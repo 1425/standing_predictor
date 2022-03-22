@@ -476,10 +476,10 @@ string make_link(Team_key team){
 	return link("https://www.thebluealliance.com/team/"+t,t);
 }
 
-	auto digit=[](auto i)->char{
-		if(i<10) return '0'+i;
-		return 'a'+(i-10);
-	};
+auto digit=[](auto i)->char{
+	if(i<10) return '0'+i;
+	return 'a'+(i-10);
+};
 
 string color(double d){
 	//input range 0-1
@@ -709,7 +709,7 @@ void run(Cached_fetcher &f,District_key district,Year year,int dcmp_size,string 
 				));
 			}
 			if(events_left==2){
-				return convolve(pr,pr)+team.rookie_bonus;
+				return convolve(pr,pr);
 			}
 			PRINT(team);
 			nyi
