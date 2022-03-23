@@ -37,12 +37,11 @@ district championship winners -> just assume that they would have enough points 
 //start program-specific stuff.
 
 using namespace std;
-using namespace tba;
 
 using Pr=double; //probability
 using Point=int;
 
-multiset<Point> point_results(Cached_fetcher& server,District_key dk){
+multiset<Point> point_results(tba::Cached_fetcher& server,tba::District_key dk){
 	auto d=district_rankings(server,dk);
 	assert(d);
 	multiset<Point> r;
@@ -79,13 +78,13 @@ map<Point,Pr> operator+(map<Point,Pr> a,int i){
 	return r;
 }
 
-set<Team_key> chairmans_winners(Cached_fetcher& f,District_key district){
-	set<Team_key> r;
+set<tba::Team_key> chairmans_winners(tba::Cached_fetcher& f,tba::District_key district){
+	set<tba::Team_key> r;
 	for(auto event:district_events(f,district)){
 		auto k=event.key;
 		auto aw=event_awards(f,k);
 		if(aw.empty()) continue;
-		auto f1=filter([](auto a){ return a.award_type==Award_type::CHAIRMANS; },aw);
+		auto f1=filter([](auto a){ return a.award_type==tba::Award_type::CHAIRMANS; },aw);
 		if(f1.empty()){
 			continue;
 		}
@@ -106,7 +105,26 @@ set<Team_key> chairmans_winners(Cached_fetcher& f,District_key district){
 	return r;
 }
 
-string make_link(Team_key team){
+double entropy(Pr p){
+	//units are bits.
+	if(p<0) p=0;
+	if(p>1) p=1;
+	if(p==0 || p==1) return 0;
+	assert(p>0 && p<1);
+	return -(log(p)*p+log(1-p)*(1-p))/log(2);
+}
+
+using Extended_cutoff=pair<Point,Pr>;
+
+map<Point,Pr> simplify(map<pair<Point,Pr>,Pr> m){
+	map<Point,Pr> r;
+	for(auto [k,v]:m){
+		r[k.first]+=v;
+	}
+	return r;
+}
+
+string make_link(tba::Team_key team){
 	auto s=team.str();
 	assert(s.substr(0,3)=="frc");
 	auto t=s.substr(3,500);
@@ -149,32 +167,15 @@ string colorize(double d){
 	);
 }
 
-double entropy(Pr p){
-	//units are bits.
-	if(p<0) p=0;
-	if(p>1) p=1;
-	if(p==0 || p==1) return 0;
-	assert(p>0 && p<1);
-	return -(log(p)*p+log(1-p)*(1-p))/log(2);
-}
-
-using Extended_cutoff=pair<Point,Pr>;
-
-map<Point,Pr> simplify(map<pair<Point,Pr>,Pr> m){
-	map<Point,Pr> r;
-	for(auto [k,v]:m){
-		r[k.first]+=v;
-	}
-	return r;
-}
+using namespace tba;
 
 string gen_html(
-	vector<tuple<Team_key,Pr,Point,Point,Point>> result,
-	vector<Team> team_info,
+	vector<tuple<tba::Team_key,Pr,Point,Point,Point>> result,
+	vector<tba::Team> team_info,
 	map<Extended_cutoff,Pr> cutoff_pr,
 	string title,
 	string district_short,
-	Year year,
+	tba::Year year,
 	int dcmp_size
 ){
 	auto nickname=[&](auto k){
@@ -268,14 +269,23 @@ string gen_html(
 	);
 }
 
-void run(Cached_fetcher &f,District_key district,Year year,int dcmp_size,string title,string district_short,std::string extra="",bool ignore_chairmans=0){
-	vector<District_key> old_keys{
+void run(
+	tba::Cached_fetcher &f,
+	tba::District_key district,
+	tba::Year year,
+	int dcmp_size,
+	string title,
+	string district_short,
+	std::string extra="",
+	bool ignore_chairmans=0
+){
+	vector<tba::District_key> old_keys{
 		//excluding 2014 since point system for quals was different.
-		District_key{"2015pnw"},
-		District_key{"2016pnw"},
-		District_key{"2017pnw"},
-		District_key{"2018pnw"},
-		District_key{"2019pnw"}
+		tba::District_key{"2015pnw"},
+		tba::District_key{"2016pnw"},
+		tba::District_key{"2017pnw"},
+		tba::District_key{"2018pnw"},
+		tba::District_key{"2019pnw"}
 	};
 
 	auto team_info=district_teams(f,district);
@@ -306,7 +316,7 @@ void run(Cached_fetcher &f,District_key district,Year year,int dcmp_size,string 
 		chairmans.clear();
 	}
 
-	map<Team_key,map<Point,Pr>> by_team;
+	map<tba::Team_key,map<Point,Pr>> by_team;
 	for(auto team:d1){
 		if(chairmans.count(team.team_key)){
 			continue;
@@ -354,12 +364,12 @@ void run(Cached_fetcher &f,District_key district,Year year,int dcmp_size,string 
 	bool by_team_csv=0;
 	if(by_team_csv){
 		cout<<"team,";
-		for(auto i:range(140)){
+		for(auto i:tba::range(140)){
 			cout<<i<<",";
 		}
 		for(auto [team,data]:by_team){
 			cout<<team<<",";
-			for(auto i:range(140)){
+			for(auto i:tba::range(140)){
 				auto f=data.find(i);
 				if(f==data.end()){
 					cout<<"0,";
@@ -435,7 +445,7 @@ void run(Cached_fetcher &f,District_key district,Year year,int dcmp_size,string 
 
 	multiset<pair<Point,Pr>> cutoffs;
 	const auto iterations=2000; //usually want this to be like 2k
-	for(auto iteration:range(iterations)){
+	for(auto iteration:tba::range(iterations)){
 		(void)iteration;
 		//PRINT(iteration);
 		map<Point,unsigned> final_points;
@@ -482,7 +492,7 @@ void run(Cached_fetcher &f,District_key district,Year year,int dcmp_size,string 
 		interesting_cutoffs[d]=cutoff_level(d);
 	}
 
-	vector<tuple<Team_key,Pr,Point,Point,Point>> result;
+	vector<tuple<tba::Team_key,Pr,Point,Point,Point>> result;
 	for(auto team:d1){
 		//PRINT(team);
 		//PRINT(team.team_key);
@@ -550,6 +560,7 @@ void run(Cached_fetcher &f,District_key district,Year year,int dcmp_size,string 
 			cout<<get<3>(a)<<"\t";
 			cout<<get<4>(a)<<"\t";
 			auto f=filter_unique([=](auto f){ return f.key==get<0>(a); },team_info);
+			using namespace tba;
 			cout<<f.nickname<<"\n";
 		}
 	}
@@ -565,7 +576,7 @@ void dcmp_awards(District_key district){
 }
 #endif
 
-int cmp_slots(District_key district){
+int cmp_slots(tba::District_key district){
 	map<string,int> slots{
 		{"2019chs",21},
 		{"2019fim",87},
@@ -584,13 +595,13 @@ int cmp_slots(District_key district){
 	return f->second;
 }
 
-void worlds(Cached_fetcher &f){
-	District_key district{"2019pnw"};
-	Event_key event{"2019pncmp"};
+void worlds(tba::Cached_fetcher &f){
+	tba::District_key district{"2019pnw"};
+	tba::Event_key event{"2019pncmp"};
 	auto rankings=district_rankings(f,district);
 	//PRINT(*rankings);
 	auto teams=event_teams_keys(f,event);
-	map<Team_key,int> existing_points;
+	map<tba::Team_key,int> existing_points;
 	for(auto team:teams){
 		auto f=filter_unique(
 			[=](auto x){ return x.team_key==team; },
@@ -602,10 +613,10 @@ void worlds(Cached_fetcher &f){
 	//PRINT(existing_points);
 
 	vector<int> cutoffs;
-	for(auto _:range(1000)){
+	for(auto _:tba::range(1000)){
 		(void)_;
-		auto old_event=Event_key{"2018pncmp"};
-		auto d=district_rankings(f,District_key{"2018pnw"});
+		auto old_event=tba::Event_key{"2018pncmp"};
+		auto d=district_rankings(f,tba::District_key{"2018pnw"});
 		vector<int> dcmp_pts;
 		for(auto team_result:*d){
 			for(auto event:team_result.event_points){
@@ -639,7 +650,7 @@ int main1(int argc,char **argv){
 	ifstream ifs("../tba/auth_key");
 	string tba_key;
 	getline(ifs,tba_key);
-	Cached_fetcher f{Fetcher{Nonempty_string{tba_key}},Cache{}};
+	tba::Cached_fetcher f{tba::Fetcher{tba::Nonempty_string{tba_key}},tba::Cache{}};
 
 	/*try{
 		worlds(f);
@@ -648,7 +659,7 @@ int main1(int argc,char **argv){
 		return 1;
 	}*/
 
-	Year year{2022};
+	tba::Year year{2022};
 	auto d=districts(f,year);
 	PRINT(d);
 	for(auto year_info:d){
