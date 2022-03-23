@@ -9,7 +9,7 @@
 std::string slurp(std::string const& filename);
 
 template<typename T>
-void print_lines(T t){
+void print_lines(T const& t){
 	for(auto elem:t){
 		std::cout<<elem<<"\n";
 	}
@@ -17,26 +17,24 @@ void print_lines(T t){
 
 template<typename T>
 std::multiset<T>& operator|=(std::multiset<T>& a,T t){
-	a.insert(t);
+	a.insert(std::move(t));
 	return a;
 }
 
 template<typename T>
-std::multiset<T>& operator|=(std::multiset<T>& a,std::multiset<T> b){
-	for(auto elem:b){
-		a|=elem;
-	}
+std::multiset<T>& operator|=(std::multiset<T>& a,std::multiset<T> const& b){
+	a.insert(b.begin(),b.end());
 	return a;
 }
 
 template<typename T>
 std::set<T>& operator|=(std::set<T>& a,T t){
-	a.insert(t);
+	a.insert(std::move(t));
 	return a;
 }
 
 template<typename K,typename V>
-std::vector<V> seconds(std::map<K,V> a){
+std::vector<V> seconds(std::map<K,V> const& a){
 	std::vector<V> r;
 	for(auto elem:a){
 		r|=elem.second;
@@ -44,7 +42,7 @@ std::vector<V> seconds(std::map<K,V> a){
 	return r;
 }
 
-double sum(std::vector<double> v);
+double sum(std::vector<double> const& v);
 
 template<typename Func,typename T>
 auto mapf(Func f,std::vector<T> const& v)->std::vector<decltype(f(v[0]))>{
@@ -115,7 +113,7 @@ std::vector<T> reversed(std::vector<T> a){
 std::vector<std::string> split(std::string const&);
 
 template<typename T>
-std::string tag(std::string name,T body){
+std::string tag(std::string const& name,T const& body){
 	std::stringstream ss;
 	ss<<"<"<<name<<">"<<body<<"</"<<split(name).at(0)<<">";
 	return ss.str();
@@ -133,7 +131,7 @@ std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C,D,E> const& t){
 }
 
 template<typename T>
-std::string as_string(T t){
+std::string as_string(T const& t){
 	std::stringstream ss;
 	ss<<t;
 	return ss.str();
@@ -173,7 +171,7 @@ template<typename T>
 auto td(T t){ return tag("td",t); }
 
 template<typename Func,typename A,typename B,typename C,typename D>
-auto mapf(Func f,std::tuple<A,B,C,D> t)
+auto mapf(Func f,std::tuple<A,B,C,D> const& t)
 	#define G(N) decltype(f(std::get<N>(t)))
 	-> std::tuple<G(0),G(1),G(2),G(3)>
 	#undef G
@@ -186,7 +184,7 @@ auto mapf(Func f,std::tuple<A,B,C,D> t)
 }
 
 template<typename Func,typename A,typename B,typename C,typename D,typename E>
-auto mapf(Func f,std::tuple<A,B,C,D,E> t)
+auto mapf(Func f,std::tuple<A,B,C,D,E> const& t)
 	#define G(N) decltype(f(std::get<N>(t)))
 	-> std::tuple<G(0),G(1),G(2),G(3),G(4)>
 	#undef G
@@ -199,7 +197,7 @@ auto mapf(Func f,std::tuple<A,B,C,D,E> t)
 }
 
 template<typename Func,typename A,typename B,typename C,typename D,typename E,typename F>
-auto mapf(Func f,std::tuple<A,B,C,D,E,F> t)
+auto mapf(Func f,std::tuple<A,B,C,D,E,F> const& t)
 	#define G(N) decltype(f(std::get<N>(t)))
 	-> std::tuple<G(0),G(1),G(2),G(3),G(4),G(5)>
 	#undef G
@@ -214,7 +212,7 @@ auto mapf(Func f,std::tuple<A,B,C,D,E,F> t)
 #define MAP(F,X) mapf([&](auto a){ return (F)(a); },(X))
 
 template<typename Func,typename T>
-T filter_unique(Func f,std::vector<T> a){
+T filter_unique(Func f,std::vector<T> const& a){
 	std::vector<T> found;
 	for(auto elem:a){
 		if(f(elem)){
@@ -226,7 +224,7 @@ T filter_unique(Func f,std::vector<T> a){
 }
 
 template<typename Func,typename A,typename B>
-auto mapf(Func f,std::pair<A,B> p){
+auto mapf(Func f,std::pair<A,B> const& p){
 	return make_pair(
 		f(p.first),
 		f(p.second)
@@ -234,7 +232,7 @@ auto mapf(Func f,std::pair<A,B> p){
 }
 
 template<typename A,typename B>
-std::string join(std::pair<A,B> p){
+std::string join(std::pair<A,B> const& p){
 	std::stringstream ss;
 	ss<<p.first;
 	ss<<p.second;
@@ -242,13 +240,13 @@ std::string join(std::pair<A,B> p){
 }
 
 template<typename T>
-std::string table(T body){ return tag("table",body); }
+std::string table(T const& body){ return tag("table",body); }
 
 template<typename T>
-auto h2(T t){ return tag("h2",t); }
+auto h2(T const& t){ return tag("h2",t); }
 
 template<typename T>
-auto th(T t){ return tag("th",t); }
+auto th(T const& t){ return tag("th",t); }
 
 std::string th1(std::string const&);
 
@@ -258,15 +256,13 @@ std::tuple<B,C,D,E> tail(std::tuple<A,B,C,D,E> const& t){
 }
 
 template<typename T>
-std::vector<T> operator+(std::vector<T> a,std::vector<T> b){
-	for(auto elem:b){
-		a|=elem;
-	}
+std::vector<T> operator+(std::vector<T> a,std::vector<T> const& b){
+	a.insert(a.end(),b.begin(),b.end());
 	return a;
 }
 
 template<typename T>
-std::vector<T> operator+(std::vector<T> a,std::tuple<T,T,T,T> t){
+std::vector<T> operator+(std::vector<T> a,std::tuple<T,T,T,T> const& t){
 	a|=std::get<0>(t);
 	a|=std::get<1>(t);
 	a|=std::get<2>(t);
@@ -275,7 +271,7 @@ std::vector<T> operator+(std::vector<T> a,std::tuple<T,T,T,T> t){
 }
 
 template<typename A,typename B,typename C,typename D,typename E>
-std::tuple<A,B,C,D,E> operator|(std::tuple<A> a,std::tuple<B,C,D,E> b){
+std::tuple<A,B,C,D,E> operator|(std::tuple<A> const& a,std::tuple<B,C,D,E> const& b){
 	return make_tuple(
 		std::get<0>(a),
 		std::get<0>(b),
@@ -286,7 +282,7 @@ std::tuple<A,B,C,D,E> operator|(std::tuple<A> a,std::tuple<B,C,D,E> b){
 }
 
 template<typename A1,typename A,typename B,typename C,typename D,typename E>
-std::tuple<A1,A,B,C,D,E> operator|(std::tuple<A1,A> a,std::tuple<B,C,D,E> b){
+std::tuple<A1,A,B,C,D,E> operator|(std::tuple<A1,A> const& a,std::tuple<B,C,D,E> const& b){
 	return make_tuple(
 		std::get<0>(a),
 		std::get<1>(a),
@@ -300,7 +296,7 @@ std::tuple<A1,A,B,C,D,E> operator|(std::tuple<A1,A> a,std::tuple<B,C,D,E> b){
 std::string link(std::string const& url,std::string const& body);
 
 template<typename T>
-std::vector<std::pair<size_t,T>> enumerate_from(size_t start,std::vector<T> v){
+std::vector<std::pair<size_t,T>> enumerate_from(size_t start,std::vector<T> const& v){
 	std::vector<std::pair<size_t,T>> r;
 	for(auto elem:v){
 		r|=std::make_pair(start++,elem);
@@ -317,7 +313,7 @@ std::vector<T> operator+(std::vector<T> a,T b){
 }
 
 template<typename A,typename B,typename C,typename D,typename E>
-std::vector<B> seconds(std::vector<std::tuple<A,B,C,D,E>> v){
+std::vector<B> seconds(std::vector<std::tuple<A,B,C,D,E>> const& v){
 	std::vector<B> r;
 	for(auto t:v){
 		r|=std::get<1>(t);
@@ -326,18 +322,14 @@ std::vector<B> seconds(std::vector<std::tuple<A,B,C,D,E>> v){
 }
 
 template<typename F,typename T>
-std::vector<T> filter(F f,std::vector<T> v){
+std::vector<T> filter(F f,std::vector<T> const& v){
 	std::vector<T> r;
-	for(auto elem:v){
-		if(f(elem)){
-			r|=elem;
-		}
-	}
+	std::copy_if(v.begin(),v.end(),std::back_inserter(r),f);
 	return r;
 }
 
 template<typename T>
-T choose(std::vector<T> v){
+T choose(std::vector<T> const& v){
 	return v[rand()%v.size()];
 }
 
@@ -348,7 +340,7 @@ std::vector<T> sorted(std::vector<T> a){
 }
 
 template<typename T>
-T max(std::vector<T> v){
+T max(std::vector<T> const& v){
 	assert(v.size());
 	T r=v[0];
 	for(auto elem:v){
@@ -358,7 +350,7 @@ T max(std::vector<T> v){
 }
 
 template<typename T>
-T min(std::vector<T> v){
+T min(std::vector<T> const& v){
 	assert(v.size());
 	T r=v[0];
 	for(auto elem:v){
@@ -370,12 +362,12 @@ T min(std::vector<T> v){
 double sum(std::vector<int> const&);
 
 template<typename T>
-double mean(std::vector<T> v){
+double mean(std::vector<T> const& v){
 	return sum(v)/v.size();
 }
 
 template<typename T>
-T median(std::vector<T> v){
+T median(std::vector<T> const& v){
 	assert(v.size());
 	return sorted(v)[v.size()/2];
 }

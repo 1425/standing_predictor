@@ -53,7 +53,7 @@ multiset<Point> point_results(tba::Cached_fetcher& server,tba::District_key dk){
 	return r;
 }
 
-map<Point,Pr> convolve(map<Point,Pr> a,map<Point,Pr> b){
+map<Point,Pr> convolve(map<Point,Pr> const& a,map<Point,Pr> const& b){
 	map<Point,Pr> r;
 	for(auto [a1,ap]:a){
 		for(auto [b1,bp]:b){
@@ -116,7 +116,7 @@ double entropy(Pr p){
 
 using Extended_cutoff=pair<Point,Pr>;
 
-map<Point,Pr> simplify(map<pair<Point,Pr>,Pr> m){
+map<Point,Pr> simplify(map<pair<Point,Pr>,Pr> const& m){
 	map<Point,Pr> r;
 	for(auto [k,v]:m){
 		r[k.first]+=v;
@@ -131,10 +131,10 @@ string make_link(tba::Team_key team){
 	return link("https://www.thebluealliance.com/team/"+t,t);
 }
 
-auto digit=[](auto i)->char{
+char digit(auto i){
 	if(i<10) return '0'+i;
 	return 'a'+(i-10);
-};
+}
 
 string color(double d){
 	//input range 0-1
@@ -170,11 +170,11 @@ string colorize(double d){
 using namespace tba;
 
 string gen_html(
-	vector<tuple<tba::Team_key,Pr,Point,Point,Point>> result,
-	vector<tba::Team> team_info,
-	map<Extended_cutoff,Pr> cutoff_pr,
-	string title,
-	string district_short,
+	vector<tuple<tba::Team_key,Pr,Point,Point,Point>> const& result,
+	vector<tba::Team> const& team_info,
+	map<Extended_cutoff,Pr> const& cutoff_pr,
+	string const& title,
+	string const& district_short,
 	tba::Year year,
 	int dcmp_size
 ){
@@ -274,8 +274,8 @@ void run(
 	tba::District_key district,
 	tba::Year year,
 	int dcmp_size,
-	string title,
-	string district_short,
+	string const& title,
+	string const& district_short,
 	std::string extra="",
 	bool ignore_chairmans=0
 ){

@@ -11,7 +11,7 @@ std::string slurp(std::string const& filename){
     return ss.str();
 }
 
-double sum(std::vector<double> v){
+double sum(std::vector<double> const& v){
 	double r=0;
 	for(auto elem:v){
 		r+=elem;
