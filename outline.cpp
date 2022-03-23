@@ -24,6 +24,7 @@ district championship winners -> just assume that they would have enough points 
 #include<random>
 #include<iomanip>
 #include "../tba/db.h"
+#include "util.h"
 #include "../tba/data.h"
 #include "../tba/tba.h"
 #include "../tba/util.h"
@@ -32,359 +33,6 @@ district championship winners -> just assume that they would have enough points 
 
 #define PRINT TBA_PRINT
 #define nyi TBA_NYI
-
-std::string slurp(std::string const& filename){
-    std::ifstream f(filename.c_str());
-    if(!f.good()){
-        throw "File_not_found(filename)";
-    }
-    std::stringstream ss;
-    while(f>>ss.rdbuf());
-    return ss.str();
-}
-
-template<typename T>
-void print_lines(T t){
-	for(auto elem:t){
-		std::cout<<elem<<"\n";
-	}
-}
-
-template<typename T>
-std::multiset<T>& operator|=(std::multiset<T>& a,T t){
-	a.insert(t);
-	return a;
-}
-
-template<typename T>
-std::multiset<T>& operator|=(std::multiset<T>& a,std::multiset<T> b){
-	for(auto elem:b){
-		a|=elem;
-	}
-	return a;
-}
-
-template<typename T>
-std::set<T>& operator|=(std::set<T>& a,T t){
-	a.insert(t);
-	return a;
-}
-
-template<typename K,typename V>
-std::vector<V> seconds(std::map<K,V> a){
-	std::vector<V> r;
-	for(auto elem:a){
-		r|=elem.second;
-	}
-	return r;
-}
-
-double sum(std::vector<double> v){
-	double r=0;
-	for(auto elem:v){
-		r+=elem;
-	}
-	return r;
-}
-
-template<typename Func,typename T>
-auto mapf(Func f,std::vector<T> const& v)->std::vector<decltype(f(v[0]))>{
-	std::vector<decltype(f(v[0]))> r;
-	for(auto elem:v){
-		r|=f(elem);
-	}
-	return r;
-}
-
-template<typename Func,typename K,typename V>
-auto mapf(Func f,std::map<K,V> const& v)->std::vector<decltype(f(*std::begin(v)))>{
-	std::vector<decltype(f(*std::begin(v)))> r;
-	for(auto p:v){
-		r|=f(p);
-	}
-	return r;
-}
-
-template<typename K,typename V>
-std::map<K,V> to_map(std::vector<std::pair<K,V>> v){
-	std::map<K,V> r;
-	for(auto p:v){
-		auto f=r.find(p.first);
-		assert(f==r.end());
-		r[p.first]=p.second;
-	}
-	return r;
-}
-
-template<typename K,typename V>
-auto values(std::map<K,V> a)->std::vector<V>{
-	std::vector<V> r;
-	for(auto p:a) r|=p.second;
-	return r;
-}
-
-template<typename T>
-std::map<T,size_t> count(std::multiset<T> const& a){
-	std::map<T,size_t> r;
-	for(auto elem:a){
-		r[elem]=a.count(elem); //slow
-	}
-	return r;
-}
-
-template<typename Func,typename K,typename V>
-auto map_values(Func f,std::map<K,V> m)->std::map<K,decltype(f(begin(m)->second))>{
-	std::map<K,decltype(f(begin(m)->second))> r;
-	for(auto [k,v]:m){
-		r[k]=f(v);
-	}
-	return r;
-}
-
-template<typename T,typename Func>
-std::vector<T> sorted(std::vector<T> v,Func f){
-	sort(begin(v),end(v),[&](auto a,auto b){ return f(a)<f(b); });
-	return v;
-}
-
-template<typename T>
-std::vector<T> reversed(std::vector<T> a){
-	reverse(begin(a),end(a));
-	return a;
-}
-
-using namespace tba;
-
-std::vector<std::string> split(std::string s){
-	std::vector<std::string> r;
-	std::stringstream ss;
-	for(auto c:s){
-		if(isblank(c)){
-			if(ss.str().size()){
-				r|=ss.str();
-				ss.str("");
-			}
-		}else{
-			ss<<c;
-		}
-	}
-	if(ss.str().size()){
-		r|=ss.str();
-	}
-	return r;
-}
-
-template<typename T>
-std::string tag(std::string name,T body){
-	std::stringstream ss;
-	ss<<"<"<<name<<">"<<body<<"</"<<split(name).at(0)<<">";
-	return ss.str();
-}
-
-template<typename A,typename B,typename C,typename D,typename E>
-std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C,D,E> const& t){
-	o<<"(";
-	o<<std::get<0>(t)<<" ";
-	o<<std::get<1>(t)<<" ";
-	o<<std::get<2>(t)<<" ";
-	o<<std::get<3>(t)<<" ";
-	o<<std::get<4>(t);
-	return o<<")";
-}
-
-template<typename T>
-std::string as_string(T t){
-	std::stringstream ss;
-	ss<<t;
-	return ss.str();
-}
-
-template<typename T>
-std::string join(std::vector<T> const& a){
-	std::stringstream ss;
-	for(auto elem:a){
-		ss<<elem;
-	}
-	return ss.str();
-}
-
-template<typename A,typename B,typename C,typename D,typename E>
-std::string join(std::tuple<A,B,C,D,E> const& t){
-	std::stringstream ss;
-	#define X(N) ss<<std::get<N>(t);
-	X(0) X(1) X(2) X(3) X(4)
-	#undef X
-	return ss.str();
-}
-
-template<typename A,typename B,typename C,typename D,typename E,typename F>
-std::string join(std::tuple<A,B,C,D,E,F> const& t){
-	std::stringstream ss;
-	#define X(N) ss<<std::get<N>(t);
-	X(0) X(1) X(2) X(3) X(4) X(5)
-	#undef X
-	return ss.str();
-}
-
-template<typename T>
-auto tr(T t){ return tag("tr",t); }
-
-template<typename T>
-auto td(T t){ return tag("td",t); }
-
-template<typename Func,typename A,typename B,typename C,typename D>
-auto mapf(Func f,std::tuple<A,B,C,D> t)
-	#define G(N) decltype(f(std::get<N>(t)))
-	-> std::tuple<G(0),G(1),G(2),G(3)>
-	#undef G
-{
-	return make_tuple(
-		#define X(N) f(std::get<N>(t))
-		X(0),X(1),X(2),X(3)
-		#undef X
-	);
-}
-
-template<typename Func,typename A,typename B,typename C,typename D,typename E>
-auto mapf(Func f,std::tuple<A,B,C,D,E> t)
-	#define G(N) decltype(f(std::get<N>(t)))
-	-> std::tuple<G(0),G(1),G(2),G(3),G(4)>
-	#undef G
-{
-	return make_tuple(
-		#define X(N) f(std::get<N>(t))
-		X(0),X(1),X(2),X(3),X(4)
-		#undef X
-	);
-}
-
-template<typename Func,typename A,typename B,typename C,typename D,typename E,typename F>
-auto mapf(Func f,std::tuple<A,B,C,D,E,F> t)
-	#define G(N) decltype(f(std::get<N>(t)))
-	-> std::tuple<G(0),G(1),G(2),G(3),G(4),G(5)>
-	#undef G
-{
-	return make_tuple(
-		#define X(N) f(std::get<N>(t))
-		X(0),X(1),X(2),X(3),X(4),X(5)
-		#undef X
-	);
-}
-
-#define MAP(F,X) mapf([&](auto a){ return (F)(a); },(X))
-
-template<typename Func,typename T>
-T filter_unique(Func f,std::vector<T> a){
-	std::vector<T> found;
-	for(auto elem:a){
-		if(f(elem)){
-			found|=elem;
-		}
-	}
-	assert(found.size()==1);
-	return found[0];
-}
-
-template<typename Func,typename A,typename B>
-auto mapf(Func f,std::pair<A,B> p){
-	return make_pair(
-		f(p.first),
-		f(p.second)
-	);
-}
-
-template<typename A,typename B>
-std::string join(std::pair<A,B> p){
-	std::stringstream ss;
-	ss<<p.first;
-	ss<<p.second;
-	return ss.str();
-}
-
-template<typename T>
-std::string table(T body){ return tag("table",body); }
-
-template<typename T>
-auto h2(T t){ return tag("h2",t); }
-
-template<typename T>
-auto th(T t){ return tag("th",t); }
-auto th1(std::string s){ return th(s); }
-
-template<typename A,typename B,typename C,typename D,typename E>
-std::tuple<B,C,D,E> tail(std::tuple<A,B,C,D,E> const& t){
-	return make_tuple(std::get<1>(t),std::get<2>(t),std::get<3>(t),std::get<4>(t));
-}
-
-template<typename T>
-std::vector<T> operator+(std::vector<T> a,std::vector<T> b){
-	for(auto elem:b){
-		a|=elem;
-	}
-	return a;
-}
-
-template<typename T>
-std::vector<T> operator+(std::vector<T> a,std::tuple<T,T,T,T> t){
-	a|=std::get<0>(t);
-	a|=std::get<1>(t);
-	a|=std::get<2>(t);
-	a|=std::get<3>(t);
-	return a;
-}
-
-template<typename A,typename B,typename C,typename D,typename E>
-std::tuple<A,B,C,D,E> operator|(std::tuple<A> a,std::tuple<B,C,D,E> b){
-	return make_tuple(
-		std::get<0>(a),
-		std::get<0>(b),
-		std::get<1>(b),
-		std::get<2>(b),
-		std::get<3>(b)
-	);
-}
-
-template<typename A1,typename A,typename B,typename C,typename D,typename E>
-std::tuple<A1,A,B,C,D,E> operator|(std::tuple<A1,A> a,std::tuple<B,C,D,E> b){
-	return make_tuple(
-		std::get<0>(a),
-		std::get<1>(a),
-		std::get<0>(b),
-		std::get<1>(b),
-		std::get<2>(b),
-		std::get<3>(b)
-	);
-}
-
-std::string link(std::string url,std::string body){
-	return tag("a href=\""+url+"\"",body);
-}
-
-template<typename T>
-std::vector<std::pair<size_t,T>> enumerate_from(size_t start,std::vector<T> v){
-	std::vector<std::pair<size_t,T>> r;
-	for(auto elem:v){
-		r|=std::make_pair(start++,elem);
-	}
-	return r;
-}
-
-std::string td1(std::string s){ return td(s); }
-
-template<typename T>
-std::vector<T> operator+(std::vector<T> a,T b){
-	a|=b;
-	return a;
-}
-
-template<typename A,typename B,typename C,typename D,typename E>
-std::vector<B> seconds(std::vector<std::tuple<A,B,C,D,E>> v){
-	std::vector<B> r;
-	for(auto t:v){
-		r|=std::get<1>(t);
-	}
-	return r;
-}
 
 //start program-specific stuff.
 
@@ -427,17 +75,6 @@ map<Point,Pr> operator+(map<Point,Pr> a,int i){
 	map<Point,Pr> r;
 	for(auto [k,v]:a){
 		r[k+i]=v;
-	}
-	return r;
-}
-
-template<typename F,typename T>
-vector<T> filter(F f,vector<T> v){
-	vector<T> r;
-	for(auto elem:v){
-		if(f(elem)){
-			r|=elem;
-		}
 	}
 	return r;
 }
@@ -540,9 +177,6 @@ string gen_html(
 	Year year,
 	int dcmp_size
 ){
-	//auto title="PNW District Championship Predictions 2019"; //TODO: Put in date & make district configurable
-		//cout<<"Team #\tP(DCMP)\tPts 5%\tPts 50%\tPts 95%\tNickname\n";
-
 	auto nickname=[&](auto k){
 		auto f=filter_unique([=](auto a){ return a.key==k; },team_info);
 		auto v=f.nickname;
@@ -894,7 +528,7 @@ void run(Cached_fetcher &f,District_key district,Year year,int dcmp_size,string 
 	}
 
 	auto x=::mapf([](auto x){ return get<1>(x); },result);
-	PRINT(sum(x));
+	PRINT(sum(x)); //this number should be really close to the number of slots available at the event.
 
 	{
 		auto g=gen_html(result,team_info,cutoff_pr,title,district_short,year,dcmp_size);
@@ -950,56 +584,6 @@ int cmp_slots(District_key district){
 	return f->second;
 }
 
-template<typename T>
-T choose(vector<T> v){
-	return v[rand()%v.size()];
-}
-
-template<typename T>
-vector<T> sorted(vector<T> a){
-	sort(begin(a),end(a));
-	return a;
-}
-
-template<typename T>
-T max(vector<T> v){
-	assert(v.size());
-	T r=v[0];
-	for(auto elem:v){
-		r=max(r,elem);
-	}
-	return r;
-}
-
-template<typename T>
-T min(vector<T> v){
-	assert(v.size());
-	T r=v[0];
-	for(auto elem:v){
-		r=min(r,elem);
-	}
-	return r;
-}
-
-double sum(vector<int> v){
-	int x=0;
-	for(auto elem:v){
-		x+=elem;
-	}
-	return x;
-}
-
-template<typename T>
-double mean(vector<T> v){
-	return sum(v)/v.size();
-}
-
-template<typename T>
-T median(vector<T> v){
-	assert(v.size());
-	return sorted(v)[v.size()/2];
-}
-
 void worlds(Cached_fetcher &f){
 	District_key district{"2019pnw"};
 	Event_key event{"2019pncmp"};
@@ -1052,17 +636,10 @@ int main1(int argc,char **argv){
 	(void)argc;
 	(void)argv;
 
-	//first, look up teams in the district
-	//for each team
-		//look up their schedule
-		//look up points earned already
 	ifstream ifs("../tba/auth_key");
 	string tba_key;
 	getline(ifs,tba_key);
 	Cached_fetcher f{Fetcher{Nonempty_string{tba_key}},Cache{}};
-
-	//cout<<districts(f,Year{2022})<<"\n";
-	//nyi
 
 	/*try{
 		worlds(f);
