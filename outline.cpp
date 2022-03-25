@@ -24,10 +24,11 @@ district championship winners -> just assume that they would have enough points 
 #include<random>
 #include<iomanip>
 #include "../tba/db.h"
-#include "util.h"
 #include "../tba/data.h"
 #include "../tba/tba.h"
 #include "../tba/util.h"
+//#include "../frc_api/db.h"
+#include "util.h"
 
 //start generic stuff
 
@@ -170,9 +171,14 @@ string colorize(double d){
 using namespace tba;
 
 string gen_html(
-	vector<tuple<tba::Team_key,Pr,Point,Point,Point>> const& result,
+	vector<tuple<
+		tba::Team_key,
+		Pr,Point,Point,Point,
+		Pr,Point,Point,Point
+	>> const& result,
 	vector<tba::Team> const& team_info,
-	map<Extended_cutoff,Pr> const& cutoff_pr,
+	map<Extended_cutoff,Pr> const& dcmp_cutoff_pr,
+	map<Extended_cutoff,Pr> const& cmp_cutoff_pr,
 	string const& title,
 	string const& district_short,
 	tba::Year year,
@@ -185,8 +191,8 @@ string gen_html(
 		return *v;
 	};
 
-	auto cutoff_table=[=](){
-		return h2("Cutoff value")+tag("table border",
+	auto cutoff_table=[=](string s,auto cutoff_pr){
+		return h2(s+" cutoff value")+tag("table border",
 			tr(th("Points")+th("Probability"))+
 			join(mapf(
 				[](auto a){
@@ -195,7 +201,10 @@ string gen_html(
 				simplify(cutoff_pr)
 			))
 		);
-	}();
+	};
+
+	auto cutoff_table1=cutoff_table("District Championship",dcmp_cutoff_pr);
+	auto cutoff_table_cmp=cutoff_table("FRC Championship",cmp_cutoff_pr);
 
 	auto cutoff_table_long=[=](){
 		return h2("Cutoff value - extended")+
@@ -206,7 +215,7 @@ string gen_html(
 				[](auto a){
 					return tr(join(MAP(td,a)));
 				},
-				cutoff_pr
+				dcmp_cutoff_pr
 			))
 		);
 	}();
@@ -224,7 +233,7 @@ string gen_html(
 			link("https://www.thebluealliance.com/events/"+district_short+"/"+as_string(year)+"#rankings","The Blue Alliance")+"<br>"+
 			link("http://frclocks.com/index.php?d="+district_short,"FRC Locks")+"(slow)<br>"+
 			"Slots at event:"+as_string(dcmp_size)+
-			cutoff_table+
+			cutoff_table1+
 			h2("Team Probabilities")+
 			tag("table border",
 				tr(join(::mapf(
@@ -236,7 +245,11 @@ string gen_html(
 						"Nickname",
 						"Extra points needed to have 5% chance of making district championship",
 						"Extra points needed to have 50% chance of making district championship",
-						"Extra points needed to have 95% chance of making district championship"
+						"Extra points needed to have 95% chance of making district championship",
+						"CMP Probability",
+						"CMP 5\% pts",
+						"CMP 50\% pts",
+						"CMP 95\% pts"
 					}
 				)))+
 				join(
@@ -255,18 +268,113 @@ string gen_html(
 									as_string(get<3>(a)),
 									as_string(get<4>(a))
 								}
-							)));
+							)
+							)+colorize(get<5>(a))+td(get<6>(a))+td(get<7>(a))+td(get<8>(a))
+							);
 						},
 						enumerate_from(1,reversed(sorted(
 							result,
-							[](auto x){ return make_pair(get<1>(x),x); }
+							[](auto x){ return make_tuple(get<1>(x),get<5>(x),x); }
 						)))
 					)
 				)
 			)+
-			cutoff_table_long
+			cutoff_table_long+cutoff_table_cmp
 		)
 	);
+}
+
+map<Point,Pr> when_greater(map<Point,Pr> const& a,map<pair<Point,double>,Pr> const& b){
+	map<Point,Pr> r;
+	for(auto [ka,va]:a){
+		for(auto [kb,vb]:b){
+			auto [value,pr]=kb;
+			if(ka>value){
+				r[ka]+=va*vb;
+			}else if(ka==value){
+				r[ka]+=va*vb*pr;
+			}
+		}
+	}
+	return r;
+}
+
+map<Point,Pr> when_greater(map<Point,Pr> const& a,map<Point,Pr> const& b){
+	//what the probability distribution of "a" looks like when it is higher than "b".
+	//not that the output is not expected to sum to 1 unless a is always greater than b.
+	//O(a.size()*b.size()) but this should still be better than sampling them since N and M are not that large.
+	map<Point,Pr> r;
+	for(auto [ka,va]:a){
+		for(auto [kb,vb]:b){
+			if(ka>kb){
+				r[ka]+=va*vb;
+			}
+		}
+	}
+	return r;
+}
+
+auto find_cutoff(map<pair<bool,Point>,unsigned> these_points,int eliminating){
+	unsigned total=0;
+	for(auto [points,teams]:these_points){
+		total+=teams;
+		/*if(total>=teams_left_out){
+			return points;
+		}*/
+		if(total>=eliminating){
+			auto excess=total-eliminating;
+			assert(points.first==0);
+			return make_pair(points.second,1-double(excess)/teams);
+		}
+	}
+	assert(0);
+}
+
+map<Point,Pr> dcmp_distribution(tba::Cached_fetcher &f){
+	vector<tba::District_key> old_districts{
+		tba::District_key{"2019pnw"},
+		tba::District_key{"2018pnw"},
+		tba::District_key{"2017pnw"},
+		tba::District_key{"2016pnw"},
+		tba::District_key{"2015pnw"},
+		//tba::District_key{"2014pnw"},
+	};
+	multiset<Point> v;
+	for(auto district:old_districts){
+		auto a=district_rankings(f,district);
+		if(!a) continue;
+		for(auto team_data:*a){
+			for(auto event_points:team_data.event_points){
+				if(event_points.district_cmp){
+					v|=int(event_points.total);
+				}
+			}
+		}
+	}
+	map<Point,Pr> r;
+	for(auto x:v){
+		r[x]=v.count(x)/double(v.size());
+	}
+	return r;
+}
+
+int worlds_slots(tba::District_key key){
+	//Via https://www.firstinspires.org/resource-library/frc/championship-eligibility-criteria
+	//Subtract out chairmans, EI, and Rookie All-Star winners
+	//Note that Rookie All-Star is not always awarded. (which is the last number)
+	if(key=="2022chs") return 16-2-2-1;
+	if(key=="2022fim") return 64-4-1-1;
+	if(key=="2022fma") return 18-2-2-1;
+	if(key=="2022fin") return 8-1-2-1;
+	if(key=="2022ne") return 25-3-2-1;
+	if(key=="2022ont") return 11-1-1-1;
+	if(key=="2022fit") return 23-3-2-2;
+	if(key=="2022isr") return 9-1-1-1;
+	if(key=="2022fnc") return 10-1-2-1;
+	if(key=="2022pnw") return 18-2-1-1;
+	if(key=="2022pch") return 10-1-2-1;
+	cerr<<"Error: Unknown district:"<<key<<"\n";
+	exit(1);
 }
 
 void run(
@@ -316,17 +424,14 @@ void run(
 		chairmans.clear();
 	}
 
-	map<tba::Team_key,map<Point,Pr>> by_team;
+	map<tba::Team_key,pair<bool,map<Point,Pr>>> by_team;
 	for(auto team:d1){
-		if(chairmans.count(team.team_key)){
-			continue;
-		}
 		//auto events_left=2-team.event_points.size();
 		auto max_counters=2-int(team.event_points.size());
 		auto events_scheduled=team_events_year_keys(f,team.team_key,year);
 		auto events_left=min(max_counters,int(events_scheduled.size())-int(team.event_points.size()));
 		assert(events_left>=0);
-		by_team[team.team_key]=[&]()->map<Point,Pr>{
+		auto dist=[&]()->map<Point,Pr>{
 			auto first_event_points=[=]()->double{
 				if(team.event_points.size()){
 					return team.event_points[0].total;
@@ -358,6 +463,7 @@ void run(
 			PRINT(team);
 			nyi
 		}()+team.rookie_bonus;
+		by_team[team.team_key]=make_pair(chairmans.count(team.team_key),dist);
 	}
 
 	print_lines(by_team);
@@ -367,7 +473,8 @@ void run(
 		for(auto i:tba::range(140)){
 			cout<<i<<",";
 		}
-		for(auto [team,data]:by_team){
+		for(auto [team,data1]:by_team){
+			auto [cmd,data]=data1;
 			cout<<team<<",";
 			for(auto i:tba::range(140)){
 				auto f=data.find(i);
@@ -382,7 +489,8 @@ void run(
 	}
 
 	map<Point,Pr> by_points; //# of teams expected to end at each # of points
-	for(auto [team,data]:by_team){
+	for(auto [team,data1]:by_team){
+		auto [cm,data]=data1;
 		(void)team;
 		for(auto [pts,pr]:data){
 			auto f=by_points.find(pts);
@@ -417,9 +525,10 @@ void run(
 		}
 	}
 
-	auto teams_advancing=dcmp_size-chairmans.size();
+	auto teams_advancing=dcmp_size;
 	auto teams_competing=sum(values(by_points));
-	auto teams_left_out=teams_competing-teams_advancing;
+	auto teams_left_out=max(0.0,teams_competing-teams_advancing); //Ontario has more slots than team in 2022.
+	auto cmp_teams_left_out=max(0,dcmp_size-worlds_slots(district));
 
 	//monte carlo method for where the cutoff is
 
@@ -443,31 +552,39 @@ void run(
 		assert(0);
 	};
 
-	multiset<pair<Point,Pr>> cutoffs;
+	auto dcmp_distribution1=dcmp_distribution(f);
+	multiset<pair<Point,Pr>> cutoffs,cmp_cutoff;
 	const auto iterations=2000; //usually want this to be like 2k
 	for(auto iteration:tba::range(iterations)){
 		(void)iteration;
 		//PRINT(iteration);
-		map<Point,unsigned> final_points;
-		for(auto [team,dist]:by_team){
-			final_points[sample(dist)]++;
+		map<pair<bool,Point>,unsigned> final_points;
+		for(auto [team,data]:by_team){
+			auto [cm,dist]=data;
+			final_points[pair<bool,Point>(cm,sample(dist))]++;
 		}
-		auto find_cutoff=[&](){
-			unsigned total=0;
-			for(auto [points,teams]:final_points){
-				total+=teams;
-				/*if(total>=teams_left_out){
-					return points;
-				}*/
-				if(total>=teams_left_out){
-					auto excess=total-teams_left_out;
-					return make_pair(points,1-excess/teams);
-				}
-			}
-			assert(0);
-		}();
+
 		//PRINT(find_cutoff);
-		cutoffs|=find_cutoff;
+
+		auto dcmp_cutoff=find_cutoff(final_points,teams_left_out);
+		cutoffs|=dcmp_cutoff;
+
+		map<pair<bool,Point>,unsigned> post_dcmp_points;
+		for(auto [earned,teams]:final_points){
+			auto [cm,points]=earned;
+
+			if(!cm && points<dcmp_cutoff.first) continue;
+			if(points==dcmp_cutoff.first){
+				teams*=(1-dcmp_cutoff.second);
+			}
+
+			for(auto _:range(teams)){
+				(void)_;
+				post_dcmp_points[make_pair(0,points+sample(dcmp_distribution1))]++;
+			}
+		}
+
+		cmp_cutoff|=find_cutoff(post_dcmp_points,cmp_teams_left_out);
 	}
 
 	//print_lines(count(cutoffs));
@@ -477,9 +594,18 @@ void run(
 	);
 	print_lines(cutoff_pr);
 
-	auto cutoff_level=[=](Pr probability_target){
+	map<pair<Point,Pr>,Pr> cmp_cutoff_pr=map_values(
+		[=](auto x){ return (0.0+x)/iterations; },
+		count(cmp_cutoff)
+	);
+	cout<<"Championship cutoff\n";
+	for(auto x:cmp_cutoff_pr){
+		cout<<"\t"<<x<<"\n";
+	}
+
+	auto cutoff_level=[=](map<pair<Point,Pr>,Pr> const& cutoff_set,Pr probability_target){
 		double t=0;
-		for(auto [points,pr]:cutoff_pr){
+		for(auto [points,pr]:cutoff_set){
 			t+=pr;
 			if(t>probability_target){
 				return points;
@@ -487,53 +613,107 @@ void run(
 		}
 		assert(0);
 	};
-	map<Pr,Extended_cutoff> interesting_cutoffs;
-	for(auto d:{.05,.5,.95}){
-		interesting_cutoffs[d]=cutoff_level(d);
-	}
 
-	vector<tuple<tba::Team_key,Pr,Point,Point,Point>> result;
+	auto interesting_cutoffs=[=](auto cutoff_set){
+		map<Pr,Extended_cutoff> r;
+		for(auto d:{.05,.5,.95}){
+			r[d]=cutoff_level(cutoff_set,d);
+		}
+		return r;
+	};
+	auto interesting_cutoffs_dcmp=interesting_cutoffs(cutoff_pr);
+	auto interesting_cutoffs_cmp=interesting_cutoffs(cmp_cutoff_pr);
+
+	vector<tuple<tba::Team_key,Pr,Point,Point,Point,Pr,Point,Point,Point>> result;
 	for(auto team:d1){
 		//PRINT(team);
 		//PRINT(team.team_key);
 		//probability that get in
 		//subtract the cutoff pr
-		auto team_pr=by_team[team.team_key];
+		auto [cm,team_pr]=by_team[team.team_key];
 		double pr_make=0;
 		double pr_miss=0;
-		for(auto [cutoff,c_pr]:cutoff_pr){
-			for(auto [team_value,t_pr]:team_pr){
-				auto combined_pr=c_pr*t_pr;
-				if(team_value>cutoff.first){
-					pr_make+=combined_pr;
-				}else if(team_value==cutoff.first){
-					pr_make+=combined_pr*(1-cutoff.second);
-					pr_miss+=combined_pr*cutoff.second;
-				}else{
-					pr_miss+=combined_pr;
+		if(cm){
+			pr_make=1;
+			pr_miss=0;
+		}else{
+			for(auto [cutoff,c_pr]:cutoff_pr){
+				for(auto [team_value,t_pr]:team_pr){
+					auto combined_pr=c_pr*t_pr;
+					if(team_value>cutoff.first){
+						pr_make+=combined_pr;
+					}else if(team_value==cutoff.first){
+						pr_make+=combined_pr*(1-cutoff.second);
+						pr_miss+=combined_pr*cutoff.second;
+					}else{
+						pr_miss+=combined_pr;
+					}
 				}
 			}
 		}
 		//PRINT(pr_make+pr_miss);
 		auto total=pr_make+pr_miss;
-		if(chairmans.count(team.team_key)){
-			assert(total>=-.01 && total<=.01);
-			result|=make_tuple(team.team_key,1.0,0,0,0);
+		assert(total>.99 && total<1.01);
+
+		auto dcmp_entry_dist=[=](){
+			if(cm){
+				return team_pr;
+			}
+			return when_greater(team_pr,cutoff_pr);
+		}();
+		auto post_dcmp_dist=convolve(dcmp_entry_dist,dcmp_distribution1);
+		auto post_total=sum(values(post_dcmp_dist));
+		Pr cmp_make=0;
+		Pr cmp_miss=0;
+		for(auto [cutoff,c_pr]:cmp_cutoff_pr){
+			for(auto [team_value,t_pr]:post_dcmp_dist){
+				auto combined_pr=c_pr*t_pr;
+				if(team_value>cutoff.first){
+					cmp_make+=combined_pr;
+				}else if(team_value==cutoff.first){
+					cmp_make+=combined_pr*(1-cutoff.second);
+					cmp_miss+=combined_pr*cutoff.second;
+				}else{
+					cmp_miss+=combined_pr;
+				}
+			}
+		}
+		{
+			auto residual=post_total-cmp_make-cmp_miss;
+			assert(residual<.01 && residual>-.01);
+		}
+
+		auto points_so_far=team.point_total;
+		vector<Point> cmp_interesting;
+		for(auto [pr,pts]:interesting_cutoffs_cmp){
+			cmp_interesting|=max(0,int(pts.first-points_so_far));
+		}
+
+		if(cm){
+			assert(pr_make>.99);
+			result|=make_tuple(
+				team.team_key,
+				1.0,0,0,0,
+				cmp_make,cmp_interesting[0],cmp_interesting[1],cmp_interesting[2]
+			);
 		}else{
 			//PRINT(total);
-			assert(total>.99 && total<1.01);
 
 			//PRINT(pr_make);
 			//points needed to have 50% odds; 5% odds; 95% odds, or quartiles?
-			auto points_so_far=team.point_total;
 			vector<Point> interesting;
-			for(auto [pr,pts]:interesting_cutoffs){
+			for(auto [pr,pts]:interesting_cutoffs_dcmp){
 				//cout<<pr<<":"<<max(0.0,pts-points_so_far)<<"\n";
 				auto value=max(0,int(pts.first-points_so_far));
 				interesting|=value;
 			}
 			assert(interesting.size()==3);
-			result|=make_tuple(team.team_key,pr_make,interesting[0],interesting[1],interesting[2]);
+
+			result|=make_tuple(
+				team.team_key,
+				pr_make,interesting[0],interesting[1],interesting[2],
+				cmp_make,cmp_interesting[0],cmp_interesting[1],cmp_interesting[2]
+			);
 		}
 	}
 
@@ -541,7 +721,7 @@ void run(
 	PRINT(sum(x)); //this number should be really close to the number of slots available at the event.
 
 	{
-		auto g=gen_html(result,team_info,cutoff_pr,title,district_short,year,dcmp_size);
+		auto g=gen_html(result,team_info,cutoff_pr,cmp_cutoff_pr,title,district_short,year,dcmp_size);
 		ofstream f(district.get()+extra+".html");
 		f<<g;
 	}
@@ -643,24 +823,40 @@ void worlds(tba::Cached_fetcher &f){
 	exit(0);
 }
 
-int main1(int argc,char **argv){
-	(void)argc;
-	(void)argv;
-
+auto get_tba_fetcher(){
 	ifstream ifs("../tba/auth_key");
 	string tba_key;
 	getline(ifs,tba_key);
-	tba::Cached_fetcher f{tba::Fetcher{tba::Nonempty_string{tba_key}},tba::Cache{}};
+	return tba::Cached_fetcher{tba::Fetcher{tba::Nonempty_string{tba_key}},tba::Cache{}};
 
-	/*try{
-		worlds(f);
-	}catch(string s){
-		cout<<s;
-		return 1;
-	}*/
+}
+
+/*auto get_frc_fetcher(){
+	ifstream f("../frc_api/api_key");
+	string s;
+	getline(f,s);
+	return frc_api::Cached_fetcher{frc_api::Fetcher{frc_api::Nonempty_string{s}},frc_api::Cache{}};
+}*/
+
+int main1(int argc,char **argv){
+	auto tba_fetcher=get_tba_fetcher();
+	//auto frc_fetcher=get_frc_fetcher();
+
+	//auto x=dcmp_distribution(tba_fetcher);
+	//for(auto [a,b]:x) cout<<a<<"\t"<<b<<"\n";
+
+	if(argc>1 && argv[1]==string{"--worlds"}){
+		try{
+			worlds(tba_fetcher);
+		}catch(string s){
+			cout<<s;
+			return 1;
+		}
+		return 0;
+	}
 
 	tba::Year year{2022};
-	auto d=districts(f,year);
+	auto d=districts(tba_fetcher,year);
 	PRINT(d);
 	for(auto year_info:d){
 		//District_key district{"2019pnw"};
@@ -694,10 +890,10 @@ int main1(int argc,char **argv){
 			nyi
 		}();
 		auto title=year_info.display_name+" District Championship Predictions "+as_string(year);
-		run(f,district,year,dcmp_size,title,year_info.abbreviation);
+		run(tba_fetcher,district,year,dcmp_size,title,year_info.abbreviation);
 
 		if(district=="2022ne"){
-			run(f,district,year,16,"New England Championship Pre-Qualify",year_info.abbreviation,"_cmp",1);
+			run(tba_fetcher,district,year,16,"New England Championship Pre-Qualify",year_info.abbreviation,"_cmp",1);
 		}
 	}
 	return 0;

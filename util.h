@@ -321,6 +321,15 @@ std::vector<B> seconds(std::vector<std::tuple<A,B,C,D,E>> const& v){
 	return r;
 }
 
+template<typename A,typename B,typename C,typename D,typename E,typename F,typename G,typename H,typename I>
+std::vector<B> seconds(std::vector<std::tuple<A,B,C,D,E,F,G,H,I>> const& v){
+	std::vector<B> r;
+	for(auto t:v){
+		r|=std::get<1>(t);
+	}
+	return r;
+}
+
 template<typename F,typename T>
 std::vector<T> filter(F f,std::vector<T> const& v){
 	std::vector<T> r;
