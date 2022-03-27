@@ -35,6 +35,11 @@ district championship winners -> just assume that they would have enough points 
 #define PRINT TBA_PRINT
 #define nyi TBA_NYI
 
+template<typename K,typename V>
+std::vector<std::pair<K,V>> to_vec(std::map<K,V> const& m){
+	return std::vector<std::pair<K,V>>{m.begin(),m.end()};
+}
+
 //start program-specific stuff.
 
 using namespace std;
@@ -170,6 +175,10 @@ string colorize(double d){
 
 using namespace tba;
 
+int as_num(tba::Team_key const& a){
+	return atoi(a.str().c_str()+3);
+}
+
 string gen_html(
 	vector<tuple<
 		tba::Team_key,
@@ -182,7 +191,8 @@ string gen_html(
 	string const& title,
 	string const& district_short,
 	tba::Year year,
-	int dcmp_size
+	int dcmp_size,
+	map<tba::Team_key,tuple<vector<int>,int,int>> points_used
 ){
 	auto nickname=[&](auto k){
 		auto f=filter_unique([=](auto a){ return a.key==k; },team_info);
@@ -190,6 +200,21 @@ string gen_html(
 		assert(v);
 		return *v;
 	};
+
+	auto data_used_table=[&](){
+		return h2("Team data used")+
+			tag("table border",
+				tr(th("Team")+th("Rookie Points")+th("Played")+th("Remaining events"))
+				+join(::mapf(
+					[](auto x){
+						auto [team,data]=x;
+						auto [played,rookie,events_left]=data;
+						return tr(td(as_num(team))+td(rookie)+td(played)+td(events_left));
+					},
+					sorted(to_vec(points_used),[](auto x){ return as_num(x.first); })
+				))
+			);
+	}();
 
 	auto cutoff_table=[=](string s,auto cutoff_pr){
 		return h2(s+" cutoff value")+tag("table border",
@@ -279,7 +304,7 @@ string gen_html(
 					)
 				)
 			)+
-			cutoff_table_long+cutoff_table_cmp
+			cutoff_table_long+cutoff_table_cmp+data_used_table
 		)
 	);
 }
@@ -425,6 +450,7 @@ void run(
 	}
 
 	map<tba::Team_key,pair<bool,map<Point,Pr>>> by_team;
+	map<tba::Team_key,tuple<vector<int>,int,int>> points_used;
 	for(auto team:d1){
 		//auto events_left=2-team.event_points.size();
 		auto max_counters=2-int(team.event_points.size());
@@ -463,6 +489,11 @@ void run(
 			PRINT(team);
 			nyi
 		}()+team.rookie_bonus;
+		points_used[team.team_key]=make_tuple(
+			::mapf([](auto x){ return int(x.total); },team.event_points),
+			team.rookie_bonus,
+			events_left
+		);
 		by_team[team.team_key]=make_pair(chairmans.count(team.team_key),dist);
 	}
 
@@ -721,7 +752,7 @@ void run(
 	PRINT(sum(x)); //this number should be really close to the number of slots available at the event.
 
 	{
-		auto g=gen_html(result,team_info,cutoff_pr,cmp_cutoff_pr,title,district_short,year,dcmp_size);
+		auto g=gen_html(result,team_info,cutoff_pr,cmp_cutoff_pr,title,district_short,year,dcmp_size,points_used);
 		ofstream f(district.get()+extra+".html");
 		f<<g;
 	}
