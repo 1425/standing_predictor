@@ -497,7 +497,7 @@ void run(
 		by_team[team.team_key]=make_pair(chairmans.count(team.team_key),dist);
 	}
 
-	print_lines(by_team);
+	//print_lines(by_team);
 	bool by_team_csv=0;
 	if(by_team_csv){
 		cout<<"team,";
@@ -623,7 +623,7 @@ void run(
 		[=](auto x){ return (0.0+x)/iterations; },
 		count(cutoffs)
 	);
-	print_lines(cutoff_pr);
+	//print_lines(cutoff_pr);
 
 	map<pair<Point,Pr>,Pr> cmp_cutoff_pr=map_values(
 		[=](auto x){ return (0.0+x)/iterations; },
@@ -749,7 +749,7 @@ void run(
 	}
 
 	auto x=::mapf([](auto x){ return get<1>(x); },result);
-	PRINT(sum(x)); //this number should be really close to the number of slots available at the event.
+	//PRINT(sum(x)); //this number should be really close to the number of slots available at the event.
 
 	{
 		auto g=gen_html(result,team_info,cutoff_pr,cmp_cutoff_pr,title,district_short,year,dcmp_size,points_used);
@@ -888,7 +888,7 @@ int main1(int argc,char **argv){
 
 	tba::Year year{2022};
 	auto d=districts(tba_fetcher,year);
-	PRINT(d);
+	//PRINT(d);
 	for(auto year_info:d){
 		//District_key district{"2019pnw"};
 		auto district=year_info.key;
