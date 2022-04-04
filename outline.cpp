@@ -422,6 +422,7 @@ void run(
 	};
 
 	auto team_info=district_teams(f,district);
+	bool dcmp_played=0;
 
 	//print_lines(district_rankings(f,district));
 	auto d=district_rankings(f,district);
@@ -456,7 +457,7 @@ void run(
 		auto max_counters=2-int(team.event_points.size());
 		auto events_scheduled=team_events_year_keys(f,team.team_key,year);
 		auto events_left=min(max_counters,int(events_scheduled.size())-int(team.event_points.size()));
-		assert(events_left>=0);
+		//assert(events_left>=0);
 		auto dist=[&]()->map<Point,Pr>{
 			auto first_event_points=[=]()->double{
 				if(team.event_points.size()){
@@ -464,6 +465,14 @@ void run(
 				}
 				return 0;
 			}();
+			if(events_left==-1){
+				//then we are post-district championship
+				dcmp_played=1;
+				return map<Point,Pr>{{
+					sum(::mapf([](auto x){ return x.total; },team.event_points)),
+					1
+				}};
+			}
 			if(events_left==0){
 				return map<Point,Pr>{{
 					first_event_points+[=]()->double{
@@ -583,7 +592,7 @@ void run(
 		assert(0);
 	};
 
-	auto dcmp_distribution1=dcmp_distribution(f);
+	auto dcmp_distribution1=dcmp_played?map<Point,Pr>{{0,1}}:dcmp_distribution(f);
 	multiset<pair<Point,Pr>> cutoffs,cmp_cutoff;
 	const auto iterations=2000; //usually want this to be like 2k
 	for(auto iteration:tba::range(iterations)){
@@ -611,7 +620,13 @@ void run(
 
 			for(auto _:range(teams)){
 				(void)_;
-				post_dcmp_points[make_pair(0,points+sample(dcmp_distribution1))]++;
+				int pts;
+				if(dcmp_played){
+					pts=points;
+				}else{
+					pts=points+sample(dcmp_distribution1);
+				}
+				post_dcmp_points[make_pair(0,pts)]++;
 			}
 		}
 
