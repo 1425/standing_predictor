@@ -402,7 +402,7 @@ int worlds_slots(tba::District_key key){
 	exit(1);
 }
 
-void run(
+map<Team_key,Pr> run(
 	tba::Cached_fetcher &f,
 	tba::District_key district,
 	tba::Year year,
@@ -790,6 +790,13 @@ void run(
 			cout<<f.nickname<<"\n";
 		}
 	}
+
+	return to_map(::mapf(
+		[](auto x){
+			return make_pair(get<0>(x),get<1>(x));
+		},
+		result
+	));
 }
 
 #if 0
@@ -821,54 +828,6 @@ int cmp_slots(tba::District_key district){
 	return f->second;
 }
 
-void worlds(tba::Cached_fetcher &f){
-	tba::District_key district{"2019pnw"};
-	tba::Event_key event{"2019pncmp"};
-	auto rankings=district_rankings(f,district);
-	//PRINT(*rankings);
-	auto teams=event_teams_keys(f,event);
-	map<tba::Team_key,int> existing_points;
-	for(auto team:teams){
-		auto f=filter_unique(
-			[=](auto x){ return x.team_key==team; },
-			*rankings
-		);
-		existing_points[team]=f.point_total;
-	}
-
-	//PRINT(existing_points);
-
-	vector<int> cutoffs;
-	for(auto _:tba::range(1000)){
-		(void)_;
-		auto old_event=tba::Event_key{"2018pncmp"};
-		auto d=district_rankings(f,tba::District_key{"2018pnw"});
-		vector<int> dcmp_pts;
-		for(auto team_result:*d){
-			for(auto event:team_result.event_points){
-				if(event.event_key==old_event){
-					dcmp_pts|=int(event.total);
-				}
-			}
-		}
-		//PRINT(dcmp_pts);
-
-		vector<int> team_total;
-		for(auto [t,p]:existing_points){
-			team_total|=(p+choose(dcmp_pts));
-		}
-
-		//print_lines(enumerate_from(1,reversed(sorted(team_total))));
-		cutoffs|=reversed(sorted(team_total))[27];
-	}
-	//print_lines(sorted(cutoffs));
-	PRINT(max(cutoffs));
-	PRINT(min(cutoffs));
-	PRINT(mean(cutoffs));
-	PRINT(median(cutoffs));
-	exit(0);
-}
-
 auto get_tba_fetcher(){
 	ifstream ifs("../tba/auth_key");
 	string tba_key;
@@ -884,26 +843,62 @@ auto get_tba_fetcher(){
 	return frc_api::Cached_fetcher{frc_api::Fetcher{frc_api::Nonempty_string{s}},frc_api::Cache{}};
 }*/
 
+pair<Event_key,std::string> championship_event(auto &f,District_key const& d){
+	auto f1=filter([](auto x){
+		return x.event_type==tba::Event_type::DISTRICT_CMP; },
+		district_events_simple(f,d)
+	);
+	assert(f1.size()==1);
+	auto e=f1[0];
+	return make_pair(e.key,e.name);
+}
+
+int team_number(Team_key const& a){
+	return atoi(a.str().c_str()+3);
+}
+
+int make_spreadsheet(tba::Cached_fetcher &f,map<District_key,map<Team_key,Pr>> const& m){
+	//write a csv with all the data, then use LibreOffice to convert it to an Excel spreadsheet
+	string filename="results.csv";
+	{
+		ofstream o(filename);
+		o<<"Team #,CMP,Event,P(DCMP)\n";
+		for(auto [district,teams]:m){
+			auto [event_key,event_name]=championship_event(f,district);
+			for(auto [team,p]:teams){
+				o<<team_number(team)<<","<<event_key<<","<<event_name<<","<<p<<"\n";
+			}
+		}
+	}
+
+	return system( ("soffice -convert-to xlsx "+filename).c_str() );
+}
+
 int main1(int argc,char **argv){
 	auto tba_fetcher=get_tba_fetcher();
 	//auto frc_fetcher=get_frc_fetcher();
 
-	//auto x=dcmp_distribution(tba_fetcher);
-	//for(auto [a,b]:x) cout<<a<<"\t"<<b<<"\n";
+	auto help=[=](){
+		cout<<argv[0]<<" [--help]\n";
+		cout<<"Calculates odds of FRC teams advancing to their district championships and the championship event.\n";
+	};
 
-	if(argc>1 && argv[1]==string{"--worlds"}){
-		try{
-			worlds(tba_fetcher);
-		}catch(string s){
-			cout<<s;
+	for(int i=1;i<argc;i++){
+		if(argv[i]==string{"--help"}){
+			help();
+			return 0;
+		}else{
+			cerr<<"Error: Unrecognized argument\n";
+			help();
 			return 1;
 		}
-		return 0;
 	}
 
 	tba::Year year{2022};
 	auto d=districts(tba_fetcher,year);
 	//PRINT(d);
+	map<District_key,map<Team_key,Pr>> dcmp_pr;
+
 	for(auto year_info:d){
 		//District_key district{"2019pnw"};
 		auto district=year_info.key;
@@ -936,12 +931,15 @@ int main1(int argc,char **argv){
 			nyi
 		}();
 		auto title=year_info.display_name+" District Championship Predictions "+as_string(year);
-		run(tba_fetcher,district,year,dcmp_size,title,year_info.abbreviation);
+		dcmp_pr[district]=run(tba_fetcher,district,year,dcmp_size,title,year_info.abbreviation);
 
 		if(district=="2022ne"){
 			run(tba_fetcher,district,year,16,"New England Championship Pre-Qualify",year_info.abbreviation,"_cmp",1);
 		}
 	}
+
+	make_spreadsheet(tba_fetcher,dcmp_pr);
+
 	return 0;
 }
 
