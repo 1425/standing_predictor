@@ -828,11 +828,11 @@ int cmp_slots(tba::District_key district){
 	return f->second;
 }
 
-auto get_tba_fetcher(){
-	ifstream ifs("../tba/auth_key");
+auto get_tba_fetcher(std::string const& auth_key_path,std::string const& cache_path){
+	ifstream ifs(auth_key_path);
 	string tba_key;
 	getline(ifs,tba_key);
-	return tba::Cached_fetcher{tba::Fetcher{tba::Nonempty_string{tba_key}},tba::Cache{}};
+	return tba::Cached_fetcher{tba::Fetcher{tba::Nonempty_string{tba_key}},tba::Cache{cache_path.c_str()}};
 
 }
 
@@ -1013,10 +1013,10 @@ int dcmp_size(tba::District_key const& district){
 }
 
 int main1(int argc,char **argv){
-	auto tba_fetcher=get_tba_fetcher();
 	//auto frc_fetcher=get_frc_fetcher();
 
 	auto args=parse_args(argc,argv);
+	auto tba_fetcher=get_tba_fetcher(args.tba_auth_key,args.tba_cache);
 	std::filesystem::create_directories(args.output_dir);
 
 	auto d=districts(tba_fetcher,args.year);
