@@ -11,4 +11,4 @@ outline: $(OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@
 
 clean:
-	rm -f outline *.o
+	rm -f outline $(OBJS)

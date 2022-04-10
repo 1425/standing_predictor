@@ -381,4 +381,9 @@ T median(std::vector<T> const& v){
 	return sorted(v)[v.size()/2];
 }
 
+template<typename K,typename V>
+std::vector<std::pair<K,V>> to_vec(std::map<K,V> const& m){
+	return std::vector<std::pair<K,V>>{m.begin(),m.end()};
+}
+
 #endif

@@ -23,6 +23,8 @@ district championship winners -> just assume that they would have enough points 
 #include<set>
 #include<random>
 #include<iomanip>
+#include<span>
+#include<filesystem>
 #include "../tba/db.h"
 #include "../tba/data.h"
 #include "../tba/tba.h"
@@ -34,11 +36,6 @@ district championship winners -> just assume that they would have enough points 
 
 #define PRINT TBA_PRINT
 #define nyi TBA_NYI
-
-template<typename K,typename V>
-std::vector<std::pair<K,V>> to_vec(std::map<K,V> const& m){
-	return std::vector<std::pair<K,V>>{m.begin(),m.end()};
-}
 
 //start program-specific stuff.
 
@@ -102,11 +99,13 @@ set<tba::Team_key> chairmans_winners(tba::Cached_fetcher& f,tba::District_key di
 			nyi
 			
 		}
-		auto f=f1[0];
-		assert(f.recipient_list.size()==1);
-		auto team=f.recipient_list[0].team_key;
-		assert(team);
-		r|=*team;
+
+		//There is more than one recipient at the dcmp events.
+		for(auto x:f1[0].recipient_list){
+			auto team=x.team_key;
+			assert(team);
+			r|=*team;
+		}
 	}
 	return r;
 }
@@ -398,12 +397,13 @@ int worlds_slots(tba::District_key key){
 	if(key=="2022fnc") return 10-1-2-1;
 	if(key=="2022pnw") return 18-2-1-1;
 	if(key=="2022pch") return 10-1-2-1;
-	cerr<<"Error: Unknown district:"<<key<<"\n";
+	cerr<<"Error: Unknown number of worlds slots for district:"<<key<<"\n";
 	exit(1);
 }
 
 map<Team_key,Pr> run(
 	tba::Cached_fetcher &f,
+	std::string const& output_dir,
 	tba::District_key district,
 	tba::Year year,
 	int dcmp_size,
@@ -768,7 +768,7 @@ map<Team_key,Pr> run(
 
 	{
 		auto g=gen_html(result,team_info,cutoff_pr,cmp_cutoff_pr,title,district_short,year,dcmp_size,points_used);
-		ofstream f(district.get()+extra+".html");
+		ofstream f(output_dir+"/"+district.get()+extra+".html");
 		f<<g;
 	}
 
@@ -857,11 +857,14 @@ int team_number(Team_key const& a){
 	return atoi(a.str().c_str()+3);
 }
 
-int make_spreadsheet(tba::Cached_fetcher &f,map<District_key,map<Team_key,Pr>> const& m){
+int make_spreadsheet(tba::Cached_fetcher &f,map<District_key,map<Team_key,Pr>> const& m,string const& output_dir){
 	//write a csv with all the data, then use LibreOffice to convert it to an Excel spreadsheet
+	//This output exists specifically for the use in this thread:
+	//https://www.chiefdelphi.com/t/2022-frc-robot-data-is-beautiful-see-if-you-can-find-your-team/405227
+
 	string filename="results.csv";
 	{
-		ofstream o(filename);
+		ofstream o(output_dir+"/"+filename);
 		o<<"Team #,CMP,Event,P(DCMP)\n";
 		for(auto [district,teams]:m){
 			auto [event_key,event_name]=championship_event(f,district);
@@ -871,74 +874,166 @@ int make_spreadsheet(tba::Cached_fetcher &f,map<District_key,map<Team_key,Pr>> c
 		}
 	}
 
-	return system( ("soffice -convert-to xlsx "+filename).c_str() );
+	//This is a call to LibreOffice or OpenOffice
+	//If neither of those is installed or in the path, this may error out
+	//Assuming that this is found though, it will produce some onscreen output that is not especially informative.
+	//It wouldn't be the worst thing to send that to /dev/null.
+	return system( ("cd "+output_dir+"; soffice --convert-to xlsx "+filename).c_str() );
+}
+
+struct Args{
+	string output_dir=".";
+	string tba_auth_key="../tba/auth_key";
+	string tba_cache="cache.db";
+	tba::Year year{2022};
+};
+
+Args parse_args(int argc,char **argv){
+	struct Flag{
+		string name;
+		vector<string> args;
+		string help;
+		std::function<void(std::span<char*>)> func;
+	};
+	Args r;
+	vector<Flag> flags{
+		Flag{
+			"--out",{"PATH"},
+			"Directory in which to store result files",
+			[&](span<char*> v){
+				r.output_dir=v[0];
+			}
+		},
+		Flag{
+			"--auth_key",
+			{"PATH"},
+			"Path to The Blue Alliance auth key",
+			[&](span<char *> v){
+				r.tba_auth_key=v[0];
+			}
+		},
+		Flag{
+			"--cache",
+			{"PATH"},
+			"Path to use for cached data from The Blue Alliance",
+			[&](span<char *> v){
+				r.tba_cache=v[0];
+			}
+		},
+		Flag{
+			"--year",
+			{"YEAR"},
+			"For which year the predictions should be made",
+			[&](span<char*> v){
+				r.year=tba::Year{stoi(v[0])};
+			}
+		}
+	};
+
+	auto help=[&](){
+		cout<<argv[0];
+		for(auto flag:flags){
+			cout<<" ["<<flag.name;
+			for(auto x:flag.args){
+				cout<<" "<<x;
+			}
+			cout<<"]";
+		}
+		cout<<"\n";
+		cout<<"Calculates odds of FRC teams advancing to their district championships and the championship event.\n";
+		for(auto flag:flags){
+			cout<<flag.name;
+			for(auto a:flag.args){
+				cout<<" "<<a;
+			}
+			cout<<"\n";
+			cout<<"\t"<<flag.help<<"\n";
+		}
+	};
+
+	flags|=Flag{
+		"--help",
+		{},
+		"Show this message",
+		[=](auto){
+			help();
+			exit(0);
+		}
+	};
+
+	for(int i=1;i<argc;){
+		auto f=filter([=](auto x){ return x.name==argv[i]; },flags);
+		if(f.empty()){
+			cerr<<"Error: Unrecognized argument: "<<argv[i]<<"\n";
+			exit(1);
+		}
+		auto flag=f[0];
+		i++;
+		auto left=argc-i;
+		if(left<flag.args.size()){
+			cerr<<"Missing arg to "<<flag.name<<"\n";
+			help();
+			exit(1);
+		}
+		flag.func(span{argv+i,flag.args.size()});
+		i+=flag.args.size();
+	}
+
+	return r;
+}
+
+int dcmp_size(tba::District_key const& district){
+	if(district=="2019chs") return 58;
+	if(district=="2019isr") return 45;
+	if(district=="2019fma") return 60;
+	if(district=="2019fnc") return 32;
+	if(district=="2019ont") return 80;
+	if(district=="2019tx") return 64;
+	if(district=="2019in") return 32;
+	if(district=="2019fim") return 160;
+	if(district=="2019ne") return 64;
+	if(district=="2019pnw") return 64;
+	if(district=="2019pch") return 45;
+
+	//via the 2022 game manual v5
+	if(district=="2022chs") return 60;
+	if(district=="2022isr") return 36;
+	if(district=="2022fma") return 60;
+	if(district=="2022fnc") return 32;
+	if(district=="2022ont") return 80;
+	if(district=="2022fit") return 80; //Texas; previously "tx"
+	if(district=="2022fin") return 32; //Previously "in"
+	if(district=="2022fim") return 160;
+	if(district=="2022ne") return 80;
+	if(district=="2022pnw") return 50;
+	if(district=="2022pch") return 32;
+
+	cerr<<"Unknown event size for "<<district<<"\n";
+	exit(1);
 }
 
 int main1(int argc,char **argv){
 	auto tba_fetcher=get_tba_fetcher();
 	//auto frc_fetcher=get_frc_fetcher();
 
-	auto help=[=](){
-		cout<<argv[0]<<" [--help]\n";
-		cout<<"Calculates odds of FRC teams advancing to their district championships and the championship event.\n";
-	};
+	auto args=parse_args(argc,argv);
+	std::filesystem::create_directories(args.output_dir);
 
-	for(int i=1;i<argc;i++){
-		if(argv[i]==string{"--help"}){
-			help();
-			return 0;
-		}else{
-			cerr<<"Error: Unrecognized argument\n";
-			help();
-			return 1;
-		}
-	}
-
-	tba::Year year{2022};
-	auto d=districts(tba_fetcher,year);
-	//PRINT(d);
+	auto d=districts(tba_fetcher,args.year);
 	map<District_key,map<Team_key,Pr>> dcmp_pr;
 
 	for(auto year_info:d){
-		//District_key district{"2019pnw"};
 		auto district=year_info.key;
 		PRINT(district);
-		auto dcmp_size=[=](){
-			if(district=="2019chs") return 58;
-			if(district=="2019isr") return 45;
-			if(district=="2019fma") return 60;
-			if(district=="2019fnc") return 32;
-			if(district=="2019ont") return 80;
-			if(district=="2019tx") return 64;
-			if(district=="2019in") return 32;
-			if(district=="2019fim") return 160;
-			if(district=="2019ne") return 64;
-			if(district=="2019pnw") return 64;
-			if(district=="2019pch") return 45;
-
-			//via the 2022 game manual v5
-			if(district=="2022chs") return 60;
-			if(district=="2022isr") return 36;
-			if(district=="2022fma") return 60;
-			if(district=="2022fnc") return 32;
-			if(district=="2022ont") return 80;
-			if(district=="2022fit") return 80; //Texas; previously "tx"
-			if(district=="2022fin") return 32; //Previously "in"
-			if(district=="2022fim") return 160;
-			if(district=="2022ne") return 80;
-			if(district=="2022pnw") return 50;
-			if(district=="2022pch") return 32;
-			nyi
-		}();
-		auto title=year_info.display_name+" District Championship Predictions "+as_string(year);
-		dcmp_pr[district]=run(tba_fetcher,district,year,dcmp_size,title,year_info.abbreviation);
+		auto title=year_info.display_name+" District Championship Predictions "+as_string(args.year);
+		dcmp_pr[district]=run(tba_fetcher,args.output_dir,district,args.year,dcmp_size(district),title,year_info.abbreviation);
 
 		if(district=="2022ne"){
-			run(tba_fetcher,district,year,16,"New England Championship Pre-Qualify",year_info.abbreviation,"_cmp",1);
+			run(tba_fetcher,args.output_dir,district,args.year,16,"New England Championship Pre-Qualify",year_info.abbreviation,"_cmp",1);
 		}
 	}
 
-	make_spreadsheet(tba_fetcher,dcmp_pr);
+	make_spreadsheet(tba_fetcher,dcmp_pr,args.output_dir);
 
 	return 0;
 }
