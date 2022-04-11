@@ -465,8 +465,10 @@ map<Team_key,Pr> run(
 				}
 				return 0;
 			}();
-			if(events_left==-1){
+			if(events_left<0){
 				//then we are post-district championship
+				//-1=played in a normal district championship or just 1 field of a multi-field one
+				//-2=played in a multi-field DCMP & did something on the joint field
 				dcmp_played=1;
 				return map<Point,Pr>{{
 					sum(::mapf([](auto x){ return x.total; },team.event_points)),
@@ -496,6 +498,7 @@ map<Team_key,Pr> run(
 				return convolve(pr,pr);
 			}
 			PRINT(team);
+			PRINT(events_left);
 			nyi
 		}()+team.rookie_bonus;
 		points_used[team.team_key]=make_tuple(
@@ -886,6 +889,7 @@ struct Args{
 	string tba_auth_key="../tba/auth_key";
 	string tba_cache="cache.db";
 	tba::Year year{2022};
+	optional<tba::District_key> district;
 };
 
 Args parse_args(int argc,char **argv){
@@ -926,6 +930,14 @@ Args parse_args(int argc,char **argv){
 			"For which year the predictions should be made",
 			[&](span<char*> v){
 				r.year=tba::Year{stoi(v[0])};
+			}
+		},
+		Flag{
+			"--district",
+			{"KEY"},
+			"Examine only a specific district",
+			[&](span<char*> v){
+				r.district=tba::District_key{v[0]};
 			}
 		}
 	};
@@ -1016,14 +1028,17 @@ int main1(int argc,char **argv){
 	//auto frc_fetcher=get_frc_fetcher();
 
 	auto args=parse_args(argc,argv);
-	auto tba_fetcher=get_tba_fetcher(args.tba_auth_key,args.tba_cache);
 	std::filesystem::create_directories(args.output_dir);
+	auto tba_fetcher=get_tba_fetcher(args.tba_auth_key,args.tba_cache);
 
 	auto d=districts(tba_fetcher,args.year);
 	map<District_key,map<Team_key,Pr>> dcmp_pr;
 
 	for(auto year_info:d){
 		auto district=year_info.key;
+		if(args.district && district!=args.district){
+			continue;
+		}
 		PRINT(district);
 		auto title=year_info.display_name+" District Championship Predictions "+as_string(args.year);
 		dcmp_pr[district]=run(tba_fetcher,args.output_dir,district,args.year,dcmp_size(district),title,year_info.abbreviation);
