@@ -1,6 +1,6 @@
 CXXFLAGS=-std=c++20 -g
 LIBS=-lsqlite3 -lcurl
-all: outline meta
+all: outline meta declines
 
 TBA_OBJS=../tba/db.o ../tba/data.o ../tba/curl.o ../tba/rapidjson.o ../tba/util.o
 
@@ -14,6 +14,8 @@ outline: $(OBJS)
 meta: $(TBA_OBJS) meta.o util.o
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -lgumbo -o $@
 
+declines: declines.o util.o $(TBA_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@
+	
 clean:
-	rm -f outline meta $(OBJS) meta.o
-
+	rm -f outline meta $(OBJS) meta.o declines declines.o

@@ -119,6 +119,16 @@ std::string tag(std::string const& name,T const& body){
 	return ss.str();
 }
 
+template<typename A,typename B,typename C,typename D>
+std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C,D> const& t){
+	o<<"(";
+	o<<std::get<0>(t)<<" ";
+	o<<std::get<1>(t)<<" ";
+	o<<std::get<2>(t)<<" ";
+	o<<std::get<3>(t);
+	return o<<")";
+}
+
 template<typename A,typename B,typename C,typename D,typename E>
 std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C,D,E> const& t){
 	o<<"(";
@@ -209,7 +219,7 @@ auto mapf(Func f,std::tuple<A,B,C,D,E,F> const& t)
 	);
 }
 
-#define MAP(F,X) mapf([&](auto a){ return (F)(a); },(X))
+#define MAP(F,X) ::mapf([&](auto a){ return (F)(a); },(X))
 
 template<typename Func,typename T>
 T filter_unique(Func f,std::vector<T> const& a){
