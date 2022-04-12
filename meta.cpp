@@ -85,10 +85,48 @@ string rm_suffix(string const& sub,string const& whole){
 	return whole.substr(0,whole.size()-sub.size());
 }
 
-//start program-specific code
+string take(size_t n,string const& s){
+	return s.substr(0,n);
+}
 
-using Team=tba::Team_key;
-using Pr=double;
+template<typename T>
+vector<T> skip(size_t,vector<T>);
+
+template<typename T>
+span<T> skip(size_t n,span<T> s){
+	if(n>=s.size()) return span<T>{};
+	return span<T>{s.begin()+n,s.end()};
+}
+
+template<typename T>
+vector<pair<size_t,T>> enumerate(vector<T>)nyi
+
+template<typename A,typename B>
+vector<pair<A,B>> zip(vector<A> const& a,span<B> b){
+	vector<pair<A,B>> r;
+	for(auto i:range(min(a.size(),b.size()))){
+		r|=make_pair(a[i],b[i]);
+	}
+	return r;
+}
+
+template<typename T>
+vector<pair<size_t,T>> enumerate(span<T> a){
+	return zip(range(a.size()),a);
+}
+
+template<typename Func,typename T>
+auto mapf(Func f,T const& t){
+	vector<decltype(f(*begin(t)))> r;
+	for(auto elem:t){
+		r|=f(elem);
+	}
+	return r;
+}
+
+ostream& operator<<(ostream& o,pair<int,double> const& p){
+	return o<<"("<<p.first<<","<<p.second<<")";
+}
 
 std::ostream& operator<<(std::ostream& o,GumboTag a){
 	#define X(A) if(a==GUMBO_TAG_##A) return o<<""#A;
@@ -152,63 +190,16 @@ std::ostream& operator<<(std::ostream& o,GumboInternalNode const& a){
 	}
 }
 
-string take(size_t n,string const& s){
-	return s.substr(0,n);
-}
+//start program-specific code
 
-template<typename T>
-vector<T> skip(size_t,vector<T>);
-
-template<typename T>
-span<T> skip(size_t n,span<T> s){
-	if(n>=s.size()) return span<T>{};
-	return span<T>{s.begin()+n,s.end()};
-}
-
-template<typename T>
-vector<pair<size_t,T>> enumerate(vector<T>)nyi
-
-template<typename A,typename B>
-vector<pair<A,B>> zip(vector<A> const& a,span<B> b){
-	vector<pair<A,B>> r;
-	for(auto i:range(min(a.size(),b.size()))){
-		r|=make_pair(a[i],b[i]);
-	}
-	return r;
-}
-
-template<typename T>
-vector<pair<size_t,T>> enumerate(span<T> a){
-	return zip(range(a.size()),a);
-}
-
-template<typename Func,typename T>
-auto mapf(Func f,T const& t){
-	vector<decltype(f(*begin(t)))> r;
-	for(auto elem:t){
-		r|=f(elem);
-	}
-	return r;
-}
-
-ostream& operator<<(ostream& o,pair<int,double> const& p){
-	return o<<"("<<p.first<<","<<p.second<<")";
-}
+using Team=tba::Team_key;
+using Pr=double;
 
 map<Team,Pr> parse_page(std::filesystem::directory_entry const& path){
-	/*xmlDoc *doc=xmlReadFile(path.path().c_str(),NULL,0);
-	if(!doc){
-		cerr<<"Failed to parse\n";
-		exit(1);
-	}
-	xmlFreeDoc(doc);*/
-
 	std::ifstream f(path.path());
 	std::stringstream buffer;
 	buffer<<f.rdbuf();
-	//cout<<"Got:"<<take(100,buffer.str())<<"\n";
 	GumboOutput* output = gumbo_parse(buffer.str().c_str());
-	// Do stuff with output->root
 	assert(output);
 	assert(output->root);
 	auto at=output->root;
