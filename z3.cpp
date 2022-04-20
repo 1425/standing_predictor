@@ -2,72 +2,16 @@
 #include<vector>
 #include<algorithm>
 #include "z3++.h"
+#include "util.h"
 
 using namespace std;
 using namespace z3;
-
-#define nyi { cout<<"nyi "<<__LINE__<<"\n"; exit(44); }
-#define PRINT(X) cout<<""#X<<":"<<(X)<<"\n";
-
-template<typename T>
-vector<T> sorted(vector<T> a){
-	std::sort(begin(a),end(a));
-	return a;
-}
-
-template<typename T>
-void print_lines(T t){
-	for(auto elem:t){
-		cout<<elem<<"\n";
-	}
-}
-
-template<typename T>
-vector<T>& operator|=(vector<T> &a,T t){
-	a.push_back(t);
-	return a;
-}
-
-template<typename T>
-vector<T> range(T start,T lim){
-	vector<T> r;
-	for(auto i=start;i<lim;i++){
-		r|=i;
-	}
-	return r;
-}
-
-template<typename T>
-vector<T> range(T lim){
-	return range(T{0},lim);
-}
-
-template<typename Func,typename T>
-auto mapf(Func f,vector<T> v){
-	vector<decltype(f(v[0]))> r;
-	for(auto a:v){
-		r|=f(a);
-	}
-	return r;
-}
-
-template<typename T>
-string as_string(T t){
-	stringstream ss;
-	ss<<t;
-	return ss.str();
-}
 
 template<typename A,typename B>
 vector<B> seconds(vector<pair<A,B>> a){
 	vector<B> r;
 	for(auto elem:a) r|=elem.second;
 	return r;
-}
-
-template<typename A,typename B>
-ostream& operator<<(ostream& o,pair<A,B> const& p){
-	return o<<"("<<p.first<<","<<p.second<<")";
 }
 
 template<typename T>

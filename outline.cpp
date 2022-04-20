@@ -28,14 +28,11 @@ district championship winners -> just assume that they would have enough points 
 #include "../tba/db.h"
 #include "../tba/data.h"
 #include "../tba/tba.h"
-#include "../tba/util.h"
 //#include "../frc_api/db.h"
 #include "util.h"
 
 //start generic stuff
 
-#define PRINT TBA_PRINT
-#define nyi TBA_NYI
 
 //start program-specific stuff.
 
@@ -513,13 +510,13 @@ map<Team_key,Pr> run(
 	bool by_team_csv=0;
 	if(by_team_csv){
 		cout<<"team,";
-		for(auto i:tba::range(140)){
+		for(auto i:range(140)){
 			cout<<i<<",";
 		}
 		for(auto [team,data1]:by_team){
 			auto [cmd,data]=data1;
 			cout<<team<<",";
-			for(auto i:tba::range(140)){
+			for(auto i:range(140)){
 				auto f=data.find(i);
 				if(f==data.end()){
 					cout<<"0,";
@@ -598,7 +595,7 @@ map<Team_key,Pr> run(
 	auto dcmp_distribution1=dcmp_played?map<Point,Pr>{{0,1}}:dcmp_distribution(f);
 	multiset<pair<Point,Pr>> cutoffs,cmp_cutoff;
 	const auto iterations=2000; //usually want this to be like 2k
-	for(auto iteration:tba::range(iterations)){
+	for(auto iteration:range(iterations)){
 		(void)iteration;
 		//PRINT(iteration);
 		map<pair<bool,Point>,unsigned> final_points;

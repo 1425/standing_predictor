@@ -14,8 +14,15 @@ outline: $(OBJS)
 meta: $(TBA_OBJS) meta.o util.o
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -lgumbo -o $@
 
-declines: declines.o util.o $(TBA_OBJS)
+FRC_API_OBJS= \
+	../frc_api/data.o \
+	../frc_api/query.o \
+	../frc_api/db.o \
+	../frc_api/rapidjson.o \
+	../frc_api/curl.o
+
+declines: declines.o util.o $(TBA_OBJS) $(FRC_API_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@
 	
 clean:
-	rm -f outline meta $(OBJS) meta.o declines declines.o
+	rm -f outline meta $(OBJS) $(FRC_API_OBJS) meta.o declines declines.o

@@ -4,7 +4,13 @@
 #include<cassert>
 #include<set>
 #include<sstream>
-#include "../tba/util.h"
+#include<iostream>
+#include<vector>
+#include<map>
+#include<optional>
+
+#define PRINT(X) { cout<<""#X<<":"<<(X)<<"\n"; }
+#define nyi { cout<<"nyi "<<__FILE__<<":"<<__LINE__<<"\n"; exit(44); }
 
 std::string slurp(std::string const& filename);
 
@@ -394,6 +400,53 @@ T median(std::vector<T> const& v){
 template<typename K,typename V>
 std::vector<std::pair<K,V>> to_vec(std::map<K,V> const& m){
 	return std::vector<std::pair<K,V>>{m.begin(),m.end()};
+}
+
+template<typename T>
+std::ostream& operator<<(std::ostream& o,std::vector<T> const& v){
+	o<<"[ ";
+	for(auto x:v){
+		o<<x<<" ";
+	}
+	return o<<"]";
+}
+
+template<typename T>
+std::vector<T>& operator|=(std::vector<T> &a,T t){
+	a.push_back(t);
+	return a;
+}
+
+template<typename T>
+std::vector<T> range(T start,T lim){
+	std::vector<T> r;
+	for(auto i=start;i<lim;i++){
+		r|=i;
+	}
+	return r;
+}
+
+template<typename T>
+std::vector<T> range(T lim){
+	return range(T{0},lim);
+}
+
+template<typename A,typename B>
+std::ostream& operator<<(std::ostream& o,std::pair<A,B> const& a){
+	return o<<"("<<a.first<<","<<a.second<<")";
+}
+
+template<typename T>
+std::ostream& operator<<(std::ostream& o,std::optional<T> const& a){
+	if(a) return o<<*a;
+	return o<<"NULL";
+}
+
+template<typename T>
+std::set<T> to_set(std::vector<T> const& a){
+	std::set<T> r;
+	for(auto x:a) r|=x;
+	return r;
 }
 
 #endif

@@ -8,21 +8,9 @@
 #include "../tba/tba.h"
 #include "util.h"
 
-#define nyi TBA_NYI
-#define PRINT TBA_PRINT
-
 using namespace std;
 
 //start generic code
-
-template<typename T>
-std::ostream& operator<<(std::ostream& o,std::vector<T> const& v){
-	o<<"[ ";
-	for(auto x:v){
-		o<<x<<" ";
-	}
-	return o<<"]";
-}
 
 template<typename T>
 std::ostream& operator<<(std::ostream&,std::set<T> const&)nyi
@@ -32,13 +20,6 @@ std::set<T> operator-(std::set<T> a,std::set<T> const& b){
 	nyi
 }
 
-template<typename T>
-std::set<T> to_set(std::vector<T> const& a){
-	std::set<T> r;
-	for(auto x:a) r|=x;
-	return r;
-}
-
 template<typename K,typename V>
 std::set<K> keys(std::map<K,V> const& a){
 	return to_set(mapf([](auto x){ return x.first; },a));
@@ -46,15 +27,6 @@ std::set<K> keys(std::map<K,V> const& a){
 
 std::ostream& operator<<(std::ostream& o,std::invalid_argument const& a){
 	return o<<"invalid_argument("<<a.what()<<")";
-}
-
-template<typename T>
-vector<T> range(T lim){
-	vector<T> r;
-	for(T i=0;i<lim;++i){
-		r|=i;
-	}
-	return r;
 }
 
 vector<std::filesystem::directory_entry> to_vec(std::filesystem::directory_iterator a){
