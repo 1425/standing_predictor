@@ -23,6 +23,9 @@ FRC_API_OBJS= \
 
 declines: declines.o util.o $(TBA_OBJS) $(FRC_API_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@
-	
+
+x: x.o util.o
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
 clean:
 	rm -f outline meta $(OBJS) $(FRC_API_OBJS) meta.o declines declines.o

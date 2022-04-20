@@ -9,7 +9,7 @@
 #include "../frc_api/curl.h"
 #include "util.h"
 
-using namespace std;
+//Start generic code
 
 #define FILTER(A,B) filter([&](auto x){ return (A)(x); },(B))
 
@@ -29,8 +29,8 @@ bool all_equal(std::vector<T> const& a){
 }
 
 template<typename T>
-auto to_set(multiset<T> const& v){
-	return set<T>{begin(v),end(v)};
+auto to_set(std::multiset<T> const& v){
+	return std::set<T>{begin(v),end(v)};
 }
 
 template<typename T>
@@ -40,8 +40,8 @@ std::multiset<T>& operator|=(std::multiset<T> &a,std::vector<T> const& b){
 }
 
 template<typename T>
-vector<T> range_inclusive(T start,T lim){
-	vector<T> r;
+std::vector<T> range_inclusive(T start,T lim){
+	std::vector<T> r;
 	for(auto i=start;i<=lim;++i){
 		r|=i;
 		if(i==lim){
@@ -50,6 +50,10 @@ vector<T> range_inclusive(T start,T lim){
 	}
 	return r;
 }
+
+//Start program-specific code
+
+using namespace std;
 
 optional<pair<int,vector<tba::Team_key>>> declines(
 	auto &f,
