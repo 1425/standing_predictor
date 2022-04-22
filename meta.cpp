@@ -13,16 +13,8 @@ using namespace std;
 //start generic code
 
 template<typename T>
-std::ostream& operator<<(std::ostream&,std::set<T> const&)nyi
-
-template<typename T>
 std::set<T> operator-(std::set<T> a,std::set<T> const& b){
 	nyi
-}
-
-template<typename K,typename V>
-std::set<K> keys(std::map<K,V> const& a){
-	return to_set(mapf([](auto x){ return x.first; },a));
 }
 
 std::ostream& operator<<(std::ostream& o,std::invalid_argument const& a){

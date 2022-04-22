@@ -9,8 +9,8 @@
 #include<map>
 #include<optional>
 
-#define PRINT(X) { cout<<""#X<<":"<<(X)<<"\n"; }
-#define nyi { cout<<"nyi "<<__FILE__<<":"<<__LINE__<<"\n"; exit(44); }
+#define PRINT(X) { std::cout<<""#X<<":"<<(X)<<"\n"; }
+#define nyi { std::cout<<"nyi "<<__FILE__<<":"<<__LINE__<<"\n"; exit(44); }
 
 std::string slurp(std::string const& filename);
 
@@ -123,6 +123,15 @@ std::string tag(std::string const& name,T const& body){
 	std::stringstream ss;
 	ss<<"<"<<name<<">"<<body<<"</"<<split(name).at(0)<<">";
 	return ss.str();
+}
+
+template<typename T>
+std::ostream& operator<<(std::ostream& o,std::set<T> const& a){
+	o<<"{ ";
+	for(auto const& x:a){
+		o<<x<<" ";
+	}
+	return o<<"}";
 }
 
 template<typename A,typename B,typename C,typename D>
@@ -447,6 +456,11 @@ std::set<T> to_set(std::vector<T> const& a){
 	std::set<T> r;
 	for(auto x:a) r|=x;
 	return r;
+}
+
+template<typename K,typename V>
+std::set<K> keys(std::map<K,V> const& a){
+	return to_set(mapf([](auto x){ return x.first; },a));
 }
 
 #endif
