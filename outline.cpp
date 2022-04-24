@@ -335,13 +335,10 @@ map<Point,Pr> when_greater(map<Point,Pr> const& a,map<Point,Pr> const& b){
 	return r;
 }
 
-auto find_cutoff(map<pair<bool,Point>,unsigned> these_points,int eliminating){
+auto find_cutoff(map<pair<bool,Point>,unsigned> these_points,unsigned eliminating){
 	unsigned total=0;
 	for(auto [points,teams]:these_points){
 		total+=teams;
-		/*if(total>=teams_left_out){
-			return points;
-		}*/
 		if(total>=eliminating){
 			auto excess=total-eliminating;
 			assert(points.first==0);
@@ -567,8 +564,8 @@ map<Team_key,Pr> run(
 
 	auto teams_advancing=dcmp_size;
 	auto teams_competing=sum(values(by_points));
-	auto teams_left_out=max(0.0,teams_competing-teams_advancing); //Ontario has more slots than team in 2022.
-	auto cmp_teams_left_out=max(0,dcmp_size-worlds_slots(district));
+	unsigned teams_left_out=max(0.0,teams_competing-teams_advancing); //Ontario has more slots than team in 2022.
+	unsigned cmp_teams_left_out=max(0,dcmp_size-worlds_slots(district));
 
 	//monte carlo method for where the cutoff is
 
@@ -979,7 +976,7 @@ Args parse_args(int argc,char **argv){
 		auto flag=f[0];
 		i++;
 		auto left=argc-i;
-		if(left<flag.args.size()){
+		if(left<int(flag.args.size())){
 			cerr<<"Missing arg to "<<flag.name<<"\n";
 			help();
 			exit(1);

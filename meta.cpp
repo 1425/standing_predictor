@@ -14,7 +14,13 @@ using namespace std;
 
 template<typename T>
 std::set<T> operator-(std::set<T> a,std::set<T> const& b){
-	nyi
+	std::set<T> r;
+	std::set_intersection(
+		a.begin(),a.end(),
+		b.begin(),b.end(),
+		std::inserter(r,r.begin())
+	);
+	return r;
 }
 
 std::ostream& operator<<(std::ostream& o,std::invalid_argument const& a){

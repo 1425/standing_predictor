@@ -495,7 +495,10 @@ optional<map<frc_api::Team_number,int>> playoff_pts(
 		frc_api::Match_results{
 			year,
 			event_code,
-			frc_api::M2{frc_api::Tournament_level::Playoff}
+			frc_api::M2{
+				frc_api::Tournament_level::Playoff,
+				{},{},{}
+			}
 		}
 	);
 	assert(x1);
@@ -681,7 +684,10 @@ optional<map<frc_api::Team_number,int>> rank_pts(
 	frc_api::Season const& year,
 	frc_api::Event_code const& event_code
 ){
-	auto a=run(f,frc_api::Event_rankings{year,event_code});
+	auto a=run(
+		f,
+		frc_api::Event_rankings{year,event_code,{}}
+	);
 	assert(a);
 	auto m=mapf([](auto x){ return x.rank; },a->Rankings);
 	if(m.empty()) return std::nullopt;
@@ -704,7 +710,8 @@ std::optional<map<frc_api::Team_number,int>> alliance_pts(
 	try{
 		auto as=run(f,frc_api::Alliance_selection{year,event_code});
 		assert(as);
-		assert(as->Alliances.size()==as->count);
+		assert(as->count>=0);
+		assert(as->Alliances.size()==unsigned(as->count));
 		auto i=as->Alliances.size();
 		if(i!=8 && i!=16 && i!=4 && i!=2){
 			//assert(as->Alliances.size()==8);
