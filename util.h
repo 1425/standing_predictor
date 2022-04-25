@@ -117,6 +117,7 @@ std::vector<T> reversed(std::vector<T> a){
 }
 
 std::vector<std::string> split(std::string const&);
+std::vector<std::string> split(std::string const&,char);
 
 template<typename T>
 std::string tag(std::string const& name,T const& body){
@@ -461,6 +462,23 @@ std::set<T> to_set(std::vector<T> const& a){
 template<typename K,typename V>
 std::set<K> keys(std::map<K,V> const& a){
 	return to_set(mapf([](auto x){ return x.first; },a));
+}
+
+template<typename T>
+std::set<T> operator-(std::set<T> const& a,std::set<T> const& b){
+	std::set<T> r;
+	std::set_difference(
+		a.begin(),a.end(),
+		b.begin(),b.end(),
+		std::inserter(r,r.begin())
+	);
+	return r;
+}
+
+template<typename T>
+std::vector<T> skip(size_t n,std::vector<T> const& a){
+    if(n>a.size()) return {};
+    return std::vector<T>{a.begin()+n,a.end()};
 }
 
 #endif

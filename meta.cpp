@@ -1,8 +1,6 @@
 #include<filesystem>
 #include<fstream>
 #include<span>
-//#include<libxml/parser.h>
-//#include<libxml/tree.h>
 #include<gumbo.h>
 #include "../tba/db.h"
 #include "../tba/tba.h"
@@ -11,17 +9,6 @@
 using namespace std;
 
 //start generic code
-
-template<typename T>
-std::set<T> operator-(std::set<T> a,std::set<T> const& b){
-	std::set<T> r;
-	std::set_intersection(
-		a.begin(),a.end(),
-		b.begin(),b.end(),
-		std::inserter(r,r.begin())
-	);
-	return r;
-}
 
 std::ostream& operator<<(std::ostream& o,std::invalid_argument const& a){
 	return o<<"invalid_argument("<<a.what()<<")";
@@ -58,9 +45,6 @@ string rm_suffix(string const& sub,string const& whole){
 string take(size_t n,string const& s){
 	return s.substr(0,n);
 }
-
-template<typename T>
-vector<T> skip(size_t,vector<T>);
 
 template<typename T>
 span<T> skip(size_t n,span<T> s){

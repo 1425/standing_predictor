@@ -46,6 +46,25 @@ std::vector<std::string> split(std::string const& s){
 	return r;
 }
 
+std::vector<std::string> split(std::string const& s,char delim){
+	std::vector<std::string> r;
+	std::stringstream ss;
+	for(auto c:s){
+		if(c==delim){
+			if(ss.str().size()){
+				r|=ss.str();
+				ss.str("");
+			}
+		}else{
+			ss<<c;
+		}
+	}
+	if(ss.str().size()){
+		r|=ss.str();
+	}
+	return r;
+}
+
 std::string link(std::string const& url,std::string const& body){
 	return tag("a href=\""+url+"\"",body);
 }
