@@ -260,43 +260,39 @@ void print_r(T const& t){
 	return print_r(0,t);
 }
 
-string operator+(string const& a,frc_api::String2 const& b){
+std::string operator+(std::string const& a,frc_api::String2 const& b){
 	return a+b.get();
 }
 
-Team to_team(tba::Team_key const& a){
-	return Team{stoi(a.str().substr(3,10))};
-}
-
-vector<char> to_vec(string const& s){
-	vector<char> r;
+std::vector<char> to_vec(std::string const& s){
+	std::vector<char> r;
 	for(auto c:s) r|=c;
 	return r;
 }
 
 template<typename Func>
-auto mapf(Func f,string s){
+auto mapf(Func f,std::string s){
 	return ::mapf(f,to_vec(s));
 }
 
-string tolower(string s){
-	stringstream ss;
+std::string tolower(std::string s){
+	std::stringstream ss;
 	for(auto c:s){
 		ss<<char(tolower(c));
 	}
 	return ss.str();
 }
 
-bool prefix(string whole,string p){
+bool prefix(std::string const& whole,std::string const& p){
 	return whole.substr(0,p.size())==p;
 }
 
-vector<string> find(string base,string name){
+std::vector<std::string> find(std::string const& base,std::string const& name){
 	//should do something similar to "find $BASE -name $NAME*"
-	vector<string> r;
+	std::vector<std::string> r;
 	for(auto x:std::filesystem::recursive_directory_iterator(base)){
 		if(x.is_regular_file()){
-			string s=as_string(x).c_str()+1;
+			std::string s=as_string(x).c_str()+1;
 			s=s.substr(0,s.size()-1);
 			auto sp=split(s,'/');
 			//PRINT(sp);
@@ -307,6 +303,10 @@ vector<string> find(string base,string name){
 		}
 	}
 	return r;
+}
+
+frc_api::Team_number to_team(tba::Team_key const& a){
+	return frc_api::Team_number{stoi(a.str().substr(3,10))};
 }
 
 //Start program-specific code
@@ -1253,8 +1253,60 @@ void demo(){
 	}
 }
 
-int main1(){
-	//demo();
+struct Args{
+	bool demo=0;
+};
+
+Args parse_args(int argc,char **argv){
+	struct Flag{
+		string flag;
+		string help;
+		std::function<void(void)> f;
+	};
+	Args r;
+	vector<Flag> flags{
+		Flag{
+			"--demo",
+			"See how The Blue Alliance & FIRST's API comare",
+			[&](){
+				r.demo=1;
+			}
+		}
+	};
+	flags|=Flag{
+		"--help",
+		"Show this message",
+		[&](){
+			cout<<"./declines";
+			for(auto flag:flags){
+				cout<<" ["<<flag.flag<<"]";
+			}
+			cout<<"\n\n";
+			for(auto flag:flags){
+				cout<<flag.flag<<"\n";
+				cout<<"\t"<<flag.help<<"\n";
+			}
+			exit(0);
+		}
+	};
+	for(auto i:range(1,argc)){
+		auto f=filter([=](auto x){ return x.flag==argv[i]; },flags);
+		if(f.size()!=1){
+			cerr<<"Unrecognized argument.\n";
+			exit(1);
+		}
+		f[0].f();
+	}
+	return r;
+}
+
+int main1(int argc,char **argv){
+	auto a=parse_args(argc,argv);
+
+	if(a.demo){
+		demo();
+		return 0;
+	}
 
 	//for each year
 		//for each district
@@ -1300,9 +1352,9 @@ int main1(){
 	return 0;
 }
 
-int main(){
+int main(int argc,char **argv){
 	try{
-		return main1();
+		return main1(argc,argv);
 	}catch(frc_api::Decode_error const& a){
 		cerr<<a<<"\n";
 		return 1;
