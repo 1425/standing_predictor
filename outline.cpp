@@ -30,88 +30,26 @@ district championship winners -> just assume that they would have enough points 
 //#include "../frc_api/db.h"
 #include "util.h"
 #include "output.h"
+#include "event.h"
 
 //start generic stuff
 
+template<typename T>
+std::vector<T> take(size_t n,std::vector<T> const& v){
+	return std::vector<T>{v.begin(),v.begin()+std::min(n,v.size())};
+}
 
 //start program-specific stuff.
 
 using namespace std;
 
-int dcmp_size(tba::District_key const& district){
-	if(district=="2019chs") return 58;
-	if(district=="2019isr") return 45;
-	if(district=="2019fma") return 60;
-	if(district=="2019fnc") return 32;
-	if(district=="2019ont") return 80;
-	if(district=="2019tx") return 64;
-	if(district=="2019in") return 32;
-	if(district=="2019fim") return 160;
-	if(district=="2019ne") return 64;
-	if(district=="2019pnw") return 64;
-	if(district=="2019pch") return 45;
-
-	//via the 2022 game manual v5
-	if(district=="2022chs") return 60;
-	if(district=="2022isr") return 36;
-	if(district=="2022fma") return 60;
-	if(district=="2022fnc") return 32;
-	if(district=="2022ont") return 80;
-	if(district=="2022fit") return 80; //Texas; previously "tx"
-	if(district=="2022fin") return 32; //Previously "in"
-	if(district=="2022fim") return 160;
-	if(district=="2022ne") return 80;
-	if(district=="2022pnw") return 50;
-	if(district=="2022pch") return 32;
-
-	cerr<<"Unknown event size for "<<district<<"\n";
-	exit(1);
-}
-
-int worlds_slots(tba::District_key key){
-	//Via https://www.firstinspires.org/resource-library/frc/championship-eligibility-criteria
-	//Subtract out chairmans, EI, and Rookie All-Star winners
-	//Note that Rookie All-Star is not always awarded. (which is the last number)
-	if(key=="2022chs") return 16-2-2-1;
-	if(key=="2022fim") return 64-4-1-1;
-	if(key=="2022fma") return 18-2-2-1;
-	if(key=="2022fin") return 8-1-2-1;
-	if(key=="2022ne") return 25-3-2-1;
-	if(key=="2022ont") return 11-1-1-1;
-	if(key=="2022fit") return 23-3-2-2;
-	if(key=="2022isr") return 9-1-1-1;
-	if(key=="2022fnc") return 10-1-2-1;
-	if(key=="2022pnw") return 18-2-1-1;
-	if(key=="2022pch") return 10-1-2-1;
-	cerr<<"Error: Unknown number of worlds slots for district:"<<key<<"\n";
-	exit(1);
-}
-
-int cmp_slots(tba::District_key district){
-	map<string,int> slots{
-		{"2019chs",21},
-		{"2019fim",87},
-		{"2019isr",11},
-		{"2019fma",21},
-		{"2019in",10},
-		{"2019ne",33},
-		{"2019ont",29},
-		{"2019tx",38},
-		{"2019fnc",15},
-		{"2019pnw",31},
-		{"2019pch",17},
-	};
-	auto f=slots.find(district.get());
-	assert(f!=slots.end());
-	return f->second;
-}
-
 multiset<Point> point_results(tba::Cached_fetcher& server,tba::District_key dk){
+	//district-level point totals from events.
 	auto d=district_rankings(server,dk);
 	assert(d);
 	multiset<Point> r;
 	for(auto team_result:*d){
-		for(auto event:team_result.event_points){
+		for(auto event:take(2,team_result.event_points)){
 			r|=Point(event.total);
 		}
 	}
@@ -171,8 +109,6 @@ set<tba::Team_key> chairmans_winners(tba::Cached_fetcher& f,tba::District_key di
 	}
 	return r;
 }
-
-using namespace tba;
 
 map<Point,Pr> when_greater(map<Point,Pr> const& a,map<pair<Point,double>,Pr> const& b){
 	map<Point,Pr> r;
@@ -245,17 +181,7 @@ map<Point,Pr> dcmp_distribution(tba::Cached_fetcher &f){
 	return r;
 }
 
-map<Team_key,Pr> run(
-	tba::Cached_fetcher &f,
-	std::string const& output_dir,
-	tba::District_key district,
-	tba::Year year,
-	int dcmp_size,
-	string const& title,
-	string const& district_short,
-	std::string extra="",
-	bool ignore_chairmans=0
-){
+auto historical_event_pts(tba::Cached_fetcher &f){
 	vector<tba::District_key> old_keys{
 		//excluding 2014 since point system for quals was different.
 		tba::District_key{"2015pnw"},
@@ -265,17 +191,9 @@ map<Team_key,Pr> run(
 		tba::District_key{"2019pnw"}
 	};
 
-	auto team_info=district_teams(f,district);
-	bool dcmp_played=0;
-
-	//print_lines(district_rankings(f,district));
-	auto d=district_rankings(f,district);
-	assert(d);
-	auto d1=*d;
-	//print_lines(d1);
 	multiset<Point> old_results;
 	for(auto key:old_keys){
-		old_results|=point_results(f,district);
+		old_results|=point_results(f,key);
 	}
 	map<Point,unsigned> occurrances;
 	for(auto value:old_results){
@@ -288,20 +206,42 @@ map<Team_key,Pr> run(
 	//print_lines(pr);
 	//PRINT(sum(seconds(pr)));
 	//PRINT(old_results.size())
+	return pr;
+}
 
-	auto chairmans=chairmans_winners(f,district);
-	if(ignore_chairmans){
-		chairmans.clear();
-	}
+map<tba::Team_key,Pr> run(
+	tba::Cached_fetcher &f,
+	std::string const& output_dir,
+	tba::District_key district,
+	tba::Year year,
+	int dcmp_size,
+	string const& title,
+	string const& district_short,
+	std::string extra="",
+	bool ignore_chairmans=0
+){
+	bool dcmp_played=0;
+
+	const auto pr=historical_event_pts(f);
+	const auto chairmans=[&](){
+		if(ignore_chairmans){
+			return set<tba::Team_key>{};//chairmans.clear();
+		}
+		return chairmans_winners(f,district);
+	}();
+
+	const auto d1=[&](){
+		auto d=district_rankings(f,district);
+		assert(d);
+		return *d;
+	}();
 
 	map<tba::Team_key,pair<bool,map<Point,Pr>>> by_team;
 	map<tba::Team_key,tuple<vector<int>,int,int>> points_used;
 	for(auto team:d1){
-		//auto events_left=2-team.event_points.size();
 		auto max_counters=2-int(team.event_points.size());
 		auto events_scheduled=team_events_year_keys(f,team.team_key,year);
 		auto events_left=min(max_counters,int(events_scheduled.size())-int(team.event_points.size()));
-		//assert(events_left>=0);
 		auto dist=[&]()->map<Point,Pr>{
 			auto first_event_points=[=]()->double{
 				if(team.event_points.size()){
@@ -396,17 +336,17 @@ map<Team_key,Pr> run(
 		}
 	}
 
-	map<Point,Pr> cdf;
-	{
-		double d=0;
-		for(auto [pts,pr]:by_points){
-			d+=pr;
-			cdf[pts]=d;
-		}
-	}
-
 	bool cdf_display=0;
 	if(cdf_display){
+		map<Point,Pr> cdf;
+		{
+			double d=0;
+			for(auto [pts,pr]:by_points){
+				d+=pr;
+				cdf[pts]=d;
+			}
+		}
+
 		for(auto [pts,pr]:cdf){
 			cout<<pts<<","<<pr<<"\n";
 		}
@@ -440,7 +380,7 @@ map<Team_key,Pr> run(
 	};
 
 	auto dcmp_distribution1=dcmp_played?map<Point,Pr>{{0,1}}:dcmp_distribution(f);
-	multiset<pair<Point,Pr>> cutoffs,cmp_cutoff;
+	multiset<pair<Point,Pr>> dcmp_cutoffs,cmp_cutoff;
 	const auto iterations=2000; //usually want this to be like 2k
 	for(auto iteration:range(iterations)){
 		(void)iteration;
@@ -451,10 +391,8 @@ map<Team_key,Pr> run(
 			final_points[pair<bool,Point>(cm,sample(dist))]++;
 		}
 
-		//PRINT(find_cutoff);
-
 		auto dcmp_cutoff=find_cutoff(final_points,teams_left_out);
-		cutoffs|=dcmp_cutoff;
+		dcmp_cutoffs|=dcmp_cutoff;
 
 		map<pair<bool,Point>,unsigned> post_dcmp_points;
 		for(auto [earned,teams]:final_points){
@@ -483,7 +421,7 @@ map<Team_key,Pr> run(
 	//print_lines(count(cutoffs));
 	map<pair<Point,Pr>,Pr> cutoff_pr=map_values(
 		[=](auto x){ return (0.0+x)/iterations; },
-		count(cutoffs)
+		count(dcmp_cutoffs)
 	);
 	//print_lines(cutoff_pr);
 
@@ -613,6 +551,7 @@ map<Team_key,Pr> run(
 	auto x=::mapf([](auto x){ return get<1>(x); },result);
 	//PRINT(sum(x)); //this number should be really close to the number of slots available at the event.
 
+	auto team_info=district_teams(f,district);
 	{
 		auto g=gen_html(result,team_info,cutoff_pr,cmp_cutoff_pr,title,district_short,year,dcmp_size,points_used);
 		ofstream f(output_dir+"/"+district.get()+extra+".html");
@@ -645,16 +584,6 @@ map<Team_key,Pr> run(
 		result
 	));
 }
-
-#if 0
-void dcmp_awards(District_key district){
-	map<District_key,int> chairmans{
-		{"2019pnw",3/*chairmans*/+2/*ei*/+1/*ras*/},
-	};
-	//able to win DCMP EI without competing there with robot?
-	//looks like 568 did last year in PNW
-}
-#endif
 
 auto get_tba_fetcher(std::string const& auth_key_path,std::string const& cache_path){
 	ifstream ifs(auth_key_path);
@@ -789,7 +718,7 @@ int main1(int argc,char **argv){
 	auto tba_fetcher=get_tba_fetcher(args.tba_auth_key,args.tba_cache);
 
 	auto d=districts(tba_fetcher,args.year);
-	map<District_key,map<Team_key,Pr>> dcmp_pr;
+	map<tba::District_key,map<tba::Team_key,Pr>> dcmp_pr;
 
 	for(auto year_info:d){
 		auto district=year_info.key;

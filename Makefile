@@ -5,7 +5,7 @@ all: outline meta declines
 TBA_OBJS=../tba/db.o ../tba/data.o ../tba/curl.o ../tba/rapidjson.o ../tba/util.o
 
 OBJS= \
-	outline.o output.o util.o $(TBA_OBJS)
+	outline.o output.o util.o event.o $(TBA_OBJS)
 	#../frc_api/db.o ../frc_api/curl.o
 
 outline: $(OBJS)
