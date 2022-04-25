@@ -268,9 +268,9 @@ string gen_html(
 						"Extra points needed to have 50% chance of making district championship",
 						"Extra points needed to have 95% chance of making district championship",
 						"CMP Probability",
-						"CMP 5\% pts",
-						"CMP 50\% pts",
-						"CMP 95\% pts"
+						"CMP 5%% pts",
+						"CMP 50%% pts",
+						"CMP 95%% pts"
 					}
 				)))+
 				join(

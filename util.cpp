@@ -71,3 +71,10 @@ std::string link(std::string const& url,std::string const& body){
 
 std::string td1(std::string const& s){ return td(s); }
 std::string th1(std::string const& s){ return th(s); }
+
+void indent(int x){
+	for(auto _:range(x)){
+		(void)_;
+		std::cout<<"\t";
+	}
+}

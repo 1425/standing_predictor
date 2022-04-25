@@ -481,4 +481,23 @@ std::vector<T> skip(size_t n,std::vector<T> const& a){
     return std::vector<T>{a.begin()+n,a.end()};
 }
 
+void indent(int levels);
+
+template<typename T>
+T last(std::vector<T> const& a){
+	assert(a.size());
+	return a[a.size()-1];
+}
+
+template<typename T>
+std::set<T> operator&(std::set<T> const& a,std::set<T> const& b){
+	std::set<T> r;
+	std::set_intersection(
+		a.begin(),a.end(),
+		b.begin(),b.end(),
+		std::inserter(r,r.begin())
+	);
+	return r;
+}
+
 #endif
