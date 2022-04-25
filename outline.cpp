@@ -22,7 +22,6 @@ district championship winners -> just assume that they would have enough points 
 #include<sstream>
 #include<set>
 #include<random>
-#include<iomanip>
 #include<span>
 #include<filesystem>
 #include "../tba/db.h"
@@ -30,6 +29,7 @@ district championship winners -> just assume that they would have enough points 
 #include "../tba/tba.h"
 //#include "../frc_api/db.h"
 #include "util.h"
+#include "output.h"
 
 //start generic stuff
 
@@ -38,8 +38,73 @@ district championship winners -> just assume that they would have enough points 
 
 using namespace std;
 
-using Pr=double; //probability
-using Point=int;
+int dcmp_size(tba::District_key const& district){
+	if(district=="2019chs") return 58;
+	if(district=="2019isr") return 45;
+	if(district=="2019fma") return 60;
+	if(district=="2019fnc") return 32;
+	if(district=="2019ont") return 80;
+	if(district=="2019tx") return 64;
+	if(district=="2019in") return 32;
+	if(district=="2019fim") return 160;
+	if(district=="2019ne") return 64;
+	if(district=="2019pnw") return 64;
+	if(district=="2019pch") return 45;
+
+	//via the 2022 game manual v5
+	if(district=="2022chs") return 60;
+	if(district=="2022isr") return 36;
+	if(district=="2022fma") return 60;
+	if(district=="2022fnc") return 32;
+	if(district=="2022ont") return 80;
+	if(district=="2022fit") return 80; //Texas; previously "tx"
+	if(district=="2022fin") return 32; //Previously "in"
+	if(district=="2022fim") return 160;
+	if(district=="2022ne") return 80;
+	if(district=="2022pnw") return 50;
+	if(district=="2022pch") return 32;
+
+	cerr<<"Unknown event size for "<<district<<"\n";
+	exit(1);
+}
+
+int worlds_slots(tba::District_key key){
+	//Via https://www.firstinspires.org/resource-library/frc/championship-eligibility-criteria
+	//Subtract out chairmans, EI, and Rookie All-Star winners
+	//Note that Rookie All-Star is not always awarded. (which is the last number)
+	if(key=="2022chs") return 16-2-2-1;
+	if(key=="2022fim") return 64-4-1-1;
+	if(key=="2022fma") return 18-2-2-1;
+	if(key=="2022fin") return 8-1-2-1;
+	if(key=="2022ne") return 25-3-2-1;
+	if(key=="2022ont") return 11-1-1-1;
+	if(key=="2022fit") return 23-3-2-2;
+	if(key=="2022isr") return 9-1-1-1;
+	if(key=="2022fnc") return 10-1-2-1;
+	if(key=="2022pnw") return 18-2-1-1;
+	if(key=="2022pch") return 10-1-2-1;
+	cerr<<"Error: Unknown number of worlds slots for district:"<<key<<"\n";
+	exit(1);
+}
+
+int cmp_slots(tba::District_key district){
+	map<string,int> slots{
+		{"2019chs",21},
+		{"2019fim",87},
+		{"2019isr",11},
+		{"2019fma",21},
+		{"2019in",10},
+		{"2019ne",33},
+		{"2019ont",29},
+		{"2019tx",38},
+		{"2019fnc",15},
+		{"2019pnw",31},
+		{"2019pch",17},
+	};
+	auto f=slots.find(district.get());
+	assert(f!=slots.end());
+	return f->second;
+}
 
 multiset<Point> point_results(tba::Cached_fetcher& server,tba::District_key dk){
 	auto d=district_rankings(server,dk);
@@ -107,203 +172,7 @@ set<tba::Team_key> chairmans_winners(tba::Cached_fetcher& f,tba::District_key di
 	return r;
 }
 
-double entropy(Pr p){
-	//units are bits.
-	if(p<0) p=0;
-	if(p>1) p=1;
-	if(p==0 || p==1) return 0;
-	assert(p>0 && p<1);
-	return -(log(p)*p+log(1-p)*(1-p))/log(2);
-}
-
-using Extended_cutoff=pair<Point,Pr>;
-
-map<Point,Pr> simplify(map<pair<Point,Pr>,Pr> const& m){
-	map<Point,Pr> r;
-	for(auto [k,v]:m){
-		r[k.first]+=v;
-	}
-	return r;
-}
-
-string make_link(tba::Team_key team){
-	auto s=team.str();
-	assert(s.substr(0,3)=="frc");
-	auto t=s.substr(3,500);
-	return link("https://www.thebluealliance.com/team/"+t,t);
-}
-
-char digit(auto i){
-	if(i<10) return '0'+i;
-	return 'a'+(i-10);
-}
-
-string color(double d){
-	//input range 0-1
-	//red->white->green
-
-	auto f=[](double v){
-		auto x=min(255,int(255*v));
-		return string()+digit(x>>4)+digit(x&0xf);
-	};
-
-	auto rgb=[=](double r,double g,double b){
-		return "#"+f(r)+f(g)+f(b);
-	};
-
-	if(d<.5){
-		return rgb(1,d*2,d*2);
-	}
-	auto a=2*(1-d);
-	return rgb(a,1,a);
-}
-
-string colorize(double d){
-	return tag("td bgcolor=\""+color(d)+"\"",
-		[&](){
-			stringstream ss;
-			ss<<setprecision(3)<<fixed;
-			ss<<d;
-			return ss.str();
-		}()
-	);
-}
-
 using namespace tba;
-
-int as_num(tba::Team_key const& a){
-	return atoi(a.str().c_str()+3);
-}
-
-string gen_html(
-	vector<tuple<
-		tba::Team_key,
-		Pr,Point,Point,Point,
-		Pr,Point,Point,Point
-	>> const& result,
-	vector<tba::Team> const& team_info,
-	map<Extended_cutoff,Pr> const& dcmp_cutoff_pr,
-	map<Extended_cutoff,Pr> const& cmp_cutoff_pr,
-	string const& title,
-	string const& district_short,
-	tba::Year year,
-	int dcmp_size,
-	map<tba::Team_key,tuple<vector<int>,int,int>> points_used
-){
-	auto nickname=[&](auto k){
-		auto f=filter_unique([=](auto a){ return a.key==k; },team_info);
-		auto v=f.nickname;
-		assert(v);
-		return *v;
-	};
-
-	auto data_used_table=[&](){
-		return h2("Team data used")+
-			tag("table border",
-				tr(th("Team")+th("Rookie Points")+th("Played")+th("Remaining events"))
-				+join(::mapf(
-					[](auto x){
-						auto [team,data]=x;
-						auto [played,rookie,events_left]=data;
-						return tr(td(as_num(team))+td(rookie)+td(played)+td(events_left));
-					},
-					sorted(to_vec(points_used),[](auto x){ return as_num(x.first); })
-				))
-			);
-	}();
-
-	auto cutoff_table=[=](string s,auto cutoff_pr){
-		return h2(s+" cutoff value")+tag("table border",
-			tr(th("Points")+th("Probability"))+
-			join(mapf(
-				[](auto a){
-					return tr(join(MAP(td,a)));
-				},
-				simplify(cutoff_pr)
-			))
-		);
-	};
-
-	auto cutoff_table1=cutoff_table("District Championship",dcmp_cutoff_pr);
-	auto cutoff_table_cmp=cutoff_table("FRC Championship",cmp_cutoff_pr);
-
-	auto cutoff_table_long=[=](){
-		return h2("Cutoff value - extended")+
-		"The cutoff values, along with how likely a team at that value is to miss advancing.  For example: a line that said (50,.25) would correspond to the probability that team above 50 get in, teams below 50 do not, and 75% of teams ending up with exactly 50 would qualify for the district championship."+
-		tag("table border",
-			tr(th("Points")+th("Probability"))+
-			join(mapf(
-				[](auto a){
-					return tr(join(MAP(td,a)));
-				},
-				dcmp_cutoff_pr
-			))
-		);
-	}();
-
-	double total_entropy=sum(::mapf(entropy,seconds(result)));
-	PRINT(total_entropy);
-	
-	return tag("html",
-		tag("head",
-			tag("title",title)
-		)+
-		tag("body",
-			tag("h1",title)+
-			link("https://frc-events.firstinspires.org/"+as_string(year)+"/district/"+district_short,"FRC Events")+"<br>"+
-			link("https://www.thebluealliance.com/events/"+district_short+"/"+as_string(year)+"#rankings","The Blue Alliance")+"<br>"+
-			link("http://frclocks.com/index.php?d="+district_short,"FRC Locks")+"(slow)<br>"+
-			"Slots at event:"+as_string(dcmp_size)+
-			cutoff_table1+
-			h2("Team Probabilities")+
-			tag("table border",
-				tr(join(::mapf(
-					th1,
-					std::vector<string>{
-						"Probability rank",
-						"Probability of making district championship",
-						"Team number",
-						"Nickname",
-						"Extra points needed to have 5% chance of making district championship",
-						"Extra points needed to have 50% chance of making district championship",
-						"Extra points needed to have 95% chance of making district championship",
-						"CMP Probability",
-						"CMP 5%% pts",
-						"CMP 50%% pts",
-						"CMP 95%% pts"
-					}
-				)))+
-				join(
-					::mapf(
-						[=](auto p){
-							auto [i,a]=p;
-							return tr(join(
-								vector<string>{}+td(i)+
-								colorize(get<1>(a))+
-							::mapf(
-								td1,
-								std::vector<std::string>{
-									make_link(get<0>(a)),
-									nickname(get<0>(a)),
-									as_string(get<2>(a)),
-									as_string(get<3>(a)),
-									as_string(get<4>(a))
-								}
-							)
-							)+colorize(get<5>(a))+td(get<6>(a))+td(get<7>(a))+td(get<8>(a))
-							);
-						},
-						enumerate_from(1,reversed(sorted(
-							result,
-							[](auto x){ return make_tuple(get<1>(x),get<5>(x),x); }
-						)))
-					)
-				)
-			)+
-			cutoff_table_long+cutoff_table_cmp+data_used_table
-		)
-	);
-}
 
 map<Point,Pr> when_greater(map<Point,Pr> const& a,map<pair<Point,double>,Pr> const& b){
 	map<Point,Pr> r;
@@ -374,25 +243,6 @@ map<Point,Pr> dcmp_distribution(tba::Cached_fetcher &f){
 		r[x]=v.count(x)/double(v.size());
 	}
 	return r;
-}
-
-int worlds_slots(tba::District_key key){
-	//Via https://www.firstinspires.org/resource-library/frc/championship-eligibility-criteria
-	//Subtract out chairmans, EI, and Rookie All-Star winners
-	//Note that Rookie All-Star is not always awarded. (which is the last number)
-	if(key=="2022chs") return 16-2-2-1;
-	if(key=="2022fim") return 64-4-1-1;
-	if(key=="2022fma") return 18-2-2-1;
-	if(key=="2022fin") return 8-1-2-1;
-	if(key=="2022ne") return 25-3-2-1;
-	if(key=="2022ont") return 11-1-1-1;
-	if(key=="2022fit") return 23-3-2-2;
-	if(key=="2022isr") return 9-1-1-1;
-	if(key=="2022fnc") return 10-1-2-1;
-	if(key=="2022pnw") return 18-2-1-1;
-	if(key=="2022pch") return 10-1-2-1;
-	cerr<<"Error: Unknown number of worlds slots for district:"<<key<<"\n";
-	exit(1);
 }
 
 map<Team_key,Pr> run(
@@ -806,25 +656,6 @@ void dcmp_awards(District_key district){
 }
 #endif
 
-int cmp_slots(tba::District_key district){
-	map<string,int> slots{
-		{"2019chs",21},
-		{"2019fim",87},
-		{"2019isr",11},
-		{"2019fma",21},
-		{"2019in",10},
-		{"2019ne",33},
-		{"2019ont",29},
-		{"2019tx",38},
-		{"2019fnc",15},
-		{"2019pnw",31},
-		{"2019pch",17},
-	};
-	auto f=slots.find(district.get());
-	assert(f!=slots.end());
-	return f->second;
-}
-
 auto get_tba_fetcher(std::string const& auth_key_path,std::string const& cache_path){
 	ifstream ifs(auth_key_path);
 	string tba_key;
@@ -839,44 +670,6 @@ auto get_tba_fetcher(std::string const& auth_key_path,std::string const& cache_p
 	getline(f,s);
 	return frc_api::Cached_fetcher{frc_api::Fetcher{frc_api::Nonempty_string{s}},frc_api::Cache{}};
 }*/
-
-pair<Event_key,std::string> championship_event(auto &f,District_key const& d){
-	auto f1=filter([](auto x){
-		return x.event_type==tba::Event_type::DISTRICT_CMP; },
-		district_events_simple(f,d)
-	);
-	assert(f1.size()==1);
-	auto e=f1[0];
-	return make_pair(e.key,e.name);
-}
-
-int team_number(Team_key const& a){
-	return atoi(a.str().c_str()+3);
-}
-
-int make_spreadsheet(tba::Cached_fetcher &f,map<District_key,map<Team_key,Pr>> const& m,string const& output_dir){
-	//write a csv with all the data, then use LibreOffice to convert it to an Excel spreadsheet
-	//This output exists specifically for the use in this thread:
-	//https://www.chiefdelphi.com/t/2022-frc-robot-data-is-beautiful-see-if-you-can-find-your-team/405227
-
-	string filename="results.csv";
-	{
-		ofstream o(output_dir+"/"+filename);
-		o<<"Team #,CMP,Event,P(DCMP)\n";
-		for(auto [district,teams]:m){
-			auto [event_key,event_name]=championship_event(f,district);
-			for(auto [team,p]:teams){
-				o<<team_number(team)<<","<<event_key<<","<<event_name<<","<<p<<"\n";
-			}
-		}
-	}
-
-	//This is a call to LibreOffice or OpenOffice
-	//If neither of those is installed or in the path, this may error out
-	//Assuming that this is found though, it will produce some onscreen output that is not especially informative.
-	//It wouldn't be the worst thing to send that to /dev/null.
-	return system( ("cd "+output_dir+"; soffice --convert-to xlsx "+filename).c_str() );
-}
 
 struct Args{
 	string output_dir=".";
@@ -986,36 +779,6 @@ Args parse_args(int argc,char **argv){
 	}
 
 	return r;
-}
-
-int dcmp_size(tba::District_key const& district){
-	if(district=="2019chs") return 58;
-	if(district=="2019isr") return 45;
-	if(district=="2019fma") return 60;
-	if(district=="2019fnc") return 32;
-	if(district=="2019ont") return 80;
-	if(district=="2019tx") return 64;
-	if(district=="2019in") return 32;
-	if(district=="2019fim") return 160;
-	if(district=="2019ne") return 64;
-	if(district=="2019pnw") return 64;
-	if(district=="2019pch") return 45;
-
-	//via the 2022 game manual v5
-	if(district=="2022chs") return 60;
-	if(district=="2022isr") return 36;
-	if(district=="2022fma") return 60;
-	if(district=="2022fnc") return 32;
-	if(district=="2022ont") return 80;
-	if(district=="2022fit") return 80; //Texas; previously "tx"
-	if(district=="2022fin") return 32; //Previously "in"
-	if(district=="2022fim") return 160;
-	if(district=="2022ne") return 80;
-	if(district=="2022pnw") return 50;
-	if(district=="2022pch") return 32;
-
-	cerr<<"Unknown event size for "<<district<<"\n";
-	exit(1);
 }
 
 int main1(int argc,char **argv){
