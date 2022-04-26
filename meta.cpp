@@ -10,10 +10,6 @@ using namespace std;
 
 //start generic code
 
-std::ostream& operator<<(std::ostream& o,std::invalid_argument const& a){
-	return o<<"invalid_argument("<<a.what()<<")";
-}
-
 vector<std::filesystem::directory_entry> to_vec(std::filesystem::directory_iterator a){
 	return vector<std::filesystem::directory_entry>{begin(a),end(a)};
 }

@@ -81,35 +81,6 @@ map<Point,Pr> operator+(map<Point,Pr> a,int i){
 	return r;
 }
 
-set<tba::Team_key> chairmans_winners(tba::Cached_fetcher& f,tba::District_key district){
-	set<tba::Team_key> r;
-	for(auto event:district_events(f,district)){
-		auto k=event.key;
-		auto aw=event_awards(f,k);
-		if(aw.empty()) continue;
-		auto f1=filter([](auto a){ return a.award_type==tba::Award_type::CHAIRMANS; },aw);
-		if(f1.empty()){
-			continue;
-		}
-		if(f1.size()!=1){
-			PRINT(district);
-			PRINT(k);
-			PRINT(aw);
-			PRINT(f1);
-			nyi
-			
-		}
-
-		//There is more than one recipient at the dcmp events.
-		for(auto x:f1[0].recipient_list){
-			auto team=x.team_key;
-			assert(team);
-			r|=*team;
-		}
-	}
-	return r;
-}
-
 map<Point,Pr> when_greater(map<Point,Pr> const& a,map<pair<Point,double>,Pr> const& b){
 	map<Point,Pr> r;
 	for(auto [ka,va]:a){
@@ -135,6 +106,35 @@ map<Point,Pr> when_greater(map<Point,Pr> const& a,map<Point,Pr> const& b){
 			if(ka>kb){
 				r[ka]+=va*vb;
 			}
+		}
+	}
+	return r;
+}
+
+set<tba::Team_key> chairmans_winners(tba::Cached_fetcher& f,tba::District_key district){
+	set<tba::Team_key> r;
+	for(auto event:district_events(f,district)){
+		auto k=event.key;
+		auto aw=event_awards(f,k);
+		if(aw.empty()) continue;
+		auto f1=filter([](auto a){ return a.award_type==tba::Award_type::CHAIRMANS; },aw);
+		if(f1.empty()){
+			continue;
+		}
+		if(f1.size()!=1){
+			PRINT(district);
+			PRINT(k);
+			PRINT(aw);
+			PRINT(f1);
+			nyi
+			
+		}
+
+		//There is more than one recipient at the dcmp events.
+		for(auto x:f1[0].recipient_list){
+			auto team=x.team_key;
+			assert(team);
+			r|=*team;
 		}
 	}
 	return r;
@@ -418,12 +418,10 @@ map<tba::Team_key,Pr> run(
 		cmp_cutoff|=find_cutoff(post_dcmp_points,cmp_teams_left_out);
 	}
 
-	//print_lines(count(cutoffs));
 	map<pair<Point,Pr>,Pr> cutoff_pr=map_values(
 		[=](auto x){ return (0.0+x)/iterations; },
 		count(dcmp_cutoffs)
 	);
-	//print_lines(cutoff_pr);
 
 	map<pair<Point,Pr>,Pr> cmp_cutoff_pr=map_values(
 		[=](auto x){ return (0.0+x)/iterations; },
@@ -457,8 +455,6 @@ map<tba::Team_key,Pr> run(
 
 	vector<tuple<tba::Team_key,Pr,Point,Point,Point,Pr,Point,Point,Point>> result;
 	for(auto team:d1){
-		//PRINT(team);
-		//PRINT(team.team_key);
 		//probability that get in
 		//subtract the cutoff pr
 		auto [cm,team_pr]=by_team[team.team_key];
@@ -482,7 +478,6 @@ map<tba::Team_key,Pr> run(
 				}
 			}
 		}
-		//PRINT(pr_make+pr_miss);
 		auto total=pr_make+pr_miss;
 		assert(total>.99 && total<1.01);
 
@@ -600,6 +595,148 @@ auto get_tba_fetcher(std::string const& auth_key_path,std::string const& cache_p
 	return frc_api::Cached_fetcher{frc_api::Fetcher{frc_api::Nonempty_string{s}},frc_api::Cache{}};
 }*/
 
+struct Flag_base{
+	string name;
+	vector<string> args;
+	string help;
+
+	Flag_base(string a,vector<string> b,string c):
+		name(a),args(b),help(c)
+	{}
+
+	virtual void set(span<char*>)=0;
+	virtual Flag_base *clone()const=0;
+};
+
+string decode(span<char*> s,string const*){
+	assert(s.size()==1);
+	assert(s[0]);
+	return s[0];
+}
+
+tba::District_key decode(span<char*> s,tba::District_key const*){
+	assert(s.size()==1);
+	assert(s[0]);
+	return tba::District_key{s[0]};
+}
+
+tba::Year decode(span<char*> s,tba::Year const*){
+	assert(s.size());
+	assert(s[0]);
+	return tba::Year{stoi(s[0])};
+}
+
+template<typename T>
+std::optional<T> decode(span<char*> s,std::optional<T> const*){
+	return decode(s,(T*)0);
+}
+
+template<typename T>
+class Flag:public Flag_base{
+	T *data;//not owned!
+	bool already_set=0;
+
+	public:
+	explicit Flag(string name,vector<string> args,string help,T &data1):
+		Flag_base(name,args,help),
+		data(&data1)
+	{
+		assert(data);
+	}
+
+	void set(span<char*> s){
+		if(already_set){
+			cerr<<"Error: Already set: "<<name<<"\n";
+			exit(1);
+		}
+		*data=decode(s,(T*)0);
+		already_set=1;
+	}
+
+	Flag *clone()const{
+		return new Flag{*this};
+	}
+};
+
+class Argument_parser{
+	string description;
+	vector<unique_ptr<Flag_base>> flags;
+
+	Flag_base *find(char *s){
+		assert(s);
+		for(auto &flag:flags){
+			assert(flag);
+			if(flag->name==s){
+				return &*flag;
+			}
+		}
+		return nullptr;
+	}
+
+	void help(char **argv)const{
+		cout<<argv[0];
+		for(auto const& flag:flags){
+			cout<<" ["<<flag->name;
+			for(auto arg:flag->args){
+				cout<<" "<<arg;
+			}
+			cout<<"]";
+		}
+		cout<<"\n\n";
+
+		cout<<description<<"\n\n";
+
+		for(auto const& flag:flags){
+			cout<<flag->name;
+			for(auto x:flag->args) cout<<" "<<x;
+			cout<<"\n";
+			cout<<"\t"<<flag->help<<"\n";
+		}
+		cout<<"--help\n";
+		cout<<"\tShow this message.\n";
+		exit(0);
+	}
+
+	public:
+	explicit Argument_parser(string desc):description(desc){}
+
+	template<typename T>
+	void add(string name,vector<string> args,string help,T& out){
+		flags.push_back(make_unique<Flag<T>>(name,args,help,out));
+	}
+
+	void parse(int argc,char **argv){
+		for(int i=1;i<argc;){
+			if(argv[i]==string{"--help"}){
+				help(argv);
+			}
+			auto f=find(argv[i]);
+			if(!f){
+				cerr<<"Error: Unrecognized argument: "<<argv[i]<<"\n";
+				exit(1);
+			}
+			i++;
+			unsigned available=argc-i;
+			if(available<f->args.size()){
+				auto missing=skip(available,f->args);
+				cerr<<"Error: Missing argument";
+				if(missing.size()>1) cerr<<"s";
+				cerr<<" to "<<f->name<<":";
+				for(auto x:missing) cerr<<" "<<x;
+				cerr<<"\n";
+				exit(1);
+			}
+			try{
+				f->set(span{argv+i,argv+i+f->args.size()});
+			}catch(std::invalid_argument const& e){
+				cerr<<"Invalid argument to "<<f->name<<": "<<e.what()<<"\n";
+				exit(1);
+			}
+			i+=f->args.size();
+		}
+	}
+};
+
 struct Args{
 	string output_dir=".";
 	string tba_auth_key="../tba/auth_key";
@@ -609,104 +746,35 @@ struct Args{
 };
 
 Args parse_args(int argc,char **argv){
-	struct Flag{
-		string name;
-		vector<string> args;
-		string help;
-		std::function<void(std::span<char*>)> func;
-	};
 	Args r;
-	vector<Flag> flags{
-		Flag{
-			"--out",{"PATH"},
-			"Directory in which to store result files",
-			[&](span<char*> v){
-				r.output_dir=v[0];
-			}
-		},
-		Flag{
-			"--auth_key",
-			{"PATH"},
-			"Path to The Blue Alliance auth key",
-			[&](span<char *> v){
-				r.tba_auth_key=v[0];
-			}
-		},
-		Flag{
-			"--cache",
-			{"PATH"},
-			"Path to use for cached data from The Blue Alliance",
-			[&](span<char *> v){
-				r.tba_cache=v[0];
-			}
-		},
-		Flag{
-			"--year",
-			{"YEAR"},
-			"For which year the predictions should be made",
-			[&](span<char*> v){
-				r.year=tba::Year{stoi(v[0])};
-			}
-		},
-		Flag{
-			"--district",
-			{"KEY"},
-			"Examine only a specific district",
-			[&](span<char*> v){
-				r.district=tba::District_key{v[0]};
-			}
-		}
-	};
-
-	auto help=[&](){
-		cout<<argv[0];
-		for(auto flag:flags){
-			cout<<" ["<<flag.name;
-			for(auto x:flag.args){
-				cout<<" "<<x;
-			}
-			cout<<"]";
-		}
-		cout<<"\n";
-		cout<<"Calculates odds of FRC teams advancing to their district championships and the championship event.\n";
-		for(auto flag:flags){
-			cout<<flag.name;
-			for(auto a:flag.args){
-				cout<<" "<<a;
-			}
-			cout<<"\n";
-			cout<<"\t"<<flag.help<<"\n";
-		}
-	};
-
-	flags|=Flag{
-		"--help",
-		{},
-		"Show this message",
-		[=](auto){
-			help();
-			exit(0);
-		}
-	};
-
-	for(int i=1;i<argc;){
-		auto f=filter([=](auto x){ return x.name==argv[i]; },flags);
-		if(f.empty()){
-			cerr<<"Error: Unrecognized argument: "<<argv[i]<<"\n";
-			exit(1);
-		}
-		auto flag=f[0];
-		i++;
-		auto left=argc-i;
-		if(left<int(flag.args.size())){
-			cerr<<"Missing arg to "<<flag.name<<"\n";
-			help();
-			exit(1);
-		}
-		flag.func(span{argv+i,flag.args.size()});
-		i+=flag.args.size();
-	}
-
+	Argument_parser p{"Calculates odds of FRC teams advancing to their district championships and the championship event."};
+	p.add(
+		"--out",{"PATH"},
+		"Directory in which to store result files",
+		r.output_dir
+	);
+	p.add(
+		"--auth_key",{"PATH"},
+		"Path to The Blue Alliance auth key",
+		r.tba_auth_key
+	);
+	p.add(
+		"--cache",{"PATH"},
+		"Path to use for cached data from The Blue Alliance",
+		r.tba_cache
+	);
+	p.add(
+		"--year",{"YEAR"},
+		"For which year the predictions should be made",
+		r.year
+	);
+	p.add(
+		"--district",{"KEY"},
+		"Examine only a specific district",
+		r.district
+	);
+	
+	p.parse(argc,argv);
 	return r;
 }
 
@@ -744,6 +812,9 @@ int main(int argc,char **argv){
 		return main1(argc,argv);
 	}catch(std::string const& s){
 		cerr<<"Caught:"<<s<<"\n";
+		return 1;
+	}catch(std::invalid_argument const& e){
+		cerr<<"Caught:"<<e<<"\n";
 		return 1;
 	}
 }
