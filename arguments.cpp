@@ -3,6 +3,13 @@
 
 using namespace std;
 
+bool decode(span<char*> s,bool const*){
+	if(s.empty()){
+		return 1;
+	}
+	nyi
+}
+
 string decode(span<char*> s,string const*){
 	assert(s.size()==1);
 	assert(s[0]);

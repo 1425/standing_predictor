@@ -10,6 +10,7 @@
 #include "../frc_api/curl.h"
 #include "util.h"
 #include "frc_api.h"
+#include "arguments.h"
 
 /*
 The program is designed to figure out how many teams are declining invitations to their district championship event.  
@@ -504,57 +505,13 @@ void demo(){
 	}
 }
 
-struct Args{
-	bool demo=0;
-};
-
-Args parse_args(int argc,char **argv){
-	struct Flag{
-		string flag;
-		string help;
-		std::function<void(void)> f;
-	};
-	Args r;
-	vector<Flag> flags{
-		Flag{
-			"--demo",
-			"See how The Blue Alliance & FIRST's API comare",
-			[&](){
-				r.demo=1;
-			}
-		}
-	};
-	flags|=Flag{
-		"--help",
-		"Show this message",
-		[&](){
-			cout<<"./declines";
-			for(auto flag:flags){
-				cout<<" ["<<flag.flag<<"]";
-			}
-			cout<<"\n\n";
-			for(auto flag:flags){
-				cout<<flag.flag<<"\n";
-				cout<<"\t"<<flag.help<<"\n";
-			}
-			exit(0);
-		}
-	};
-	for(auto i:range(1,argc)){
-		auto f=filter([=](auto x){ return x.flag==argv[i]; },flags);
-		if(f.size()!=1){
-			cerr<<"Unrecognized argument.\n";
-			exit(1);
-		}
-		f[0].f();
-	}
-	return r;
-}
-
 int main1(int argc,char **argv){
-	auto a=parse_args(argc,argv);
+	bool do_demo=0;
+	auto p=Argument_parser("Calculate how many teams decline DCMP invitations");
+	p.add("--demo",{},"See how The Blue Alliance & FIRST's API compare",do_demo);
+	p.parse(argc,argv);
 
-	if(a.demo){
+	if(do_demo){
 		demo();
 		return 0;
 	}

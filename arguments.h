@@ -10,7 +10,8 @@
 
 std::string decode(std::span<char*>,std::string const*);
 tba::District_key decode(std::span<char*>,tba::District_key const*);
-tba::Year decode(std::span<char*> s,tba::Year const*);
+tba::Year decode(std::span<char*>,tba::Year const*);
+bool decode(std::span<char*>,bool const*);
 
 template<typename T>
 std::optional<T> decode(std::span<char*> s,std::optional<T> const*){
