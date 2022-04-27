@@ -78,3 +78,8 @@ void indent(int x){
 		std::cout<<"\t";
 	}
 }
+
+std::ostream& operator<<(std::ostream& o,std::invalid_argument const& a){
+	return o<<"invalid_argument("<<a.what()<<")";
+}
+

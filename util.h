@@ -500,8 +500,6 @@ std::set<T> operator&(std::set<T> const& a,std::set<T> const& b){
 	return r;
 }
 
-std::ostream& operator<<(std::ostream& o,std::invalid_argument const& a){
-	return o<<"invalid_argument("<<a.what()<<")";
-}
+std::ostream& operator<<(std::ostream&,std::invalid_argument const&);
 
 #endif
