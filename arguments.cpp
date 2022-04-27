@@ -3,22 +3,6 @@
 
 using namespace std;
 
-Flag_base::Flag_base(string a,vector<string> b,string c):
-	already_set(0),
-	name(a),
-	args(b),
-	help(c)
-{}
-
-void Flag_base::set(std::span<char*> s){
-	if(already_set){
-		std::cerr<<"Error: Already set: "<<name<<"\n";
-		exit(1);
-	}
-	already_set=1;
-	set_inner(s);
-}
-
 string decode(span<char*> s,string const*){
 	assert(s.size()==1);
 	assert(s[0]);
@@ -37,54 +21,86 @@ tba::Year decode(span<char*> s,tba::Year const*){
 	return tba::Year{stoi(s[0])};
 }
 
-Flag_base *Argument_parser::find(char *s){
-	assert(s);
-	for(auto &flag:flags){
-		assert(flag);
-		if(flag->name==s){
-			return &*flag;
+struct Flag{
+	string name;
+	vector<string> args;
+	string help;
+	std::function<void(std::span<char*>)> set;
+};
+
+struct Argument_parser::Impl{
+	string description;
+	vector<Flag> flags;
+
+	void help(char **argv)const{
+		cout<<argv[0];
+		for(auto const& flag:flags){
+			cout<<" ["<<flag.name;
+			for(auto arg:flag.args){
+				cout<<" "<<arg;
+			}
+			cout<<"]";
 		}
-	}
-	return nullptr;
-}
+		cout<<"\n\n";
 
-void Argument_parser::help(char **argv)const{
-	cout<<argv[0];
-	for(auto const& flag:flags){
-		cout<<" ["<<flag->name;
-		for(auto arg:flag->args){
-			cout<<" "<<arg;
+		cout<<description<<"\n\n";
+
+		for(auto const& flag:flags){
+			cout<<flag.name;
+			for(auto x:flag.args) cout<<" "<<x;
+			cout<<"\n";
+			cout<<"\t"<<flag.help<<"\n";
 		}
-		cout<<"]";
+		cout<<"--help\n";
+		cout<<"\tShow this message.\n";
+		exit(0);
 	}
-	cout<<"\n\n";
 
-	cout<<description<<"\n\n";
-
-	for(auto const& flag:flags){
-		cout<<flag->name;
-		for(auto x:flag->args) cout<<" "<<x;
-		cout<<"\n";
-		cout<<"\t"<<flag->help<<"\n";
+	Flag *find(string const& s){
+		for(auto &flag:flags){
+			if(flag.name==s){
+				return &flag;
+			}
+		}
+		return nullptr;
 	}
-	cout<<"--help\n";
-	cout<<"\tShow this message.\n";
-	exit(0);
+};
+
+Argument_parser::Argument_parser(string s):
+	impl(new Argument_parser::Impl{std::move(s),vector<Flag>{}})
+{}
+
+Argument_parser::~Argument_parser()=default;
+
+void Argument_parser::add(
+	std::string a,
+	vector<string> b,
+	string c,
+	std::function<void(std::span<char*>)> f
+){
+	impl->flags|=Flag{move(a),move(b),move(c),move(f)};
 }
-
-Argument_parser::Argument_parser(string desc):description(desc){}
 
 void Argument_parser::parse(int argc,char **argv){
+	set<string> used;
 	for(int i=1;i<argc;){
-		if(argv[i]==string{"--help"}){
-			help(argv);
+		string s=argv[i];
+		if(used.count(s)){
+			cerr<<"Already set:"<<s<<"\n";
+			exit(1);
 		}
-		auto f=find(argv[i]);
+		used|=s;
+
+		if(s=="--help"){
+			impl->help(argv);
+		}
+		auto f=impl->find(s);
 		if(!f){
 			cerr<<"Error: Unrecognized argument: "<<argv[i]<<"\n";
 			exit(1);
 		}
 		i++;
+
 		unsigned available=argc-i;
 		if(available<f->args.size()){
 			auto missing=skip(available,f->args);
