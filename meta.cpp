@@ -5,6 +5,7 @@
 #include "../tba/db.h"
 #include "../tba/tba.h"
 #include "set.h"
+#include "map.h"
 #include "tba.h"
 #include "util.h"
 

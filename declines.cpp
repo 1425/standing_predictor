@@ -11,6 +11,7 @@
 #include "arguments.h"
 #include "frc_api.h"
 #include "set.h"
+#include "map.h"
 #include "tba.h"
 #include "util.h"
 

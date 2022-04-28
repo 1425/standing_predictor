@@ -123,4 +123,13 @@ std::multiset<T>& operator|=(std::multiset<T> &a,std::vector<T> const& b){
 	return a;
 }
 
+template<typename T>
+std::map<T,size_t> count(std::multiset<T> const& a){
+	std::map<T,size_t> r;
+	for(auto elem:a){
+		r[elem]=a.count(elem); //slow
+	}
+	return r;
+}
+
 #endif

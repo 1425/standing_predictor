@@ -2,11 +2,9 @@
 #define UTIL_H
 
 #include<cassert>
-#include<set>
 #include<sstream>
 #include<iostream>
 #include<vector>
-#include<map>
 #include<optional>
 #include<algorithm>
 
@@ -115,15 +113,6 @@ std::vector<T> operator+(std::vector<T> a,T b){
 	return a;
 }
 
-template<typename K,typename V>
-std::vector<V> seconds(std::map<K,V> const& a){
-	std::vector<V> r;
-	for(auto elem:a){
-		r|=elem.second;
-	}
-	return r;
-}
-
 double sum(std::vector<double> const& v);
 
 template<typename Func,typename T>
@@ -131,15 +120,6 @@ auto mapf(Func f,std::vector<T> const& v)->std::vector<decltype(f(v[0]))>{
 	std::vector<decltype(f(v[0]))> r;
 	for(auto elem:v){
 		r|=f(elem);
-	}
-	return r;
-}
-
-template<typename Func,typename K,typename V>
-auto mapf(Func f,std::map<K,V> const& v)->std::vector<decltype(f(*std::begin(v)))>{
-	std::vector<decltype(f(*std::begin(v)))> r;
-	for(auto p:v){
-		r|=f(p);
 	}
 	return r;
 }
@@ -192,54 +172,6 @@ auto mapf(Func f,std::pair<A,B> const& p){
 }
 
 #define MAP(F,X) ::mapf([&](auto a){ return (F)(a); },(X))
-
-template<typename Func,typename K,typename V>
-auto map_values(Func f,std::map<K,V> m)->std::map<K,decltype(f(begin(m)->second))>{
-	std::map<K,decltype(f(begin(m)->second))> r;
-	for(auto [k,v]:m){
-		r[k]=f(v);
-	}
-	return r;
-}
-
-template<typename K,typename V>
-std::map<K,V> to_map(std::vector<std::pair<K,V>> v){
-	std::map<K,V> r;
-	for(auto p:v){
-		auto f=r.find(p.first);
-		assert(f==r.end());
-		r[p.first]=p.second;
-	}
-	return r;
-}
-
-template<typename K,typename V>
-auto values(std::map<K,V> a)->std::vector<V>{
-	std::vector<V> r;
-	for(auto p:a) r|=p.second;
-	return r;
-}
-
-template<typename T>
-std::map<T,size_t> count(std::multiset<T> const& a){
-	std::map<T,size_t> r;
-	for(auto elem:a){
-		r[elem]=a.count(elem); //slow
-	}
-	return r;
-}
-
-template<typename T,typename Func>
-std::vector<T> sorted(std::vector<T> v,Func f){
-	sort(begin(v),end(v),[&](auto a,auto b){ return f(a)<f(b); });
-	return v;
-}
-
-template<typename T>
-std::vector<T> reversed(std::vector<T> a){
-	reverse(begin(a),end(a));
-	return a;
-}
 
 void indent(int levels);
 
@@ -380,6 +312,18 @@ std::vector<T> sorted(std::vector<T> a){
 	return a;
 }
 
+template<typename T,typename Func>
+std::vector<T> sorted(std::vector<T> v,Func f){
+	sort(begin(v),end(v),[&](auto a,auto b){ return f(a)<f(b); });
+	return v;
+}
+
+template<typename T>
+std::vector<T> reversed(std::vector<T> a){
+	reverse(begin(a),end(a));
+	return a;
+}
+
 template<typename T>
 T max(std::vector<T> const& v){
 	assert(v.size());
@@ -411,11 +355,6 @@ template<typename T>
 T median(std::vector<T> const& v){
 	assert(v.size());
 	return sorted(v)[v.size()/2];
-}
-
-template<typename K,typename V>
-std::vector<std::pair<K,V>> to_vec(std::map<K,V> const& m){
-	return std::vector<std::pair<K,V>>{m.begin(),m.end()};
 }
 
 template<typename T>
@@ -455,16 +394,6 @@ std::vector<std::pair<A,B>> zip(std::vector<A> const& a,std::vector<B> const& b)
 	);
 }
 
-template<typename Func,typename T>
-auto group(Func f,std::vector<T> const& v){
-	using K=decltype(f(v[0]));
-	std::map<K,std::vector<T>> r;
-	for(auto x:v){
-		r[f(x)]|=x;
-	}
-	return r;
-}
-
 template<typename T>
 std::vector<T> range_inclusive(T start,T lim){
 	std::vector<T> r;
@@ -487,31 +416,6 @@ bool all_equal(std::vector<T> const& a){
 		}
 	}
 	return 1;
-}
-
-template<typename Func,typename T>
-std::vector<T> sort_by(Func f,std::vector<T> a){
-	sort(
-		a.begin(),
-		a.end(),
-		[=](auto a,auto b){
-			return f(a)<f(b);
-		}
-	);
-	return a;
-}
-
-template<typename K,typename V>
-std::ostream& operator<<(std::ostream& o,std::map<K,V> const& a){
-	return o<<to_vec(a);
-}
-
-template<typename K,typename V>
-std::map<K,V>& operator+=(std::map<K,V>& a,std::map<K,V> const& b){
-	for(auto [k,v]:b){
-		a[k]+=v;
-	}
-	return a;
 }
 
 #endif

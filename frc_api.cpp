@@ -6,6 +6,7 @@
 #include "set.h"
 #include "util.h"
 #include "print_r.h"
+#include "map.h"
 
 //start generic code
 
@@ -445,7 +446,7 @@ optional<map<Team,pair<vector<int>,optional<int>>>> analyze_district(
 		}
 	);
 
-	auto x=sort_by([](auto x){ return x.dateStart; },r2.Events);
+	auto x=sorted(r2.Events,[](auto x){ return x.dateStart; });
 
 	map<Team,vector<int>> pts_earned;
 	map<Team,int> dcmp_pts;
