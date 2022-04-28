@@ -1,5 +1,6 @@
 #include "tba.h"
 #include "../tba/tba.h"
+#include "set.h"
 #include "util.h"
 
 using namespace std;

@@ -8,9 +8,10 @@
 #include "../frc_api/query.h"
 #include "../frc_api/rapidjson.h"
 #include "../frc_api/curl.h"
-#include "util.h"
-#include "frc_api.h"
 #include "arguments.h"
+#include "frc_api.h"
+#include "set.h"
+#include "util.h"
 
 /*
 The program is designed to figure out how many teams are declining invitations to their district championship event.  
@@ -167,11 +168,11 @@ std::vector<std::string> find(std::string const& base,std::string const& name){
 	return r;
 }
 
+//Start program-specific code
+
 frc_api::Team_number to_team(tba::Team_key const& a){
 	return frc_api::Team_number{stoi(a.str().substr(3,10))};
 }
-
-//Start program-specific code
 
 using namespace std;
 

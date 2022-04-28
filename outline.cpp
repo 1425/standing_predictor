@@ -28,11 +28,12 @@ district championship winners -> just assume that they would have enough points 
 #include "../tba/data.h"
 #include "../tba/tba.h"
 //#include "../frc_api/db.h"
-#include "util.h"
 #include "output.h"
 #include "event.h"
 #include "arguments.h"
 #include "tba.h"
+#include "set.h"
+#include "util.h"
 
 //start generic stuff
 

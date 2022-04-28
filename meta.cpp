@@ -4,6 +4,7 @@
 #include<gumbo.h>
 #include "../tba/db.h"
 #include "../tba/tba.h"
+#include "set.h"
 #include "util.h"
 
 using namespace std;
