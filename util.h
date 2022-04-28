@@ -330,6 +330,11 @@ std::vector<std::pair<size_t,T>> enumerate_from(size_t start,std::vector<T> cons
 	return r;
 }
 
+template<typename T>
+auto enumerate(T const& t){
+	return enumerate_from(0,t);
+}
+
 template<typename A,typename B,typename C,typename D,typename E>
 std::vector<B> seconds(std::vector<std::tuple<A,B,C,D,E>> const& v){
 	std::vector<B> r;
@@ -354,6 +359,8 @@ std::vector<T> filter(F f,std::vector<T> const& v){
 	std::copy_if(v.begin(),v.end(),std::back_inserter(r),f);
 	return r;
 }
+
+#define FILTER(A,B) filter([&](auto x){ return (A)(x); },(B))
 
 template<typename Func,typename T>
 T filter_unique(Func f,std::vector<T> const& a){
@@ -436,5 +443,40 @@ T last(std::vector<T> const& a){
 	assert(a.size());
 	return a[a.size()-1];
 }
+
+std::string tolower(std::string const&);
+bool prefix(std::string const& whole,std::string const& p);
+
+template<typename A,typename B>
+std::vector<std::pair<A,B>> zip(std::vector<A> const& a,std::vector<B> const& b){
+	return mapf(
+		[&](auto i){ return std::make_pair(a[i],b[i]); },
+		range(std::min(a.size(),b.size()))
+	);
+}
+
+template<typename Func,typename T>
+auto group(Func f,std::vector<T> const& v){
+	using K=decltype(f(v[0]));
+	std::map<K,std::vector<T>> r;
+	for(auto x:v){
+		r[f(x)]|=x;
+	}
+	return r;
+}
+
+template<typename T>
+std::vector<T> range_inclusive(T start,T lim){
+	std::vector<T> r;
+	for(auto i=start;i<=lim;++i){
+		r|=i;
+		if(i==lim){
+			return r;
+		}
+	}
+	return r;
+}
+
+std::vector<char> to_vec(std::string const&);
 
 #endif

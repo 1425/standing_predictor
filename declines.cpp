@@ -37,41 +37,6 @@ TODO: Add offline mode
 
 //Start generic code
 
-#define FILTER(A,B) filter([&](auto x){ return (A)(x); },(B))
-
-template<typename A,typename B>
-std::vector<std::pair<A,B>> zip(std::vector<A> const& a,std::vector<B> const& b){
-	return mapf(
-		[&](auto i){ return std::make_pair(a[i],b[i]); },
-		range(std::min(a.size(),b.size()))
-	);
-}
-
-template<typename T>
-std::multiset<T> to_multiset(std::vector<T> const& v){
-	return std::multiset<T>{v.begin(),v.end()};
-}
-
-template<typename Func,typename T>
-std::set<T> filter(Func f,std::set<T> const& a){
-	std::set<T> r;
-	for(auto elem:a){
-		if(f(elem)){
-			r|=elem;
-		}
-	}
-	return r;
-}
-
-template<typename Func,typename T>
-auto mapf(Func f,std::multiset<T> const& a){
-	std::vector<decltype(f(*a.begin()))> r;
-	for(auto elem:a){
-		r|=f(elem);
-	}
-	return r;
-}
-
 template<typename T>
 T mode(std::vector<T> const& a){
 	auto m=to_multiset(a);
@@ -85,69 +50,13 @@ T mode(std::vector<T> const& a){
 	return *begin(f);
 }
 
-template<typename Func,typename T>
-auto group(Func f,std::vector<T> const& v){
-	using K=decltype(f(v[0]));
-	std::map<K,std::vector<T>> r;
-	for(auto x:v){
-		r[f(x)]|=x;
-	}
-	return r;
-}
-
-template<typename T>
-auto enumerate(T const& t){
-	return enumerate_from(0,t);
-}
-
-template<typename T>
-auto to_set(std::multiset<T> const& v){
-	return std::set<T>{begin(v),end(v)};
-}
-
-template<typename T>
-std::multiset<T>& operator|=(std::multiset<T> &a,std::vector<T> const& b){
-	a.insert(begin(b),end(b));
-	return a;
-}
-
-template<typename T>
-std::vector<T> range_inclusive(T start,T lim){
-	std::vector<T> r;
-	for(auto i=start;i<=lim;++i){
-		r|=i;
-		if(i==lim){
-			return r;
-		}
-	}
-	return r;
-}
-
 std::string operator+(std::string const& a,frc_api::String2 const& b){
 	return a+b.get();
-}
-
-std::vector<char> to_vec(std::string const& s){
-	std::vector<char> r;
-	for(auto c:s) r|=c;
-	return r;
 }
 
 template<typename Func>
 auto mapf(Func f,std::string s){
 	return ::mapf(f,to_vec(s));
-}
-
-std::string tolower(std::string s){
-	std::stringstream ss;
-	for(auto c:s){
-		ss<<char(tolower(c));
-	}
-	return ss.str();
-}
-
-bool prefix(std::string const& whole,std::string const& p){
-	return whole.substr(0,p.size())==p;
 }
 
 std::vector<std::string> find(std::string const& base,std::string const& name){

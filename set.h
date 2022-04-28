@@ -87,4 +87,40 @@ bool operator==(std::set<T> const& a,std::vector<T> const& b){
 	return a==to_set(b);
 }
 
+template<typename T>
+std::multiset<T> to_multiset(std::vector<T> const& v){
+	return std::multiset<T>{v.begin(),v.end()};
+}
+
+template<typename T>
+auto to_set(std::multiset<T> const& v){
+	return std::set<T>{begin(v),end(v)};
+}
+
+template<typename Func,typename T>
+auto mapf(Func f,std::multiset<T> const& a){
+	std::vector<decltype(f(*a.begin()))> r;
+	for(auto elem:a){
+		r|=f(elem);
+	}
+	return r;
+}
+
+template<typename Func,typename T>
+std::set<T> filter(Func f,std::set<T> const& a){
+	std::set<T> r;
+	for(auto elem:a){
+		if(f(elem)){
+			r|=elem;
+		}
+	}
+	return r;
+}
+
+template<typename T>
+std::multiset<T>& operator|=(std::multiset<T> &a,std::vector<T> const& b){
+	a.insert(begin(b),end(b));
+	return a;
+}
+
 #endif
