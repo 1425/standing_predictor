@@ -21,7 +21,7 @@ FRC_API_OBJS= \
 	../frc_api/rapidjson.o \
 	../frc_api/curl.o
 
-declines: declines.o frc_api.o arguments.o util.o $(TBA_OBJS) $(FRC_API_OBJS)
+declines: declines.o frc_api.o rank_pts.o arguments.o util.o $(TBA_OBJS) $(FRC_API_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@
 
 clean:
