@@ -479,13 +479,6 @@ map<tba::Team_key,Pr> run(
 	));
 }
 
-auto get_tba_fetcher(std::string const& auth_key_path,std::string const& cache_path){
-	ifstream ifs(auth_key_path);
-	string tba_key;
-	getline(ifs,tba_key);
-	return tba::Cached_fetcher{tba::Fetcher{tba::Nonempty_string{tba_key}},tba::Cache{cache_path.c_str()}};
-}
-
 struct Args{
 	string output_dir=".";
 	string tba_auth_key="../tba/auth_key";

@@ -11,6 +11,7 @@
 #include "arguments.h"
 #include "frc_api.h"
 #include "set.h"
+#include "tba.h"
 #include "util.h"
 
 /*
@@ -146,13 +147,6 @@ optional<pair<int,vector<tba::Team_key>>> declines(
 	auto event_size=all_at_cmp.size();
 
 	return make_pair(event_size,::mapf([](auto x){ return get<3>(x); },declined));
-}
-
-auto get_tba_fetcher(std::string const& auth_key_path,std::string const& cache_path){
-	ifstream ifs(auth_key_path);
-	string tba_key;
-	getline(ifs,tba_key);
-	return tba::Cached_fetcher{tba::Fetcher{tba::Nonempty_string{tba_key}},tba::Cache{cache_path.c_str()}};
 }
 
 auto get_frc_fetcher(){

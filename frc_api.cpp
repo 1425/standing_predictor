@@ -9,41 +9,6 @@
 
 //start generic code
 
-template<typename T>
-bool all_equal(std::vector<T> const& a){
-	for(auto elem:a){
-		if(elem!=a[0]){
-			return 0;
-		}
-	}
-	return 1;
-}
-
-template<typename Func,typename T>
-std::vector<T> sort_by(Func f,std::vector<T> a){
-	sort(
-		a.begin(),
-		a.end(),
-		[=](auto a,auto b){
-			return f(a)<f(b);
-		}
-	);
-	return a;
-}
-
-template<typename K,typename V>
-std::ostream& operator<<(std::ostream& o,std::map<K,V> const& a){
-	return o<<to_vec(a);
-}
-
-template<typename K,typename V>
-std::map<K,V>& operator+=(std::map<K,V>& a,std::map<K,V> const& b){
-	for(auto [k,v]:b){
-		a[k]+=v;
-	}
-	return a;
-}
-
 //start program-specific code
 
 using namespace std;

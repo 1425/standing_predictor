@@ -11,7 +11,7 @@ OBJS= \
 outline: $(OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@
 
-meta: $(TBA_OBJS) meta.o util.o
+meta: $(TBA_OBJS) meta.o util.o tba.o
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -lgumbo -o $@
 
 FRC_API_OBJS= \
@@ -21,7 +21,7 @@ FRC_API_OBJS= \
 	../frc_api/rapidjson.o \
 	../frc_api/curl.o
 
-declines: declines.o frc_api.o rank_pts.o arguments.o util.o print_r.o $(TBA_OBJS) $(FRC_API_OBJS)
+declines: declines.o frc_api.o rank_pts.o arguments.o util.o print_r.o tba.o $(TBA_OBJS) $(FRC_API_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@
 
 clean:

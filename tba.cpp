@@ -1,4 +1,5 @@
 #include "tba.h"
+#include<fstream>
 #include "../tba/tba.h"
 #include "set.h"
 #include "util.h"
@@ -13,6 +14,13 @@ std::vector<T> take(size_t n,std::vector<T> const& v){
 }
 
 //start program-specific stuff
+
+tba::Cached_fetcher get_tba_fetcher(std::string const& auth_key_path,std::string const& cache_path){
+	ifstream ifs(auth_key_path);
+	string tba_key;
+	getline(ifs,tba_key);
+	return tba::Cached_fetcher{tba::Fetcher{tba::Nonempty_string{tba_key}},tba::Cache{cache_path.c_str()}};
+}
 
 set<tba::Team_key> chairmans_winners(tba::Cached_fetcher& f,tba::District_key const& district){
 	set<tba::Team_key> r;
