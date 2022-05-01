@@ -2,12 +2,11 @@
 #define UTIL_H
 
 #include<cassert>
-#include<set>
 #include<sstream>
 #include<iostream>
 #include<vector>
-#include<map>
 #include<optional>
+#include<algorithm>
 
 #define PRINT(X) { std::cout<<""#X<<":"<<(X)<<"\n"; }
 #define nyi { std::cout<<"nyi "<<__FILE__<<":"<<__LINE__<<"\n"; exit(44); }
@@ -22,117 +21,9 @@ void print_lines(T const& t){
 }
 
 template<typename T>
-std::multiset<T>& operator|=(std::multiset<T>& a,T t){
-	a.insert(std::move(t));
+std::vector<T>& operator|=(std::vector<T> &a,T t){
+	a.push_back(t);
 	return a;
-}
-
-template<typename T>
-std::multiset<T>& operator|=(std::multiset<T>& a,std::multiset<T> const& b){
-	a.insert(b.begin(),b.end());
-	return a;
-}
-
-template<typename T>
-std::set<T>& operator|=(std::set<T>& a,T t){
-	a.insert(std::move(t));
-	return a;
-}
-
-template<typename K,typename V>
-std::vector<V> seconds(std::map<K,V> const& a){
-	std::vector<V> r;
-	for(auto elem:a){
-		r|=elem.second;
-	}
-	return r;
-}
-
-double sum(std::vector<double> const& v);
-
-template<typename Func,typename T>
-auto mapf(Func f,std::vector<T> const& v)->std::vector<decltype(f(v[0]))>{
-	std::vector<decltype(f(v[0]))> r;
-	for(auto elem:v){
-		r|=f(elem);
-	}
-	return r;
-}
-
-template<typename Func,typename K,typename V>
-auto mapf(Func f,std::map<K,V> const& v)->std::vector<decltype(f(*std::begin(v)))>{
-	std::vector<decltype(f(*std::begin(v)))> r;
-	for(auto p:v){
-		r|=f(p);
-	}
-	return r;
-}
-
-template<typename K,typename V>
-std::map<K,V> to_map(std::vector<std::pair<K,V>> v){
-	std::map<K,V> r;
-	for(auto p:v){
-		auto f=r.find(p.first);
-		assert(f==r.end());
-		r[p.first]=p.second;
-	}
-	return r;
-}
-
-template<typename K,typename V>
-auto values(std::map<K,V> a)->std::vector<V>{
-	std::vector<V> r;
-	for(auto p:a) r|=p.second;
-	return r;
-}
-
-template<typename T>
-std::map<T,size_t> count(std::multiset<T> const& a){
-	std::map<T,size_t> r;
-	for(auto elem:a){
-		r[elem]=a.count(elem); //slow
-	}
-	return r;
-}
-
-template<typename Func,typename K,typename V>
-auto map_values(Func f,std::map<K,V> m)->std::map<K,decltype(f(begin(m)->second))>{
-	std::map<K,decltype(f(begin(m)->second))> r;
-	for(auto [k,v]:m){
-		r[k]=f(v);
-	}
-	return r;
-}
-
-template<typename T,typename Func>
-std::vector<T> sorted(std::vector<T> v,Func f){
-	sort(begin(v),end(v),[&](auto a,auto b){ return f(a)<f(b); });
-	return v;
-}
-
-template<typename T>
-std::vector<T> reversed(std::vector<T> a){
-	reverse(begin(a),end(a));
-	return a;
-}
-
-std::vector<std::string> split(std::string const&);
-std::vector<std::string> split(std::string const&,char);
-
-template<typename T>
-std::string tag(std::string const& name,T const& body){
-	std::stringstream ss;
-	ss<<"<"<<name<<">"<<body<<"</"<<split(name).at(0)<<">";
-	return ss.str();
-}
-
-template<typename T>
-std::ostream& operator<<(std::ostream& o,std::set<T> const& a){
-	o<<"{ ";
-	for(auto const& x:a){
-		o<<x<<" ";
-	}
-	return o<<"}";
 }
 
 template<typename A,typename B,typename C,typename D>
@@ -157,44 +48,81 @@ std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C,D,E> const& t){
 }
 
 template<typename T>
-std::string as_string(T const& t){
-	std::stringstream ss;
-	ss<<t;
-	return ss.str();
+std::ostream& operator<<(std::ostream& o,std::vector<T> const& v){
+	o<<"[ ";
+	for(auto x:v){
+		o<<x<<" ";
+	}
+	return o<<"]";
+}
+
+template<typename A,typename B>
+std::ostream& operator<<(std::ostream& o,std::pair<A,B> const& a){
+	return o<<"("<<a.first<<","<<a.second<<")";
 }
 
 template<typename T>
-std::string join(std::vector<T> const& a){
-	std::stringstream ss;
-	for(auto elem:a){
-		ss<<elem;
-	}
-	return ss.str();
+std::ostream& operator<<(std::ostream& o,std::optional<T> const& a){
+	if(a) return o<<*a;
+	return o<<"NULL";
+}
+
+std::ostream& operator<<(std::ostream&,std::invalid_argument const&);
+
+template<typename T>
+std::vector<T> operator+(std::vector<T> a,std::vector<T> const& b){
+	a.insert(a.end(),b.begin(),b.end());
+	return a;
+}
+
+template<typename T>
+std::vector<T> operator+(std::vector<T> a,std::tuple<T,T,T,T> const& t){
+	a|=std::get<0>(t);
+	a|=std::get<1>(t);
+	a|=std::get<2>(t);
+	a|=std::get<3>(t);
+	return a;
 }
 
 template<typename A,typename B,typename C,typename D,typename E>
-std::string join(std::tuple<A,B,C,D,E> const& t){
-	std::stringstream ss;
-	#define X(N) ss<<std::get<N>(t);
-	X(0) X(1) X(2) X(3) X(4)
-	#undef X
-	return ss.str();
+std::tuple<A,B,C,D,E> operator|(std::tuple<A> const& a,std::tuple<B,C,D,E> const& b){
+	return make_tuple(
+		std::get<0>(a),
+		std::get<0>(b),
+		std::get<1>(b),
+		std::get<2>(b),
+		std::get<3>(b)
+	);
 }
 
-template<typename A,typename B,typename C,typename D,typename E,typename F>
-std::string join(std::tuple<A,B,C,D,E,F> const& t){
-	std::stringstream ss;
-	#define X(N) ss<<std::get<N>(t);
-	X(0) X(1) X(2) X(3) X(4) X(5)
-	#undef X
-	return ss.str();
+template<typename A1,typename A,typename B,typename C,typename D,typename E>
+std::tuple<A1,A,B,C,D,E> operator|(std::tuple<A1,A> const& a,std::tuple<B,C,D,E> const& b){
+	return make_tuple(
+		std::get<0>(a),
+		std::get<1>(a),
+		std::get<0>(b),
+		std::get<1>(b),
+		std::get<2>(b),
+		std::get<3>(b)
+	);
 }
 
 template<typename T>
-auto tr(T t){ return tag("tr",t); }
+std::vector<T> operator+(std::vector<T> a,T b){
+	a|=b;
+	return a;
+}
 
-template<typename T>
-auto td(T t){ return tag("td",t); }
+double sum(std::vector<double> const& v);
+
+template<typename Func,typename T>
+auto mapf(Func f,std::vector<T> const& v)->std::vector<decltype(f(v[0]))>{
+	std::vector<decltype(f(v[0]))> r;
+	for(auto elem:v){
+		r|=f(elem);
+	}
+	return r;
+}
 
 template<typename Func,typename A,typename B,typename C,typename D>
 auto mapf(Func f,std::tuple<A,B,C,D> const& t)
@@ -235,26 +163,53 @@ auto mapf(Func f,std::tuple<A,B,C,D,E,F> const& t)
 	);
 }
 
-#define MAP(F,X) ::mapf([&](auto a){ return (F)(a); },(X))
-
-template<typename Func,typename T>
-T filter_unique(Func f,std::vector<T> const& a){
-	std::vector<T> found;
-	for(auto elem:a){
-		if(f(elem)){
-			found|=elem;
-		}
-	}
-	assert(found.size()==1);
-	return found[0];
-}
-
 template<typename Func,typename A,typename B>
 auto mapf(Func f,std::pair<A,B> const& p){
 	return make_pair(
 		f(p.first),
 		f(p.second)
 	);
+}
+
+#define MAP(F,X) ::mapf([&](auto a){ return (F)(a); },(X))
+
+void indent(int levels);
+
+std::vector<std::string> split(std::string const&);
+std::vector<std::string> split(std::string const&,char);
+
+template<typename T>
+std::string as_string(T const& t){
+	std::stringstream ss;
+	ss<<t;
+	return ss.str();
+}
+
+template<typename T>
+std::string join(std::vector<T> const& a){
+	std::stringstream ss;
+	for(auto elem:a){
+		ss<<elem;
+	}
+	return ss.str();
+}
+
+template<typename A,typename B,typename C,typename D,typename E>
+std::string join(std::tuple<A,B,C,D,E> const& t){
+	std::stringstream ss;
+	#define X(N) ss<<std::get<N>(t);
+	X(0) X(1) X(2) X(3) X(4)
+	#undef X
+	return ss.str();
+}
+
+template<typename A,typename B,typename C,typename D,typename E,typename F>
+std::string join(std::tuple<A,B,C,D,E,F> const& t){
+	std::stringstream ss;
+	#define X(N) ss<<std::get<N>(t);
+	X(0) X(1) X(2) X(3) X(4) X(5)
+	#undef X
+	return ss.str();
 }
 
 template<typename A,typename B>
@@ -264,6 +219,21 @@ std::string join(std::pair<A,B> const& p){
 	ss<<p.second;
 	return ss.str();
 }
+
+template<typename T>
+std::string tag(std::string const& name,T const& body){
+	std::stringstream ss;
+	ss<<"<"<<name<<">"<<body<<"</"<<split(name).at(0)<<">";
+	return ss.str();
+}
+
+template<typename T>
+auto tr(T t){ return tag("tr",t); }
+
+template<typename T>
+auto td(T t){ return tag("td",t); }
+
+std::string td1(std::string const&);
 
 template<typename T>
 std::string table(T const& body){ return tag("table",body); }
@@ -276,50 +246,12 @@ auto th(T const& t){ return tag("th",t); }
 
 std::string th1(std::string const&);
 
+std::string link(std::string const& url,std::string const& body);
+
 template<typename A,typename B,typename C,typename D,typename E>
 std::tuple<B,C,D,E> tail(std::tuple<A,B,C,D,E> const& t){
 	return make_tuple(std::get<1>(t),std::get<2>(t),std::get<3>(t),std::get<4>(t));
 }
-
-template<typename T>
-std::vector<T> operator+(std::vector<T> a,std::vector<T> const& b){
-	a.insert(a.end(),b.begin(),b.end());
-	return a;
-}
-
-template<typename T>
-std::vector<T> operator+(std::vector<T> a,std::tuple<T,T,T,T> const& t){
-	a|=std::get<0>(t);
-	a|=std::get<1>(t);
-	a|=std::get<2>(t);
-	a|=std::get<3>(t);
-	return a;
-}
-
-template<typename A,typename B,typename C,typename D,typename E>
-std::tuple<A,B,C,D,E> operator|(std::tuple<A> const& a,std::tuple<B,C,D,E> const& b){
-	return make_tuple(
-		std::get<0>(a),
-		std::get<0>(b),
-		std::get<1>(b),
-		std::get<2>(b),
-		std::get<3>(b)
-	);
-}
-
-template<typename A1,typename A,typename B,typename C,typename D,typename E>
-std::tuple<A1,A,B,C,D,E> operator|(std::tuple<A1,A> const& a,std::tuple<B,C,D,E> const& b){
-	return make_tuple(
-		std::get<0>(a),
-		std::get<1>(a),
-		std::get<0>(b),
-		std::get<1>(b),
-		std::get<2>(b),
-		std::get<3>(b)
-	);
-}
-
-std::string link(std::string const& url,std::string const& body);
 
 template<typename T>
 std::vector<std::pair<size_t,T>> enumerate_from(size_t start,std::vector<T> const& v){
@@ -330,12 +262,9 @@ std::vector<std::pair<size_t,T>> enumerate_from(size_t start,std::vector<T> cons
 	return r;
 }
 
-std::string td1(std::string const&);
-
 template<typename T>
-std::vector<T> operator+(std::vector<T> a,T b){
-	a|=b;
-	return a;
+auto enumerate(T const& t){
+	return enumerate_from(0,t);
 }
 
 template<typename A,typename B,typename C,typename D,typename E>
@@ -363,6 +292,15 @@ std::vector<T> filter(F f,std::vector<T> const& v){
 	return r;
 }
 
+#define FILTER(A,B) filter([&](auto x){ return (A)(x); },(B))
+
+template<typename Func,typename T>
+T filter_unique(Func f,std::vector<T> const& a){
+	auto found=filter(f,a);
+	assert(found.size()==1);
+	return found[0];
+}
+
 template<typename T>
 T choose(std::vector<T> const& v){
 	return v[rand()%v.size()];
@@ -371,6 +309,18 @@ T choose(std::vector<T> const& v){
 template<typename T>
 std::vector<T> sorted(std::vector<T> a){
 	std::sort(begin(a),end(a));
+	return a;
+}
+
+template<typename T,typename Func>
+std::vector<T> sorted(std::vector<T> v,Func f){
+	sort(begin(v),end(v),[&](auto a,auto b){ return f(a)<f(b); });
+	return v;
+}
+
+template<typename T>
+std::vector<T> reversed(std::vector<T> a){
+	reverse(begin(a),end(a));
 	return a;
 }
 
@@ -407,26 +357,6 @@ T median(std::vector<T> const& v){
 	return sorted(v)[v.size()/2];
 }
 
-template<typename K,typename V>
-std::vector<std::pair<K,V>> to_vec(std::map<K,V> const& m){
-	return std::vector<std::pair<K,V>>{m.begin(),m.end()};
-}
-
-template<typename T>
-std::ostream& operator<<(std::ostream& o,std::vector<T> const& v){
-	o<<"[ ";
-	for(auto x:v){
-		o<<x<<" ";
-	}
-	return o<<"]";
-}
-
-template<typename T>
-std::vector<T>& operator|=(std::vector<T> &a,T t){
-	a.push_back(t);
-	return a;
-}
-
 template<typename T>
 std::vector<T> range(T start,T lim){
 	std::vector<T> r;
@@ -441,47 +371,11 @@ std::vector<T> range(T lim){
 	return range(T{0},lim);
 }
 
-template<typename A,typename B>
-std::ostream& operator<<(std::ostream& o,std::pair<A,B> const& a){
-	return o<<"("<<a.first<<","<<a.second<<")";
-}
-
-template<typename T>
-std::ostream& operator<<(std::ostream& o,std::optional<T> const& a){
-	if(a) return o<<*a;
-	return o<<"NULL";
-}
-
-template<typename T>
-std::set<T> to_set(std::vector<T> const& a){
-	std::set<T> r;
-	for(auto x:a) r|=x;
-	return r;
-}
-
-template<typename K,typename V>
-std::set<K> keys(std::map<K,V> const& a){
-	return to_set(mapf([](auto x){ return x.first; },a));
-}
-
-template<typename T>
-std::set<T> operator-(std::set<T> const& a,std::set<T> const& b){
-	std::set<T> r;
-	std::set_difference(
-		a.begin(),a.end(),
-		b.begin(),b.end(),
-		std::inserter(r,r.begin())
-	);
-	return r;
-}
-
 template<typename T>
 std::vector<T> skip(size_t n,std::vector<T> const& a){
-    if(n>a.size()) return {};
-    return std::vector<T>{a.begin()+n,a.end()};
+	if(n>a.size()) return {};
+	return std::vector<T>{a.begin()+n,a.end()};
 }
-
-void indent(int levels);
 
 template<typename T>
 T last(std::vector<T> const& a){
@@ -489,18 +383,40 @@ T last(std::vector<T> const& a){
 	return a[a.size()-1];
 }
 
-template<typename T>
-std::set<T> operator&(std::set<T> const& a,std::set<T> const& b){
-	std::set<T> r;
-	std::set_intersection(
-		a.begin(),a.end(),
-		b.begin(),b.end(),
-		std::inserter(r,r.begin())
+std::string tolower(std::string const&);
+bool prefix(std::string const& whole,std::string const& p);
+
+template<typename A,typename B>
+std::vector<std::pair<A,B>> zip(std::vector<A> const& a,std::vector<B> const& b){
+	return mapf(
+		[&](auto i){ return std::make_pair(a[i],b[i]); },
+		range(std::min(a.size(),b.size()))
 	);
+}
+
+template<typename T>
+std::vector<T> range_inclusive(T start,T lim){
+	std::vector<T> r;
+	for(auto i=start;i<=lim;++i){
+		r|=i;
+		if(i==lim){
+			return r;
+		}
+	}
 	return r;
 }
 
-std::ostream& operator<<(std::ostream&,std::invalid_argument const&);
+std::vector<char> to_vec(std::string const&);
+
+template<typename T>
+bool all_equal(std::vector<T> const& a){
+	for(auto elem:a){
+		if(elem!=a[0]){
+			return 0;
+		}
+	}
+	return 1;
+}
 
 template<typename K,typename V>
 std::ostream& operator<<(std::ostream& o,std::map<K,V> const& a){

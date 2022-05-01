@@ -8,9 +8,12 @@
 #include "../frc_api/query.h"
 #include "../frc_api/rapidjson.h"
 #include "../frc_api/curl.h"
-#include "util.h"
-#include "frc_api.h"
 #include "arguments.h"
+#include "frc_api.h"
+#include "set.h"
+#include "map.h"
+#include "tba.h"
+#include "util.h"
 
 /*
 The program is designed to figure out how many teams are declining invitations to their district championship event.  
@@ -36,41 +39,6 @@ TODO: Add offline mode
 
 //Start generic code
 
-#define FILTER(A,B) filter([&](auto x){ return (A)(x); },(B))
-
-template<typename A,typename B>
-std::vector<std::pair<A,B>> zip(std::vector<A> const& a,std::vector<B> const& b){
-	return mapf(
-		[&](auto i){ return std::make_pair(a[i],b[i]); },
-		range(std::min(a.size(),b.size()))
-	);
-}
-
-template<typename T>
-std::multiset<T> to_multiset(std::vector<T> const& v){
-	return std::multiset<T>{v.begin(),v.end()};
-}
-
-template<typename Func,typename T>
-std::set<T> filter(Func f,std::set<T> const& a){
-	std::set<T> r;
-	for(auto elem:a){
-		if(f(elem)){
-			r|=elem;
-		}
-	}
-	return r;
-}
-
-template<typename Func,typename T>
-auto mapf(Func f,std::multiset<T> const& a){
-	std::vector<decltype(f(*a.begin()))> r;
-	for(auto elem:a){
-		r|=f(elem);
-	}
-	return r;
-}
-
 template<typename T>
 T mode(std::vector<T> const& a){
 	auto m=to_multiset(a);
@@ -84,69 +52,13 @@ T mode(std::vector<T> const& a){
 	return *begin(f);
 }
 
-template<typename Func,typename T>
-auto group(Func f,std::vector<T> const& v){
-	using K=decltype(f(v[0]));
-	std::map<K,std::vector<T>> r;
-	for(auto x:v){
-		r[f(x)]|=x;
-	}
-	return r;
-}
-
-template<typename T>
-auto enumerate(T const& t){
-	return enumerate_from(0,t);
-}
-
-template<typename T>
-auto to_set(std::multiset<T> const& v){
-	return std::set<T>{begin(v),end(v)};
-}
-
-template<typename T>
-std::multiset<T>& operator|=(std::multiset<T> &a,std::vector<T> const& b){
-	a.insert(begin(b),end(b));
-	return a;
-}
-
-template<typename T>
-std::vector<T> range_inclusive(T start,T lim){
-	std::vector<T> r;
-	for(auto i=start;i<=lim;++i){
-		r|=i;
-		if(i==lim){
-			return r;
-		}
-	}
-	return r;
-}
-
 std::string operator+(std::string const& a,frc_api::String2 const& b){
 	return a+b.get();
-}
-
-std::vector<char> to_vec(std::string const& s){
-	std::vector<char> r;
-	for(auto c:s) r|=c;
-	return r;
 }
 
 template<typename Func>
 auto mapf(Func f,std::string s){
 	return ::mapf(f,to_vec(s));
-}
-
-std::string tolower(std::string s){
-	std::stringstream ss;
-	for(auto c:s){
-		ss<<char(tolower(c));
-	}
-	return ss.str();
-}
-
-bool prefix(std::string const& whole,std::string const& p){
-	return whole.substr(0,p.size())==p;
 }
 
 std::vector<std::string> find(std::string const& base,std::string const& name){
@@ -167,11 +79,11 @@ std::vector<std::string> find(std::string const& base,std::string const& name){
 	return r;
 }
 
+//Start program-specific code
+
 frc_api::Team_number to_team(tba::Team_key const& a){
 	return frc_api::Team_number{stoi(a.str().substr(3,10))};
 }
-
-//Start program-specific code
 
 using namespace std;
 
@@ -236,20 +148,6 @@ optional<pair<int,vector<tba::Team_key>>> declines(
 	auto event_size=all_at_cmp.size();
 
 	return make_pair(event_size,::mapf([](auto x){ return get<3>(x); },declined));
-}
-
-auto get_tba_fetcher(std::string const& auth_key_path,std::string const& cache_path){
-	ifstream ifs(auth_key_path);
-	string tba_key;
-	getline(ifs,tba_key);
-	return tba::Cached_fetcher{tba::Fetcher{tba::Nonempty_string{tba_key}},tba::Cache{cache_path.c_str()}};
-}
-
-auto get_frc_fetcher(){
-	ifstream f("../frc_api/api_key");
-	string s;
-	getline(f,s);
-	return frc_api::Cached_fetcher{frc_api::Fetcher{frc_api::Nonempty_string{s}},frc_api::Cache{}};
 }
 
 
@@ -475,11 +373,103 @@ void diff(T const& a,T const& b){
 	return diff(0,a,b);
 }
 
-void demo(){
-	//auto f=get_frc_fetcher();
-	auto f=Local_fetcher_frc{};
+struct FRC_fetcher_base{
+	virtual std::pair<optional<frc_api::HTTP_Date>,frc_api::Data> fetch(frc_api::URL url)const=0;
+};
+
+template<typename T>
+class FRC_fetcher_impl:public FRC_fetcher_base{
+	unique_ptr<T> data;
+
+	public:
+	FRC_fetcher_impl(T *t):data(t){}
+
+	std::pair<optional<frc_api::HTTP_Date>,frc_api::Data> fetch(frc_api::URL url)const{
+		return data->fetch(url);
+	}
+};
+
+class FRC_fetcher{
+	unique_ptr<FRC_fetcher_base> data;
+
+	public:
+	template<typename T>
+	FRC_fetcher(T *t):
+		data(new FRC_fetcher_impl<T>{t})
+	{}
+
+	std::pair<optional<frc_api::HTTP_Date>,frc_api::Data> fetch(frc_api::URL url)const{
+		return data->fetch(url);
+	}
+};
+
+FRC_fetcher get_frc_fetcher(bool local_only){
+	if(local_only){
+		return FRC_fetcher{new Local_fetcher_frc{}};
+	}
+	ifstream f("../frc_api/api_key");
+	string s;
+	getline(f,s);
+	auto x=new frc_api::Cached_fetcher{
+		frc_api::Fetcher{frc_api::Nonempty_string{s}},
+		frc_api::Cache{}
+	};
+	return FRC_fetcher{x};
+}
+
+struct TBA_fetcher_base{
+	virtual std::pair<tba::HTTP_Date,tba::Data> fetch(tba::URL const& url)const=0;
+};
+
+template<typename T>
+class TBA_fetcher_impl:public TBA_fetcher_base{
+	unique_ptr<T> t;
+
+	public:
+	TBA_fetcher_impl(T* t1):
+		t(t1)
+	{}
+
+	virtual std::pair<tba::HTTP_Date,tba::Data> fetch(tba::URL const& url)const{
+		return t->fetch(url);
+	}
+};
+
+class TBA_fetcher{
+	unique_ptr<TBA_fetcher_base> data;
+
+	public:
+	template<typename T>
+	TBA_fetcher(T *t):
+		data(new TBA_fetcher_impl<T>{t})
+	{}
+
+	std::pair<tba::HTTP_Date,tba::Data> fetch(tba::URL const& url)const{
+		return data->fetch(url);
+	}
+};
+
+TBA_fetcher get_tba_fetcher(
+	bool local_only,
+	string auth_key_path="../tba/auth_key",
+	string cache_path="../tba/cache.db"
+){
+	if(local_only){
+		return new Local_fetcher_tba{};
+	}
+	return new tba::Cached_fetcher{get_tba_fetcher(auth_key_path,cache_path)};
+}
+
+void demo(bool frc_api_local,bool tba_api_local){
+	auto f=get_frc_fetcher(frc_api_local);
+	//auto f=Local_fetcher_frc{};
 	//auto tba_f=get_tba_fetcher("../tba/auth_key","../tba/cache.db");
-	auto tba_f=Local_fetcher_tba{};
+	
+	/*if(!tba_api_local){
+		nyi
+	}
+	auto tba_f=Local_fetcher_tba{};*/
+	auto tba_f=get_tba_fetcher(tba_api_local);
 
 	//Season_summary{Season{}};
 	for(
@@ -507,12 +497,16 @@ void demo(){
 
 int main1(int argc,char **argv){
 	bool do_demo=0;
+	bool frc_api_local=0;
+	bool tba_api_local=0;
 	auto p=Argument_parser("Calculate how many teams decline DCMP invitations");
 	p.add("--demo",{},"See how The Blue Alliance & FIRST's API compare",do_demo);
+	p.add("--frc_api_local",{},"Do not fetch data via FRC API; just use cached versions",frc_api_local);
+	p.add("--tba_api_local",{},"Do not fetch data via TBA API; just use cached versions",tba_api_local);
 	p.parse(argc,argv);
 
 	if(do_demo){
-		demo();
+		demo(frc_api_local,tba_api_local);
 		return 0;
 	}
 

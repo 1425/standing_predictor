@@ -4,6 +4,9 @@
 #include<gumbo.h>
 #include "../tba/db.h"
 #include "../tba/tba.h"
+#include "set.h"
+#include "map.h"
+#include "tba.h"
 #include "util.h"
 
 using namespace std;
@@ -264,13 +267,6 @@ map<Team,Pr> parse_page(std::filesystem::directory_entry const& path){
 	gumbo_destroy_output(&kGumboDefaultOptions, output);
 
 	return r;
-}
-
-auto get_tba_fetcher(std::string const& auth_key_path,std::string const& cache_path){
-        ifstream ifs(auth_key_path);
-        string tba_key;
-        getline(ifs,tba_key);
-        return tba::Cached_fetcher{tba::Fetcher{tba::Nonempty_string{tba_key}},tba::Cache{cache_path.c_str()}};
 }
 
 enum class Season_result{

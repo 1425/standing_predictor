@@ -3,127 +3,16 @@
 #include "../frc_api/data.h"
 #include "../frc_api/rapidjson.h"
 #include "rank_pts.h"
+#include "set.h"
 #include "util.h"
+#include "print_r.h"
+#include "map.h"
 
-template<typename T>
-bool all_equal(std::vector<T> const& a){
-	for(auto elem:a){
-		if(elem!=a[0]){
-			return 0;
-		}
-	}
-	return 1;
-}
+//start generic code
 
-template<typename T>
-bool operator==(std::set<T> const& a,std::vector<T> const& b){
-	return a==to_set(b);
-}
-
-template<typename T>
-std::set<T>& operator|=(std::set<T>& a,std::optional<T> const& b){
-	if(b) a|=*b;
-	return a;
-}
-
-template<typename T>
-std::set<T>& operator|=(std::set<T>& a,std::set<T> const& b){
-	a.insert(b.begin(),b.end());
-	return a;
-}
-
-template<typename T>
-std::set<T> operator|(std::set<T> a,std::set<T> const& b){
-	a|=b;
-	return a;
-}
-
-template<typename Func,typename T>
-std::vector<T> sort_by(Func f,std::vector<T> a){
-	sort(
-		a.begin(),
-		a.end(),
-		[=](auto a,auto b){
-			return f(a)<f(b);
-		}
-	);
-	return a;
-}
-
-template<typename K,typename V>
-std::map<K,V>& operator+=(std::map<K,V>& a,std::map<K,V> const& b){
-	for(auto [k,v]:b){
-		a[k]+=v;
-	}
-	return a;
-}
-
-void print_r(int,frc_api::Match const&);
-void print_r(int,frc_api::TeamListings const&);
-void print_r(int,frc_api::Event const&);
-
-template<typename T>
-void print_r(int n,T const& t){
-	indent(n);
-	std::cout<<t<<"\n";
-}
-
-template<typename A,typename B>
-void print_r(int n,std::pair<A,B> const& a){
-	indent(n++);
-	std::cout<<"pair\n";
-	print_r(n,a.first);
-	print_r(n,a.second);
-}
-
-template<typename T>
-void print_r(int n,std::vector<T> const& v){
-	indent(n);
-	std::cout<<"vector\n";
-	for(auto x:v){
-		print_r(n+1,x);
-	}
-}
-
-template<typename K,typename V>
-void print_r(int n,std::map<K,V> const& v){
-	indent(n);
-	std::cout<<"map\n";
-	n++;
-	for(auto x:v) print_r(n,x);
-}
-
-template<typename T>
-void print_r(T const& t){
-	return print_r(0,t);
-}
+//start program-specific code
 
 using namespace std;
-
-void print_r(int n,frc_api::Match const& a){
-	indent(n);
-	cout<<"Match\n";
-	n++;
-	#define X(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
-	FRC_API_MATCH(X)
-	#undef X
-}
-
-void print_r(int n,frc_api::TeamListings const& a){
-	indent(n++);
-	cout<<"TeamListings\n";
-	#define X(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
-	FRC_API_TEAMLISTINGS(X)
-	#undef X
-}
-
-void print_r(int n,frc_api::Event const& a){
-	indent(n++);
-	cout<<"Event\n";
-	#define X(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
-	FRC_API_EVENT(X)
-	#undef X
-}
 
 int points(auto &f,frc_api::Season season,int awardId){
 	//obviously very slow to run this every time.  Could easily make this get cached.
@@ -557,7 +446,7 @@ optional<map<Team,pair<vector<int>,optional<int>>>> analyze_district(
 		}
 	);
 
-	auto x=sort_by([](auto x){ return x.dateStart; },r2.Events);
+	auto x=sorted(r2.Events,[](auto x){ return x.dateStart; });
 
 	map<Team,vector<int>> pts_earned;
 	map<Team,int> dcmp_pts;

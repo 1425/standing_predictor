@@ -27,12 +27,13 @@ district championship winners -> just assume that they would have enough points 
 #include "../tba/db.h"
 #include "../tba/data.h"
 #include "../tba/tba.h"
-//#include "../frc_api/db.h"
-#include "util.h"
-#include "output.h"
-#include "event.h"
 #include "arguments.h"
+#include "event.h"
+#include "map.h"
+#include "output.h"
+#include "set.h"
 #include "tba.h"
+#include "util.h"
 
 //start generic stuff
 
@@ -478,21 +479,6 @@ map<tba::Team_key,Pr> run(
 		result
 	));
 }
-
-auto get_tba_fetcher(std::string const& auth_key_path,std::string const& cache_path){
-	ifstream ifs(auth_key_path);
-	string tba_key;
-	getline(ifs,tba_key);
-	return tba::Cached_fetcher{tba::Fetcher{tba::Nonempty_string{tba_key}},tba::Cache{cache_path.c_str()}};
-
-}
-
-/*auto get_frc_fetcher(){
-	ifstream f("../frc_api/api_key");
-	string s;
-	getline(f,s);
-	return frc_api::Cached_fetcher{frc_api::Fetcher{frc_api::Nonempty_string{s}},frc_api::Cache{}};
-}*/
 
 struct Args{
 	string output_dir=".";

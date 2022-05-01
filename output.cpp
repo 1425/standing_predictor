@@ -3,6 +3,7 @@
 #include<iomanip>
 #include<fstream>
 #include "../tba/tba.h"
+#include "map.h"
 #include "util.h"
 
 using namespace std;

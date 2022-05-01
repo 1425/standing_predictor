@@ -83,3 +83,20 @@ std::ostream& operator<<(std::ostream& o,std::invalid_argument const& a){
 	return o<<"invalid_argument("<<a.what()<<")";
 }
 
+std::string tolower(std::string const& s){
+	std::stringstream ss;
+	for(auto c:s){
+		ss<<char(tolower(c));
+	}
+	return ss.str();
+}
+
+bool prefix(std::string const& whole,std::string const& p){
+	return whole.substr(0,p.size())==p;
+}
+
+std::vector<char> to_vec(std::string const& s){
+	std::vector<char> r;
+	for(auto c:s) r|=c;
+	return r;
+}
