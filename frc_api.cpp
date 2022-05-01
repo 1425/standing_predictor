@@ -51,11 +51,6 @@ std::vector<T> sort_by(Func f,std::vector<T> a){
 }
 
 template<typename K,typename V>
-std::ostream& operator<<(std::ostream& o,std::map<K,V> const& a){
-	return o<<to_vec(a);
-}
-
-template<typename K,typename V>
 std::map<K,V>& operator+=(std::map<K,V>& a,std::map<K,V> const& b){
 	for(auto [k,v]:b){
 		a[k]+=v;

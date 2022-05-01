@@ -502,4 +502,9 @@ std::set<T> operator&(std::set<T> const& a,std::set<T> const& b){
 
 std::ostream& operator<<(std::ostream&,std::invalid_argument const&);
 
+template<typename K,typename V>
+std::ostream& operator<<(std::ostream& o,std::map<K,V> const& a){
+	return o<<to_vec(a);
+}
+
 #endif
