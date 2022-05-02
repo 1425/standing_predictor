@@ -379,7 +379,7 @@ struct FRC_fetcher_base{
 
 template<typename T>
 class FRC_fetcher_impl:public FRC_fetcher_base{
-	unique_ptr<T> data;
+	std::unique_ptr<T> data;
 
 	public:
 	FRC_fetcher_impl(T *t):data(t){}
@@ -390,7 +390,7 @@ class FRC_fetcher_impl:public FRC_fetcher_base{
 };
 
 class FRC_fetcher{
-	unique_ptr<FRC_fetcher_base> data;
+	std::unique_ptr<FRC_fetcher_base> data;
 
 	public:
 	template<typename T>
@@ -449,6 +449,42 @@ class TBA_fetcher{
 	}
 };
 
+struct TBA_fetcher_config{
+	string auth_key_path,cache_path;
+	bool local_only;
+
+	TBA_fetcher_config():
+		auth_key_path("../tba/auth_key"),
+		cache_path("../tba/cache.db"),
+		local_only(0)
+	{}
+
+	void add(Argument_parser &f){
+		f.add(
+			"--tba_auth_key",{"PATH"},
+			"Path to auth_key for The Blue Alliance",
+			auth_key_path
+		);
+		f.add(
+			"--tba_cache",{"PATH"},
+			"Path to cache for data from The Blue Alliance",
+			cache_path
+		);
+		f.add(
+			"--tba_local",{},
+			"Do not attempt to talk to The Blue Alliance; use only what is in cache.",
+			local_only
+		);
+	}
+
+	TBA_fetcher get()const{
+		if(local_only){
+			return new Local_fetcher_tba{};
+		}
+		return new tba::Cached_fetcher{get_tba_fetcher(auth_key_path,cache_path)};
+	}
+};
+
 TBA_fetcher get_tba_fetcher(
 	bool local_only,
 	string auth_key_path="../tba/auth_key",
@@ -460,7 +496,7 @@ TBA_fetcher get_tba_fetcher(
 	return new tba::Cached_fetcher{get_tba_fetcher(auth_key_path,cache_path)};
 }
 
-void demo(bool frc_api_local,bool tba_api_local){
+void demo(bool frc_api_local,auto& tba_f){
 	auto f=get_frc_fetcher(frc_api_local);
 	//auto f=Local_fetcher_frc{};
 	//auto tba_f=get_tba_fetcher("../tba/auth_key","../tba/cache.db");
@@ -469,7 +505,7 @@ void demo(bool frc_api_local,bool tba_api_local){
 		nyi
 	}
 	auto tba_f=Local_fetcher_tba{};*/
-	auto tba_f=get_tba_fetcher(tba_api_local);
+	//auto tba_f=get_tba_fetcher(tba_api_local);
 
 	//Season_summary{Season{}};
 	for(
@@ -498,15 +534,16 @@ void demo(bool frc_api_local,bool tba_api_local){
 int main1(int argc,char **argv){
 	bool do_demo=0;
 	bool frc_api_local=0;
-	bool tba_api_local=0;
 	auto p=Argument_parser("Calculate how many teams decline DCMP invitations");
 	p.add("--demo",{},"See how The Blue Alliance & FIRST's API compare",do_demo);
 	p.add("--frc_api_local",{},"Do not fetch data via FRC API; just use cached versions",frc_api_local);
-	p.add("--tba_api_local",{},"Do not fetch data via TBA API; just use cached versions",tba_api_local);
+	TBA_fetcher_config tba_config;
+	tba_config.add(p);
 	p.parse(argc,argv);
+	auto tba=tba_config.get();
 
 	if(do_demo){
-		demo(frc_api_local,tba_api_local);
+		demo(frc_api_local,tba);
 		return 0;
 	}
 

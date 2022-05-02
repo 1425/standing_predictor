@@ -418,9 +418,4 @@ bool all_equal(std::vector<T> const& a){
 	return 1;
 }
 
-template<typename K,typename V>
-std::ostream& operator<<(std::ostream& o,std::map<K,V> const& a){
-	return o<<to_vec(a);
-}
-
 #endif
