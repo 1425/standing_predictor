@@ -381,7 +381,7 @@ map<tba::Team_key,Pr> run(
 		auto total=pr_make+pr_miss;
 		assert(total>.99 && total<1.01);
 
-		auto dcmp_entry_dist=[=](){
+		auto dcmp_entry_dist=[=,cm=cm,team_pr=team_pr](){
 			if(cm){
 				return team_pr;
 			}

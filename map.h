@@ -1,6 +1,11 @@
 #ifndef MAP_H
 #define MAP_H
 
+#include<map>
+#include<vector>
+#include<algorithm>
+#include<fstream>
+
 template<typename K,typename V>
 std::vector<V> seconds(std::map<K,V> const& a){
 	std::vector<V> r;
@@ -14,7 +19,7 @@ template<typename Func,typename K,typename V>
 auto mapf(Func f,std::map<K,V> const& v)->std::vector<decltype(f(*std::begin(v)))>{
 	std::vector<decltype(f(*std::begin(v)))> r;
 	for(auto p:v){
-		r|=f(p);
+		r.push_back(f(p));
 	}
 	return r;
 }
@@ -42,7 +47,7 @@ std::map<K,V> to_map(std::vector<std::pair<K,V>> v){
 template<typename K,typename V>
 auto values(std::map<K,V> a)->std::vector<V>{
 	std::vector<V> r;
-	for(auto p:a) r|=p.second;
+	std::transform(a.begin(),a.end(),back_inserter(r),[](auto x){ return x.second; });
 	return r;
 }
 

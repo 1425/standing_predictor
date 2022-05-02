@@ -19,7 +19,7 @@ std::optional<T> decode(std::span<char*> s,std::optional<T> const*){
 }
 
 class Argument_parser{
-	class Impl;
+	struct Impl;
 	std::unique_ptr<Impl> impl;
 
 	void add(

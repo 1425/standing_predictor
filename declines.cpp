@@ -375,6 +375,7 @@ void diff(T const& a,T const& b){
 
 struct FRC_fetcher_base{
 	virtual std::pair<optional<frc_api::HTTP_Date>,frc_api::Data> fetch(frc_api::URL url)const=0;
+	virtual ~FRC_fetcher_base(){}
 };
 
 template<typename T>
@@ -419,6 +420,7 @@ FRC_fetcher get_frc_fetcher(bool local_only){
 
 struct TBA_fetcher_base{
 	virtual std::pair<tba::HTTP_Date,tba::Data> fetch(tba::URL const& url)const=0;
+	virtual ~TBA_fetcher_base(){}
 };
 
 template<typename T>

@@ -2,6 +2,7 @@
 #include<fstream>
 #include<cassert>
 #include<map>
+#include<array>
 #include "util.h"
 
 //start generic code

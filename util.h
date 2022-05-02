@@ -26,6 +26,9 @@ std::vector<T>& operator|=(std::vector<T> &a,T t){
 	return a;
 }
 
+template<typename A,typename B>
+std::ostream& operator<<(std::ostream&,std::pair<A,B> const&);
+
 template<typename A,typename B,typename C,typename D>
 std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C,D> const& t){
 	o<<"(";

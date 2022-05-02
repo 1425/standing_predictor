@@ -298,14 +298,14 @@ optional<map<Team,Season_result>> season_results(tba::District_key const& distri
 	auto r=to_map(::mapf(
 		[&](tba::District_Ranking const& a){
 			auto team=a.team_key;
-			double pre_dcmp=a.rookie_bonus;
+			//double pre_dcmp=a.rookie_bonus;
 			double at_dcmp=0;
 			for(auto x:a.event_points){
 				if(x.district_cmp){
 					any_dcmp=1;
 					at_dcmp+=x.total;
 				}else{
-					pre_dcmp+=x.total;
+					//pre_dcmp+=x.total;
 				}
 			}
 			return make_pair(
