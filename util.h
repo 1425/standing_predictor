@@ -421,4 +421,6 @@ bool all_equal(std::vector<T> const& a){
 	return 1;
 }
 
+std::vector<std::string> find(std::string const& base,std::string const& name);
+
 #endif

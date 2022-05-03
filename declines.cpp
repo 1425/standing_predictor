@@ -61,24 +61,6 @@ auto mapf(Func f,std::string s){
 	return ::mapf(f,to_vec(s));
 }
 
-std::vector<std::string> find(std::string const& base,std::string const& name){
-	//should do something similar to "find $BASE -name $NAME*"
-	std::vector<std::string> r;
-	for(auto x:std::filesystem::recursive_directory_iterator(base)){
-		if(x.is_regular_file()){
-			std::string s=as_string(x).c_str()+1;
-			s=s.substr(0,s.size()-1);
-			auto sp=split(s,'/');
-			//PRINT(sp);
-			//cout<<"\""<<sp[sp.size()-1]<<"\"\n";
-			if(prefix(last(sp),name)){
-				r|=s;
-			}
-		}
-	}
-	return r;
-}
-
 //Start program-specific code
 
 frc_api::Team_number to_team(tba::Team_key const& a){
@@ -216,12 +198,6 @@ optional<map<Team,pair<vector<int>,optional<int>>>> analyze_district_tba(
 	));
 }
 
-struct No_data{ string url; };
-
-std::ostream& operator<<(std::ostream& o,No_data const& a){
-	return o<<"No_data("<<a.url<<")";
-}
-
 class Local_fetcher_frc{
 	vector<unique_ptr<frc_api::Cache>> cache;
 
@@ -237,29 +213,6 @@ class Local_fetcher_frc{
 
 	std::pair<optional<frc_api::HTTP_Date>,frc_api::Data> fetch(frc_api::URL url)const{
 		for(auto & c:cache){
-			assert(c);
-			auto f=c->fetch(url);
-			if(f) return *f;
-		}
-		throw No_data{url};
-	}
-};
-
-class Local_fetcher_tba{
-	vector<unique_ptr<tba::Cache>> cache;
-
-	public:
-	Local_fetcher_tba(){
-		for(auto path:find("..","cache.db")){
-			try{
-				cache.emplace_back(new tba::Cache(path.c_str()));
-			}catch(std::runtime_error const&){
-			}
-		}
-	}
-
-	std::pair<tba::HTTP_Date,tba::Data> fetch(tba::URL const& url)const{
-		for(auto &c:cache){
 			assert(c);
 			auto f=c->fetch(url);
 			if(f) return *f;
@@ -418,86 +371,6 @@ FRC_fetcher get_frc_fetcher(bool local_only){
 	return FRC_fetcher{x};
 }
 
-struct TBA_fetcher_base{
-	virtual std::pair<tba::HTTP_Date,tba::Data> fetch(tba::URL const& url)const=0;
-	virtual ~TBA_fetcher_base(){}
-};
-
-template<typename T>
-class TBA_fetcher_impl:public TBA_fetcher_base{
-	unique_ptr<T> t;
-
-	public:
-	TBA_fetcher_impl(T* t1):
-		t(t1)
-	{}
-
-	virtual std::pair<tba::HTTP_Date,tba::Data> fetch(tba::URL const& url)const{
-		return t->fetch(url);
-	}
-};
-
-class TBA_fetcher{
-	unique_ptr<TBA_fetcher_base> data;
-
-	public:
-	template<typename T>
-	TBA_fetcher(T *t):
-		data(new TBA_fetcher_impl<T>{t})
-	{}
-
-	std::pair<tba::HTTP_Date,tba::Data> fetch(tba::URL const& url)const{
-		return data->fetch(url);
-	}
-};
-
-struct TBA_fetcher_config{
-	string auth_key_path,cache_path;
-	bool local_only;
-
-	TBA_fetcher_config():
-		auth_key_path("../tba/auth_key"),
-		cache_path("../tba/cache.db"),
-		local_only(0)
-	{}
-
-	void add(Argument_parser &f){
-		f.add(
-			"--tba_auth_key",{"PATH"},
-			"Path to auth_key for The Blue Alliance",
-			auth_key_path
-		);
-		f.add(
-			"--tba_cache",{"PATH"},
-			"Path to cache for data from The Blue Alliance",
-			cache_path
-		);
-		f.add(
-			"--tba_local",{},
-			"Do not attempt to talk to The Blue Alliance; use only what is in cache.",
-			local_only
-		);
-	}
-
-	TBA_fetcher get()const{
-		if(local_only){
-			return new Local_fetcher_tba{};
-		}
-		return new tba::Cached_fetcher{get_tba_fetcher(auth_key_path,cache_path)};
-	}
-};
-
-TBA_fetcher get_tba_fetcher(
-	bool local_only,
-	string auth_key_path="../tba/auth_key",
-	string cache_path="../tba/cache.db"
-){
-	if(local_only){
-		return new Local_fetcher_tba{};
-	}
-	return new tba::Cached_fetcher{get_tba_fetcher(auth_key_path,cache_path)};
-}
-
 void demo(bool frc_api_local,auto& tba_f){
 	auto f=get_frc_fetcher(frc_api_local);
 	//auto f=Local_fetcher_frc{};
@@ -556,17 +429,13 @@ int main1(int argc,char **argv){
 			//look at which teams won chairmans
 			//look at what teams tied the cutoff
 			//not going to look into tiebreakers...?
-	auto f=get_tba_fetcher("../tba/auth_key","../tba/cache.db");
-	//auto f=Local_fetcher{};
 
-	//cout<<declines(f,tba::Year{2019},tba::District_key{"2019ne"});
-	//return 0;
 	multiset<tba::Team_key> teams_declined;
 	for(auto year:reversed(range(tba::Year{1992},tba::Year{2023}))){
 		//PRINT(year)
-		for(auto d:districts(f,year)){
+		for(auto d:districts(tba,year)){
 			//PRINT(d.key);
-			auto result=declines(f,year,d.key);
+			auto result=declines(tba,year,d.key);
 			if(result){
 				cout<<d.key<<"\t"<<result->first<<"\t"<<result->second.size();
 				for(auto t:result->second){

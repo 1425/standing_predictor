@@ -35,7 +35,8 @@ META_OBJS= \
 	$(TBA_OBJS) \
 	meta.o \
 	util.o \
-	tba.o
+	tba.o \
+	arguments.o \
 
 meta: $(META_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -lgumbo -o $@

@@ -110,7 +110,7 @@ auto find_cutoff(map<pair<bool,Point>,unsigned> these_points,unsigned eliminatin
 }
 
 map<tba::Team_key,Pr> run(
-	tba::Cached_fetcher &f,
+	TBA_fetcher &f,
 	std::string const& output_dir,
 	tba::District_key district,
 	tba::Year year,
@@ -482,10 +482,9 @@ map<tba::Team_key,Pr> run(
 
 struct Args{
 	string output_dir=".";
-	string tba_auth_key="../tba/auth_key";
-	string tba_cache="cache.db";
 	tba::Year year{2022};
 	optional<tba::District_key> district;
+	TBA_fetcher_config tba;
 };
 
 Args parse_args(int argc,char **argv){
@@ -497,16 +496,6 @@ Args parse_args(int argc,char **argv){
 		r.output_dir
 	);
 	p.add(
-		"--auth_key",{"PATH"},
-		"Path to The Blue Alliance auth key",
-		r.tba_auth_key
-	);
-	p.add(
-		"--cache",{"PATH"},
-		"Path to use for cached data from The Blue Alliance",
-		r.tba_cache
-	);
-	p.add(
 		"--year",{"YEAR"},
 		"For which year the predictions should be made",
 		r.year
@@ -516,17 +505,15 @@ Args parse_args(int argc,char **argv){
 		"Examine only a specific district",
 		r.district
 	);
-	
+	r.tba.add(p);
 	p.parse(argc,argv);
 	return r;
 }
 
 int main1(int argc,char **argv){
-	//auto frc_fetcher=get_frc_fetcher();
-
 	auto args=parse_args(argc,argv);
 	std::filesystem::create_directories(args.output_dir);
-	auto tba_fetcher=get_tba_fetcher(args.tba_auth_key,args.tba_cache);
+	auto tba_fetcher=args.tba.get();
 
 	auto d=districts(tba_fetcher,args.year);
 	map<tba::District_key,map<tba::Team_key,Pr>> dcmp_pr;

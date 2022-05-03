@@ -5,6 +5,7 @@
 #include "../tba/tba.h"
 #include "map.h"
 #include "util.h"
+#include "tba.h"
 
 using namespace std;
 
@@ -217,7 +218,7 @@ int team_number(tba::Team_key const& a){
 }
 
 int make_spreadsheet(
-	tba::Cached_fetcher &f,
+	TBA_fetcher &f,
 	map<tba::District_key,map<tba::Team_key,Pr>> const& m,
 	string const& output_dir
 ){

@@ -1,5 +1,6 @@
 #include "util.h"
 #include<fstream>
+#include<filesystem>
 
 std::string slurp(std::string const& filename){
     std::ifstream f(filename.c_str());
@@ -100,3 +101,22 @@ std::vector<char> to_vec(std::string const& s){
 	for(auto c:s) r|=c;
 	return r;
 }
+
+std::vector<std::string> find(std::string const& base,std::string const& name){
+	//should do something similar to "find $BASE -name $NAME*"
+	std::vector<std::string> r;
+	for(auto x:std::filesystem::recursive_directory_iterator(base)){
+		if(x.is_regular_file()){
+			std::string s=as_string(x).c_str()+1;
+			s=s.substr(0,s.size()-1);
+			auto sp=split(s,'/');
+			//PRINT(sp);
+			//cout<<"\""<<sp[sp.size()-1]<<"\"\n";
+			if(prefix(last(sp),name)){
+				r|=s;
+			}
+		}
+	}
+	return r;
+}
+

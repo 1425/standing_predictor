@@ -4,6 +4,8 @@
 #include "../tba/data.h"
 #include "../tba/db.h"
 
+class TBA_fetcher;
+
 using Pr=double; //probability
 using Point=int;
 using Extended_cutoff=std::pair<Point,Pr>;
@@ -25,7 +27,7 @@ std::string gen_html(
 );
 
 int make_spreadsheet(
-	tba::Cached_fetcher &f,
+	TBA_fetcher &f,
 	std::map<tba::District_key,std::map<tba::Team_key,Pr>> const&,
 	std::string const& output_dir
 );
