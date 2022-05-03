@@ -288,7 +288,7 @@ std::ostream& operator<<(std::ostream& o,Season_result a){
 
 optional<map<Team,Season_result>> season_results(tba::District_key const& district){
 	//do district at a time?
-	auto f=get_tba_fetcher("../tba/auth_key","../tba/cache.db");//might want to make these configurable
+	auto f=TBA_fetcher_config{}.get();
 
 	auto at_cmp=to_set(event_teams_keys(f,tba::Event_key{"2022cmptx"}));
 

@@ -3,6 +3,7 @@
 #include "../tba/tba.h"
 #include "set.h"
 #include "util.h"
+#include "arguments.h"
 
 using namespace std;
 
@@ -22,7 +23,7 @@ tba::Cached_fetcher get_tba_fetcher(std::string const& auth_key_path,std::string
 	return tba::Cached_fetcher{tba::Fetcher{tba::Nonempty_string{tba_key}},tba::Cache{cache_path.c_str()}};
 }
 
-set<tba::Team_key> chairmans_winners(tba::Cached_fetcher& f,tba::District_key const& district){
+set<tba::Team_key> chairmans_winners(TBA_fetcher& f,tba::District_key const& district){
 	set<tba::Team_key> r;
 	for(auto event:district_events(f,district)){
 		auto k=event.key;
@@ -51,7 +52,7 @@ set<tba::Team_key> chairmans_winners(tba::Cached_fetcher& f,tba::District_key co
 	return r;
 }
 
-map<Point,Pr> dcmp_distribution(tba::Cached_fetcher &f){
+map<Point,Pr> dcmp_distribution(TBA_fetcher &f){
 	vector<tba::District_key> old_districts{
 		tba::District_key{"2019pnw"},
 		tba::District_key{"2018pnw"},
@@ -79,9 +80,9 @@ map<Point,Pr> dcmp_distribution(tba::Cached_fetcher &f){
 	return r;
 }
 
-multiset<Point> point_results(tba::Cached_fetcher& server,tba::District_key dk){
+multiset<Point> point_results(TBA_fetcher& fetcher,tba::District_key dk){
 	//district-level point totals from events.
-	auto d=district_rankings(server,dk);
+	auto d=district_rankings(fetcher,dk);
 	assert(d);
 	multiset<Point> r;
 	for(auto team_result:*d){
@@ -92,7 +93,7 @@ multiset<Point> point_results(tba::Cached_fetcher& server,tba::District_key dk){
 	return r;
 }
 
-map<Point,Pr> historical_event_pts(tba::Cached_fetcher &f){
+map<Point,Pr> historical_event_pts(TBA_fetcher &f){
 	vector<tba::District_key> old_keys{
 		//excluding 2014 since point system for quals was different.
 		tba::District_key{"2015pnw"},
@@ -119,3 +120,76 @@ map<Point,Pr> historical_event_pts(tba::Cached_fetcher &f){
 	//PRINT(old_results.size())
 	return pr;
 }
+class Local_fetcher_tba{
+	vector<unique_ptr<tba::Cache>> cache;
+
+	public:
+	Local_fetcher_tba(){
+		for(auto path:find("..","cache.db")){
+			try{
+				cache.emplace_back(new tba::Cache(path.c_str()));
+			}catch(std::runtime_error const&){
+			}
+		}
+	}
+
+	std::pair<tba::HTTP_Date,tba::Data> fetch(tba::URL const& url)const{
+		for(auto &c:cache){
+			assert(c);
+			auto f=c->fetch(url);
+			if(f) return *f;
+		}
+		throw No_data{url};
+	}
+};
+
+std::pair<tba::HTTP_Date,tba::Data> TBA_fetcher::fetch(tba::URL const& url)const{
+	return data->fetch(url);
+}
+
+TBA_fetcher_config::TBA_fetcher_config():
+	auth_key_path("../tba/auth_key"),
+	cache_path("../tba/cache.db"),
+	local_only(0)
+{}
+
+void TBA_fetcher_config::add(Argument_parser &f){
+	f.add(
+		"--tba_auth_key",{"PATH"},
+		"Path to auth_key for The Blue Alliance",
+		auth_key_path
+	);
+	f.add(
+		"--tba_cache",{"PATH"},
+		"Path to cache for data from The Blue Alliance",
+		cache_path
+	);
+	f.add(
+		"--tba_local",{},
+		"Do not attempt to talk to The Blue Alliance; use only what is in cache.",
+		local_only
+	);
+}
+
+TBA_fetcher TBA_fetcher_config::get()const{
+	if(local_only){
+		return new Local_fetcher_tba{};
+	}
+	return new tba::Cached_fetcher{get_tba_fetcher(auth_key_path,cache_path)};
+}
+
+TBA_fetcher get_tba_fetcher(
+	bool local_only,
+	string auth_key_path="../tba/auth_key",
+	string cache_path="../tba/cache.db"
+){
+	if(local_only){
+		return new Local_fetcher_tba{};
+	}
+	return new tba::Cached_fetcher{get_tba_fetcher(auth_key_path,cache_path)};
+}
+
+std::ostream& operator<<(std::ostream& o,No_data const& a){
+	return o<<"No_data("<<a.url<<")";
+}
+
