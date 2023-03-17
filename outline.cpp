@@ -130,17 +130,31 @@ map<tba::Team_key,Pr> run(
 		return chairmans_winners(f,district);
 	}();
 
-	const auto d1=[&](){
+	auto d1=[&](){
 		auto d=district_rankings(f,district);
 		assert(d);
 		return *d;
 	}();
+
+	{
+		//if the team isn't scheduled for any events this year, ignore them.
+		set<tba::Team_key> not_going;
+		for(auto team:d1){
+			auto e=team_events_year_keys(f,team.team_key,year);
+			if(e.empty()){
+				not_going|=team.team_key;
+			}
+		}
+		PRINT(not_going);
+		d1=filter([&](auto x){ return not_going.count(x.team_key)==0; },d1);
+	}
 
 	map<tba::Team_key,pair<bool,map<Point,Pr>>> by_team;
 	map<tba::Team_key,tuple<vector<int>,int,int>> points_used;
 	for(auto team:d1){
 		auto max_counters=2-int(team.event_points.size());
 		auto events_scheduled=team_events_year_keys(f,team.team_key,year);
+
 		auto events_left=min(max_counters,int(events_scheduled.size())-int(team.event_points.size()));
 		auto dist=[&]()->map<Point,Pr>{
 			auto first_event_points=[=]()->double{
