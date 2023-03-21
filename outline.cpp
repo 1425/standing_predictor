@@ -37,9 +37,55 @@ district championship winners -> just assume that they would have enough points 
 
 //start generic stuff
 
+template<typename K,typename V,typename H>
+std::vector<std::pair<K,V>> sorted(std::unordered_map<K,V,H> const& a){
+	std::vector<std::pair<K,V>> v(a.begin(),a.end());
+	return sorted(v);
+}
+
+struct hash_pair{
+	template<typename A,typename B>
+	size_t operator()(std::pair<A,B> const& a)const{
+		auto h1=std::hash<A>{}(a.first);
+		auto h2=std::hash<B>{}(a.second);
+		return h1^h2;
+	}
+};
+
 //start program-specific stuff.
 
 using namespace std;
+
+template<typename K,typename V>
+class flat_map{
+	using Data=std::vector<std::pair<K,V>>;
+	Data data;
+
+	public:
+	flat_map(){}
+
+	explicit flat_map(std::initializer_list<pair<K,V>> a):data(a){}
+
+	flat_map(std::map<K,V> const& a):data(a.begin(),a.end()){}
+
+	operator std::map<K,V>()const{
+		return std::map<K,V>{data.begin(),data.end()};
+	}
+
+	auto find(K const& k)const{
+		//if wanted to make this a binary search, then would need to make
+		//always be in order
+
+		auto at=data.begin();
+		while(at!=data.end() && at->first!=k){
+			++at;
+		}
+		return at;
+	}
+
+	auto begin()const{ return data.begin(); }
+	auto end()const{ return data.end(); }
+};
 
 map<Point,Pr> convolve(map<Point,Pr> const& a,map<Point,Pr> const& b){
 	map<Point,Pr> r;
@@ -81,9 +127,25 @@ map<Point,Pr> when_greater(map<Point,Pr> const& a,map<pair<Point,double>,Pr> con
 	return r;
 }
 
+template<typename T>
+auto when_greater(T const& a,map<pair<Point,double>,Pr> const& b){
+	map<Point,Pr> r;
+	for(auto [ka,va]:a){
+		for(auto [kb,vb]:b){
+			auto [value,pr]=kb;
+			if(ka>value){
+				r[ka]+=va*vb;
+			}else if(ka==value){
+				r[ka]+=va*vb*pr;
+			}
+		}
+	}
+	return r;
+}
+
 map<Point,Pr> when_greater(map<Point,Pr> const& a,map<Point,Pr> const& b){
 	//what the probability distribution of "a" looks like when it is higher than "b".
-	//not that the output is not expected to sum to 1 unless a is always greater than b.
+	//note that the output is not expected to sum to 1 unless a is always greater than b.
 	//O(a.size()*b.size()) but this should still be better than sampling them since N and M are not that large.
 	map<Point,Pr> r;
 	for(auto [ka,va]:a){
@@ -99,6 +161,20 @@ map<Point,Pr> when_greater(map<Point,Pr> const& a,map<Point,Pr> const& b){
 auto find_cutoff(map<pair<bool,Point>,unsigned> these_points,unsigned eliminating){
 	unsigned total=0;
 	for(auto [points,teams]:these_points){
+		total+=teams;
+		if(total>=eliminating){
+			auto excess=total-eliminating;
+			assert(points.first==0);
+			return make_pair(points.second,1-double(excess)/teams);
+		}
+	}
+	assert(0);
+}
+
+template<typename T>
+auto find_cutoff(T these_points,unsigned eliminating){
+	unsigned total=0;
+	for(auto [points,teams]:sorted(these_points)){
 		total+=teams;
 		if(total>=eliminating){
 			auto excess=total-eliminating;
@@ -149,14 +225,14 @@ map<tba::Team_key,Pr> run(
 		d1=filter([&](auto x){ return not_going.count(x.team_key)==0; },d1);
 	}
 
-	map<tba::Team_key,pair<bool,map<Point,Pr>>> by_team;
+	map<tba::Team_key,pair<bool,std::map<Point,Pr>>> by_team;
 	map<tba::Team_key,tuple<vector<int>,int,int>> points_used;
 	for(auto team:d1){
 		auto max_counters=2-int(team.event_points.size());
 		auto events_scheduled=team_events_year_keys(f,team.team_key,year);
 
 		auto events_left=min(max_counters,int(events_scheduled.size())-int(team.event_points.size()));
-		auto dist=[&]()->map<Point,Pr>{
+		auto dist=[&]()->std::map<Point,Pr>{
 			auto first_event_points=[=]()->double{
 				if(team.event_points.size()){
 					return team.event_points[0].total;
@@ -168,7 +244,7 @@ map<tba::Team_key,Pr> run(
 				//-1=played in a normal district championship or just 1 field of a multi-field one
 				//-2=played in a multi-field DCMP & did something on the joint field
 				dcmp_played=1;
-				return map<Point,Pr>{{
+				return std::map<Point,Pr>{{
 					sum(::mapf([](auto x){ return x.total; },team.event_points)),
 					1
 				}};
@@ -299,7 +375,7 @@ map<tba::Team_key,Pr> run(
 	for(auto iteration:range(iterations)){
 		(void)iteration;
 		//PRINT(iteration);
-		map<pair<bool,Point>,unsigned> final_points;
+		std::map<pair<bool,Point>,unsigned> final_points;
 		for(auto [team,data]:by_team){
 			auto [cm,dist]=data;
 			final_points[pair<bool,Point>(cm,sample(dist))]++;
@@ -395,7 +471,7 @@ map<tba::Team_key,Pr> run(
 		auto total=pr_make+pr_miss;
 		assert(total>.99 && total<1.01);
 
-		auto dcmp_entry_dist=[=,cm=cm,team_pr=team_pr](){
+		auto dcmp_entry_dist=[=,cm=cm,team_pr=team_pr]()->std::map<int,double>{
 			if(cm){
 				return team_pr;
 			}

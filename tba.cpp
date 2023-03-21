@@ -56,6 +56,7 @@ set<tba::Team_key> chairmans_winners(TBA_fetcher& f,tba::District_key const& dis
 
 map<Point,Pr> dcmp_distribution(TBA_fetcher &f){
 	vector<tba::District_key> old_districts{
+		tba::District_key{"2022pnw"},
 		tba::District_key{"2019pnw"},
 		tba::District_key{"2018pnw"},
 		tba::District_key{"2017pnw"},
@@ -102,7 +103,8 @@ map<Point,Pr> historical_event_pts(TBA_fetcher &f){
 		tba::District_key{"2016pnw"},
 		tba::District_key{"2017pnw"},
 		tba::District_key{"2018pnw"},
-		tba::District_key{"2019pnw"}
+		tba::District_key{"2019pnw"},
+		tba::District_key{"2022pnw"}
 	};
 
 	multiset<Point> old_results;

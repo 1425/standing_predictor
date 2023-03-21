@@ -73,6 +73,44 @@ int as_num(tba::Team_key const& a){
 	return atoi(a.str().c_str()+3);
 }
 
+template<typename T>
+T find_cutoff(map<T,Pr> const& cutoff_pr,double threshold){
+	auto t=sum(seconds(cutoff_pr));
+	assert(t>.99 && t<1.01);
+	double total=0;
+	for(auto [a,p]:cutoff_pr){
+		total+=p;
+		if(total>=threshold){
+			return a;
+		}
+	}
+	assert(0);
+}
+
+template<typename T>
+tuple<T,T,T> summary(map<T,Pr> const& a){
+	return make_tuple(
+		find_cutoff(a,.05),
+		find_cutoff(a,.5),
+		find_cutoff(a,.95)
+	);
+}
+
+template<typename T>
+string join(string const& s,vector<T> const& v){
+	if(v.empty()) return "";
+
+	std::stringstream ss;
+	auto at=v.begin();
+	ss<<*at;
+	at++;
+	while(at!=v.end()){
+		ss<<s<<*at;
+		at++;
+	}
+	return ss.str();
+}
+
 string gen_html(
 	vector<tuple<
 		tba::Team_key,
@@ -111,15 +149,33 @@ string gen_html(
 	}();
 
 	auto cutoff_table=[=](string s,auto cutoff_pr){
-		return h2(s+" cutoff value")+tag("table border",
-			tr(th("Points")+th("Probability"))+
-			join(mapf(
-				[](auto a){
-					return tr(join(MAP(td,a)));
-				},
-				simplify(cutoff_pr)
-			))
-		);
+		auto simple=simplify(cutoff_pr);
+		return h2(s+" cutoff value")+
+		table(tr(
+			td(tag("table border",
+				tr(th("Points")+th("Probability"))+
+				join(mapf(
+					[](auto a){
+						return tr(join(MAP(td,a)));
+					},
+					simple
+				))
+			))+
+			td(
+				h3("Summary")+
+				tag("table border",
+					tr(th("Probability")+th("Point total"))+
+					[=](){
+						auto q=summary(simple);
+						return
+							tr(th("5%")+td(std::get<0>(q)))+
+							tr(th("Median")+td(std::get<1>(q)))+
+							tr(th("95%")+td(std::get<2>(q)))
+						;
+					}()
+				)
+			)
+		));
 	};
 
 	auto cutoff_table1=cutoff_table("District Championship",dcmp_cutoff_pr);
@@ -141,7 +197,34 @@ string gen_html(
 
 	double total_entropy=sum(::mapf(entropy,seconds(result)));
 	PRINT(total_entropy);
-	
+
+	static const std::vector<std::pair<std::string,std::string>> columns{
+		{"Rank","Ranking of probability of advancement"},
+		{"P<sub>DCMP</sub>","Probability of making district championship"},
+		{"Team","Team number"},
+		{"Nickname","Team nickname"},
+		{"DCMP 5% pts","Extra points needed to have 5% chance of making district championship"},
+		{"DCMP 50% pts","Extra points needed to have 50% chance of making district championship"},
+		{"DCMP 95% pts","Extra points needed to have 95% chance of making district championship"},
+		{"P<sub>CMP</sub>","Probability of making championship"},
+		{"CMP 5% pts","Extra points needed to have a 5% chance of making championship"},
+		{"CMP 50% pts","Extra points needed to have a 50% chance of making championship"},
+		{"CMP 95% pts","Extra points needed to have a 95% chance of making championship"},
+		{"Rookie Points","Rookie bonus points awarded"},
+		{"Played","Results from events played so far"},
+		{"Remaining events","Number of counting events for which the team is scheduled"}
+	};
+
+	auto explain=tag("table border",
+		tr(th("Column")+th("Description"))+
+		join(mapf(
+			[](auto a){
+				return tr(td(a.first)+td(a.second));
+			},
+			columns
+		))
+	);
+
 	return tag("html",
 		tag("head",
 			tag("title",title)
@@ -154,41 +237,38 @@ string gen_html(
 			"Slots at event:"+as_string(dcmp_size)+
 			cutoff_table1+
 			h2("Team Probabilities")+
+			explain+
 			tag("table border",
 				tr(join(::mapf(
-					th1,
-					std::vector<string>{
-						"Probability rank",
-						"Probability of making district championship",
-						"Team number",
-						"Nickname",
-						"Extra points needed to have 5% chance of making district championship",
-						"Extra points needed to have 50% chance of making district championship",
-						"Extra points needed to have 95% chance of making district championship",
-						"CMP Probability",
-						"CMP 5%% pts",
-						"CMP 50%% pts",
-						"CMP 95%% pts"
-					}
+					[](auto x){ return th1(x.first); },
+					columns
 				)))+
 				join(
 					::mapf(
 						[=](auto p){
 							auto [i,a]=p;
+							auto used=points_used.find(get<0>(a))->second;
 							return tr(join(
 								vector<string>{}+td(i)+
 								colorize(get<1>(a))+
-							::mapf(
-								td1,
-								std::vector<std::string>{
-									make_link(get<0>(a)),
-									nickname(get<0>(a)),
-									as_string(get<2>(a)),
-									as_string(get<3>(a)),
-									as_string(get<4>(a))
-								}
-							)
-							)+colorize(get<5>(a))+td(get<6>(a))+td(get<7>(a))+td(get<8>(a))
+								::mapf(
+									td1,
+									std::vector<std::string>{
+										make_link(get<0>(a)),
+										nickname(get<0>(a)),
+										as_string(get<2>(a)),
+										as_string(get<3>(a)),
+										as_string(get<4>(a))
+									}
+								)
+								)+
+								colorize(get<5>(a))+
+								td(get<6>(a))+
+								td(get<7>(a))+
+								td(get<8>(a))+
+								td(get<1>(used))+ //rookie points
+								td(join("&nbsp;",get<0>(used)))+ //played
+								td(get<2>(used)) //remaining events
 							);
 						},
 						enumerate_from(1,reversed(sorted(
@@ -198,7 +278,7 @@ string gen_html(
 					)
 				)
 			)+
-			cutoff_table_long+cutoff_table_cmp+data_used_table
+			cutoff_table_long+cutoff_table_cmp /*+data_used_table*/
 		)
 	);
 }

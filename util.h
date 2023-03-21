@@ -29,6 +29,15 @@ std::vector<T>& operator|=(std::vector<T> &a,T t){
 template<typename A,typename B>
 std::ostream& operator<<(std::ostream&,std::pair<A,B> const&);
 
+template<typename A,typename B,typename C>
+std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C> const& t){
+	o<<"(";
+	o<<std::get<0>(t)<<" ";
+	o<<std::get<1>(t)<<" ";
+	o<<std::get<2>(t);
+	return o<<")";
+}
+
 template<typename A,typename B,typename C,typename D>
 std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C,D> const& t){
 	o<<"(";
@@ -243,6 +252,9 @@ std::string table(T const& body){ return tag("table",body); }
 
 template<typename T>
 auto h2(T const& t){ return tag("h2",t); }
+
+template<typename T>
+auto h3(T const& t){ return tag("h3",t); }
 
 template<typename T>
 auto th(T const& t){ return tag("th",t); }

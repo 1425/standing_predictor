@@ -385,7 +385,7 @@ void demo(bool frc_api_local,auto& tba_f){
 	//Season_summary{Season{}};
 	for(
 		auto year:
-		range_inclusive(frc_api::Season{2015},frc_api::Season{2022})
+		range_inclusive(frc_api::Season{2015},frc_api::Season{2023})
 	){
 		PRINT(year);
 
