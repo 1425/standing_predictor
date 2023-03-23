@@ -59,35 +59,94 @@ using namespace std;
 template<typename K,typename V>
 class flat_map{
 	using Data=std::vector<std::pair<K,V>>;
+	//this is always kept sorted.
 	Data data;
 
 	public:
 	flat_map(){}
 
-	explicit flat_map(std::initializer_list<pair<K,V>> a):data(a){}
-
-	flat_map(std::map<K,V> const& a):data(a.begin(),a.end()){}
-
-	operator std::map<K,V>()const{
-		return std::map<K,V>{data.begin(),data.end()};
+	explicit flat_map(std::initializer_list<pair<K,V>> a):data(a){
+		sort(data.begin(),data.end());
 	}
 
-	auto find(K const& k)const{
-		//if wanted to make this a binary search, then would need to make
-		//always be in order
+	explicit flat_map(std::map<K,V> const& a):data(a.begin(),a.end()){}
 
-		auto at=data.begin();
-		while(at!=data.end() && at->first!=k){
-			++at;
+	explicit flat_map(std::vector<std::pair<K,V>>&& a):data(a){
+		sort(data.begin(),data.end());
+		//could check that there are no duplicate keys
+		//for now, will just assume that there are no duplicates
+	}
+
+	/*operator std::map<K,V>()const{
+		return std::map<K,V>{data.begin(),data.end()};
+	}*/
+
+	auto find(K const& k)const{
+		auto f=std::lower_bound(
+			data.begin(),
+			data.end(),
+			make_pair(k,V{}),
+			[](auto a,auto b){ return a.first<b.first; }
+		);
+		if(f==data.end() || f->first!=k){
+			return data.end();
 		}
-		return at;
+		return f;
+	}
+
+	auto find(K const& k){
+		auto f=std::lower_bound(
+			data.begin(),
+			data.end(),
+			make_pair(k,V{}),
+			[](auto a,auto b){ return a.first<b.first; }
+		);
+		if(f==data.end() || f->first!=k){
+			return data.end();
+		}
+		return f;
 	}
 
 	auto begin()const{ return data.begin(); }
 	auto end()const{ return data.end(); }
+
+	V& operator[](K const& k){
+		auto f=std::lower_bound(
+			data.begin(),
+			data.end(),
+			make_pair(k,V{}),
+			[](auto a,auto b){ return a.first<b.first; }
+		);
+		if(f==data.end() || f->first!=k){
+			return data.emplace(f,make_pair(k,V{}))->second;
+		}
+		return f->second;
+	}
 };
 
+template<typename K,typename V>
+flat_map<K,V> to_flat_map(vector<pair<K,V>> &&a){
+	return flat_map<K,V>{std::forward<std::vector<pair<K,V>>>(a)};
+}
+
 map<Point,Pr> convolve(map<Point,Pr> const& a,map<Point,Pr> const& b){
+	map<Point,Pr> r;
+	for(auto [a1,ap]:a){
+		for(auto [b1,bp]:b){
+			auto result=a1+b1;
+			auto pr=ap*bp;
+			auto f=r.find(result);
+			if(f==r.end()){
+				r[result]=pr;
+			}else{
+				f->second+=pr;
+			}
+		}
+	}
+	return r;
+}
+
+map<Point,Pr> convolve(flat_map<Point,Pr> const& a,map<Point,Pr> const& b){
 	map<Point,Pr> r;
 	for(auto [a1,ap]:a){
 		for(auto [b1,bp]:b){
@@ -112,6 +171,14 @@ map<Point,Pr> operator+(map<Point,Pr> a,int i){
 	return r;
 }
 
+flat_map<Point,Pr> operator+(flat_map<Point,Pr> const& a,int i){
+	flat_map<Point,Pr> r;
+	for(auto [k,v]:a){
+		r[k+i]=v;
+	}
+	return r;
+}
+
 map<Point,Pr> when_greater(map<Point,Pr> const& a,map<pair<Point,double>,Pr> const& b){
 	map<Point,Pr> r;
 	for(auto [ka,va]:a){
@@ -129,7 +196,7 @@ map<Point,Pr> when_greater(map<Point,Pr> const& a,map<pair<Point,double>,Pr> con
 
 template<typename T>
 auto when_greater(T const& a,map<pair<Point,double>,Pr> const& b){
-	map<Point,Pr> r;
+	T r;
 	for(auto [ka,va]:a){
 		for(auto [kb,vb]:b){
 			auto [value,pr]=kb;
@@ -171,10 +238,9 @@ auto find_cutoff(map<pair<bool,Point>,unsigned> these_points,unsigned eliminatin
 	assert(0);
 }
 
-template<typename T>
-auto find_cutoff(T these_points,unsigned eliminating){
+auto find_cutoff(flat_map<pair<bool,Point>,unsigned> these_points,unsigned eliminating){
 	unsigned total=0;
-	for(auto [points,teams]:sorted(these_points)){
+	for(auto [points,teams]:these_points){
 		total+=teams;
 		if(total>=eliminating){
 			auto excess=total-eliminating;
@@ -225,14 +291,15 @@ map<tba::Team_key,Pr> run(
 		d1=filter([&](auto x){ return not_going.count(x.team_key)==0; },d1);
 	}
 
-	map<tba::Team_key,pair<bool,std::map<Point,Pr>>> by_team;
+	using Team_dist=flat_map<Point,Pr>;
+	map<tba::Team_key,pair<bool,Team_dist>> by_team;
 	map<tba::Team_key,tuple<vector<int>,int,int>> points_used;
 	for(auto team:d1){
 		auto max_counters=2-int(team.event_points.size());
 		auto events_scheduled=team_events_year_keys(f,team.team_key,year);
 
 		auto events_left=min(max_counters,int(events_scheduled.size())-int(team.event_points.size()));
-		auto dist=[&]()->std::map<Point,Pr>{
+		auto dist=[&]()->Team_dist{
 			auto first_event_points=[=]()->double{
 				if(team.event_points.size()){
 					return team.event_points[0].total;
@@ -244,13 +311,13 @@ map<tba::Team_key,Pr> run(
 				//-1=played in a normal district championship or just 1 field of a multi-field one
 				//-2=played in a multi-field DCMP & did something on the joint field
 				dcmp_played=1;
-				return std::map<Point,Pr>{{
+				return Team_dist{{
 					sum(::mapf([](auto x){ return x.total; },team.event_points)),
 					1
 				}};
 			}
 			if(events_left==0){
-				return map<Point,Pr>{{
+				return Team_dist{{
 					first_event_points+[=]()->double{
 						if(team.event_points.size()>1){
 							return team.event_points[1].total;
@@ -261,7 +328,7 @@ map<tba::Team_key,Pr> run(
 				}};
 			}
 			if(events_left==1){
-				return to_map(mapf(
+				return to_flat_map(mapf(
 					[&](auto p){
 						return make_pair(int(p.first+first_event_points),p.second);
 					},
@@ -269,7 +336,7 @@ map<tba::Team_key,Pr> run(
 				));
 			}
 			if(events_left==2){
-				return convolve(pr,pr);
+				return Team_dist{convolve(pr,pr)};
 			}
 			PRINT(team);
 			PRINT(events_left);
@@ -357,7 +424,8 @@ map<tba::Team_key,Pr> run(
 	// initialize a uniform distribution between 0 and 1
 	std::uniform_real_distribution<double> unif(0, 1);
 
-	auto sample=[&](map<Point,Pr> const& m)->Point{
+	//auto sample=[&](map<Point,Pr> const& m)->Point{
+	auto sample=[&](auto const& m)->Point{
 		auto num=unif(rng);
 		double total=0;
 		for(auto [value,pr]:m){
@@ -375,8 +443,8 @@ map<tba::Team_key,Pr> run(
 	for(auto iteration:range(iterations)){
 		(void)iteration;
 		//PRINT(iteration);
-		std::map<pair<bool,Point>,unsigned> final_points;
-		for(auto [team,data]:by_team){
+		flat_map<pair<bool,Point>,unsigned> final_points;
+		for(auto const& [team,data]:by_team){
 			auto [cm,dist]=data;
 			final_points[pair<bool,Point>(cm,sample(dist))]++;
 		}
@@ -471,7 +539,7 @@ map<tba::Team_key,Pr> run(
 		auto total=pr_make+pr_miss;
 		assert(total>.99 && total<1.01);
 
-		auto dcmp_entry_dist=[=,cm=cm,team_pr=team_pr]()->std::map<int,double>{
+		auto dcmp_entry_dist=[=,cm=cm,team_pr=team_pr]()->Team_dist{
 			if(cm){
 				return team_pr;
 			}

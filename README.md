@@ -1,9 +1,9 @@
 # standing_predictor
 
 Dependencies:
-sqlite3
-libcurl
-libgumbo (if you want to run the meta-analysis)
+-sqlite3
+-libcurl
+-libgumbo (if you want to run the meta-analysis)
 
 Build instructions:
 1) Download this project and https://github.com/1425/tba so that the two directories are in the same parent directory.
