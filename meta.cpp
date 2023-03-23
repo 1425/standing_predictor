@@ -13,6 +13,14 @@ using namespace std;
 
 //start generic code
 
+template<typename K,typename V>
+map<K,V> remove_keys(map<K,V> m,set<K> s){
+	for(auto elem:s){
+		m.erase(elem);
+	}
+	return m;
+}
+
 vector<std::filesystem::directory_entry> to_vec(std::filesystem::directory_iterator a){
 	return vector<std::filesystem::directory_entry>{begin(a),end(a)};
 }
@@ -324,9 +332,22 @@ optional<map<Team,Season_result>> season_results(tba::District_key const& distri
 }
 
 double compare(map<Team,bool> a,map<Team,double> b){
+	{
+		//make teams that do not appear in the predictions implicitly a 0% chance.
+		auto a_only=keys(a)-keys(b);
+		for(auto k:a_only){
+			b[k]=0;
+		}
+	}
+
 	auto ak=keys(a);
 	auto bk=keys(b);
+
 	if(ak!=bk){
+		auto a_only=ak-bk;
+		if(a_only.size()){
+			cout<<"Only in a:"<<remove_keys(a,bk)<<"\n";
+		}
 		PRINT(ak-bk);
 		PRINT(bk-ak);
 	}
