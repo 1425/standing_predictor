@@ -122,6 +122,10 @@ class flat_map{
 		}
 		return f->second;
 	}
+
+	auto size()const{
+		return data.size();
+	}
 };
 
 template<typename K,typename V>
@@ -129,8 +133,239 @@ flat_map<K,V> to_flat_map(vector<pair<K,V>> &&a){
 	return flat_map<K,V>{std::forward<std::vector<pair<K,V>>>(a)};
 }
 
-map<Point,Pr> convolve(map<Point,Pr> const& a,map<Point,Pr> const& b){
-	map<Point,Pr> r;
+template<typename Func,typename K,typename V>
+auto mapf(Func f,flat_map<K,V> const& a){
+	using U=decltype(f(*begin(a)));
+	std::vector<U> r(a.size());
+	std::transform(a.begin(),a.end(),r.begin(),f);
+	return r;
+}
+
+template<typename K,typename V>
+vector<V> values(flat_map<K,V> const& a){
+	return mapf([](auto const& x){ return x.second; },a);
+}
+
+template<typename T>
+vector<T> sorted(std::initializer_list<T> const& a){
+	vector<T> v;
+	for(auto elem:a){
+		v|=elem;
+	}
+	return sorted(v);
+}
+
+template<typename T>
+bool operator==(std::optional<T> const& a,std::optional<T> const& b){
+	if(a){
+		if(b){
+			return *a==*b;
+		}
+		return 0;
+	}
+	return !b;
+}
+
+template<typename K,typename V>
+class flat_map2{
+	//Doing pair of vectors rather than vector of pairs
+	//This will complicate some operations like find()
+	using KS=vector<K>;
+	using VS=vector<V>;
+	KS keys;
+	VS values;
+
+	public:
+	flat_map2(){}
+
+	flat_map2(std::initializer_list<pair<K,V>> const& a){
+		//sort(a.begin(),a.end());
+		for(auto const& elem:sorted(a)){
+			keys|=elem.first;
+			values|=elem.second;
+		}
+	}
+
+	explicit flat_map2(std::vector<std::pair<K,V>> const& a){
+		//assuming that there are no duplicate keys in input
+		for(auto [k,v]:sorted(a)){
+			keys|=k;
+			values|=v;
+		}
+	}
+
+	explicit flat_map2(flat_map<K,V> const& a){
+		for(auto [k,v]:a){
+			keys|=k;
+			values|=v;
+		}
+	}
+
+	explicit flat_map2(std::map<K,V> const& a){
+		for(auto [k,v]:a){
+			keys|=k;
+			values|=v;
+		}
+	}
+
+	struct proxy{
+		K& first;
+		V& second;
+
+		//auto operator<=>(proxy const&)const=default;
+		bool operator==(proxy const&)const{
+			nyi
+		}
+	};
+
+	struct iterator{
+		using K_it=typename KS::iterator;
+		using V_it=typename VS::iterator;
+		K_it first;
+		V_it second;
+
+		proxy *p=nullptr;
+
+		iterator(K_it a,V_it b):first(a),second(b){}
+
+		iterator(iterator const&);
+
+		~iterator(){
+			delete p;
+		}
+
+		iterator& operator++(){
+			first++;
+			second++;
+			return *this;
+		}
+
+		proxy operator*(){
+			return proxy{*first,*second};
+		}
+
+		proxy* operator->(){
+			if(p){
+				delete p;
+			}
+			p=new proxy{*first,*second};
+			return &*p;
+		}
+
+		auto operator<=>(iterator const&)const=default;
+	};
+
+	struct const_proxy{
+		K const& first;
+		V const& second;
+
+		auto operator<=>(const_proxy const&)const{
+			nyi
+		}
+
+		bool operator==(const_proxy const& p)const{
+			return first==p.first && second==p.second;
+		}
+	};
+
+	struct const_iterator{
+		using K_it=typename KS::const_iterator;
+		using V_it=typename VS::const_iterator;
+		K_it first;
+		V_it second;
+
+		const_iterator& operator++(){
+			first++;
+			second++;
+			return *this;
+		}
+
+		const_proxy operator*(){
+			return const_proxy{*first,*second};
+		}
+
+		auto operator<=>(const_iterator const&)const=default;
+	};
+
+	const_iterator find(K)const;
+
+	iterator find(K const& k){
+		auto f=std::lower_bound(keys.begin(),keys.end(),k);
+		if(f==keys.end() || *f!=k){
+			return iterator{keys.end(),values.end()};
+		}
+		return iterator{f,values.begin()+(f-keys.begin())};
+	}
+
+	const_iterator begin()const{
+		return const_iterator{keys.begin(),values.begin()};
+	}
+
+	const_iterator end()const{
+		return const_iterator{keys.end(),values.end()};
+	}
+
+	iterator begin(){
+		return iterator{keys.begin(),values.begin()};
+	}
+
+	iterator end(){
+		return iterator{keys.end(),values.end()};
+	}
+
+	V& operator[](K const& k){
+		auto f=std::lower_bound(keys.begin(),keys.end(),k);
+		auto v_it=values.begin()+(f-keys.begin());
+		if(f==keys.end() || *f!=k){
+			//new key
+			keys.emplace(f,k);
+			return *values.emplace(v_it,V{});
+		}
+		return *v_it;
+	}
+
+	/*operator map<K,V>()const{
+		//for perf, never want to use this.
+		map<K,V> r;
+		for(auto i:range(keys.size())){
+			r[keys[i]]=values[i];
+		}
+		return r;
+	}*/
+
+	auto get_values()const{
+		return values;
+	}
+};
+
+template<typename K,typename V>
+auto values(flat_map2<K,V> const& a){
+	return a.get_values();
+}
+
+template<typename K,typename V>
+class int_map{
+	vector<bool> keys;
+	vector<V> values;
+
+	public:
+	explicit int_map(std::initializer_list<std::pair<K,V>>)nyi
+	explicit int_map(std::map<K,V>)nyi
+	explicit int_map(flat_map<K,V>)nyi
+	explicit int_map(flat_map2<K,V>)nyi
+	explicit int_map(std::vector<std::pair<K,V>>)nyi
+
+	using iterator=int;
+	iterator find(K const&);
+	iterator begin();
+	iterator end();
+};
+
+template<typename K,typename V>
+int_map<K,V> operator+(int_map<K,V>,int)nyi
+
+flat_map<Point,Pr> convolve(map<Point,Pr> const& a,map<Point,Pr> const& b){
+	flat_map<Point,Pr> r;
 	for(auto [a1,ap]:a){
 		for(auto [b1,bp]:b){
 			auto result=a1+b1;
@@ -146,8 +381,59 @@ map<Point,Pr> convolve(map<Point,Pr> const& a,map<Point,Pr> const& b){
 	return r;
 }
 
-map<Point,Pr> convolve(flat_map<Point,Pr> const& a,map<Point,Pr> const& b){
-	map<Point,Pr> r;
+flat_map<Point,Pr> convolve(flat_map<Point,Pr> const& a,map<Point,Pr> const& b){
+	flat_map<Point,Pr> r;
+	for(auto [a1,ap]:a){
+		for(auto [b1,bp]:b){
+			auto result=a1+b1;
+			auto pr=ap*bp;
+			auto f=r.find(result);
+			if(f==r.end()){
+				r[result]=pr;
+			}else{
+				f->second+=pr;
+			}
+		}
+	}
+	return r;
+}
+
+flat_map2<Point,Pr> convolve(flat_map2<Point,Pr> const& a,map<Point,Pr> const& b){
+	flat_map2<Point,Pr> r;
+	for(auto [a1,ap]:a){
+		for(auto [b1,bp]:b){
+			auto result=a1+b1;
+			auto pr=ap*bp;
+			auto f=r.find(result);
+			if(f==r.end()){
+				r[result]=pr;
+			}else{
+				f->second+=pr;
+			}
+		}
+	}
+	return r;
+}
+
+flat_map2<Point,Pr> convolve(flat_map2<Point,Pr> const& a,flat_map<Point,Pr> const& b){
+	flat_map2<Point,Pr> r;
+	for(auto [a1,ap]:a){
+		for(auto [b1,bp]:b){
+			auto result=a1+b1;
+			auto pr=ap*bp;
+			auto f=r.find(result);
+			if(f==r.end()){
+				r[result]=pr;
+			}else{
+				f->second+=pr;
+			}
+		}
+	}
+	return r;
+}
+
+flat_map2<Point,Pr> convolve(flat_map2<Point,Pr> const& a,flat_map2<Point,Pr> const& b){
+	flat_map2<Point,Pr> r;
 	for(auto [a1,ap]:a){
 		for(auto [b1,bp]:b){
 			auto result=a1+b1;
@@ -173,6 +459,16 @@ map<Point,Pr> operator+(map<Point,Pr> a,int i){
 
 flat_map<Point,Pr> operator+(flat_map<Point,Pr> const& a,int i){
 	flat_map<Point,Pr> r;
+	for(auto [k,v]:a){
+		r[k+i]=v;
+	}
+	return r;
+}
+
+flat_map2<Point,Pr> operator+(flat_map2<Point,Pr> const& a,int i){
+	flat_map2<Point,Pr> r;
+	//this is not an efficient way to do this with this data structure
+	//should make a copy and then modify each of the keys
 	for(auto [k,v]:a){
 		r[k+i]=v;
 	}
@@ -251,6 +547,19 @@ auto find_cutoff(flat_map<pair<bool,Point>,unsigned> these_points,unsigned elimi
 	assert(0);
 }
 
+auto find_cutoff(flat_map2<pair<bool,Point>,unsigned> these_points,unsigned eliminating){
+	unsigned total=0;
+	for(auto [points,teams]:these_points){
+		total+=teams;
+		if(total>=eliminating){
+			auto excess=total-eliminating;
+			assert(points.first==0);
+			return make_pair(points.second,1-double(excess)/teams);
+		}
+	}
+	assert(0);
+}
+
 map<tba::Team_key,Pr> run(
 	TBA_fetcher &f,
 	std::string const& output_dir,
@@ -291,7 +600,7 @@ map<tba::Team_key,Pr> run(
 		d1=filter([&](auto x){ return not_going.count(x.team_key)==0; },d1);
 	}
 
-	using Team_dist=flat_map<Point,Pr>;
+	using Team_dist=flat_map2<Point,Pr>;
 	map<tba::Team_key,pair<bool,Team_dist>> by_team;
 	map<tba::Team_key,tuple<vector<int>,int,int>> points_used;
 	for(auto team:d1){
@@ -328,7 +637,7 @@ map<tba::Team_key,Pr> run(
 				}};
 			}
 			if(events_left==1){
-				return to_flat_map(mapf(
+				return Team_dist(mapf(
 					[&](auto p){
 						return make_pair(int(p.first+first_event_points),p.second);
 					},
@@ -437,13 +746,13 @@ map<tba::Team_key,Pr> run(
 		assert(0);
 	};
 
-	auto dcmp_distribution1=dcmp_played?map<Point,Pr>{{0,1}}:dcmp_distribution(f);
+	auto dcmp_distribution1=flat_map2<Point,Pr>{dcmp_played?map<Point,Pr>{{0,1}}:dcmp_distribution(f)};
 	multiset<pair<Point,Pr>> dcmp_cutoffs,cmp_cutoff;
 	const auto iterations=2000; //usually want this to be like 2k
 	for(auto iteration:range(iterations)){
 		(void)iteration;
 		//PRINT(iteration);
-		flat_map<pair<bool,Point>,unsigned> final_points;
+		flat_map2<pair<bool,Point>,unsigned> final_points;
 		for(auto const& [team,data]:by_team){
 			auto [cm,dist]=data;
 			final_points[pair<bool,Point>(cm,sample(dist))]++;

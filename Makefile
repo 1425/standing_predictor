@@ -1,4 +1,4 @@
-CXXFLAGS=-std=c++20 -Wall -Wextra
+CXXFLAGS=-std=c++20 -Wall -Wextra -Ofast
 LIBS=-lsqlite3 -lcurl
 
 EXE=outline meta declines
