@@ -4,6 +4,7 @@
 #include<gumbo.h>
 #include "../tba/db.h"
 #include "../tba/tba.h"
+#include "arguments.h"
 #include "set.h"
 #include "map.h"
 #include "tba.h"
@@ -221,6 +222,7 @@ map<Team,Pr> parse_page(std::filesystem::directory_entry const& path){
 
 	at=output->root;
 	traverse(GUMBO_TAG_BODY);
+	auto pre_table=at;
 	traverse(GUMBO_TAG_TABLE,1);
 	traverse(GUMBO_TAG_TBODY);
 
@@ -235,7 +237,9 @@ map<Team,Pr> parse_page(std::filesystem::directory_entry const& path){
 		assert(a);
 		auto v=a->v.element.children;
 		//rank,p,team,name,...
-		assert(v.length>3);
+		if(v.length<=3){
+			throw std::invalid_argument("wrong table");
+		}
 		auto f=[=](int i){
 			auto x=(GumboNode*)(v.data)[i];
 			assert(x);
@@ -262,19 +266,38 @@ map<Team,Pr> parse_page(std::filesystem::directory_entry const& path){
 		);
 	};
 
-	auto r=to_map(mapf(
-		parse_team_row,
-		skip(1,
-			span<GumboNode*>{
-				(GumboNode**)(at->v.element.children.data),
-				at->v.element.children.length
-			}
-		)
-	));
+	try{
+		auto r=to_map(mapf(
+			parse_team_row,
+			skip(1,
+				span<GumboNode*>{
+					(GumboNode**)(at->v.element.children.data),
+					at->v.element.children.length
+				}
+			)
+		));
 
-	gumbo_destroy_output(&kGumboDefaultOptions, output);
+		gumbo_destroy_output(&kGumboDefaultOptions, output);
 
-	return r;
+		return r;
+	}catch(std::invalid_argument const&){
+		at=pre_table;
+		traverse(GUMBO_TAG_TABLE,2);
+		traverse(GUMBO_TAG_TBODY);
+		auto r=to_map(mapf(
+			parse_team_row,
+			skip(1,
+				span<GumboNode*>{
+					(GumboNode**)(at->v.element.children.data),
+					at->v.element.children.length
+				}
+			)
+		));
+
+		gumbo_destroy_output(&kGumboDefaultOptions, output);
+
+		return r;
+	}
 }
 
 enum class Season_result{
@@ -361,7 +384,12 @@ double compare(map<Team,bool> a,map<Team,double> b){
 	));
 }
 
-int main1(){
+int main1(int argc,char **argv){
+	Argument_parser parser("Calculate Brier scores of previous predictions");
+	tba::Year year{2022};
+	parser.add("--year",{"YEAR"},"Year to analyze",year);
+	parser.parse(argc,argv);
+
 	map<tba::District_key,vector<std::filesystem::directory_entry>> m;
 	for(auto subdir:
 		//sorted(to_vec(std::filesystem::directory_iterator("results/2022")))
@@ -369,7 +397,7 @@ int main1(){
 			[](auto x){
 				return x.is_directory() && numeric(std::filesystem::path(x).filename());
 			},
-			std::filesystem::directory_iterator("results/2022")
+			std::filesystem::directory_iterator("results/"+as_string(year))
 		))
 	){
 		for(auto x:
@@ -417,9 +445,9 @@ int main1(){
 	return 0;
 }
 
-int main(){
+int main(int argc,char **argv){
 	try{
-		return main1();
+		return main1(argc,argv);
 	}catch(std::invalid_argument const& a){
 		cout<<a<<"\n";
 		return 1;
