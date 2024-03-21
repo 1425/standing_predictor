@@ -41,6 +41,18 @@ int dcmp_size(tba::District_key const& district){
 	if(district=="2023pnw") return 50;
 	if(district=="2023pch") return 50;
 
+	if(district=="2024chs") return 54;
+	if(district=="2024isr") return 45;
+	if(district=="2024fma") return 60;
+	if(district=="2024fnc") return 40;
+	if(district=="2024ont") return 100;
+	if(district=="2024fit") return 86;
+	if(district=="2024fin") return 38;
+	if(district=="2024fim") return 160;
+	if(district=="2024ne") return 96;
+	if(district=="2024pnw") return 50;
+	if(district=="2024pch") return 50;
+
 	cerr<<"Unknown event size for "<<district<<"\n";
 	exit(1);
 }
@@ -90,6 +102,18 @@ int worlds_slots(tba::District_key const& key){
 	if(key=="2023fnc") return 14-1-2-2;
 	if(key=="2023pnw") return 22-2-2-1;
 	if(key=="2023pch") return 17-2-2-2;
+
+	if(key=="2024chs") return 17-1-1-1;
+	if(key=="2024fim") return 86-5-1-2;
+	if(key=="2024fma") return 22-2-2-1;
+	if(key=="2024fin") return 11-1-2-1;
+	if(key=="2024ne") return 31-3-2-1;
+	if(key=="2024ont") return 23-3-1-1;
+	if(key=="2024fit") return 29-2-2-2;
+	if(key=="2024isr") return 11-1-1-1;
+	if(key=="2024fnc") return 13-1-2-2;
+	if(key=="2024pnw") return 22-2-1-2;
+	if(key=="2024pch") return 16-2-2-2;
 
 	cerr<<"Error: Unknown number of worlds slots for district:"<<key<<"\n";
 	exit(1);
