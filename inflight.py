@@ -10,7 +10,7 @@ def values(d):
 
 def read():
     #returns str(heading)->[int(team number)]
-    lines=file('data/inflight.txt').read().splitlines()
+    lines=open('data/inflight.txt').read().splitlines()
     data={} #str(heading)->[int(team number)]
     current_heading=None
     for line in lines:
@@ -47,19 +47,19 @@ def contingency():
             out[k]=[]
         out[k].append(team)
     prediction_types=['in','~in','bubble','~out','out',"InFlight's label"]#list(values(pred))
-    print '\t'.join(prediction_types)
+    print('\t'.join(prediction_types))
     for label in list(via_in_flight)+[None]:
         def get(prediction):
             k=(label,prediction)
             if k in out:
                 return len(out[k])
             return 0
-        print '\t'.join(map(lambda x: str(get(x)),prediction_types)+[str(label)])
+        print('\t'.join(map(lambda x: str(get(x)),prediction_types)+[str(label)]))
 
-    print 'Specific teams:'
+    print('Specific teams:')
     for k,v in sorted(out.iteritems()):
-        print k
-        print '\t',sorted(v)
+        print(k)
+        print('\t',sorted(v))
 
 if __name__=='__main__':
     #for heading,teams in read().iteritems():

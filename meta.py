@@ -9,12 +9,12 @@ from sys import exit
 
 #any(a) => [a] -> void
 def print_lines(a):
-	for elem in a: print elem
+	for elem in a: print(elem)
 
 #any(k),any(v) => {k->v} -> void
 def print_map(a):
 	for key in sorted(a):
-		print key,a[key]
+		print(key,a[key])
 
 #any(a),any(b) => (a->b)->[a]
 def keys(m): return sorted(m)
@@ -34,7 +34,7 @@ def predictions(filename):
 		sp=s.split('\t')
 		return sp[1],int(sp[2].split()[0])
 
-	m=map(parse_line,file(filename).read().splitlines()[4:])
+	m=map(parse_line,open(filename).read().splitlines()[4:])
 	r={}
 	for prediction,team in m:
 		r[team]=prediction
@@ -80,7 +80,7 @@ def demo():
 			q=f[0]['qualification_reason'][:7]
 		else:
 			q=None
-		print '\t'.join(map(str,[a['rank'],a['total_points'],q,a['team']]))
+		print('\t'.join(map(str,[a['rank'],a['total_points'],q,a['team']])))
 
 def actual_2018():
 	p=parse_file('data/2018_pnw_rank.txt')
@@ -89,7 +89,7 @@ def actual_2018():
 	for a in p:
 		team=a['team']
 		team_number=int(team.split()[0])
-		f=filter(lambda x: x['team_number']==team_number,p1)
+		f=list(filter(lambda x: x['team_number']==team_number,p1))
 		if len(f):
 			v='in'
 		else:
@@ -107,8 +107,8 @@ def run(actual_file,prediction_file):
 	t1=keys(actual)
 	t2=keys(pred)
 	if t1!=t2:
-		print set(t1)-set(t2)
-		print set(t2)-set(t1)
+		print(set(t1)-set(t2))
+		print(set(t2)-set(t1))
 	assert t1==t2
 
 	result={}
@@ -121,10 +121,10 @@ def run(actual_file,prediction_file):
 		add_result(pred[team],actual[team])
 
 	#print_map(result)
-	print '\t'.join(['Predicted','Actual In','Actual Out'])
+	print('\t'.join(['Predicted','Actual In','Actual Out']))
 	for pred in ['bubble','in','out','~in','~out']:
 		d=result[pred]
-		print '\t\t'.join(map(str,[pred,d['in'],d['out']]))
+		print('\t\t'.join(map(str,[pred,d['in'],d['out']])))
 
 if __name__=='__main__':
 	from optparse import OptionParser

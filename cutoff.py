@@ -11,12 +11,12 @@ from sys import exit
 
 def firsts(a):
 	#any(a) => [[a]]->[a]
-	return map(lambda x: x[0],a)
+	return list(map(lambda x: x[0],a))
 
 
 def seconds(a):
 	#any(a) => [[a]]->[a]
-	return map(lambda x: x[1],a)
+	return list(map(lambda x: x[1],a))
 
 
 def parse_line(s):
@@ -70,14 +70,21 @@ def calc_lines():
 	out={}
 	for target_score in range(80):
 		#print target_score,
-		m1=map(lambda x: (x[0],x[1]>target_score),m)
-		#print m1
+		m1=list(map(lambda x: (x[0],x[1]>target_score),m))
+		#print(m1)
+		if len(m1)==0:
+			out[target_score]=(0,0)
+			continue
+		#print('found here:')
+		#print(len(firsts(m1)))
+		#print(len(seconds(m1)))
 		par=np.polyfit(firsts(m1), seconds(m1), 1, full=True)
 		slope=par[0][0]
 		intercept=par[0][1]
 		def f(x): return slope*x+intercept
 		#print '\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f'%(slope,intercept,f(4),f(20),f(30),f(50))
 		out[target_score]=(slope,intercept)
+	print('out:',out)
 	return out
 
 #now just need to combine with a probability of the cutoff being a certain number of points.
@@ -114,9 +121,9 @@ def lines_demo():
 	lines=calc_lines()
 	
 	for existing_points in range(78):
-		print existing_points,
+		print(existing_points,end='')
 		total_px=0
-		for cutoff_points,cutoff_px in cutoff_odds().iteritems():
+		for cutoff_points,cutoff_px in cutoff_odds().items():
 			points_needed=cutoff_points-existing_points
 			if points_needed<=0:
 				px=1
@@ -126,7 +133,7 @@ def lines_demo():
 				px=min(px,1)
 				px=max(px,0)
 			total_px+=px*cutoff_px
-		print total_px
+		print(total_px)
 
 def worlds(data):
 	#print_lines(data)
@@ -134,13 +141,13 @@ def worlds(data):
 	for line in data:
 		#print line
 		total_points=none_to_0(line['event1'])+none_to_0(line['event2'])+none_to_0(line['district_championship'])+line['team_age_points']
-		print '%s\t%s\t%s'%(total_points,line['frc_championship'],line['team'])
+		print('%s\t%s\t%s'%(total_points,line['frc_championship'],line['team']))
 
 if __name__=='__main__':
 	p=ArgumentParser()
 	p.add_argument('--file',default='data/2017_pnw_post.txt')
 	p.add_argument('--mean',action='store_true')
-        p.add_argument('--worlds',action='store_true')
+	p.add_argument('--worlds',action='store_true')
 	args=p.parse_args()
 	data=parse_file(args.file)
 
@@ -150,6 +157,6 @@ if __name__=='__main__':
 	if args.mean:
 		for a in data:
 			qual_pts=none_to_0(a['event1'])+none_to_0(a['event2'])+a['team_age_points']
-			print qual_pts,a['district_championship'],a['team']
+			print(qual_pts,a['district_championship'],a['team'])
 
 	lines_demo()

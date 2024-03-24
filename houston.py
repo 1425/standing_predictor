@@ -11,7 +11,7 @@ def rp_parse_line(s):
 
 def rp_parse_file():
 	#returns [(int,int)]
-	return map(rp_parse_line,open('data/pts_64.txt','r').read().splitlines())
+	return list(map(rp_parse_line,open('data/table/pts_64.txt','r').read().splitlines()))
 
 
 def rank_to_get_points(points):
@@ -38,6 +38,6 @@ if __name__=='__main__':
 		normal_points_left=(cutoff-total_points)/3.0
 		r=rank_to_get_points(normal_points_left)
 		#print '%s\t%s\t%s'%(r,normal_points_left,a['team'])
-		print '%s\t%s'%(r,a['team'])
+		print('%s\t%s'%(r,a['team']))
 
 

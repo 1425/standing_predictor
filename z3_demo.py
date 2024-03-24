@@ -108,30 +108,30 @@ def main():
 
     def declare_int(name):
         #str
-        print '(declare-const '+name+' Int)'
+        print('(declare-const '+name+' Int)')
 
     def declare_not_equal(names):
         #[str]->void
         for i in range(len(names)):
             for j in range(i):
-                print '(assert (not (= '+names[i]+' '+names[j]+')))'
+                print('(assert (not (= '+names[i]+' '+names[j]+')))')
 
-    teams=[901,903,904,7000]+range(10)
+    teams=[901,903,904,7000]+list(range(10))
     rookie_teams=[7000]
 
     def declare_from_list(name,options):
         #[int]->void
         declare_int(name)
-        print '(assert (or',
-        print ' '.join(map(lambda x: '(= '+name+' '+str(x)+')',options)),
-        print '))'
+        print('(assert (or',end='')
+        print(' '.join(map(lambda x: '(= '+name+' '+str(x)+')',options)),end='')
+        print('))')
 
     def declare_team_num(name):
         #Create a variable that must be a team number from the event.
         declare_from_list(name,teams)
         
     qual_ranks=range(1,1+len(teams))
-    qual_rank_vars=map(lambda qual_rank: 'qual_rank'+str(qual_rank),qual_ranks)
+    qual_rank_vars=list(map(lambda qual_rank: 'qual_rank'+str(qual_rank),qual_ranks))
     map(declare_team_num,qual_rank_vars)
     declare_not_equal(qual_rank_vars) #Same team does not have more than one rank
 
@@ -172,24 +172,24 @@ def main():
         for j in range(i):
             a1='award_'+nonduplicate_awards[i]
             a2='award_'+nonduplicate_awards[j]
-            print '(assert (or (= '+a1+' 0) (not (= '+a1+' '+a2+'))))'
+            print('(assert (or (= '+a1+' 0) (not (= '+a1+' '+a2+'))))')
 
 
     #Total points at the event
     map(lambda x: declare_int('points_'+str(x)),teams)
 
     for team in teams:
-        print '(assert (= points_'+str(team),
-        print '(+ ',
+        print('(assert (= points_'+str(team),end='')
+        print('(+ ',end='')
 
         #Ranking points
-        print ' '.join(map(lambda qual_rank: '(ite (= qual_rank'+str(qual_rank)+' '+str(team)+') '+str(get_qual_pts(qual_rank))+' 0)',qual_ranks)),
+        print(' '.join(map(lambda qual_rank: '(ite (= qual_rank'+str(qual_rank)+' '+str(team)+') '+str(get_qual_pts(qual_rank))+' 0)',qual_ranks)),end='')
 
         #Award points
-        print ' '.join(map(lambda award: '(ite (= award_'+award+' '+str(team)+') '+str(award_pts(award))+' 0)',all_awards))
+        print(' '.join(map(lambda award: '(ite (= award_'+award+' '+str(team)+') '+str(award_pts(award))+' 0)',all_awards)))
 
-        print ')',
-        print '))'
+        print(')',end='')
+        print('))')
 
     #TODO: Put in district rank logic.
     #TODO: Figure out how to do all of the tiebreakers?
@@ -201,28 +201,28 @@ def main():
         declare_int(v)
 
         #District rank must be at least as high as 1+ # of teams w/ more district points 
-        print '(assert (>= '+v+' (+ 1 ',
+        print('(assert (>= '+v+' (+ 1 ',end='')
         other_teams=filter(lambda x: x!=team,teams)
-        print ' '.join(map(lambda x: '(ite (> points_'+str(x)+' points_'+str(team)+') 1 0)',other_teams)),
-        print ')))'
+        print(' '.join(map(lambda x: '(ite (> points_'+str(x)+' points_'+str(team)+') 1 0)',other_teams)),end='')
+        print(')))')
 
         #District rank must be better than all of those with fewer points.
         #or in other words, no further down than those with more or at least as many points
-        print '(assert (<= '+v+' (+ 1 ',
+        print('(assert (<= '+v+' (+ 1 ',end='')
         other_teams=filter(lambda x: x!=team,teams)
-        print ' '.join(map(lambda x: '(ite (>= points_'+str(x)+' points_'+str(team)+') 1 0)',other_teams)),
-        print ')))'
+        print(' '.join(map(lambda x: '(ite (>= points_'+str(x)+' points_'+str(team)+') 1 0)',other_teams)),end='')
+        print(')))')
 
     #All the district rankings should be different.
-    declare_not_equal(map(lambda x: 'district_rank_'+str(x),teams))
+    declare_not_equal(list(map(lambda x: 'district_rank_'+str(x),teams)))
 
     #for team in teams:
         #v='min_rank_'+str(team) #max number of teams that could be ranked above them
 
     #print '(assert (> rank1 3))'
     #print '(assert (
-    print '(check-sat)'
-    print '(get-model)'
+    print('(check-sat)')
+    print('(get-model)')
 
 
 if __name__=='__main__':

@@ -30,7 +30,7 @@ def parse_line(s):
 		st=s.strip()
 		if st=='Qualified': return 'in'
 		if st=='---': return 'out'
-		print 'not understood: \"%s\"'%s
+		print('not understood: \"%s\"'%s)
 		raise
 
 	#print len(sp),sp
@@ -45,7 +45,7 @@ def parse_line(s):
 		}
 
 def parse_file(input_filename):
-	lines=file(input_filename).read().splitlines()
+	lines=open(input_filename).read().splitlines()
 	return map(parse_line,lines[:])
 
 #team_names={}
@@ -69,7 +69,7 @@ def parse_line_tba(s):
 		}
 
 def main(input_filename,dcmp_event_size):
-	lines=file(input_filename).read().splitlines()
+	lines=open(input_filename).read().splitlines()
 
 	#m=map(parse_line_tba,lines[:])
 	m=parse_file(input_filename)
@@ -90,9 +90,9 @@ def main(input_filename,dcmp_event_size):
 		
 	l=list(reversed(sorted(map(max_pts,m))))
 	min_cutoff_for_dcmp=m[dcmp_event_size-1]['total_points']
-	print 'Best-case points to make it to district cmp:',min_cutoff_for_dcmp
+	print('Best-case points to make it to district cmp:',min_cutoff_for_dcmp)
 	max_cutoff_for_dcmp=l[dcmp_event_size-1]
-	print 'Worst-case points to make it to district cmp:',max_cutoff_for_dcmp
+	print('Worst-case points to make it to district cmp:',max_cutoff_for_dcmp)
 
 	average_points_per_event=22 #approx
 	def expected_pts(team_info):
@@ -106,7 +106,7 @@ def main(input_filename,dcmp_event_size):
 
 	l=list(reversed(sorted(map(expected_pts,m))))
 	cutoff_best_est=l[dcmp_event_size-1]
-	print 'Best estimate:',cutoff_best_est
+	print('Best estimate:',cutoff_best_est)
 
 	#3 events left, 
 	#12*32*2 qualifi
@@ -184,9 +184,9 @@ def main(input_filename,dcmp_event_size):
 		return m
 		
 	st=map(status,m)
-	print count(st)
+	print(count(st))
 	for i,team in enumerate(m):
-		print '%s\t'%i,'%s\t'%status(team),team['team']
+		print('%s\t'%i,'%s\t'%status(team),team['team'])
 
 def get_dcmp_sizes(year):
 	if year==2017:
