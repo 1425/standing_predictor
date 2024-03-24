@@ -406,6 +406,12 @@ void demo(bool frc_api_local,auto& tba_f){
 	}
 }
 
+template<typename T,typename T2>
+vector<T>& operator-=(vector<T> &a,T2 const& t){
+	a=filter([&](auto x){ return x!=t; },a);
+	return a;
+}
+
 int main1(int argc,char **argv){
 	bool do_demo=0;
 	bool frc_api_local=0;
@@ -431,7 +437,8 @@ int main1(int argc,char **argv){
 			//not going to look into tiebreakers...?
 
 	multiset<tba::Team_key> teams_declined;
-	for(auto year:reversed(range(tba::Year{1992},tba::Year{2023}))){
+	auto years=range(tba::Year{1992},tba::Year{2024});
+	for(auto year:reversed(years)){
 		//PRINT(year)
 		for(auto d:districts(tba,year)){
 			//PRINT(d.key);
@@ -475,6 +482,9 @@ int main(int argc,char **argv){
 		cerr<<s<<"\n";
 		return 1;
 	}catch(No_data const& a){
+		cerr<<a<<"\n";
+		return 1;
+	}catch(std::invalid_argument const& a){
 		cerr<<a<<"\n";
 		return 1;
 	}
