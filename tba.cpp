@@ -71,7 +71,7 @@ map<Point,Pr> dcmp_distribution(TBA_fetcher &f){
 		for(auto team_data:*a){
 			for(auto event_points:team_data.event_points){
 				if(event_points.district_cmp){
-					v|=int(event_points.total);
+					v|=Point(event_points.total);
 				}
 			}
 		}

@@ -71,7 +71,17 @@ class flat_map{
 	auto size()const{
 		return data.size();
 	}
+
 };
+
+template<typename K,typename V>
+std::map<K,V> to_map(flat_map<K,V> const& a){
+	std::map<K,V> r;
+	for(auto [k,v]:a){
+		r[k]=v;
+	}
+	return r;
+}
 
 template<typename K,typename V>
 flat_map<K,V> to_flat_map(std::vector<std::pair<K,V>> &&a){
@@ -89,6 +99,16 @@ auto mapf(Func f,flat_map<K,V> const& a){
 template<typename K,typename V>
 std::vector<V> values(flat_map<K,V> const& a){
 	return mapf([](auto const& x){ return x.second; },a);
+}
+
+template<typename Func,typename K,typename V>
+auto map_values(Func f,flat_map<K,V> const& a){
+	using U=decltype(f(a.begin()->second));
+	flat_map<K,U> r;
+	for(auto [k,v]:a){
+		r[k]=f(v);
+	}
+	return r;
 }
 
 #endif

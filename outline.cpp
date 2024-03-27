@@ -36,6 +36,7 @@ district championship winners -> just assume that they would have enough points 
 #include "util.h"
 #include "flat_map.h"
 #include "flat_map2.h"
+
 //start generic stuff
 
 template<typename K,typename V,typename H>
@@ -62,6 +63,27 @@ bool operator==(std::optional<T> const& a,std::optional<T> const& b){
 		return 0;
 	}
 	return !b;
+}
+
+template<typename T>
+class multiset_flat{
+	using Data=flat_map<T,unsigned>;
+	Data data;
+
+	public:
+	multiset_flat& operator|=(T const& t){
+		data[t]++;
+		return *this;
+	}
+
+	auto get()const{
+		return data;
+	}
+};
+
+template<typename T>
+auto count(multiset_flat<T> const& a){
+	return a.get();
 }
 
 //start program-specific stuff.
@@ -194,8 +216,8 @@ map<Point,Pr> when_greater(map<Point,Pr> const& a,map<pair<Point,double>,Pr> con
 	return r;
 }
 
-template<typename T>
-auto when_greater(T const& a,map<pair<Point,double>,Pr> const& b){
+template<typename T,template<typename,typename> typename MAP>
+auto when_greater(T const& a,MAP<pair<Point,double>,Pr> const& b){
 	T r;
 	for(auto [ka,va]:a){
 		for(auto [kb,vb]:b){
@@ -277,7 +299,7 @@ map<tba::Team_key,Pr> run(
 ){
 	bool dcmp_played=0;
 
-	const auto pr=historical_event_pts(f);
+	const auto pr=flat_map2(historical_event_pts(f));
 	const auto chairmans=[&](){
 		if(ignore_chairmans){
 			return set<tba::Team_key>{};//chairmans.clear();
@@ -343,7 +365,7 @@ map<tba::Team_key,Pr> run(
 			if(events_left==1){
 				return Team_dist(mapf(
 					[&](auto p){
-						return make_pair(int(p.first+first_event_points),p.second);
+						return make_pair(Point(p.first+first_event_points),p.second);
 					},
 					pr
 				));
@@ -360,7 +382,7 @@ map<tba::Team_key,Pr> run(
 			team.rookie_bonus,
 			events_left
 		);
-		by_team[team.team_key]=make_pair(chairmans.count(team.team_key),dist);
+		by_team[team.team_key]=make_pair(chairmans.count(team.team_key),std::move(dist));
 	}
 
 	//print_lines(by_team);
@@ -451,7 +473,8 @@ map<tba::Team_key,Pr> run(
 	};
 
 	auto dcmp_distribution1=flat_map2<Point,Pr>{dcmp_played?map<Point,Pr>{{0,1}}:dcmp_distribution(f)};
-	multiset<pair<Point,Pr>> dcmp_cutoffs,cmp_cutoff;
+	//multiset<pair<Point,Pr>> dcmp_cutoffs,cmp_cutoff;
+	multiset_flat<pair<Point,Pr>> dcmp_cutoffs,cmp_cutoff;
 	const auto iterations=2000; //usually want this to be like 2k
 	for(auto iteration:range(iterations)){
 		(void)iteration;
@@ -465,7 +488,7 @@ map<tba::Team_key,Pr> run(
 		auto dcmp_cutoff=find_cutoff(final_points,teams_left_out);
 		dcmp_cutoffs|=dcmp_cutoff;
 
-		map<pair<bool,Point>,unsigned> post_dcmp_points;
+		flat_map2<pair<bool,Point>,unsigned> post_dcmp_points;
 		for(auto [earned,teams]:final_points){
 			auto [cm,points]=earned;
 
@@ -489,21 +512,24 @@ map<tba::Team_key,Pr> run(
 		cmp_cutoff|=find_cutoff(post_dcmp_points,cmp_teams_left_out);
 	}
 
-	map<pair<Point,Pr>,Pr> cutoff_pr=map_values(
+	//map<pair<Point,Pr>,Pr> cutoff_pr=flat_map2(map_values(
+	auto cutoff_pr=flat_map2(map_values(
 		[=](auto x){ return (0.0+x)/iterations; },
 		count(dcmp_cutoffs)
-	);
+	));
 
-	map<pair<Point,Pr>,Pr> cmp_cutoff_pr=map_values(
+	//map<pair<Point,Pr>,Pr> cmp_cutoff_pr=map_values(
+	auto cmp_cutoff_pr=flat_map2(map_values(
 		[=](auto x){ return (0.0+x)/iterations; },
 		count(cmp_cutoff)
-	);
+	));
 	cout<<"Championship cutoff\n";
 	for(auto x:cmp_cutoff_pr){
 		cout<<"\t"<<x<<"\n";
 	}
 
-	auto cutoff_level=[=](map<pair<Point,Pr>,Pr> const& cutoff_set,Pr probability_target){
+	//auto cutoff_level=[=](map<pair<Point,Pr>,Pr> const& cutoff_set,Pr probability_target){
+	auto cutoff_level=[=](auto const& cutoff_set,Pr probability_target){
 		double t=0;
 		for(auto [points,pr]:cutoff_set){
 			t+=pr;
@@ -524,7 +550,8 @@ map<tba::Team_key,Pr> run(
 	auto interesting_cutoffs_dcmp=interesting_cutoffs(cutoff_pr);
 	auto interesting_cutoffs_cmp=interesting_cutoffs(cmp_cutoff_pr);
 
-	vector<tuple<tba::Team_key,Pr,Point,Point,Point,Pr,Point,Point,Point>> result;
+	using Result_tuple=tuple<tba::Team_key,Pr,Point,Point,Point,Pr,Point,Point,Point>;
+	vector<Result_tuple> result;
 	for(auto team:d1){
 		//probability that get in
 		//subtract the cutoff pr
@@ -583,12 +610,12 @@ map<tba::Team_key,Pr> run(
 		auto points_so_far=team.point_total;
 		vector<Point> cmp_interesting;
 		for(auto [pr,pts]:interesting_cutoffs_cmp){
-			cmp_interesting|=max(0,int(pts.first-points_so_far));
+			cmp_interesting|=max(Point(0),Point(pts.first-points_so_far));
 		}
 
 		if(cm){
 			assert(pr_make>.99);
-			result|=make_tuple(
+			result|=Result_tuple(
 				team.team_key,
 				1.0,0,0,0,
 				cmp_make,cmp_interesting[0],cmp_interesting[1],cmp_interesting[2]
@@ -601,7 +628,7 @@ map<tba::Team_key,Pr> run(
 			vector<Point> interesting;
 			for(auto [pr,pts]:interesting_cutoffs_dcmp){
 				//cout<<pr<<":"<<max(0.0,pts-points_so_far)<<"\n";
-				auto value=max(0,int(pts.first-points_so_far));
+				auto value=max(Point(0),Point(pts.first-points_so_far));
 				interesting|=value;
 			}
 			assert(interesting.size()==3);
@@ -619,7 +646,17 @@ map<tba::Team_key,Pr> run(
 
 	auto team_info=district_teams(f,district);
 	{
-		auto g=gen_html(result,team_info,cutoff_pr,cmp_cutoff_pr,title,district_short,year,dcmp_size,points_used);
+		auto g=gen_html(
+			result,
+			team_info,
+			to_map(cutoff_pr),
+			to_map(cmp_cutoff_pr),
+			title,
+			district_short,
+			year,
+			dcmp_size,
+			points_used
+		);
 		ofstream f(output_dir+"/"+district.get()+extra+".html");
 		f<<g;
 	}
@@ -637,7 +674,7 @@ map<tba::Team_key,Pr> run(
 			cout<<get<2>(a)<<"\t";
 			cout<<get<3>(a)<<"\t";
 			cout<<get<4>(a)<<"\t";
-			auto f=filter_unique([=](auto f){ return f.key==get<0>(a); },team_info);
+			auto f=filter_unique([=](auto const& f){ return f.key==get<0>(a); },team_info);
 			using namespace tba;
 			cout<<f.nickname<<"\n";
 		}

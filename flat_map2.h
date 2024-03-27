@@ -60,6 +60,10 @@ class flat_map2{
 		bool operator==(proxy const&)const{
 			nyi
 		}
+
+		friend std::ostream& operator<<(std::ostream& o,proxy const& a){
+			return o<<"("<<a.first<<","<<a.second<<")";
+		}
 	};
 
 	struct iterator{
@@ -168,9 +172,17 @@ class flat_map2{
 		return *v_it;
 	}
 
-	/*operator map<K,V>()const{
+	std::map<K,V> to_map()const{
+		std::map<K,V> r;
+		for(auto i:range(keys.size())){
+			r[keys[i]]=values[i];
+		}
+		return r;
+	}
+
+	/*operator std::map<K,V>()const{
 		//for perf, never want to use this.
-		map<K,V> r;
+		std::map<K,V> r;
 		for(auto i:range(keys.size())){
 			r[keys[i]]=values[i];
 		}
@@ -180,11 +192,28 @@ class flat_map2{
 	auto get_values()const{
 		return values;
 	}
+
+	auto size()const{
+		return keys.size();
+	}
 };
+
+template<typename K,typename V>
+std::map<K,V> to_map(flat_map2<K,V> const& a){
+	return a.to_map();
+}
 
 template<typename K,typename V>
 auto values(flat_map2<K,V> const& a){
 	return a.get_values();
+}
+
+template<typename Func,typename K,typename V>
+auto mapf(Func f,flat_map2<K,V> const& a){
+	using U=decltype(f(*std::begin(a)));
+	std::vector<U> r(a.size());
+	std::transform(a.begin(),a.end(),r.begin(),f);
+	return r;
 }
 
 #endif

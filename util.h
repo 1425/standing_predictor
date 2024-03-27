@@ -311,9 +311,30 @@ std::vector<T> filter(F f,std::vector<T> const& v){
 
 template<typename Func,typename T>
 T filter_unique(Func f,std::vector<T> const& a){
-	auto found=filter(f,a);
+	/*auto found=filter(f,a);
 	assert(found.size()==1);
-	return found[0];
+	return std::move(found[0]);*/
+
+	//The version below is meant to be faster by not making the list
+	//this does not make a major difference though.
+	
+	auto it=a.begin();
+	while(it!=a.end() && !f(*it)){
+		++it;
+	}
+
+	if(it==a.end()){
+		assert(0);
+	}
+
+	auto r=*it;
+
+	++it;
+	while(it!=a.end() && !f(*it)){
+		++it;
+	}
+	assert(it==a.end());
+	return r;
 }
 
 template<typename T>
