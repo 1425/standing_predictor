@@ -13,6 +13,16 @@ std::ostream& operator<<(std::ostream& o,std::set<T> const& a){
 }
 
 template<typename T>
+std::ostream& operator<<(std::ostream& o,std::multiset<T> const& a){
+	o<<"{ ";
+	for(auto elem:to_set(a)){
+		o<<elem<<":"<<a.count(elem)<<" ";
+	}
+	o<<"}";
+	return o;
+}
+
+template<typename T>
 std::multiset<T>& operator|=(std::multiset<T>& a,T t){
 	a.insert(std::move(t));
 	return a;
@@ -59,6 +69,14 @@ std::set<T> to_set(std::vector<T> const& a){
 	return r;
 }
 
+template<typename T>
+std::set<T> to_set(std::optional<T> const& a){
+	if(a){
+		return std::set<T>{*a};
+	}
+	return {};
+}
+
 template<typename K,typename V>
 std::set<K> keys(std::map<K,V> const& a){
 	return to_set(mapf([](auto x){ return x.first; },a));
@@ -88,8 +106,22 @@ bool operator==(std::set<T> const& a,std::vector<T> const& b){
 }
 
 template<typename T>
+std::map<T,size_t> count(std::multiset<T> const& a){
+	std::map<T,size_t> r;
+	for(auto elem:a){
+		r[elem]=a.count(elem); //slow
+	}
+	return r;
+}
+
+template<typename T>
 std::multiset<T> to_multiset(std::vector<T> const& v){
 	return std::multiset<T>{v.begin(),v.end()};
+}
+
+template<typename T>
+auto count(std::vector<T> t){
+	return count(to_multiset(t));
 }
 
 template<typename T>
@@ -124,10 +156,19 @@ std::multiset<T>& operator|=(std::multiset<T> &a,std::vector<T> const& b){
 }
 
 template<typename T>
-std::map<T,size_t> count(std::multiset<T> const& a){
-	std::map<T,size_t> r;
+std::set<T> or_all(std::vector<std::optional<T>> const& a){
+	std::set<T> r;
 	for(auto elem:a){
-		r[elem]=a.count(elem); //slow
+		r|=elem;
+	}
+	return r;
+}
+
+template<typename T>
+std::set<T> or_all(std::vector<std::set<T>> const& a){
+	std::set<T> r;
+	for(auto elem:a){
+		r|=elem;
 	}
 	return r;
 }

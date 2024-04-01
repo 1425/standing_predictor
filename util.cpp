@@ -3,13 +3,13 @@
 #include<filesystem>
 
 std::string slurp(std::string const& filename){
-    std::ifstream f(filename.c_str());
-    if(!f.good()){
-        throw "File_not_found(filename)";
-    }
-    std::stringstream ss;
-    while(f>>ss.rdbuf());
-    return ss.str();
+	std::ifstream f(filename.c_str());
+	if(!f.good()){
+		throw "File_not_found(filename)";
+	}
+	std::stringstream ss;
+	while(f>>ss.rdbuf());
+	return ss.str();
 }
 
 double sum(std::vector<double> const& v){

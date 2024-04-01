@@ -14,20 +14,40 @@
 std::string slurp(std::string const& filename);
 
 template<typename T>
-void print_lines(T const& t){
-	for(auto elem:t){
-		std::cout<<elem<<"\n";
-	}
-}
-
-template<typename T>
 std::vector<T>& operator|=(std::vector<T> &a,T t){
 	a.push_back(t);
 	return a;
 }
 
+template<typename T>
+std::vector<T>& operator|=(std::vector<T> &a,std::optional<T> const& b){
+	if(b){
+		a|=*b;
+	}
+	return a;
+}
+
+template<template<typename> typename COLLECTION,typename T>
+std::vector<T>& operator|=(std::vector<T> &a,COLLECTION<T> const& b){
+	for(auto const& elem:b){
+		a|=elem;
+	}
+	return a;
+}
+
 template<typename A,typename B>
 std::ostream& operator<<(std::ostream&,std::pair<A,B> const&);
+
+template<typename T>
+std::ostream& operator<<(std::ostream&,std::optional<T> const&);
+
+template<typename A,typename B>
+std::ostream& operator<<(std::ostream& o,std::tuple<A,B> const& t){
+	o<<"(";
+	o<<std::get<0>(t)<<" ";
+	o<<std::get<1>(t);
+	return o<<")";
+}
 
 template<typename A,typename B,typename C>
 std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C> const& t){
@@ -82,6 +102,13 @@ std::ostream& operator<<(std::ostream& o,std::optional<T> const& a){
 std::ostream& operator<<(std::ostream&,std::invalid_argument const&);
 
 template<typename T>
+void print_lines(T const& t){
+	for(auto elem:t){
+		std::cout<<elem<<"\n";
+	}
+}
+
+template<typename T>
 std::vector<T> operator+(std::vector<T> a,std::vector<T> const& b){
 	a.insert(a.end(),b.begin(),b.end());
 	return a;
@@ -126,6 +153,15 @@ std::vector<T> operator+(std::vector<T> a,T b){
 }
 
 double sum(std::vector<double> const& v);
+
+template<typename T>
+T sum(std::vector<T> const& a){
+	T r{};
+	for(auto const& elem:a){
+		r+=elem;
+	}
+	return r;
+}
 
 template<typename Func,typename T>
 auto mapf(Func f,std::vector<T> const& v)->std::vector<decltype(f(v[0]))>{
@@ -282,6 +318,13 @@ auto enumerate(T const& t){
 	return enumerate_from(0,t);
 }
 
+template<typename A,typename B>
+std::vector<B> seconds(std::vector<std::pair<A,B>> a){
+	std::vector<B> r;
+	for(auto elem:a) r|=elem.second;
+	return r;
+}
+
 template<typename A,typename B,typename C,typename D,typename E>
 std::vector<B> seconds(std::vector<std::tuple<A,B,C,D,E>> const& v){
 	std::vector<B> r;
@@ -360,20 +403,20 @@ std::vector<T> reversed(std::vector<T> a){
 	return a;
 }
 
-template<typename T>
-T max(std::vector<T> const& v){
-	assert(v.size());
-	T r=v[0];
+template<template<typename> typename V,typename T>
+T max(V<T> const& v){
+	assert(!v.empty());
+	T r=*begin(v);
 	for(auto elem:v){
 		r=std::max(r,elem);
 	}
 	return r;
 }
 
-template<typename T>
-T min(std::vector<T> const& v){
-	assert(v.size());
-	T r=v[0];
+template<template<typename> typename V,typename T>
+T min(V<T> const& v){
+	assert(!v.empty());
+	T r=*begin(v);
 	for(auto elem:v){
 		r=std::min(r,elem);
 	}
@@ -455,5 +498,45 @@ bool all_equal(std::vector<T> const& a){
 }
 
 std::vector<std::string> find(std::string const& base,std::string const& name);
+
+template<template<typename> typename INNER,typename T>
+auto flatten(std::vector<INNER<T>> a){
+	std::vector<T> r;
+	for(auto const& elem:a){
+		r|=elem;
+	}
+	return r;
+}
+
+template<typename T>
+auto flatten(std::vector<std::optional<T>> a){
+	std::vector<T> r;
+	for(auto elem:a){
+		r|=elem;
+	}
+	return r;
+}
+
+template<typename T>
+bool operator==(std::optional<T> const& a,std::optional<T> const& b){
+	if(a){
+		if(b){
+			return *a==*b;
+		}
+		return 0;
+	}
+	return !b;
+}
+
+template<typename T>
+std::vector<T> nonempty(std::vector<std::optional<T>> const& a){
+	std::vector<T> r;
+	for(auto elem:a){
+		if(elem){
+			r|=*elem;
+		}
+	}
+	return r;
+}
 
 #endif

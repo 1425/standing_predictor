@@ -26,6 +26,7 @@ OUTLINE_OBJS= \
 	event.o \
 	arguments.o \
 	tba.o \
+	status.o \
 	$(TBA_OBJS)
 
 outline: $(OUTLINE_OBJS)

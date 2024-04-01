@@ -7,13 +7,6 @@
 using namespace std;
 using namespace z3;
 
-template<typename A,typename B>
-vector<B> seconds(vector<pair<A,B>> a){
-	vector<B> r;
-	for(auto elem:a) r|=elem.second;
-	return r;
-}
-
 template<typename T>
 T sum(vector<T> a){
 	T r{0};

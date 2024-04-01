@@ -36,6 +36,8 @@ district championship winners -> just assume that they would have enough points 
 #include "util.h"
 #include "flat_map.h"
 #include "flat_map2.h"
+#include "multiset_flat.h"
+#include "status.h"
 
 //start generic stuff
 
@@ -54,43 +56,11 @@ struct hash_pair{
 	}
 };
 
-template<typename T>
-bool operator==(std::optional<T> const& a,std::optional<T> const& b){
-	if(a){
-		if(b){
-			return *a==*b;
-		}
-		return 0;
-	}
-	return !b;
-}
-
-template<typename T>
-class multiset_flat{
-	using Data=flat_map<T,unsigned>;
-	Data data;
-
-	public:
-	multiset_flat& operator|=(T const& t){
-		data[t]++;
-		return *this;
-	}
-
-	auto get()const{
-		return data;
-	}
-};
-
-template<typename T>
-auto count(multiset_flat<T> const& a){
-	return a.get();
-}
-
 //start program-specific stuff.
 
 using namespace std;
 
-flat_map<Point,Pr> convolve(map<Point,Pr> const& a,map<Point,Pr> const& b){
+flat_map<Point,Pr> convolve(std::map<Point,Pr> const& a,std::map<Point,Pr> const& b){
 	flat_map<Point,Pr> r;
 	for(auto [a1,ap]:a){
 		for(auto [b1,bp]:b){
@@ -107,7 +77,7 @@ flat_map<Point,Pr> convolve(map<Point,Pr> const& a,map<Point,Pr> const& b){
 	return r;
 }
 
-flat_map<Point,Pr> convolve(flat_map<Point,Pr> const& a,map<Point,Pr> const& b){
+flat_map<Point,Pr> convolve(flat_map<Point,Pr> const& a,std::map<Point,Pr> const& b){
 	flat_map<Point,Pr> r;
 	for(auto [a1,ap]:a){
 		for(auto [b1,bp]:b){
@@ -124,7 +94,7 @@ flat_map<Point,Pr> convolve(flat_map<Point,Pr> const& a,map<Point,Pr> const& b){
 	return r;
 }
 
-flat_map2<Point,Pr> convolve(flat_map2<Point,Pr> const& a,map<Point,Pr> const& b){
+flat_map2<Point,Pr> convolve(flat_map2<Point,Pr> const& a,std::map<Point,Pr> const& b){
 	flat_map2<Point,Pr> r;
 	for(auto [a1,ap]:a){
 		for(auto [b1,bp]:b){
@@ -175,8 +145,8 @@ flat_map2<Point,Pr> convolve(flat_map2<Point,Pr> const& a,flat_map2<Point,Pr> co
 	return r;
 }
 
-map<Point,Pr> operator+(map<Point,Pr> a,int i){
-	map<Point,Pr> r;
+std::map<Point,Pr> operator+(std::map<Point,Pr> a,int i){
+	std::map<Point,Pr> r;
 	for(auto [k,v]:a){
 		r[k+i]=v;
 	}
@@ -693,6 +663,7 @@ struct Args{
 	tba::Year year{2022};
 	optional<tba::District_key> district;
 	TBA_fetcher_config tba;
+	bool demo=0;
 };
 
 Args parse_args(int argc,char **argv){
@@ -714,6 +685,11 @@ Args parse_args(int argc,char **argv){
 		r.district
 	);
 	r.tba.add(p);
+	p.add(
+		"--demo",{},
+		"Explore data for possible future use",
+		r.demo
+	);
 	p.parse(argc,argv);
 	return r;
 }
@@ -722,6 +698,10 @@ int main1(int argc,char **argv){
 	auto args=parse_args(argc,argv);
 	std::filesystem::create_directories(args.output_dir);
 	auto tba_fetcher=args.tba.get();
+
+	if(args.demo){
+		return demo(tba_fetcher);
+	}
 
 	auto d=districts(tba_fetcher,args.year);
 	map<tba::District_key,map<tba::Team_key,Pr>> dcmp_pr;

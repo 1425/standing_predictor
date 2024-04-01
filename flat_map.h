@@ -1,6 +1,9 @@
 #ifndef FLAT_MAP_H
 #define FLAT_MAP_H
 
+#include<algorithm>
+#include "map.h"
+
 template<typename K,typename V>
 class flat_map{
 	using Data=std::vector<std::pair<K,V>>;
@@ -72,6 +75,9 @@ class flat_map{
 		return data.size();
 	}
 
+	auto empty()const{
+		return data.empty();
+	}
 };
 
 template<typename K,typename V>
@@ -84,13 +90,19 @@ std::map<K,V> to_map(flat_map<K,V> const& a){
 }
 
 template<typename K,typename V>
+std::ostream& operator<<(std::ostream& o,flat_map<K,V> const& a){
+	//obviously not the most efficient way to do this.
+	return o<<to_map(a);
+}
+
+template<typename K,typename V>
 flat_map<K,V> to_flat_map(std::vector<std::pair<K,V>> &&a){
 	return flat_map<K,V>{std::forward<std::vector<std::pair<K,V>>>(a)};
 }
 
 template<typename Func,typename K,typename V>
 auto mapf(Func f,flat_map<K,V> const& a){
-	using U=decltype(f(*begin(a)));
+	using U=decltype(f(*std::begin(a)));
 	std::vector<U> r(a.size());
 	std::transform(a.begin(),a.end(),r.begin(),f);
 	return r;
@@ -99,6 +111,11 @@ auto mapf(Func f,flat_map<K,V> const& a){
 template<typename K,typename V>
 std::vector<V> values(flat_map<K,V> const& a){
 	return mapf([](auto const& x){ return x.second; },a);
+}
+
+template<typename K,typename V>
+std::vector<K> keys(flat_map<K,V> const& a){
+	return mapf([](auto const& x){ return x.first; },a);
 }
 
 template<typename Func,typename K,typename V>
