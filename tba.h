@@ -48,7 +48,7 @@ class TBA_fetcher{
 
 struct TBA_fetcher_config{
 	std::string auth_key_path,cache_path;
-	bool local_only;
+	bool local_only,log;
 
 	TBA_fetcher_config();
 

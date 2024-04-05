@@ -4,6 +4,54 @@
 
 using namespace std;
 
+template<typename T>
+T min(T a,T b,T c){
+	return std::min(
+		std::min(a,b),
+		c
+	);
+}
+
+template<typename Func,typename T>
+auto sort_by(std::vector<T> a,Func f){
+	std::sort(
+		a.begin(),
+		a.end(),
+		[&](auto a,auto b){
+			return f(a)<f(b);
+		}
+	);
+	return a;
+}
+
+size_t levenshtein_distance(std::string a,std::string b){
+	//Warning: This is written with no regard to performance.
+	//Will explode on large input.
+
+	if(a.empty()) return b.size();
+	if(b.empty()) return a.size();
+
+	auto a0=a[0];
+	auto ar=a.substr(1,a.size());
+	auto b0=b[0];
+	auto br=b.substr(1,b.size());
+
+	if(a0==b0){
+		return levenshtein_distance(ar,br);
+	}
+	
+	return 1+min(
+		//insert
+		levenshtein_distance(a,br),
+
+		//delete
+		levenshtein_distance(ar,b),
+
+		//replace
+		levenshtein_distance(ar,br)
+	);
+}
+
 bool decode(span<char*> s,bool const*){
 	if(s.empty()){
 		return 1;
@@ -105,6 +153,16 @@ void Argument_parser::parse(int argc,char **argv){
 		auto f=impl->find(s);
 		if(!f){
 			cerr<<"Error: Unrecognized argument: "<<argv[i]<<"\n";
+	
+			auto flags=mapf([](auto x){ return x.name; },impl->flags);
+			auto m=sort_by(
+				flags,
+				[=](auto x){ return make_pair(levenshtein_distance(argv[i],x),x); }
+			);
+			cerr<<"\nAvailable arguments:\n";
+			for(auto const& elem:m){
+				cout<<"\t"<<elem<<"\n";
+			}
 			exit(1);
 		}
 		i++;

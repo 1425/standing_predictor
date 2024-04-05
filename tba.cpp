@@ -154,7 +154,8 @@ std::pair<tba::HTTP_Date,tba::Data> TBA_fetcher::fetch(tba::URL const& url)const
 TBA_fetcher_config::TBA_fetcher_config():
 	auth_key_path("../tba/auth_key"),
 	cache_path("../tba/cache.db"),
-	local_only(0)
+	local_only(0),
+	log(0)
 {}
 
 void TBA_fetcher_config::add(Argument_parser &f){
@@ -173,13 +174,35 @@ void TBA_fetcher_config::add(Argument_parser &f){
 		"Do not attempt to talk to The Blue Alliance; use only what is in cache.",
 		local_only
 	);
+	f.add(
+		"--tba_log",{},
+		"Print which tba pages are used, even if cached",
+		log
+	);
 }
 
-TBA_fetcher TBA_fetcher_config::get()const{
-	if(local_only){
-		return new Local_fetcher_tba{};
+struct TBA_fetcher_log{
+	TBA_fetcher inner;
+	std::vector<tba::URL> data;
+
+	std::pair<tba::HTTP_Date,tba::Data> fetch(tba::URL url){
+		//data|=url;
+		PRINT(url);
+		return inner.fetch(url);
 	}
-	return new tba::Cached_fetcher{get_tba_fetcher(auth_key_path,cache_path)};
+};
+
+TBA_fetcher TBA_fetcher_config::get()const{
+	TBA_fetcher r=[&]()->TBA_fetcher{
+		if(local_only){
+			return new Local_fetcher_tba{};
+		}
+		return new tba::Cached_fetcher{get_tba_fetcher(auth_key_path,cache_path)};
+	}();
+	if(log){
+		return new TBA_fetcher_log(std::move(r),{});
+	}
+	return r;
 }
 
 TBA_fetcher get_tba_fetcher(
