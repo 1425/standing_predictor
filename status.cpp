@@ -789,6 +789,7 @@ static int event_points_multiplier(TBA_fetcher &tba_fetcher,tba::Event_key event
 		case DISTRICT:
 			return 1;
 		case DISTRICT_CMP_DIVISION:
+		case DISTRICT_CMP:
 			return 3;
 		default:
 			PRINT(e.event_type);
