@@ -7,6 +7,7 @@
 #include<vector>
 #include<optional>
 #include<algorithm>
+#include<map>
 
 #define PRINT(X) { std::cout<<""#X<<":"<<(X)<<"\n"; }
 #define nyi { std::cout<<"nyi "<<__FILE__<<":"<<__LINE__<<"\n"; exit(44); }
@@ -34,6 +35,10 @@ std::vector<T>& operator|=(std::vector<T> &a,COLLECTION<T> const& b){
 	}
 	return a;
 }
+
+//definition in map.h.
+template<typename K,typename V>
+std::ostream& operator<<(std::ostream&,std::map<K,V> const&);
 
 template<typename A,typename B>
 std::ostream& operator<<(std::ostream&,std::pair<A,B> const&);
@@ -163,13 +168,28 @@ T sum(std::vector<T> const& a){
 	return r;
 }
 
+class vector_void{
+	public:
+	explicit vector_void(size_t){}
+};
+
+std::ostream& operator<<(std::ostream& o,vector_void);
+
 template<typename Func,typename T>
-auto mapf(Func f,std::vector<T> const& v)->std::vector<decltype(f(v[0]))>{
-	std::vector<decltype(f(v[0]))> r;
-	for(auto elem:v){
-		r|=f(elem);
+auto mapf(Func f,std::vector<T> const& v){
+	using E=decltype(f(*std::begin(v)));
+	if constexpr(std::is_same<void,E>()){
+		for(auto const& elem:v){
+			f(elem);
+		}
+		return vector_void{v.size()};
+	}else{
+		std::vector<decltype(f(v[0]))> r;
+		for(auto const& elem:v){
+			r|=f(elem);
+		}
+		return r;
 	}
-	return r;
 }
 
 template<typename Func,typename A,typename B,typename C,typename D>
@@ -437,6 +457,15 @@ T median(std::vector<T> const& v){
 }
 
 template<typename T>
+std::vector<T> range(T start,T lim,T step){
+	std::vector<T> r;
+	for(auto i=start;i<lim;i+=step){
+		r|=i;
+	}
+	return r;
+}
+
+template<typename T>
 std::vector<T> range(T start,T lim){
 	std::vector<T> r;
 	for(auto i=start;i<lim;i++){
@@ -537,6 +566,27 @@ std::vector<T> nonempty(std::vector<std::optional<T>> const& a){
 		}
 	}
 	return r;
+}
+
+template<typename T>
+std::vector<T> take(size_t n,std::vector<T> const& v){
+	return std::vector<T>{v.begin(),v.begin()+std::min(n,v.size())};
+}
+
+template<typename Func,typename T>
+auto sort_by(std::vector<T> a,Func f){
+	std::sort(
+		a.begin(),
+		a.end(),
+		[&](auto a,auto b){
+			return f(a)<f(b);
+		}
+	);
+	return a;
+}
+
+auto sort_by(auto a,auto f){
+	return sort_by(to_vec(a),f);
 }
 
 #endif

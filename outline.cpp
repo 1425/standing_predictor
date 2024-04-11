@@ -258,14 +258,14 @@ auto find_cutoff(flat_map2<pair<bool,Point>,unsigned> these_points,unsigned elim
 
 map<tba::Team_key,Pr> run(
 	TBA_fetcher &f,
-	std::string const& output_dir,
-	tba::District_key district,
-	tba::Year year,
-	int dcmp_size,
-	string const& title,
-	string const& district_short,
-	std::string extra="",
-	bool ignore_chairmans=0
+	std::string const& output_dir, //output
+	tba::District_key district, //data in
+	tba::Year year, //data in & out
+	int dcmp_size, //how
+	string const& title, //output
+	string const& district_short, //output
+	std::string extra="", //output
+	bool ignore_chairmans=0 //how
 ){
 	bool dcmp_played=0;
 

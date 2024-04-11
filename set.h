@@ -4,25 +4,6 @@
 #include<set>
 
 template<typename T>
-std::ostream& operator<<(std::ostream& o,std::set<T> const& a){
-	o<<"{ ";
-	for(auto const& x:a){
-		o<<x<<" ";
-	}
-	return o<<"}";
-}
-
-template<typename T>
-std::ostream& operator<<(std::ostream& o,std::multiset<T> const& a){
-	o<<"{ ";
-	for(auto elem:to_set(a)){
-		o<<elem<<":"<<a.count(elem)<<" ";
-	}
-	o<<"}";
-	return o;
-}
-
-template<typename T>
 std::multiset<T>& operator|=(std::multiset<T>& a,T t){
 	a.insert(std::move(t));
 	return a;
@@ -171,6 +152,30 @@ std::set<T> or_all(std::vector<std::set<T>> const& a){
 		r|=elem;
 	}
 	return r;
+}
+
+template<typename T>
+std::ostream& operator<<(std::ostream& o,std::set<T> const& a){
+	o<<"{ ";
+	for(auto const& x:a){
+		o<<x<<" ";
+	}
+	return o<<"}";
+}
+
+template<typename T>
+std::ostream& operator<<(std::ostream& o,std::multiset<T> const& a){
+	o<<"{ ";
+	for(auto elem:to_set(a)){
+		o<<elem<<":"<<a.count(elem)<<" ";
+	}
+	o<<"}";
+	return o;
+}
+
+template<typename T>
+std::vector<T> to_vec(std::set<T> const& a){
+	return std::vector<T>{a.begin(),a.end()};
 }
 
 #endif

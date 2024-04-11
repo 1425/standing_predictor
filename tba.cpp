@@ -7,15 +7,6 @@
 
 using namespace std;
 
-//start generic code
-
-template<typename T>
-std::vector<T> take(size_t n,std::vector<T> const& v){
-	return std::vector<T>{v.begin(),v.begin()+std::min(n,v.size())};
-}
-
-//start program-specific stuff
-
 TBA_fetcher_base::~TBA_fetcher_base(){}
 
 tba::Cached_fetcher get_tba_fetcher(std::string const& auth_key_path,std::string const& cache_path){

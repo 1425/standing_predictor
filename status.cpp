@@ -2,15 +2,53 @@
 #include<iomanip>
 #include "outline.h"
 #include<optional>
-#include<set>
+#include<cmath>
 #include "../tba/tba.h"
+#include "set.h"
+#include "util.h"
 #include "map.h"
 #include "tba.h"
-#include "util.h"
-#include "set.h"
 #include "print_r.h"
 #include "multiset_flat.h"
 #include "event.h"
+
+auto head(auto x){
+	return take(10,x);
+}
+
+template<typename T>
+auto seconds(std::vector<std::vector<T>> const& a){
+	return mapf(
+		[](auto x){
+			assert(x.size()>=2);
+			return x[1];
+		},
+		a
+	);
+}
+
+template<typename T>
+auto second(std::vector<T> const& a){
+	assert(a.size()>=2);
+	return a[1];
+}
+
+template<typename T,size_t N>
+auto second(std::array<T,N> const& a){
+	static_assert(N>=2);
+	return a[1];
+}
+
+template<typename T>
+auto seconds(std::vector<T> const& a){
+	return MAP(second,a);
+}
+
+std::string as_pct(double d){
+	std::stringstream ss;
+	ss<<int(d*100)<<'%';
+	return ss.str();
+}
 
 template<typename K,typename V>
 std::map<V,std::vector<K>> invert(std::map<K,V> const& a){
@@ -94,6 +132,144 @@ std::ostream& operator<<(std::ostream& o,std::array<T,N> const& a){
 		o<<elem<<" ";
 	}
 	return o<<"]";
+}
+
+auto swap_pairs(auto a){
+	return mapf([](auto x){ return make_pair(x.second,x.first); },a);
+}
+
+template<typename T>
+std::set<T> operator-(std::set<T> a,T t){
+	a.erase(t);
+	return a;
+}
+
+template<typename T>
+auto first(T const& t){
+	assert(!t.empty());
+	return *begin(t);
+}
+
+template<typename T>
+auto firsts(T const& t){
+	return MAP(first,t);
+}
+
+template<typename T>
+auto to_vec(std::multiset<T> const& a){
+	return std::vector<T>{a.begin(),a.end()};
+}
+
+auto square(auto x){
+	return x*x;
+}
+
+auto variance(std::vector<int> v)->double{
+	auto mu=mean(v);
+	return mean(mapf(
+		[mu](auto x){ return square(x-mu); },
+		v
+	));
+}
+
+auto std_dev(std::vector<int> v){
+	return sqrt(variance(v));
+}
+
+template<typename T>
+auto std_dev(std::multiset<T> const& a){
+	return std_dev(to_vec(a));
+}
+
+auto mad(std::vector<int> v)->double{
+	//mean absolute devaition
+	auto mu=mean(v);
+	return mean(mapf(
+		[mu](auto x){ return fabs(x-mu); },
+		v
+	));
+}
+
+template<typename T>
+auto mad(std::multiset<T> a){
+	return mad(to_vec(a));
+}
+
+static auto consolidate_inner(std::vector<int> in){
+	auto s=to_set(in);
+	std::vector<std::pair<int,int>> v;
+	if(s.empty()){
+		return v;
+	}
+	int start=*begin(s);
+	for(int i=start;i<=max(s);++i){
+		if(!s.count(i)){
+			v|=std::make_pair(start,i-1);
+			do{
+				i++;
+			}while(i<=max(s) && s.count(i)==0);
+			start=i;
+		}
+	}
+	v|=std::make_pair(start,max(s));
+	return v;
+}
+
+auto consolidate(std::vector<int> in){
+	auto v=consolidate_inner(in);
+	std::stringstream ss;
+	for(auto x:v){
+		if(x.first==x.second){
+			ss<<x.first;
+		}else{
+			ss<<x;
+		}
+		ss<<' ';
+	}
+	return ss.str();
+}
+
+#define RM_CONST(X) typename std::remove_cv<X>::type
+#define RM_REF(X) typename std::remove_reference<X>::type
+#define ELEM(X) RM_CONST(RM_REF(decltype(*std::begin(X))))
+
+auto cross(auto a,auto b){
+	using A=ELEM(a);
+	using B=ELEM(b);
+	std::vector<std::pair<A,B>> r;
+	for(auto a1:a){
+		for(auto b1:b){
+			r|=std::make_pair(a1,b1);
+		}
+	}
+	return r;
+}
+
+template<typename T>
+auto to_array(std::pair<T,T> a){
+	return std::array<T,2>{a.first,a.second};
+}
+
+template<typename T>
+auto mean(std::multiset<T> const& a){
+	return mean(to_vec(a));
+}
+
+auto quartiles(auto a){
+	assert(!a.empty());
+	auto b=sorted(a);
+	return std::array{b[b.size()/4],b[b.size()/2],b[b.size()*3/4]};
+}
+
+
+template<typename Func,typename T>
+auto filter_first(Func f,T const& t){
+	for(auto const& elem:t){
+		if(f(elem)){
+			return elem;
+		}
+	}
+	assert(0);
 }
 
 using namespace std;
@@ -1024,7 +1200,233 @@ static void award_plus_elim(TBA_fetcher &tba_fetcher){
 	}
 }
 
+static const int ROUND_AMOUNT=1;
+
+static int round(int x){
+	return x/ROUND_AMOUNT*ROUND_AMOUNT;
+}
+
+template<typename T,size_t N>
+static auto round(std::array<T,N> a){
+	return MAP(round,a);
+}
+
+template<typename T>
+static auto round(vector<T> a){
+	return MAP(round,a);
+}
+
+/*void pre_dcmp_prediction(TBA_fetcher &tba_fetcher){
+	
+}*/
+
+static void skill_chart(TBA_fetcher &tba_fetcher){
+	//TODO: Check how large the sample sizes are for the pre-dcmp totals
+
+	//for each point total at first event, what is the distribution of pts at second event?
+	//also would want to have some sort of measurement between first 2 events and dcmp
+	//also would be interesting to see distribution of season totals after first event
+
+	//These result in not super intuitive results unless you put in a huge amount of smoothing.
+	//Don't really have a principled way to account for amount of smoothing to apply
+	//Maybe try to see how many pseudo counts entered give the best approximation between 
+	//different years?
+
+	//Also TODO: figure out where some of the unusually high point totals come from
+	//TODO: Deal w/ the teams that don't make it to a second event as 0.
+	//TODO: Produce model of if teams ever re-appear after missing an event that they are scheduled for.
+
+	vector<tba::District_Ranking> r;
+	auto years=to_set(range(2015,2025))-2020;
+	//point totals are totally messed up for 2020 because of the DCMP not having matches, but still awarding points
+	//for some awards
+	for(auto year:years){
+		for(auto district:district_keys(tba_fetcher,tba::Year{year})){
+			auto d=district_rankings(tba_fetcher,district);
+			assert(d);
+			r|=*d;
+		}
+	}
+
+	auto attendance_type=[](auto x){
+		//print_r(x.event_points);
+		auto m=mapf([](auto x){ return x.district_cmp; },x.event_points);
+		return to_multiset(m);
+	};
+
+	auto c=count(mapf(attendance_type,r));
+	//print_lines(sorted(swap_pairs(c)));
+
+	//there are actually 8 times teams don't have a second district event 
+	//but did attend their district championship.
+
+	/*auto f=filter([&](auto x){ return attendance_type(x)==multiset<bool>{0,1}; },r);
+	print_r(f);
+	nyi*/
+
+	auto a=mapf(
+		[](auto x){
+			//print_r(x.event_points);
+			auto g=group([](auto y){ return y.district_cmp; },x.event_points);
+			//print_r(g);
+			auto v=map_values(
+				[](auto x){
+					return mapf([](auto y){ return y.total; },x);
+				},
+				g
+			);
+			return v;
+		},
+		r
+	);
+	//print_lines(a);
+
+	/*auto m=mapf(
+		[](auto x){
+			return mapf([](auto y){ return y.total; },x.event_points);
+		},
+		r
+	);*/
+	//print_r(m);
+
+	//at some point, should run this with missing events being counted as 0.
+	/*auto m3=mapf(
+		[](auto x){ return take(2,x); },
+		filter([](auto x){ return x.size()>=2; },m)
+	);
+	*/
+	vector<std::array<int,2>> m3;
+	/*for(auto elem:a){
+		auto p=elem[0];
+		switch(p.size()){
+			case 0:
+				continue;
+			case 1:
+				m3|=std::array<int,2>{int(p[0]),0};
+				break;
+			case 2:
+				m3|=std::array<int,2>{int(p[0]),int(p[1])};
+				break;
+			default:
+				assert(0);
+		}
+	}*/
+	for(auto elem:filter([](auto x){ return x[1].size(); },a)){
+		auto pre=sum(elem[0]);
+		auto post=sum(elem[1]);
+		m3|=std::array<int,2>{pre,post};
+	}
+
+	auto m2=round(m3);
+
+	auto max_value=max(seconds(m2));
+	PRINT(max_value);
+
+	PRINT(consolidate(firsts(m2)));
+	PRINT(consolidate(seconds(m2)));
+	PRINT(m2.size());
+	auto x=to_set(firsts(m2));
+	auto y=to_set(seconds(m2));
+	PRINT(x.size());
+	PRINT(y.size());
+	{
+		auto c=x.size()*y.size();
+		PRINT(c);
+		PRINT(m2.size()/double(c));
+	}
+
+	auto possible_combos=cross(x,y);
+	auto actual_combos=to_multiset(m2);
+
+	//map<pair<int,int>,unsigned> density;
+	auto density=count(m2);
+
+	auto distance=[&](auto x1,auto y1){
+		auto d=density[array{x1,y1}];
+		if(d) return 0;
+
+		//by_distance
+		auto s=sort_by(to_vec(x),[=](auto a){ return abs(a-x1); });
+		auto f=filter([&](auto x2){ return density[array{x2,y1}]; },s);
+		assert(!f.empty());
+		auto found=f[0];
+		auto dist=abs(found-x1);
+		return dist;
+	};
+
+	//e2 numbers -> e1 number -> int
+	//how to weight 
+	//what % of the possible items have nonzero?
+
+	//would make sense to have it so that expand region until get at least N counts?
+	//also, would make sense to divide by the size of the region that was explored
+	//to that distance
+
+	#if 0
+	for(auto x1:x){ //the performance in the first event.
+		vector<int> distances;
+		for(auto y1:y){
+			auto d=distance(x1,y1);
+			//cout<<x1<<" "<<y1<<" "<<d<<"\n";
+			distances|=d;
+		}
+		auto w=mapf([](auto x){ return (x==0)?0:(double(1)/x); },distances);
+		cout<<x1<<" "<<min(distances)<<" "<<max(distances)<<" "<<quartiles(distances);
+		auto n=filter([=](auto p){ return p[0]==x1; },m3).size();
+		cout<<" "<<n;
+		cout<<" "<<sum(w)<<"\n";
+		//cout<<distances<<"\n";
+	}
+	nyi
+	#endif
+
+	auto m=mapf([=](auto x){ return actual_combos.count(to_array(x)); },possible_combos);
+	//what the distribution of how many occurrances have appeared is.
+	//turns of like half of possible things have never occurred.
+	//print_lines(count(m));
+
+	double old_mean=0;
+	vector<double> means;
+	for(auto [k,v]:group([](auto x){ return x[0]; },m2)){
+		auto v2=to_multiset(seconds(v));
+		auto m2=mean(v2);
+		auto dm=m2-old_mean;
+		means|=dm;
+		old_mean=m2;
+
+		cout<<k<<"\t"<<v2.size()<<"\t"<<min(v2)<<"\t"<<max(v2)<<"\t"<<mean(v2);
+		cout<<"\t"<<mad(v2)<<"\t"<<std_dev(v2);
+		cout<<"\t"<<dm<<"\n";
+		//would be interesting to see how far away the nearest thing is with that value
+		//then have the value be 1/that.  
+		//
+	}
+
+	cout<<"mean differences:\t"<<min(means)<<"\t"<<mean(means)<<"\t"<<max(means)<<"\n";
+	PRINT(quartiles(means));
+	cout<<"\n";
+
+
+	//print_lines(sorted(m2));
+	for(auto [k,v]:group([](auto x){ return x[0]; },m2)){
+		auto v2=to_multiset(seconds(v));
+		//cout<<k<<"\t"<<v2.size()<<"\t"<<min(v2)<<"\t"<<mean(v2)<<"\t"<<max(v2)<<"\n";
+		cout<<k<<"\t";
+		//cout<<v.size()<<"\t";
+		//cout<<map_values([=](auto x){ return as_pct(double(x)/v2.size()); },count(v2));
+		double total=0;
+		for(auto i:range(0,max_value+1,ROUND_AMOUNT)){
+			auto value=v2.count(i)/double(v2.size());
+			total+=value;
+			cout<<total<<"\t";
+		}
+		cout<<"\n";
+	}
+}
+
 int demo(TBA_fetcher& tba_fetcher){
+	skill_chart(tba_fetcher);
+
 	//might eventually want to have a score distribution for in-progress events
 	//that is different
 	//or could just discount all the numbers from events that are currently in progress

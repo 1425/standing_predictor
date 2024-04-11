@@ -12,18 +12,6 @@ T min(T a,T b,T c){
 	);
 }
 
-template<typename Func,typename T>
-auto sort_by(std::vector<T> a,Func f){
-	std::sort(
-		a.begin(),
-		a.end(),
-		[&](auto a,auto b){
-			return f(a)<f(b);
-		}
-	);
-	return a;
-}
-
 size_t levenshtein_distance(std::string a,std::string b){
 	//Warning: This is written with no regard to performance.
 	//Will explode on large input.

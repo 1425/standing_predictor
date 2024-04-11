@@ -120,3 +120,6 @@ std::vector<std::string> find(std::string const& base,std::string const& name){
 	return r;
 }
 
+std::ostream& operator<<(std::ostream& o,vector_void){
+	return o<<"vector_void";
+}
