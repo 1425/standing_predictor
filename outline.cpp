@@ -262,7 +262,7 @@ using Team_dist=flat_map2<Point,Pr>;
 
 struct Run_result{
 	std::vector<Result_tuple> result;
-	flat_map2<std::pair<int,double>,double> cutoff_pr,cmp_cutoff_pr;
+	flat_map2<std::pair<Point,double>,double> cutoff_pr,cmp_cutoff_pr;
 	std::map<tba::Team_key,std::tuple<std::vector<int>,int,int>> points_used;
 	map<tba::Team_key,pair<bool,Team_dist>> by_team;
 };

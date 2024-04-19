@@ -14,6 +14,8 @@
 
 using namespace std;
 
+//TODO: Calculate mean pts by event size.
+
 //Stuff to deal w/ probability distributions
 
 template<template<typename,typename> typename MAP>
@@ -837,7 +839,7 @@ static std::set<tba::Team_key> district_teams_at_cmp(TBA_fetcher& tba_fetcher,tb
 static auto elimination_points(TBA_fetcher &tba_fetcher,tba::Event_key const& event){
 	auto e=tba::event_district_points(tba_fetcher,event);
 	assert(e);
-	return mapf([](auto x){ return x.elim_points; },values(e->points));
+	return mapf([](auto x){ return Point(x.elim_points); },values(e->points));
 }
 
 static std::vector<tba::Event_key> local_district_events(TBA_fetcher &tba_fetcher,tba::Year year){
@@ -849,14 +851,14 @@ static std::vector<tba::Event_key> local_district_events(TBA_fetcher &tba_fetche
 	return keys(events);
 }
 
-static map<int,double> elimination_points(TBA_fetcher &tba_fetcher,tba::Year year){
+static map<Point,double> elimination_points(TBA_fetcher &tba_fetcher,tba::Year year){
 	auto m=mapf(
 		[&](auto x){ return elimination_points(tba_fetcher,x); },
 		local_district_events(tba_fetcher,year)
 	);
 	auto m2=flatten(m);
 	auto c=count(flatten(m));
-	return to_map(mapf([=](auto x){ return make_pair(int(x.first),double(x.second)/m2.size()); },c));
+	return to_map(mapf([=](auto x){ return make_pair(x.first,double(x.second)/m2.size()); },c));
 }
 
 static void elimination_points(TBA_fetcher &tba_fetcher){
@@ -879,10 +881,10 @@ static void elimination_points(TBA_fetcher &tba_fetcher){
 static auto award_points(TBA_fetcher &tba_fetcher,tba::Event_key const& event){
 	auto e=tba::event_district_points(tba_fetcher,event);
 	assert(e);
-	return mapf([](auto x){ return x.award_points; },values(e->points));
+	return mapf([](auto x){ return Point(x.award_points); },values(e->points));
 }
 
-static map<int,double> award_points(TBA_fetcher &tba_fetcher,tba::Year const& year){
+static map<Point,double> award_points(TBA_fetcher &tba_fetcher,tba::Year const& year){
 	auto m=mapf(
 		[&](auto x){ return award_points(tba_fetcher,x); },
 		local_district_events(tba_fetcher,year)
@@ -911,17 +913,17 @@ static void award_points(TBA_fetcher &tba_fetcher){
 static auto award_plus_elim(TBA_fetcher &tba_fetcher,tba::Event_key event){
 	auto e=tba::event_district_points(tba_fetcher,event);
 	assert(e);
-	return mapf([](auto x){ return x.award_points+x.elim_points; },values(e->points));
+	return mapf([](auto x){ return Point(x.award_points+x.elim_points); },values(e->points));
 }
 
-static map<int,double> award_plus_elim(TBA_fetcher &tba_fetcher,tba::Year year){
+static map<Point,double> award_plus_elim(TBA_fetcher &tba_fetcher,tba::Year year){
 	auto m=mapf(
 		[&](auto x){ return award_plus_elim(tba_fetcher,x); },
 		local_district_events(tba_fetcher,year)
 	);
 	auto m2=flatten(m);
 	auto c=count(m2);
-	return to_map(mapf([=](auto x){ return make_pair(int(x.first),double(x.second)/m2.size()); },c));
+	return to_map(mapf([=](auto x){ return make_pair(x.first,double(x.second)/m2.size()); },c));
 }
 
 static void award_plus_elim(TBA_fetcher &tba_fetcher){
