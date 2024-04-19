@@ -1,6 +1,7 @@
 #include "util.h"
 #include<fstream>
 #include<filesystem>
+#include "set.h"
 
 std::string slurp(std::string const& filename){
 	std::ifstream f(filename.c_str());
@@ -123,3 +124,44 @@ std::vector<std::string> find(std::string const& base,std::string const& name){
 std::ostream& operator<<(std::ostream& o,vector_void){
 	return o<<"vector_void";
 }
+
+static auto consolidate_inner(std::vector<int> const& in){
+	auto s=to_set(in);
+	std::vector<std::pair<int,int>> v;
+	if(s.empty()){
+		return v;
+	}
+	int start=*begin(s);
+	for(int i=start;i<=max(s);++i){
+		if(!s.count(i)){
+			v|=std::make_pair(start,i-1);
+			do{
+				i++;
+			}while(i<=max(s) && s.count(i)==0);
+			start=i;
+		}
+	}
+	v|=std::make_pair(start,max(s));
+	return v;
+}
+
+std::string consolidate(std::vector<int> const& in){
+	auto v=consolidate_inner(in);
+	std::stringstream ss;
+	for(auto x:v){
+		if(x.first==x.second){
+			ss<<x.first;
+		}else{
+			ss<<x;
+		}
+		ss<<' ';
+	}
+	return ss.str();
+}
+
+std::string as_pct(double d){
+	std::stringstream ss;
+	ss<<int(d*100)<<'%';
+	return ss.str();
+}
+

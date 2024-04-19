@@ -17,15 +17,6 @@ std::array<T,N> to_array(std::vector<T> const& a){
 	return r;
 }
 
-template<typename Func,typename T,size_t N>
-auto mapf(Func f,std::array<T,N> const& a){
-	std::array<decltype(f(a[0])),N> r;
-	for(auto i:range(N)){
-		r[i]=f(a[i]);
-	}
-	return r;
-}
-
 //start program-specific code
 
 using namespace std;

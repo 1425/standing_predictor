@@ -8,6 +8,7 @@
 #include<optional>
 #include<algorithm>
 #include<map>
+#include<cmath>
 
 #define PRINT(X) { std::cout<<""#X<<":"<<(X)<<"\n"; }
 #define nyi { std::cout<<"nyi "<<__FILE__<<":"<<__LINE__<<"\n"; exit(44); }
@@ -588,5 +589,179 @@ auto sort_by(std::vector<T> a,Func f){
 auto sort_by(auto a,auto f){
 	return sort_by(to_vec(a),f);
 }
+
+auto head(auto x){
+	return take(10,x);
+}
+
+template<typename T>
+auto seconds(std::vector<std::vector<T>> const& a){
+	return mapf(
+		[](auto x){
+			assert(x.size()>=2);
+			return x[1];
+		},
+		a
+	);
+}
+
+template<typename T>
+auto second(std::vector<T> const& a){
+	assert(a.size()>=2);
+	return a[1];
+}
+
+template<typename T,size_t N>
+auto second(std::array<T,N> const& a){
+	static_assert(N>=2);
+	return a[1];
+}
+
+template<typename T>
+auto seconds(std::vector<T> const& a){
+	return MAP(second,a);
+}
+
+std::string as_pct(double);
+
+template<typename K,typename V>
+std::map<V,std::vector<K>> invert(std::map<K,V> const& a){
+	std::map<V,std::vector<K>> r;
+	for(auto [k,v]:a){
+		r[v]|=k;
+	}
+	return r;
+}
+
+template<typename T>
+auto keys(T const& t){
+	return mapf([](auto x){ return x.key; },t);
+}
+
+template<typename T>
+std::vector<T> operator|(std::vector<T>,std::optional<T>);
+
+template<size_t N>
+std::array<size_t,N> range_st(){
+	std::array<size_t,N> r;
+	for(size_t i=0;i<N;i++){
+		r[i]=i;
+	}
+	return r;
+}
+
+template<typename T>
+std::vector<T> cdr(std::vector<T> a){
+	if(a.empty()) return a;
+	return std::vector<T>{a.begin()+1,a.end()};
+}
+
+template<typename Func,typename T,size_t N>
+auto mapf(Func f,std::array<T,N> const& a){
+	using E=decltype(f(*begin(a)));
+	std::array<E,N> r;
+	for(auto i:range_st<N>()){
+		r[i]=f(a[i]);
+	}
+	return r;
+}
+
+template<typename T,size_t N>
+std::array<T,N> as_array(std::vector<T> const& a){
+	assert(a.size()==N);
+	return mapf([&](auto x){ return a[x]; },range_st<N>());
+}
+
+template<typename T,size_t N>
+std::ostream& operator<<(std::ostream& o,std::array<T,N> const& a){
+	o<<"[ ";
+	for(auto elem:a){
+		o<<elem<<" ";
+	}
+	return o<<"]";
+}
+
+auto swap_pairs(auto a){
+	return mapf([](auto x){ return make_pair(x.second,x.first); },a);
+}
+
+template<typename T>
+auto first(T const& t){
+	assert(!t.empty());
+	return *begin(t);
+}
+
+template<typename T>
+auto firsts(T const& t){
+	return MAP(first,t);
+}
+
+auto square(auto x){
+	return x*x;
+}
+
+template<typename T>
+auto variance(std::vector<T> v)->double{
+	auto mu=mean(v);
+	return mean(mapf(
+		[mu](auto x){ return square(x-mu); },
+		v
+	));
+}
+
+template<typename T>
+auto std_dev(std::vector<T> v){
+	return sqrt(variance(v));
+}
+
+template<typename T>
+auto mad(std::vector<T> v)->double{
+	//mean absolute devaition
+	auto mu=mean(v);
+	return mean(mapf(
+		[mu](auto x){ return fabs(x-mu); },
+		v
+	));
+}
+
+#define RM_CONST(X) typename std::remove_cv<X>::type
+#define RM_REF(X) typename std::remove_reference<X>::type
+#define ELEM(X) RM_CONST(RM_REF(decltype(*std::begin(X))))
+
+auto cross(auto a,auto b){
+	using A=ELEM(a);
+	using B=ELEM(b);
+	std::vector<std::pair<A,B>> r;
+	for(auto a1:a){
+		for(auto b1:b){
+			r|=std::make_pair(a1,b1);
+		}
+	}
+	return r;
+}
+
+template<typename T>
+auto to_array(std::pair<T,T> a){
+	return std::array<T,2>{a.first,a.second};
+}
+
+auto quartiles(auto a){
+	assert(!a.empty());
+	auto b=sorted(a);
+	return std::array{b[b.size()/4],b[b.size()/2],b[b.size()*3/4]};
+}
+
+
+template<typename Func,typename T>
+auto filter_first(Func f,T const& t){
+	for(auto const& elem:t){
+		if(f(elem)){
+			return elem;
+		}
+	}
+	assert(0);
+}
+
+std::string consolidate(std::vector<int> const&);
 
 #endif
