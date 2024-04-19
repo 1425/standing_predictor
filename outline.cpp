@@ -256,168 +256,39 @@ auto find_cutoff(flat_map2<pair<bool,Point>,unsigned> these_points,unsigned elim
 	assert(0);
 }
 
-map<tba::Team_key,Pr> run(
-	TBA_fetcher &f,
-	std::string const& output_dir, //output
-	tba::District_key district, //data in
-	tba::Year year, //data in & out
-	int dcmp_size, //how
-	string const& title, //output
-	string const& district_short, //output
-	std::string extra="", //output
-	bool ignore_chairmans=0 //how
-){
-	bool dcmp_played=0;
+using Result_tuple=tuple<tba::Team_key,Pr,Point,Point,Point,Pr,Point,Point,Point>;
 
-	const auto pr=flat_map2(historical_event_pts(f));
-	const auto chairmans=[&](){
-		if(ignore_chairmans){
-			return set<tba::Team_key>{};//chairmans.clear();
-		}
-		return chairmans_winners(f,district);
-	}();
+using Team_dist=flat_map2<Point,Pr>;
 
-	auto d1=[&](){
-		auto d=district_rankings(f,district);
-		assert(d);
-		return *d;
-	}();
-
-	{
-		//if the team isn't scheduled for any events this year, ignore them.
-		set<tba::Team_key> not_going;
-		for(auto team:d1){
-			auto e=team_events_year_keys(f,team.team_key,year);
-			if(e.empty()){
-				not_going|=team.team_key;
-			}
-		}
-		PRINT(not_going);
-		d1=filter([&](auto x){ return not_going.count(x.team_key)==0; },d1);
-	}
-
-	using Team_dist=flat_map2<Point,Pr>;
+struct Run_result{
+	std::vector<Result_tuple> result;
+	flat_map2<std::pair<int,double>,double> cutoff_pr,cmp_cutoff_pr;
+	std::map<tba::Team_key,std::tuple<std::vector<int>,int,int>> points_used;
 	map<tba::Team_key,pair<bool,Team_dist>> by_team;
-	map<tba::Team_key,tuple<vector<int>,int,int>> points_used;
-	for(auto team:d1){
-		auto max_counters=2-int(team.event_points.size());
-		auto events_scheduled=team_events_year_keys(f,team.team_key,year);
+};
 
-		auto events_left=min(max_counters,int(events_scheduled.size())-int(team.event_points.size()));
-		auto dist=[&]()->Team_dist{
-			auto first_event_points=[=]()->double{
-				if(team.event_points.size()){
-					return team.event_points[0].total;
-				}
-				return 0;
-			}();
-			if(events_left<0){
-				//then we are post-district championship
-				//-1=played in a normal district championship or just 1 field of a multi-field one
-				//-2=played in a multi-field DCMP & did something on the joint field
-				dcmp_played=1;
-				return Team_dist{{
-					sum(::mapf([](auto x){ return x.total; },team.event_points)),
-					1
-				}};
-			}
-			if(events_left==0){
-				return Team_dist{{
-					first_event_points+[=]()->double{
-						if(team.event_points.size()>1){
-							return team.event_points[1].total;
-						}
-						return 0;
-					}(),
-					1
-				}};
-			}
-			if(events_left==1){
-				return Team_dist(mapf(
-					[&](auto p){
-						return make_pair(Point(p.first+first_event_points),p.second);
-					},
-					pr
-				));
-			}
-			if(events_left==2){
-				return Team_dist{convolve(pr,pr)};
-			}
-			PRINT(team);
-			PRINT(events_left);
-			nyi
-		}()+team.rookie_bonus;
-		points_used[team.team_key]=make_tuple(
-			::mapf([](auto x){ return int(x.total); },team.event_points),
-			team.rookie_bonus,
-			events_left
-		);
-		by_team[team.team_key]=make_pair(chairmans.count(team.team_key),std::move(dist));
-	}
+Run_result run_calc(
+	int dcmp_size,
+	int worlds_slots,
+       
+	/*for each team, did they win a district chairmans's award and how 
+	  many points are they expected to have by the time of the district 
+	  championship
+	  */
+	map<tba::Team_key,pair<bool,Team_dist>> by_team,
 
-	//print_lines(by_team);
-	bool by_team_csv=0;
-	if(by_team_csv){
-		cout<<"team,";
-		for(auto i:range(140)){
-			cout<<i<<",";
-		}
-		for(auto [team,data1]:by_team){
-			auto [cmd,data]=data1;
-			cout<<team<<",";
-			for(auto i:range(140)){
-				auto f=data.find(i);
-				if(f==data.end()){
-					cout<<"0,";
-				}else{
-					cout<<f->second<<",";
-				}
-			}
-			cout<<"\n";
-		}
-	}
-
-	map<Point,Pr> by_points; //# of teams expected to end at each # of points
-	for(auto [team,data1]:by_team){
-		auto [cm,data]=data1;
-		(void)team;
-		for(auto [pts,pr]:data){
-			auto f=by_points.find(pts);
-			if(f==by_points.end()){
-				by_points[pts]=pr;
-			}else{
-				f->second+=pr;
-			}
-		}
-	}
-
-	bool sum_display=0;
-	if(sum_display){
-		for(auto [pts,pr]:by_points){
-			cout<<pts<<","<<pr<<"\n";
-		}
-	}
-
-	bool cdf_display=0;
-	if(cdf_display){
-		map<Point,Pr> cdf;
-		{
-			double d=0;
-			for(auto [pts,pr]:by_points){
-				d+=pr;
-				cdf[pts]=d;
-			}
-		}
-
-		for(auto [pts,pr]:cdf){
-			cout<<pts<<","<<pr<<"\n";
-		}
-	}
+	bool dcmp_played,
+	flat_map2<Point,Pr> dcmp_distribution1,
+	std::vector<tba::District_Ranking> d1,
+	map<tba::Team_key,tuple<vector<int>,int,int>> points_used //this is only passed through
+){
+	//This function exists to run the calculations of how teams are 
+	//expected to do, seperatedly from doing any IO.
 
 	auto teams_advancing=dcmp_size;
-	auto teams_competing=sum(values(by_points));
-	unsigned teams_left_out=max(0.0,teams_competing-teams_advancing); //Ontario has more slots than team in 2022.
-	unsigned cmp_teams_left_out=max(0,dcmp_size-worlds_slots(district));
+	auto teams_competing=by_team.size();
+	unsigned teams_left_out=max(size_t(0),teams_competing-teams_advancing); //Ontario had more slots than teams in 2022.
+	unsigned cmp_teams_left_out=max(0,dcmp_size-worlds_slots);
 
 	//monte carlo method for where the cutoff is
 
@@ -442,7 +313,6 @@ map<tba::Team_key,Pr> run(
 		assert(0);
 	};
 
-	auto dcmp_distribution1=flat_map2<Point,Pr>{dcmp_played?map<Point,Pr>{{0,1}}:dcmp_distribution(f)};
 	//multiset<pair<Point,Pr>> dcmp_cutoffs,cmp_cutoff;
 	multiset_flat<pair<Point,Pr>> dcmp_cutoffs,cmp_cutoff;
 	const auto iterations=2000; //usually want this to be like 2k
@@ -493,11 +363,6 @@ map<tba::Team_key,Pr> run(
 		[=](auto x){ return (0.0+x)/iterations; },
 		count(cmp_cutoff)
 	));
-	cout<<"Championship cutoff\n";
-	for(auto x:cmp_cutoff_pr){
-		cout<<"\t"<<x<<"\n";
-	}
-
 	//auto cutoff_level=[=](map<pair<Point,Pr>,Pr> const& cutoff_set,Pr probability_target){
 	auto cutoff_level=[=](auto const& cutoff_set,Pr probability_target){
 		double t=0;
@@ -520,7 +385,6 @@ map<tba::Team_key,Pr> run(
 	auto interesting_cutoffs_dcmp=interesting_cutoffs(cutoff_pr);
 	auto interesting_cutoffs_cmp=interesting_cutoffs(cmp_cutoff_pr);
 
-	using Result_tuple=tuple<tba::Team_key,Pr,Point,Point,Point,Pr,Point,Point,Point>;
 	vector<Result_tuple> result;
 	for(auto team:d1){
 		//probability that get in
@@ -614,18 +478,207 @@ map<tba::Team_key,Pr> run(
 	auto x=::mapf([](auto x){ return get<1>(x); },result);
 	//PRINT(sum(x)); //this number should be really close to the number of slots available at the event.
 
+	return Run_result{result,cutoff_pr,cmp_cutoff_pr,points_used,by_team};
+}
+
+Run_result run_inner(
+	TBA_fetcher &f,
+	bool ignore_chairmans,
+	tba::District_key district,
+	tba::Year year,
+	int dcmp_size
+){
+	bool dcmp_played=0;
+
+	const auto pr=flat_map2(historical_event_pts(f));
+	const auto chairmans=[&](){
+		if(ignore_chairmans){
+			return set<tba::Team_key>{};//chairmans.clear();
+		}
+		return chairmans_winners(f,district);
+	}();
+
+	auto d1=[&](){
+		auto d=district_rankings(f,district);
+		assert(d);
+		return *d;
+	}();
+
+	{
+		//if the team isn't scheduled for any events this year, ignore them.
+		set<tba::Team_key> not_going;
+		for(auto team:d1){
+			auto e=team_events_year_keys(f,team.team_key,year);
+			if(e.empty()){
+				not_going|=team.team_key;
+			}
+		}
+		//PRINT(not_going);
+		d1=filter([&](auto x){ return not_going.count(x.team_key)==0; },d1);
+	}
+
+	map<tba::Team_key,pair<bool,Team_dist>> by_team;
+	map<tba::Team_key,tuple<vector<int>,int,int>> points_used;
+	for(auto team:d1){
+		auto max_counters=2-int(team.event_points.size());
+		auto events_scheduled=team_events_year_keys(f,team.team_key,year);
+
+		auto events_left=min(max_counters,int(events_scheduled.size())-int(team.event_points.size()));
+		auto dist=[&]()->Team_dist{
+			auto first_event_points=[=]()->double{
+				if(team.event_points.size()){
+					return team.event_points[0].total;
+				}
+				return 0;
+			}();
+			if(events_left<0){
+				//then we are post-district championship
+				//-1=played in a normal district championship or just 1 field of a multi-field one
+				//-2=played in a multi-field DCMP & did something on the joint field
+				dcmp_played=1;
+				return Team_dist{{
+					sum(::mapf([](auto x){ return x.total; },team.event_points)),
+					1
+				}};
+			}
+			if(events_left==0){
+				return Team_dist{{
+					first_event_points+[=]()->double{
+						if(team.event_points.size()>1){
+							return team.event_points[1].total;
+						}
+						return 0;
+					}(),
+					1
+				}};
+			}
+			if(events_left==1){
+				return Team_dist(mapf(
+					[&](auto p){
+						return make_pair(Point(p.first+first_event_points),p.second);
+					},
+					pr
+				));
+			}
+			if(events_left==2){
+				return Team_dist{convolve(pr,pr)};
+			}
+			PRINT(team);
+			PRINT(events_left);
+			nyi
+		}()+team.rookie_bonus;
+		points_used[team.team_key]=make_tuple(
+			::mapf([](auto x){ return int(x.total); },team.event_points),
+			team.rookie_bonus,
+			events_left
+		);
+		by_team[team.team_key]=make_pair(chairmans.count(team.team_key),std::move(dist));
+	}
+
+	map<Point,Pr> by_points; //# of teams expected to end at each # of points
+	for(auto [team,data1]:by_team){
+		auto [cm,data]=data1;
+		(void)team;
+		for(auto [pts,pr]:data){
+			auto f=by_points.find(pts);
+			if(f==by_points.end()){
+				by_points[pts]=pr;
+			}else{
+				f->second+=pr;
+			}
+		}
+	}
+
+	auto dcmp_distribution1=flat_map2<Point,Pr>{dcmp_played?map<Point,Pr>{{0,1}}:dcmp_distribution(f)};
+
+	bool sum_display=0;
+	if(sum_display){
+		for(auto [pts,pr]:by_points){
+			cout<<pts<<","<<pr<<"\n";
+		}
+	}
+
+	bool cdf_display=0;
+	if(cdf_display){
+		map<Point,Pr> cdf;
+		{
+			double d=0;
+			for(auto [pts,pr]:by_points){
+				d+=pr;
+				cdf[pts]=d;
+			}
+		}
+
+		for(auto [pts,pr]:cdf){
+			cout<<pts<<","<<pr<<"\n";
+		}
+	}
+
+	return run_calc(
+		dcmp_size,
+		worlds_slots(district),
+		by_team,
+		dcmp_played,
+		dcmp_distribution1,
+		d1,
+		points_used
+	);
+}
+
+map<tba::Team_key,Pr> run(
+	TBA_fetcher &f,
+	std::string const& output_dir, //output
+	tba::District_key district, //data in
+	tba::Year year, //data in & out
+	int dcmp_size, //how
+	string const& title, //output
+	string const& district_short, //output
+	std::string extra="", //output
+	bool ignore_chairmans=0 //how
+){
+	//this function exists to separate the input & calculation from the output
+
+	auto results=run_inner(f,ignore_chairmans,district,year,dcmp_size);
+
+	//print_lines(by_team);
+	bool by_team_csv=0;
+	if(by_team_csv){
+		cout<<"team,";
+		for(auto i:range(140)){
+			cout<<i<<",";
+		}
+		for(auto [team,data1]:results.by_team){
+			auto [cmd,data]=data1;
+			cout<<team<<",";
+			for(auto i:range(140)){
+				auto f=data.find(i);
+				if(f==data.end()){
+					cout<<"0,";
+				}else{
+					cout<<f->second<<",";
+				}
+			}
+			cout<<"\n";
+		}
+	}
+
+	cout<<"Championship cutoff\n";
+	for(auto x:results.cmp_cutoff_pr){
+		cout<<"\t"<<x<<"\n";
+	}
+
 	auto team_info=district_teams(f,district);
 	{
 		auto g=gen_html(
-			result,
+			results.result,
 			team_info,
-			to_map(cutoff_pr),
-			to_map(cmp_cutoff_pr),
+			to_map(results.cutoff_pr),
+			to_map(results.cmp_cutoff_pr),
 			title,
 			district_short,
 			year,
 			dcmp_size,
-			points_used
+			results.points_used
 		);
 		ofstream f(output_dir+"/"+district.get()+extra+".html");
 		f<<g;
@@ -636,7 +689,7 @@ map<tba::Team_key,Pr> run(
 		cout<<"Team #\tP(DCMP)\tPts 5%\tPts 50%\tPts 95%\tNickname\n";
 		cout.precision(3);
 		for(auto a:reversed(sorted(
-			result,
+			results.result,
 			[](auto x){ return make_pair(get<1>(x),x); }
 		))){
 			cout<<get<0>(a).str().substr(3,100)<<"\t";
@@ -654,7 +707,7 @@ map<tba::Team_key,Pr> run(
 		[](auto x){
 			return make_pair(get<0>(x),get<1>(x));
 		},
-		result
+		results.result
 	));
 }
 

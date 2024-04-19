@@ -1438,7 +1438,13 @@ int demo(TBA_fetcher& tba_fetcher){
 	//for the event total; could just lop off the part of the distribution where the total is
 	//below what's been calculated as the minimum.
 	//could also try to calculate a maximum number for a team remaining
-	
+
+	/*
+	 * How to keep track of what teams distributions look like:
+	 * 1) pair of distributions, 1 for after district events, 1 for after dcmp
+	 * 2) distribution of pairs of totals -> can later be shrunk down to only part later if needed.
+	 * */
+
 	cout<<"Award+\n";
 	award_plus_elim(tba_fetcher);
 
