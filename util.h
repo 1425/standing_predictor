@@ -15,9 +15,9 @@
 
 std::string slurp(std::string const& filename);
 
-template<typename T>
-std::vector<T>& operator|=(std::vector<T> &a,T t){
-	a.push_back(t);
+template<typename T,typename T2>
+std::vector<T>& operator|=(std::vector<T> &a,T2 t){
+	a.push_back(std::move(t));
 	return a;
 }
 
@@ -150,6 +150,23 @@ std::tuple<A1,A,B,C,D,E> operator|(std::tuple<A1,A> const& a,std::tuple<B,C,D,E>
 		std::get<2>(b),
 		std::get<3>(b)
 	);
+}
+
+
+template<typename A,typename B,typename C,typename D,typename E,typename F>
+auto operator+=(std::tuple<A,B,C,D,E,F>& a,std::tuple<A,B,C,D,E,F> const& b){
+	#define X(N) std::get<N>(a)+=std::get<N>(b);
+	X(0) X(1) X(2) X(3) X(4) X(5)
+	#undef X
+        return a;
+}
+
+template<typename A,typename B,typename C,typename D,typename E>
+auto operator+=(std::tuple<A,B,C,D,E>& a,std::tuple<A,B,C,D,E> const& b){
+	#define X(N) std::get<N>(a)+=std::get<N>(b);
+	X(0) X(1) X(2) X(3) X(4)
+	#undef X
+        return a;
 }
 
 template<typename T>
@@ -623,15 +640,6 @@ auto seconds(std::vector<T> const& a){
 }
 
 std::string as_pct(double);
-
-template<typename K,typename V>
-std::map<V,std::vector<K>> invert(std::map<K,V> const& a){
-	std::map<V,std::vector<K>> r;
-	for(auto [k,v]:a){
-		r[v]|=k;
-	}
-	return r;
-}
 
 template<typename T>
 auto keys(T const& t){

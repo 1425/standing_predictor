@@ -16,7 +16,84 @@
 
 using namespace std;
 
-//TODO: Calculate mean pts by event size.
+template<typename T>
+std::multiset<T> operator&(std::multiset<T> a,std::multiset<T> b){
+	std::multiset<T> r;
+	for(auto k:to_set(a)|to_set(b)){
+		auto n=std::min(a.count(k),b.count(k));
+		for(auto _:range(n)){
+			(void)_;
+			r|=k;
+		}
+	}
+	return r;
+}
+
+template<typename T>
+std::multiset<T>& operator&=(std::multiset<T>& a,std::multiset<T> const& b){
+	return a=(a&b);
+}
+
+template<typename T>
+auto and_all(std::set<T> a){
+	assert(!a.empty());
+	auto r=*std::begin(a);
+	for(auto const& elem:a){
+		r&=elem;
+	}
+	return r;
+}
+
+template<typename T>
+auto or_all(std::set<T> const& a){
+	assert(!a.empty());
+	auto r=*begin(a);
+	for(auto const& elem:a){
+		r|=elem;
+	}
+	return r;
+}
+
+template<typename T>
+auto operator-(std::multiset<T> a,std::multiset<T> b){
+	std::multiset<T> r;
+	for(auto k:to_set(a)){
+		auto c1=a.count(k);
+		auto c2=b.count(k);
+		if(c1>c2){
+			auto n=c1-c2;
+			for(auto _:range(n)){
+				(void)_;
+				r|=k;
+			}
+		}
+	}
+	return r;
+}
+
+template<typename Func,typename T>
+auto count_if(Func f,T const& t){
+	auto f1=filter(f,t);
+	return f1.size();
+}
+
+template<typename T>
+void print_lines(size_t n,T const& t){
+	for(auto const& elem:t){
+		indent(n);
+		std::cout<<elem<<"\n";
+	}
+}
+
+template<typename T,typename T2>
+std::vector<T> operator|(std::vector<T> a,T2 t){
+	a|=t;
+	return a;
+}
+
+auto as_doubles(auto a){
+	return MAP(double,a);
+}
 
 //Stuff to deal w/ probability distributions
 
@@ -379,7 +456,7 @@ static void skill_chart(TBA_fetcher &tba_fetcher){
 	for(auto elem:filter([](auto x){ return x[1].size(); },a)){
 		auto pre=sum(elem[0]);
 		auto post=sum(elem[1]);
-		m3|=std::array<int,2>{pre,post};
+		m3|=std::array<int,2>{int(pre),int(post)};
 	}
 
 	auto m2=round(m3);
@@ -418,6 +495,7 @@ static void skill_chart(TBA_fetcher &tba_fetcher){
 		auto dist=abs(found-x1);
 		return dist;
 	};
+	(void)distance;
 
 	//e2 numbers -> e1 number -> int
 	//how to weight 
@@ -489,7 +567,103 @@ static void skill_chart(TBA_fetcher &tba_fetcher){
 	}
 }
 
+std::multiset<tba::Award_type> award_types(TBA_fetcher &f,tba::Event_key event){
+	return to_multiset(mapf([](auto x){ return x.award_type; },event_awards(f,event)));
+}
+
+void by_event_size(TBA_fetcher &tba_fetcher){
+	for(auto year:years){
+		using T=tuple<int,int,int,double,double>;
+		map<int,vector<T>> m;
+		vector<multiset<tba::Award_type>> award_types_x;
+		for(auto event:local_district_events(tba_fetcher,year)){
+			auto e=event_district_points(tba_fetcher,event);
+			assert(e);
+			auto v=mapf(
+				[](auto x){
+					return make_tuple(
+						x.alliance_points,
+						x.award_points,
+						x.qual_points,
+						x.elim_points,
+						x.total
+					);
+				},
+				values(e->points)
+			);
+			m[v.size()]|=sum(v);
+			award_types_x|=award_types(tba_fetcher,event);
+		}
+
+		PRINT(year);
+		//print_r(m);
+	
+		bool show_awards=0;
+		if(show_awards && !all_equal(award_types_x)){
+			//auto s=to_set(award_types_x);
+			/*auto always=and_all(s);
+			PRINT(always);
+			auto sometimes=or_all(s)-always;
+			PRINT(sometimes);*/
+			auto f=to_set(flatten(award_types_x));
+			vector<tuple<tba::Award_type,size_t,size_t>> v;
+			for(auto type:f){
+				auto used=mapf([=](auto x){ return x.count(type); },award_types_x);
+				if(!all_equal(used|1)){
+					if(max(used)>1){
+						cout<<"\t\t"<<type<<":"<<count(used)<<"\n";
+					}else{
+						cout<<"\t\t"<<type<<":"<<as_pct(mean(as_doubles(used)))<<"\n";
+					}
+				}
+				/*auto used=count_if([=](auto x){ return x.count(type); },award_types_x);
+				if(used!=award_types_x.size()){
+					v|=make_tuple(type,used,award_types_x.size());
+					//cout<<type<<":"<<used<<"\n";
+				}*/
+			}
+			print_lines(1,v);
+		}
+		
+		for(auto [k,t]:m){
+			auto v=mapf([](auto x){ return std::get<4>(x); },t);
+			auto m1=min(v);
+			auto m2=max(v);
+			auto d=m2-m1;
+			cout<<k<<"\t"<<v.size();
+			cout<<'\t'<<mean(v)/k;
+			cout<<'\t'<<d<<'\t';
+			if(d){
+				cout<<min(v)<<'\t'<<quartiles(v)<<'\t'<<max(v);
+			}else{
+				cout<<m1;
+			}
+			cout<<'\n';
+
+			bool show_diff=0;
+			if(show_diff && d){
+				//mapf([](auto x){ return ; });
+				//look through each of the component items
+				#define X(NAME,N) {\
+					auto m=mapf([](auto x){ return get<N>(x); },t);\
+					if(min(m)!=max(m)){\
+						auto d=max(m)-min(m);\
+						cout<<"\t\t"<<NAME<<":"<<d<<"\t"<<min(m)<<" "<<max(m)<<"\n";\
+					}\
+				}
+				X("alliance",0)
+				X("award_points",1)
+				X("qual_points",2)
+				X("elim_points",3)
+				#undef X
+			}
+		}
+	}
+}
+
 int demo(TBA_fetcher& tba_fetcher){
+	by_event_size(tba_fetcher);
+
 	skill_chart(tba_fetcher);
 
 	//might eventually want to have a score distribution for in-progress events

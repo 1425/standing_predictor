@@ -80,4 +80,13 @@ std::map<K,V>& operator+=(std::map<K,V>& a,std::map<K,V> const& b){
 	return a;
 }
 
+template<typename K,typename V>
+std::map<V,std::vector<K>> invert(std::map<K,V> const& a){
+	std::map<V,std::vector<K>> r;
+	for(auto [k,v]:a){
+		r[v]|=k;
+	}
+	return r;
+}
+
 #endif

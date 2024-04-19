@@ -2,6 +2,11 @@
 #define SET_H
 
 #include<set>
+#include<optional>
+#include<vector>
+#include<algorithm>
+#include<iostream>
+#include<map>
 
 //start stuff using std::set
 
@@ -173,6 +178,11 @@ std::multiset<T>& operator|=(std::multiset<T> &a,std::vector<T> const& b){
 }
 
 template<typename T>
+auto to_set(std::multiset<T> const& v){
+	return std::set<T>{begin(v),end(v)};
+}
+
+template<typename T>
 std::ostream& operator<<(std::ostream& o,std::multiset<T> const& a){
 	o<<"{ ";
 	for(auto elem:to_set(a)){
@@ -194,11 +204,6 @@ std::map<T,size_t> count(std::multiset<T> const& a){
 template<typename T>
 std::multiset<T> to_multiset(std::vector<T> const& v){
 	return std::multiset<T>{v.begin(),v.end()};
-}
-
-template<typename T>
-auto to_set(std::multiset<T> const& v){
-	return std::set<T>{begin(v),end(v)};
 }
 
 template<typename T>
