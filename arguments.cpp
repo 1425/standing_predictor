@@ -122,7 +122,7 @@ void Argument_parser::add(
 	string c,
 	std::function<void(std::span<char*>)> f
 ){
-	impl->flags|=Flag{move(a),move(b),move(c),move(f)};
+	impl->flags|=Flag{std::move(a),std::move(b),std::move(c),std::move(f)};
 }
 
 void Argument_parser::parse(int argc,char **argv){

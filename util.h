@@ -29,8 +29,8 @@ std::vector<T>& operator|=(std::vector<T> &a,std::optional<T> const& b){
 	return a;
 }
 
-template<template<typename> typename COLLECTION,typename T>
-std::vector<T>& operator|=(std::vector<T> &a,COLLECTION<T> const& b){
+template<typename T,template<typename...> typename COLLECTION,typename ...EXTRA>
+std::vector<T>& operator|=(std::vector<T> &a,COLLECTION<T,EXTRA...> const& b){
 	for(auto const& elem:b){
 		a|=elem;
 	}
@@ -441,20 +441,22 @@ std::vector<T> reversed(std::vector<T> a){
 	return a;
 }
 
-template<template<typename> typename V,typename T>
-T max(V<T> const& v){
+template<template<typename...> typename V,typename ...T>
+auto max(V<T...> const& v){
 	assert(!v.empty());
-	T r=*begin(v);
+	using E=std::tuple_element_t<0,std::tuple<T...>>;
+	E r=*begin(v);
 	for(auto elem:v){
 		r=std::max(r,elem);
 	}
 	return r;
 }
 
-template<template<typename> typename V,typename T>
-T min(V<T> const& v){
+template<template<typename...> typename V,typename ...T>
+auto min(V<T...> const& v){
 	assert(!v.empty());
-	T r=*begin(v);
+	using E=std::tuple_element_t<0,std::tuple<T...>>;
+	E r=*begin(v);
 	for(auto elem:v){
 		r=std::min(r,elem);
 	}
@@ -546,8 +548,8 @@ bool all_equal(std::vector<T> const& a){
 
 std::vector<std::string> find(std::string const& base,std::string const& name);
 
-template<template<typename> typename INNER,typename T>
-auto flatten(std::vector<INNER<T>> a){
+template<template<typename...> typename INNER,typename T,typename ... EXTRA>
+auto flatten(std::vector<INNER<T,EXTRA...>> a){
 	std::vector<T> r;
 	for(auto const& elem:a){
 		r|=elem;
