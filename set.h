@@ -157,6 +157,11 @@ std::set<T> or_all(std::vector<std::vector<T>> const& a){
 	return r;
 }
 
+template<typename Func,typename T>
+auto mapf(Func f,std::set<T> const& a){
+	return mapf(f,to_vec(a));
+}
+
 //start stuff using std::multiset
 
 template<typename T>

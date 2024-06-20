@@ -397,7 +397,7 @@ int main1(int argc,char **argv){
 			[](auto x){
 				return x.is_directory() && numeric(std::filesystem::path(x).filename());
 			},
-			std::filesystem::directory_iterator("results/"+as_string(year))
+			std::filesystem::directory_iterator("results/"+::as_string(year))
 		))
 	){
 		for(auto x:

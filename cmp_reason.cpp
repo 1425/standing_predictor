@@ -63,7 +63,7 @@ static std::set<tba::Team_key> district_quals(
 	auto f=filter([](auto x){ return dcmp(x.event_type); },x);
 	assert(f.size());
 	auto cmp_events=keys(f);
-	auto a=to_set(mapf([&](auto x){ return event_status(tba_fetcher,x); },cmp_events));
+	auto a=to_set(::mapf([&](auto x){ return event_status(tba_fetcher,x); },cmp_events));
 	if(a!=set{Event_status::COMPLETE}){
 		return {};
 	}
@@ -73,7 +73,7 @@ static std::set<tba::Team_key> district_quals(
 
 	size_t slots=worlds_slots(district);
 
-	auto aw=flatten(mapf([&](auto x){ return event_awards(tba_fetcher,x); },cmp_events));
+	auto aw=flatten(::mapf([&](auto x){ return event_awards(tba_fetcher,x); },cmp_events));
 	std::set<tba::Award_type> auto_qual{
 		tba::Award_type::CHAIRMANS,
 		tba::Award_type::ENGINEERING_INSPIRATION,
@@ -109,7 +109,7 @@ static std::set<tba::Team_key> district_quals(
 	tba::Year year,
 	std::set<tba::Team_key> const& attending_teams //so that can fill in for declines
 ){
-	return or_all(mapf(
+	return or_all(::mapf(
 		[&](auto x){ return district_quals(tba_fetcher,x,attending_teams); },
 		district_keys(tba_fetcher,year)
 	));
@@ -118,7 +118,7 @@ static std::set<tba::Team_key> district_quals(
 static std::set<tba::Team_key> regional_quals(TBA_fetcher &tba_fetcher,tba::Year year){
 	auto e=events(tba_fetcher,year);
 	auto f=filter([](auto x){ return x.event_type==tba::Event_type::REGIONAL; },e);
-	auto m=sorted(mapf([](auto x){ return make_pair(x.week,x.key); },f));
+	auto m=sorted(::mapf([](auto x){ return make_pair(x.week,x.key); },f));
 	auto m2=seconds(m);
 	//print_r(m2);
 	std::set<tba::Team_key> r;

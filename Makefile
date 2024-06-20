@@ -1,5 +1,5 @@
 CXXFLAGS=-std=c++20 -Wall -Wextra -Ofast
-LIBS=-lsqlite3 -lcurl
+LIBS=-lsqlite3 -lcurl -lsimdjson
 
 EXE=outline meta declines
 
@@ -9,7 +9,7 @@ TBA_OBJS= \
 	../tba/db.o \
 	../tba/data.o \
 	../tba/curl.o \
-	../tba/rapidjson.o \
+	../tba/simdjson.o \
 	../tba/util.o
 
 FRC_API_OBJS= \
@@ -29,6 +29,7 @@ OUTLINE_OBJS= \
 	status.o \
 	event_status.o \
 	cmp_reason.o \
+	run.o \
 	$(TBA_OBJS)
 
 outline: $(OUTLINE_OBJS)

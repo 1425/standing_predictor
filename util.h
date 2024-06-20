@@ -645,7 +645,7 @@ std::string as_pct(double);
 
 template<typename T>
 auto keys(T const& t){
-	return mapf([](auto x){ return x.key; },t);
+	return ::mapf([](auto x){ return x.key; },t);
 }
 
 template<typename T>

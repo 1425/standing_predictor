@@ -87,7 +87,7 @@ Event_status event_status(TBA_fetcher& tba_fetcher,tba::Event_key const& event){
 	(void)f;
 
 	#define X(A,B) \
-		auto B=multiset_flat(mapf([](auto x){ return x.B; },v));
+		auto B=multiset_flat(::mapf([](auto x){ return x.B; },v));
 	TBA_POINTS(X)
 	#undef X
 
@@ -163,7 +163,7 @@ Event_status event_status(TBA_fetcher& tba_fetcher,tba::Event_key const& event){
 std::map<tba::Event_key,Event_status> event_status(TBA_fetcher& tba_fetcher,tba::Year const& year){
 	auto a=events(tba_fetcher,year);
 	auto b=filter([](auto x){ return x.event_type==tba::Event_type::DISTRICT; },a);
-	return to_map(mapf(
+	return to_map(::mapf(
 		[&](auto x){ return make_pair(x,event_status(tba_fetcher,x)); },
 		keys(b)
 	));

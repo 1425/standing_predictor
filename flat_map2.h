@@ -1,6 +1,8 @@
 #ifndef FLAT_MAP2_H
 #define FLAT_MAP2_H
 
+#include "flat_map.h"
+
 template<typename T>
 std::vector<T> sorted(std::initializer_list<T> const& a){
 	std::vector<T> v;
