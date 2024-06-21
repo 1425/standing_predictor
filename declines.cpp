@@ -6,7 +6,7 @@
 #include "../tba/tba.h"
 #include "../frc_api/db.h"
 #include "../frc_api/query.h"
-#include "../frc_api/rapidjson.h"
+#include "../frc_api/simdjson.h"
 #include "../frc_api/curl.h"
 #include "arguments.h"
 #include "frc_api.h"
@@ -167,7 +167,7 @@ optional<map<Team,pair<vector<int>,optional<int>>>> analyze_district_tba(
 ){
 	auto d=district_rankings(
 		f,
-		tba::District_key{as_string(season)+tolower(district_code.get())}
+		tba::District_key{::as_string(season)+tolower(district_code.get())}
 	);
 	if(!d) return std::nullopt;
 	return to_map(mapf(

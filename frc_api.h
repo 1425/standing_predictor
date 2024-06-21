@@ -56,13 +56,23 @@ template<typename Fetcher,typename T>
 auto run(Fetcher &fetcher,frc_api::URL url,const T*){
 	//PRINT(url);
 	auto g=fetcher.fetch(url);
-	rapidjson::Document a;
-	a.Parse(g.second.c_str());
-	try{
-		return decode(a,(T*)nullptr);
-	}catch(...){
-		std::cout<<url<<"\n";
-		throw;
+        simdjson::dom::parser parser;
+        simdjson::padded_string str(g.second);
+        auto doc=parser.parse(str);
+        try{
+                switch(doc.type()){
+                        case simdjson::dom::element_type::ARRAY:
+                                return decode(doc.get_array(),(T*)nullptr);
+                        case simdjson::dom::element_type::OBJECT:
+                                return decode(doc.get_object(),(T*)nullptr);
+                        case simdjson::dom::element_type::NULL_VALUE:
+                                return decode(nullptr,(T*)nullptr);
+                        default:
+                                throw Decode_error{typeid(T).name(),"","unexpected type"};
+                }
+        }catch(...){
+                std::cout<<url<<"\n";
+                throw;
         }
 }
 

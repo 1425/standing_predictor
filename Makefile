@@ -16,7 +16,7 @@ FRC_API_OBJS= \
 	../frc_api/data.o \
 	../frc_api/query.o \
 	../frc_api/db.o \
-	../frc_api/rapidjson.o \
+	../frc_api/simdjson.o \
 	../frc_api/curl.o
 
 OUTLINE_OBJS= \

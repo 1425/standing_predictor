@@ -1,7 +1,7 @@
 #include "frc_api.h"
 #include "../frc_api/curl.h"
 #include "../frc_api/data.h"
-#include "../frc_api/rapidjson.h"
+#include "../frc_api/simdjson.h"
 #include "rank_pts.h"
 #include "set.h"
 #include "util.h"
