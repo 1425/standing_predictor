@@ -227,8 +227,8 @@ Run_result run_calc(
 
 	//multiset<pair<Point,Pr>> dcmp_cutoffs,cmp_cutoff;
 	multiset_flat<pair<Point,Pr>> dcmp_cutoffs,cmp_cutoff;
-	const auto iterations=2000; //usually want this to be like 2k
-	for(auto iteration:range(iterations)){
+	static const auto iterations=2000; //usually want this to be like 2k
+	for(auto iteration:range_st<iterations>()){
 		(void)iteration;
 		//PRINT(iteration);
 		flat_map2<pair<bool,Point>,unsigned> final_points;

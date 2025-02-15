@@ -261,13 +261,13 @@ map<tba::Team_key,Pr> run(
 	bool by_team_csv=0;
 	if(by_team_csv){
 		cout<<"team,";
-		for(auto i:range(140)){
+		for(auto i:range_st<140>()){
 			cout<<i<<",";
 		}
 		for(auto [team,data1]:results.by_team){
 			auto [cmd,data]=data1;
 			cout<<team<<",";
-			for(auto i:range(140)){
+			for(auto i:range_st<140>()){
 				auto f=data.find(i);
 				if(f==data.end()){
 					cout<<"0,";
@@ -402,7 +402,30 @@ Run_input to_run_input_equal(TBA_fetcher &fetcher,tba::District_key district,Dis
 		*d
 	);*/
 	//r.points_used=;*/
+
+	//vector<tba::District_ranking>
+
+	#if 0
+	r.d1=mapf(
+		[](auto x)->tba::District_Ranking{
+			auto [team,team_data]=x;
+			return tba::District_Ranking{
+				team_key,
+				rank,
+				rookie_bonus pts,
+				point total
+				vector<Event_points> event points; Event_points=
+			};
+		},
+		data
+	);
+
+	cout<<"\n\n";
+	print_lines(take(5,*d));
+	PRINT(data);
+	//points_used:=std::map<tba::Team_key,std::tuple<std::vector<int>,int,int>>
 	nyi
+	#endif
 	return r;
 }
 

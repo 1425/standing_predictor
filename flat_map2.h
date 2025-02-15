@@ -16,6 +16,7 @@ template<typename K,typename V>
 class flat_map2{
 	//Doing pair of vectors rather than vector of pairs
 	//This will complicate some operations like find()
+	//These are kept in order.
 	using KS=std::vector<K>;
 	using VS=std::vector<V>;
 	KS keys;

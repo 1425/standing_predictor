@@ -11,7 +11,7 @@ template<size_t N,typename T>
 std::array<T,N> to_array(std::vector<T> const& a){
 	assert(a.size()==N);
 	std::array<T,N> r;
-	for(auto i:range(N)){
+	for(auto i:range_st<N>()){
 		r[i]=a[i];
 	}
 	return r;

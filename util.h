@@ -486,7 +486,7 @@ std::vector<T> range(T start,T lim,T step){
 }
 
 template<typename T>
-std::vector<T> range(T start,T lim){
+constexpr std::vector<T> range(T start,T lim){
 	std::vector<T> r;
 	for(auto i=start;i<lim;i++){
 		r|=i;
