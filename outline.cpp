@@ -112,7 +112,15 @@ Run_result run_inner(
 		if(ignore_chairmans){
 			return set<tba::Team_key>{};//chairmans.clear();
 		}
-		return chairmans_winners(f,district);
+		try{
+			return chairmans_winners(f,district);
+		}catch(tba::Decode_error const& a){
+			//Known to be happening for the event described at:
+			//https://www.thebluealliance.com/event/2025tempclone-356125237
+			//Might want to have the error be returned somehow rather than going on.
+			cerr<<"Warning: Failed to find list of chairmans winners for "<<district<<"\n";
+			return set<tba::Team_key>{};
+		}
 	}();
 
 	auto d1=[&](){

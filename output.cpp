@@ -284,8 +284,17 @@ string gen_html(
 }
 
 pair<tba::Event_key,std::string> championship_event(auto &f,tba::District_key const& d){
-	auto f1=filter([](auto x){
-		return x.event_type==tba::Event_type::DISTRICT_CMP; },
+	auto f1=filter(
+		[](auto x)->bool{
+			//This is here because there is an event whose code is "mbfrc25"
+			//And is named "DO NOT APPLY - FRC Test Event for BV"
+			//But it says that it is a second 2025 New England district championship.
+			if(prefix(x.name,"DO NOT APPLY - FRC Test Event")){
+				return 0;
+			}
+
+			return x.event_type==tba::Event_type::DISTRICT_CMP;
+		},
 		district_events_simple(f,d)
 	);
 	assert(f1.size()==1);
