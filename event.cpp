@@ -53,6 +53,19 @@ int dcmp_size(tba::District_key const& district){
 	if(district=="2024pnw") return 50;
 	if(district=="2024pch") return 50;
 
+	if(district=="2025chs") return 54;
+	if(district=="2025fim") return 160;
+	if(district=="2025fit") return 90;
+	if(district=="2025fin") return 38;
+	if(district=="2025isr") return 45;
+	if(district=="2025fma") return 60;
+	if(district=="2025fnc") return 40;
+	if(district=="2025ont") return 100;
+	if(district=="2025fsc") return 35;
+	if(district=="2025ne") return 96;
+	if(district=="2025pnw") return 50;
+	if(district=="2025pch") return 45;
+
 	cerr<<"Unknown event size for "<<district<<"\n";
 	exit(1);
 }
@@ -114,6 +127,19 @@ int worlds_slots(tba::District_key const& key){
 	if(key=="2024fnc") return 13-1-2-2;
 	if(key=="2024pnw") return 22-2-1-2;
 	if(key=="2024pch") return 16-2-2-2;
+
+	if(key=="2025chs") return 17-2-2-1;
+	if(key=="2025fim") return 80-4-1-2;
+	if(key=="2025fit") return 28-2-2-2;
+	if(key=="2025fin") return 12-1-1-1;
+	if(key=="2025isr") return 10-1-1-1;
+	if(key=="2025fma") return 23-2-2-1;
+	if(key=="2025fnc") return 12-1-2-2;
+	if(key=="2025fsc") return 5-1-1; //no rookie all star auto-bid, per the rules
+	if(key=="2025ne") return 31-3-2-1;
+	if(key=="2025ont") return 22-2-1-1;
+	if(key=="2025pnw") return 22-2-2-1;
+	if(key=="2025pch") return 12-1-2-1;
 
 	cerr<<"Error: Unknown number of worlds slots for district:"<<key<<"\n";
 	exit(1);
