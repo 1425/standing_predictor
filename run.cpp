@@ -136,6 +136,12 @@ map<Point,Pr> when_greater(map<Point,Pr> const& a,map<Point,Pr> const& b){
 }
 
 auto find_cutoff(map<pair<bool,Point>,unsigned> these_points,unsigned eliminating){
+	//if for some reason, there are equal or fewer teams than slots, then return 
+	//that 0 points is the cutoff, and there is no excess.
+	if(eliminating==0){
+		return make_pair(0,1.0);
+	}
+
 	unsigned total=0;
 	for(auto [points,teams]:these_points){
 		total+=teams;
@@ -149,6 +155,12 @@ auto find_cutoff(map<pair<bool,Point>,unsigned> these_points,unsigned eliminatin
 }
 
 auto find_cutoff(flat_map<pair<bool,Point>,unsigned> these_points,unsigned eliminating){
+	//if for some reason, there are equal or fewer teams than slots, then return 
+	//that 0 points is the cutoff, and there is no excess.
+	if(eliminating==0){
+		return make_pair(0,1.0);
+	}
+
 	unsigned total=0;
 	for(auto [points,teams]:these_points){
 		total+=teams;
@@ -162,7 +174,14 @@ auto find_cutoff(flat_map<pair<bool,Point>,unsigned> these_points,unsigned elimi
 }
 
 auto find_cutoff(flat_map2<pair<bool,Point>,unsigned> these_points,unsigned eliminating){
+	//if for some reason, there are equal or fewer teams than slots, then return 
+	//that 0 points is the cutoff, and there is no excess.
+	if(eliminating==0){
+		return make_pair(0,1.0);
+	}
+
 	unsigned total=0;
+
 	for(auto [points,teams]:these_points){
 		total+=teams;
 		if(total>=eliminating){
@@ -171,9 +190,7 @@ auto find_cutoff(flat_map2<pair<bool,Point>,unsigned> these_points,unsigned elim
 			return make_pair(points.second,1-double(excess)/teams);
 		}
 	}
-	//if for some reason, there are fewer teams than slots, then return 
-	//that 0 points is the cutoff, and there is no excess.
-	return make_pair(0,1.0);
+	assert(0);
 }
 
 Run_result run_calc(
@@ -199,7 +216,7 @@ Run_result run_calc(
 
 	auto teams_advancing=input.dcmp_size;
 	auto teams_competing=input.by_team.size();
-	unsigned teams_left_out=max(size_t(0),teams_competing-teams_advancing); //Ontario had more slots than teams in 2022.
+	unsigned teams_left_out=max(0,(int)teams_competing-(int)teams_advancing); //Ontario had more slots than teams in 2022.
 	unsigned cmp_teams_left_out=max(0,input.dcmp_size-input.worlds_slots);
 
 	//monte carlo method for where the cutoff is
