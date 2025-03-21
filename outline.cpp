@@ -568,6 +568,15 @@ int historical_demo(TBA_fetcher &fetcher){
 		},
 		p
 	);
+	/*Run_input{
+		dcmp_size,
+		worlds_slots,
+		map<Team_key,std::pair<bool,Team_dist> by team
+		dcmp_played
+		dcmp_distribution1
+		vector<tba::District_Ranking> d1
+		map<Team_key,tuple<vector<int>,int>> points_used
+	};*/
 	nyi
 	return 0;
 }

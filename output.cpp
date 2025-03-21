@@ -233,7 +233,8 @@ string gen_html(
 			tag("h1",title)+
 			link("https://frc-events.firstinspires.org/"+::as_string(year)+"/district/"+district_short,"FRC Events")+"<br>"+
 			link("https://www.thebluealliance.com/events/"+district_short+"/"+::as_string(year)+"#rankings","The Blue Alliance")+"<br>"+
-			link("http://frclocks.com/index.php?d="+district_short,"FRC Locks")+"(slow)<br>"+
+			//link("http://frclocks.com/index.php?d="+district_short,"FRC Locks")+"(slow)<br>"+
+			link("http://frclocks.com/districts/"+district_short+".html","FRC Locks")+"<br>"+
 			"Slots at event:"+as_string(dcmp_size)+
 			cutoff_table1+
 			h2("Team Probabilities")+
