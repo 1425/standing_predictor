@@ -131,7 +131,7 @@ class flat_map2{
 			return *this;
 		}
 
-		const_proxy operator*(){
+		const_proxy operator*()const{
 			return const_proxy{*first,*second};
 		}
 
@@ -198,6 +198,11 @@ class flat_map2{
 
 	auto size()const{
 		return keys.size();
+	}
+
+	void clear(){
+		keys.clear();
+		values.clear();
 	}
 };
 

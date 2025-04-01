@@ -21,7 +21,6 @@ district championship winners -> just assume that they would have enough points 
 #include<fstream>
 #include<sstream>
 #include<set>
-#include<random>
 #include<span>
 #include<filesystem>
 #include "../tba/db.h"
@@ -192,6 +191,15 @@ Run_result run_inner(
 			PRINT(events_left);
 			nyi
 		}()+team.rookie_bonus;
+
+		{
+			auto accounted_pts=sum(mapf([](auto x){ return x.total; },team.event_points))+team.rookie_bonus;
+			if(accounted_pts!=team.point_total){
+				std::cout<<"Discrepancy:"<<team.team_key<<"\n";
+			}
+			//assert(accounted_pts==team.point_total);
+		}
+
 		points_used[team.team_key]=make_tuple(
 			::mapf([](auto x){ return int(x.total); },team.event_points),
 			team.rookie_bonus,

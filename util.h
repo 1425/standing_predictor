@@ -251,7 +251,7 @@ auto mapf(Func f,std::tuple<A,B,C,D,E,F> const& t)
 
 template<typename Func,typename A,typename B>
 auto mapf(Func f,std::pair<A,B> const& p){
-	return make_pair(
+	return std::make_pair(
 		f(p.first),
 		f(p.second)
 	);
@@ -699,6 +699,11 @@ template<typename T>
 auto first(T const& t){
 	assert(!t.empty());
 	return *begin(t);
+}
+
+template<typename A,typename B>
+auto first(std::pair<A,B> const& a){
+	return a.first;
 }
 
 template<typename T>

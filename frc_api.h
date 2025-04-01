@@ -5,6 +5,8 @@
 #include "../frc_api/query.h"
 #include "../frc_api/data.h"
 #include "../frc_api/db.h"
+#include "set.h"
+#include "util.h"
 
 struct FRC_api_fetcher{
 	using Out=std::pair<std::optional<frc_api::HTTP_Date>,frc_api::Data>;
@@ -83,6 +85,17 @@ auto run(Fetcher &fetcher,frc_api::URL url,const T*){
 	}
 FRC_API_QUERY_TYPES(X)
 #undef X
+}
+
+std::set<frc_api::Team_number> chairmans_winners(
+	FRC_api_fetcher&,
+	frc_api::Season,
+	frc_api::District_code const&
+);
+
+std::set<frc_api::Team_number> chairmans_winners(auto &f,frc_api::Season a,frc_api::District_code const& b){
+	FRC_api_fetcher_impl f1(&f);
+	return chairmans_winners(static_cast<FRC_api_fetcher&>(f1),a,b);
 }
 
 #endif

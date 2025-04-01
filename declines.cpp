@@ -14,6 +14,7 @@
 #include "map.h"
 #include "tba.h"
 #include "util.h"
+#include "print_r.h"
 
 /*
 The program is designed to figure out how many teams are declining invitations to their district championship event.  
@@ -59,6 +60,117 @@ std::string operator+(std::string const& a,frc_api::String2 const& b){
 template<typename Func>
 auto mapf(Func f,std::string s){
 	return ::mapf(f,to_vec(s));
+}
+
+template<typename T>
+void diff(int n,T const& a,T const& b){
+	if(a!=b){
+		indent(n);
+		std::cout<<"a:"<<a<<"\n";
+		indent(n);
+		std::cout<<"b:"<<b<<"\n";
+	}
+}
+
+template<typename T>
+void diff(int n,std::vector<T> const& a,std::vector<T> const& b){
+	/*if(a!=b){
+		indent(n++);
+		cout<<"vector\n";
+	}*/
+	for(auto [i,p]:enumerate(zip(a,b))){
+		auto [a1,b1]=p;
+		if(a1!=b1){
+			indent(n);
+			std::cout<<i<<"\n";
+			diff(n+1,a1,b1);
+		}
+	}
+	if(a.size()>b.size()){
+		for(auto [i,x]:skip(b.size(),enumerate(a))){
+			indent(n);
+			std::cout<<"Only in a:"<<i<<" "<<x<<"\n";
+		}
+	}
+	if(a.size()<b.size()){
+		for(auto [i,x]:skip(a.size(),enumerate(b))){
+			indent(n);
+			std::cout<<"Only in b:"<<i<<" "<<x<<"\n";
+		}
+	}
+}
+
+template<typename A,typename B>
+void diff(int n,std::pair<A,B> const& a,std::pair<A,B> const& b){
+	/*if(a!=b){
+		indent(n++);
+		cout<<"pair\n";
+	}*/
+	if(a.first!=b.first){
+		indent(n);
+		std::cout<<"first\n";
+		diff(n+1,a.first,b.first);
+	}
+	if(a.second!=b.second){
+		indent(n);
+		std::cout<<"second\n";
+		diff(n+1,a.second,b.second);
+	}
+}
+
+template<typename K,typename V>
+void diff(int n,std::map<K,V> a,std::map<K,V> b){
+	if(a!=b){
+		indent(n++);
+		std::cout<<"map\n";
+	}
+	auto ka=keys(a);
+	auto kb=keys(b);
+	for(auto elem:ka&kb){
+		auto an=a[elem],bn=b[elem];
+		if(an!=bn){
+			indent(n);
+			std::cout<<elem<<"\n";
+			diff(n+1,a[elem],b[elem]);
+		}
+	}
+	for(auto elem:ka-kb){
+		indent(n);
+		std::cout<<"Only in a:"<<elem<<"\n";
+	}
+	for(auto elem:kb-ka){
+		indent(n);
+		std::cout<<"Only in b:"<<elem<<"\n";
+	}
+}
+
+template<typename T>
+void diff(int n,std::optional<T> const& a,std::optional<T> const& b){
+	if(a!=b){
+		indent(n++);
+		std::cout<<"optional\n";
+	}
+	if(a){
+		if(b){
+			return diff(n,*a,*b);
+		}
+		nyi
+	}
+	if(b){
+		indent(n);
+		std::cout<<"No a\n";
+	}
+}
+
+template<typename T>
+void diff(T const& a,T const& b){
+	return diff(0,a,b);
+}
+
+template<typename T,typename T2>
+std::vector<T>& operator-=(std::vector<T> &a,T2 const& t){
+	a=filter([&](auto x){ return x!=t; },a);
+	return a;
 }
 
 //Start program-specific code
@@ -221,111 +333,6 @@ class Local_fetcher_frc{
 	}
 };
 
-template<typename T>
-void diff(int n,T const& a,T const& b){
-	if(a!=b){
-		indent(n);
-		cout<<"a:"<<a<<"\n";
-		indent(n);
-		cout<<"b:"<<b<<"\n";
-	}
-}
-
-template<typename T>
-void diff(int n,vector<T> const& a,vector<T> const& b){
-	/*if(a!=b){
-		indent(n++);
-		cout<<"vector\n";
-	}*/
-	for(auto [i,p]:enumerate(zip(a,b))){
-		auto [a1,b1]=p;
-		if(a1!=b1){
-			indent(n);
-			cout<<i<<"\n";
-			diff(n+1,a1,b1);
-		}
-	}
-	if(a.size()>b.size()){
-		for(auto [i,x]:skip(b.size(),enumerate(a))){
-			indent(n);
-			cout<<"Only in a:"<<i<<" "<<x<<"\n";
-		}
-	}
-	if(a.size()<b.size()){
-		for(auto [i,x]:skip(a.size(),enumerate(b))){
-			indent(n);
-			cout<<"Only in b:"<<i<<" "<<x<<"\n";
-		}
-	}
-}
-
-template<typename A,typename B>
-void diff(int n,std::pair<A,B> const& a,std::pair<A,B> const& b){
-	/*if(a!=b){
-		indent(n++);
-		cout<<"pair\n";
-	}*/
-	if(a.first!=b.first){
-		indent(n);
-		cout<<"first\n";
-		diff(n+1,a.first,b.first);
-	}
-	if(a.second!=b.second){
-		indent(n);
-		cout<<"second\n";
-		diff(n+1,a.second,b.second);
-	}
-}
-
-template<typename K,typename V>
-void diff(int n,map<K,V> a,map<K,V> b){
-	if(a!=b){
-		indent(n++);
-		cout<<"map\n";
-	}
-	auto ka=keys(a);
-	auto kb=keys(b);
-	for(auto elem:ka&kb){
-		auto an=a[elem],bn=b[elem];
-		if(an!=bn){
-			indent(n);
-			cout<<elem<<"\n";
-			diff(n+1,a[elem],b[elem]);
-		}
-	}
-	for(auto elem:ka-kb){
-		indent(n);
-		cout<<"Only in a:"<<elem<<"\n";
-	}
-	for(auto elem:kb-ka){
-		indent(n);
-		cout<<"Only in b:"<<elem<<"\n";
-	}
-}
-
-template<typename T>
-void diff(int n,optional<T> const& a,optional<T> const& b){
-	if(a!=b){
-		indent(n++);
-		cout<<"optional\n";
-	}
-	if(a){
-		if(b){
-			return diff(n,*a,*b);
-		}
-		nyi
-	}
-	if(b){
-		indent(n);
-		cout<<"No a\n";
-	}
-}
-
-template<typename T>
-void diff(T const& a,T const& b){
-	return diff(0,a,b);
-}
-
 struct FRC_fetcher_base{
 	virtual std::pair<optional<frc_api::HTTP_Date>,frc_api::Data> fetch(frc_api::URL url)const=0;
 	virtual ~FRC_fetcher_base(){}
@@ -371,8 +378,122 @@ FRC_fetcher get_frc_fetcher(bool local_only){
 	return FRC_fetcher{x};
 }
 
+auto rankings1(auto &f,frc_api::Season season,frc_api::District_code district){
+	//multiple pages; look at all of them.
+	vector<frc_api::DistrictRankings_item> r;
+	frc_api::District_rankings q{season,district,std::nullopt,std::nullopt,std::nullopt};
+	q.page=1;
+	while(1){
+		auto d=run(f,q).districtRanks;
+		if(d.empty()){
+			return filter([=](auto x){ return x.districtCode==district; },r);
+		}
+		r|=d;
+		q.page=(*q.page)+1;
+	}
+}
+
+std::map<Point,Pr> dcmp_distribution(auto& f){
+	vector<pair<frc_api::Season,frc_api::District_code>> old_districts{
+		//2022pnw, to 2015 pnw
+	};
+
+	for(auto i:range(2015,2025)){
+		old_districts|=make_pair(frc_api::Season{i},frc_api::District_code{"PNW"});
+	}
+
+	multiset<Point> v;
+	for(auto [season,district]:old_districts){
+		auto x=rankings1(f,season,district);
+		auto d=mapf([](auto x){ return x.districtCode; },x);
+		for(auto elem:x){
+			v|=Point(elem.totalPoints);
+		}
+	}
+	map<Point,Pr> r;
+	for(auto x:v){
+		r[x]=v.count(x)/double(v.size());
+	}
+	return r;
+}
+
+multiset<Point> point_results(auto &f,frc_api::Season season,frc_api::District_code district){
+	//auto d=district_rankings(f,season,district);
+	auto a=rankings1(f,season,district);
+	multiset<Point> r;
+
+	auto add=[&](auto x){
+		if(!x) return;
+		r|=Point(*x);
+	};
+
+	for(auto elem:a){
+		add(elem.event1Points);
+		add(elem.event2Points);
+	}
+	return r;
+}
+
+std::map<Point,Pr> historical_event_pts(auto& f){
+	vector<pair<frc_api::Season,frc_api::District_code>> old_keys;
+	for(auto i:range(2015,2023)){
+		old_keys|=make_pair(frc_api::Season{i},frc_api::District_code{"PNW"});
+	}
+
+	multiset<Point> old_results;
+	for(auto [season,district]:old_keys){
+		old_results|=point_results(f,season,district);
+	}
+	std::map<Point,Pr> r;
+	for(auto n:old_results){
+		r[n]=double(old_results.count(n))/old_results.size();
+	}
+	return r;
+}
+
+void demo_reg(auto &f){
+	(void)f;
+	#if 0
+	frc_api::Season season{2024};
+	frc_api::Team_number team{254};
+	frc_api::Event_code event{"ORORE"};
+	auto a=run(f,frc_api::Registrations_query{season,team});
+	//auto a=run(f,frc_api::Registrations_query{season,event});
+	//these results seem to come out as empty all the time; so need to get the data some different way.
+	PRINT(a);
+	#endif
+
+	
+
+	nyi
+}
+
+void demo2(auto&){
+	ifstream f("../frc_api/api_key");
+	string s;
+	getline(f,s);
+	frc_api::Cached_fetcher f1{
+		frc_api::Fetcher{frc_api::Nonempty_string{s}},
+		frc_api::Cache{}
+	};
+	FRC_api_fetcher_impl f2{&f1};
+	auto x=chairmans_winners(f2,frc_api::Season{2025},frc_api::District_code{"fit"});
+	PRINT(x);
+
+	auto d=dcmp_distribution(f2);
+	PRINT(d);
+
+	auto h=historical_event_pts(f2);
+	PRINT(h);
+
+	//demo_reg(f2);
+
+	exit(0);
+}
+
 void demo(bool frc_api_local,auto& tba_f){
 	auto f=get_frc_fetcher(frc_api_local);
+	demo2(f);
 	//auto f=Local_fetcher_frc{};
 	//auto tba_f=get_tba_fetcher("../tba/auth_key","../tba/cache.db");
 	
@@ -404,12 +525,6 @@ void demo(bool frc_api_local,auto& tba_f){
 			}
 		}
 	}
-}
-
-template<typename T,typename T2>
-vector<T>& operator-=(vector<T> &a,T2 const& t){
-	a=filter([&](auto x){ return x!=t; },a);
-	return a;
 }
 
 int main1(int argc,char **argv){

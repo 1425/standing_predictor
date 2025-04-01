@@ -29,6 +29,8 @@ class flat_map{
 		return std::map<K,V>{data.begin(),data.end()};
 	}*/
 
+	using const_iterator=Data::const_iterator;
+
 	auto find(K const& k)const{
 		auto f=std::lower_bound(
 			data.begin(),
@@ -77,6 +79,10 @@ class flat_map{
 
 	auto empty()const{
 		return data.empty();
+	}
+
+	void clear(){
+		data.clear();
 	}
 };
 

@@ -61,7 +61,10 @@ int dcmp_size(tba::District_key const& district){
 	if(district=="2025fma") return 60;
 	if(district=="2025fnc") return 40;
 	if(district=="2025ont") return 100;
-	if(district=="2025fsc") return 35;
+	if(district=="2025fsc"){
+		//return 35; this was altered in team update 18.
+		return 28;
+	}
 	if(district=="2025ne") return 96;
 	if(district=="2025pnw") return 50;
 	if(district=="2025pch") return 45;

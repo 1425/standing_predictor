@@ -540,3 +540,49 @@ optional<map<Team,pair<vector<int>,optional<int>>>> analyze_district(
 	}
 	return r;
 }
+
+bool contains(std::string const& haystack,std::string const& needle){
+	return !!strstr(haystack.c_str(),needle.c_str());
+}
+
+std::set<frc_api::Team_number> chairmans_winners(
+	FRC_api_fetcher& f,
+	frc_api::Season season,
+	frc_api::District_code const& district
+){
+	auto a1=run(f,frc_api::Award_listings{season});
+	assert(a1);
+	auto f2=filter(
+		[](auto x){ return contains(x.description,"Impact"); },
+		a1->awards
+	);
+	auto award_ids=to_set(mapf([](auto x){ return x.awardId; },f2));
+
+	auto chairmans=[&](int award_id)->bool{
+		return award_ids.count(award_id);
+	};
+
+	auto q=frc_api::Event_listings(season,
+		frc_api::Event_criteria{
+			std::nullopt,
+			district
+		}
+	);
+	auto events=run(f,q);
+	//auto events=run(f,frc_api::Event_listings(season,district));
+	//print_lines(events.Events);
+	auto m=mapf(
+		[&](auto event)->std::vector<frc_api::Team_number>{
+			//print_r(event);
+			//event.code
+			auto a=run(f,frc_api::Event_awards(season,event.code));
+			auto f2=filter([&](auto x){ return chairmans(x.awardId); },a.Awards);
+			auto t=mapf([](auto x){ return x.teamNumber; },f2);
+			auto n=nonempty(t);
+			assert(n.size()==0 || n.size()==1);
+			return n;
+		},
+		events.Events
+	);
+	return to_set(flatten(m));
+}

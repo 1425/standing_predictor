@@ -11,7 +11,7 @@ using Pr=double; //probability
 //a point total.
 //Note that despite negative point totals being impossible under current
 //rules, some of the code depends on this being signed.
-using Point=int;
+using Point=short;
 
 using Extended_cutoff=std::pair<Point,Pr>;
 

@@ -1,5 +1,6 @@
 CXXFLAGS=-std=c++20 -Wall -Wextra -Ofast
 LIBS=-lsqlite3 -lcurl -lsimdjson
+CC=$(CXX)
 
 EXE=outline meta declines
 

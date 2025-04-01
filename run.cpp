@@ -139,7 +139,7 @@ auto find_cutoff(map<pair<bool,Point>,unsigned> these_points,unsigned eliminatin
 	//if for some reason, there are equal or fewer teams than slots, then return 
 	//that 0 points is the cutoff, and there is no excess.
 	if(eliminating==0){
-		return make_pair(0,1.0);
+		return make_pair(Point(0),1.0);
 	}
 
 	unsigned total=0;
@@ -158,7 +158,7 @@ auto find_cutoff(flat_map<pair<bool,Point>,unsigned> these_points,unsigned elimi
 	//if for some reason, there are equal or fewer teams than slots, then return 
 	//that 0 points is the cutoff, and there is no excess.
 	if(eliminating==0){
-		return make_pair(0,1.0);
+		return make_pair(Point(0),1.0);
 	}
 
 	unsigned total=0;
@@ -173,11 +173,11 @@ auto find_cutoff(flat_map<pair<bool,Point>,unsigned> these_points,unsigned elimi
 	assert(0);
 }
 
-auto find_cutoff(flat_map2<pair<bool,Point>,unsigned> these_points,unsigned eliminating){
+auto find_cutoff(flat_map2<pair<bool,Point>,unsigned> const& these_points,unsigned eliminating){
 	//if for some reason, there are equal or fewer teams than slots, then return 
 	//that 0 points is the cutoff, and there is no excess.
 	if(eliminating==0){
-		return make_pair(0,1.0);
+		return make_pair(Point(0),1.0);
 	}
 
 	unsigned total=0;
@@ -244,13 +244,26 @@ Run_result run_calc(
 
 	//multiset<pair<Point,Pr>> dcmp_cutoffs,cmp_cutoff;
 	multiset_flat<pair<Point,Pr>> dcmp_cutoffs,cmp_cutoff;
-	static const auto iterations=2000; //usually want this to be like 2k
+
+	/*usually want this to be like 2k
+	but theoretically the numbers should get better up to about 20k iterations
+
+	In practice it seems like 2k iterations should get you below 1.5% 
+	difference in cutoff probabilities run to run and going up to 20k will
+	get you below 0.5% run to run variation.
+	*/
+	static const auto iterations=2000;
+
+	flat_map2<pair<bool,Point>,unsigned> final_points;
+
 	for(auto iteration:range_st<iterations>()){
 		(void)iteration;
 		//PRINT(iteration);
-		flat_map2<pair<bool,Point>,unsigned> final_points;
+		final_points.clear();
+
+
 		for(auto const& [team,data]:input.by_team){
-			auto [cm,dist]=data;
+			auto const& [cm,dist]=data;
 			final_points[pair<bool,Point>(cm,sample(dist))]++;
 		}
 
@@ -266,8 +279,9 @@ Run_result run_calc(
 				teams*=(1-dcmp_cutoff.second);
 			}
 
-			for(auto _:range(teams)){
-				(void)_;
+			//for(auto _:range(teams)){
+			//	(void)_;
+			for(unsigned i=0;i<teams;i++){
 				int pts;
 				if(input.dcmp_played){
 					pts=points;
