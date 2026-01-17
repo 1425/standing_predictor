@@ -1,4 +1,4 @@
-CXXFLAGS=-std=c++20 -Wall -Wextra -Ofast
+CXXFLAGS=-std=c++20 -Wall -Wextra -Ofast -fdiagnostics-color=always
 LIBS=-lsqlite3 -lcurl -lsimdjson
 CC=$(CXX)
 
@@ -31,6 +31,8 @@ OUTLINE_OBJS= \
 	event_status.o \
 	cmp_reason.o \
 	run.o \
+	ca.o \
+	zipcodes.o \
 	$(TBA_OBJS)
 
 outline: $(OUTLINE_OBJS)

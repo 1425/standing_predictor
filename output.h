@@ -3,6 +3,8 @@
 
 #include "../tba/data.h"
 #include "../tba/db.h"
+#include "flat_map2.h"
+#include "ca.h"
 
 class TBA_fetcher;
 
@@ -15,19 +17,33 @@ using Point=short;
 
 using Extended_cutoff=std::pair<Point,Pr>;
 
+using Cutoff=std::map<Extended_cutoff,Pr>;
+using Cutoff2=flat_map2<Extended_cutoff,Pr>;
+
+struct Output_tuple{
+	tba::Team_key team;
+	Dcmp_home dcmp_home;
+
+	Pr dcmp_make;
+	std::array<Point,3> dcmp_interesting;
+
+	Pr cmp_make;
+	std::array<Point,3> cmp_interesting;
+
+	auto operator<=>(Output_tuple const&)const=default;
+};
+
+std::ostream& operator<<(std::ostream&,Output_tuple const&);
+
 std::string gen_html(
-	std::vector<std::tuple<
-		tba::Team_key,
-		Pr,Point,Point,Point,
-		Pr,Point,Point,Point
-	>> const& result,
+	std::vector<Output_tuple> const& result,
 	std::vector<tba::Team> const& team_info,
-	std::map<Extended_cutoff,Pr> const& dcmp_cutoff_pr,
-	std::map<Extended_cutoff,Pr> const& cmp_cutoff_pr,
+	std::array<Cutoff2,MAX_DCMPS> const& dcmp_cutoff_pr,
+	Cutoff const& cmp_cutoff_pr,
 	std::string const& title,
 	std::string const& district_short,
 	tba::Year year,
-	int dcmp_size,
+	std::vector<int> dcmp_size,
 	std::map<tba::Team_key,std::tuple<std::vector<int>,int,int>> points_used
 );
 

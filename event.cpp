@@ -1,9 +1,10 @@
 #include "event.h"
 #include<iostream>
+#include "util.h"
 
 using namespace std;
 
-int dcmp_size(tba::District_key const& district){
+std::optional<int> dcmp_size_inner(tba::District_key const& district){
 	if(district=="2019chs") return 58;
 	if(district=="2019isr") return 45;
 	if(district=="2019fma") return 60;
@@ -69,9 +70,39 @@ int dcmp_size(tba::District_key const& district){
 	if(district=="2025pnw") return 50;
 	if(district=="2025pch") return 45;
 
+	//if(district=="2026ca") return 60;
+	if(district=="2026fch") return 60;
+	if(district=="2026fim") return 160;
+	if(district=="2026fit") return 90;
+	if(district=="2026fin") return 38;
+	if(district=="2026isr") return 45;
+	if(district=="2026fma") return 60;
+	if(district=="2026fnc") return 50;
+	if(district=="2026ont") return 100;
+	if(district=="2026fsc") return 32;
+	if(district=="2026win") return 36;
+	if(district=="2026ne") return 100;
+	if(district=="2026pnw") return 50;
+	if(district=="2026pch") return 45;
+
+	return std::nullopt;
+}
+
+std::vector<int> dcmp_size(tba::District_key const& district){
+	auto a=dcmp_size_inner(district);
+	if(a){
+		std::vector<int> r;
+		r|=*a;
+		return r;
+	}
+	if(district=="2026ca"){
+		return std::vector<int>{{60,60}};
+	}
+
 	cerr<<"Unknown event size for "<<district<<"\n";
 	exit(1);
 }
+		
 
 int worlds_slots(tba::District_key const& key){
 	map<string,int> slots{
@@ -143,6 +174,21 @@ int worlds_slots(tba::District_key const& key){
 	if(key=="2025ont") return 22-2-1-1;
 	if(key=="2025pnw") return 22-2-2-1;
 	if(key=="2025pch") return 12-1-2-1;
+
+	if(key=="2026ca") return 46-(2+1+1)*2;
+	if(key=="2026fch") return 19-2-1-1;
+	if(key=="2026fim") return 83-5-1-2;
+	if(key=="2026fit") return 28-2-2-2;
+	if(key=="2026fin") return 12-1-2-0;
+	if(key=="2026isr") return 12-1-1-1;
+	if(key=="2026fma") return 23-2-2-1;
+	if(key=="2026fnc") return 15-1-2-2;
+	if(key=="2026fsc") return 7-1-1-1;
+	if(key=="2026win") return 12-1-1-1;
+	if(key=="2026ne") return 32-4-2-1;
+	if(key=="2026ont") return 21-2-1-1;
+	if(key=="2026pnw") return 21-2-2-1;
+	if(key=="2026pch") return 13-2-2-1;
 
 	cerr<<"Error: Unknown number of worlds slots for district:"<<key<<"\n";
 	exit(1);

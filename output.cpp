@@ -6,10 +6,33 @@
 #include "map.h"
 #include "util.h"
 #include "tba.h"
+#include "run.h"
+#include "outline.h"
 
 using namespace std;
 
+std::ostream& operator<<(std::ostream& o,Output_tuple const& a){
+	o<<"Output_tuple( ";
+	#define X(A) o<<""#A<<":"<<a.A<<" ";
+	X(team)
+	X(dcmp_home)
+	X(dcmp_make)
+	X(dcmp_interesting)
+	X(cmp_make)
+	X(cmp_interesting)
+	#undef X
+	return o<<")";
+}
+
 map<Point,Pr> simplify(map<pair<Point,Pr>,Pr> const& m){
+	map<Point,Pr> r;
+	for(auto [k,v]:m){
+		r[k.first]+=v;
+	}
+	return r;
+}
+
+map<Point,Pr> simplify(flat_map2<pair<Point,Pr>,Pr> const& m){
 	map<Point,Pr> r;
 	for(auto [k,v]:m){
 		r[k.first]+=v;
@@ -112,24 +135,71 @@ string join(string const& s,vector<T> const& v){
 }
 
 string gen_html(
-	vector<tuple<
-		tba::Team_key,
-		Pr,Point,Point,Point,
-		Pr,Point,Point,Point
-	>> const& result,
+	vector<Output_tuple> const& result,
 	vector<tba::Team> const& team_info,
-	map<Extended_cutoff,Pr> const& dcmp_cutoff_pr,
-	map<Extended_cutoff,Pr> const& cmp_cutoff_pr,
+	std::array<Cutoff2,2> const& dcmp_cutoff_pr,
+	Cutoff const& cmp_cutoff_pr,
 	string const& title,
 	string const& district_short,
 	tba::Year year,
-	int dcmp_size,
+	std::vector<int> dcmp_size,
 	map<tba::Team_key,tuple<vector<int>,int,int>> points_used
 ){
+	std::map<tba::Team_key,tba::Team> by_team;
+	for(auto x:team_info){
+		by_team.insert(make_pair(x.key,x));
+		//by_team[x.key]=x;
+	}
+
+	auto dcmp_string=[&](tba::Team_key t){
+		auto f=by_team.find(t);
+		assert(f!=by_team.end());
+		auto f1=f->second;
+		if(f1.state_prov!="California"){
+			return string();
+		}
+		return as_string(california_region(f1));
+	};
+	auto by_dcmp=group([&](auto x){ return dcmp_string(x.team); },result);
+	//PRINT(by_dcmp);
+	map<tba::Team_key,std::string> team_str;
+	for(auto &p:by_dcmp){
+		auto &l=p.second;
+		std::sort(
+			l.begin(),
+			l.end(),
+			[](auto a,auto b){
+				auto t=[](auto x){ return make_tuple(x.dcmp_make,x.cmp_make,x); };
+				return t(a)<t(b);
+			}
+		);
+
+		std::reverse(l.begin(),l.end());
+		auto m=mapf([](auto x){ return x.team; },l);
+		for(auto [i,team]:enumerate_from(1,m)){
+			std::stringstream ss;
+			auto d=dcmp_string(team);
+			ss<<d;
+			if(!d.empty()){
+				ss<<"("<<i<<" of "<<m.size()<<")";
+			}
+			team_str.insert(make_pair(team,ss.str()));
+		}
+	}
+
+	auto get_team_str=[=](tba::Team_key t){
+		auto f=team_str.find(t);
+		assert(f!=team_str.end());
+		return f->second;
+	};
+
 	auto nickname=[&](auto k){
 		auto f=filter_unique([=](auto a){ return a.key==k; },team_info);
 		auto v=f.nickname;
 		assert(v);
+		/*if(f.state_prov=="California"){
+			return "("+as_string(california_region(f))+") "+*v;
+		}*/
 		return *v;
 	};
 
@@ -178,10 +248,32 @@ string gen_html(
 		));
 	};
 
-	auto cutoff_table1=cutoff_table("District Championship",dcmp_cutoff_pr);
+	auto dcmp_name=[=](int i)->string{
+		if(district_short=="ca"){
+			switch(i){
+				case 0:
+					return "NORTH";
+				case 1:
+					return "SOUTH";
+				default:
+					assert(0);
+			}
+		}
+		return "";
+	};
+
+	auto dcmp_names=(district_short=="ca")?2:1;
+
+	//auto cutoff_table1=cutoff_table("District Championship",dcmp_cutoff_pr);
+	auto cutoff_table1=join(mapf(
+		[=](auto i){
+			return cutoff_table("District Championship "+dcmp_name(i),dcmp_cutoff_pr[i]);
+		},
+		range(dcmp_names)
+	));
 	auto cutoff_table_cmp=cutoff_table("FRC Championship",cmp_cutoff_pr);
 
-	auto cutoff_table_long=[=](){
+	auto cutoff_table_long1=[=](auto data){
 		return h2("Cutoff value - extended")+
 		"The cutoff values, along with how likely a team at that value is to miss advancing.  For example: a line that said (50,.25) would correspond to the probability that team above 50 get in, teams below 50 do not, and 75% of teams ending up with exactly 50 would qualify for the district championship."+
 		tag("table border",
@@ -190,12 +282,18 @@ string gen_html(
 				[](auto a){
 					return tr(join(MAP(td,a)));
 				},
-				dcmp_cutoff_pr
+				data
 			))
 		);
-	}();
+	};
 
-	double total_entropy=sum(::mapf(entropy,seconds(result)));
+	auto cutoff_table_long=join(mapf(
+		[=](auto i){ return cutoff_table_long1(dcmp_cutoff_pr[i]); },
+		range(dcmp_names)
+	));
+
+	//double total_entropy=sum(::mapf(entropy,seconds(result)));
+	double total_entropy=sum(::mapf(entropy,mapf([](auto x){ return x.dcmp_make; },result)));
 	PRINT(total_entropy);
 
 	static const std::vector<std::pair<std::string,std::string>> columns{
@@ -235,7 +333,12 @@ string gen_html(
 			link("https://www.thebluealliance.com/events/"+district_short+"/"+::as_string(year)+"#rankings","The Blue Alliance")+"<br>"+
 			//link("http://frclocks.com/index.php?d="+district_short,"FRC Locks")+"(slow)<br>"+
 			link("http://frclocks.com/districts/"+district_short+".html","FRC Locks")+"<br>"+
-			"Slots at event:"+as_string(dcmp_size)+
+			"Slots at district championship:"+[=](){
+				if(dcmp_size.size()==1){
+					return as_string(dcmp_size[0]);
+				}
+				return as_string(dcmp_size);
+			}()+
 			cutoff_table1+
 			h2("Team Probabilities")+
 			explain+
@@ -248,25 +351,25 @@ string gen_html(
 					::mapf(
 						[=](auto p){
 							auto [i,a]=p;
-							auto used=points_used.find(get<0>(a))->second;
+							auto used=points_used.find(a.team)->second;
 							return tr(join(
-								vector<string>{}+td(i)+
-								colorize(get<1>(a))+
+								vector<string>{}+td(as_string(i)+" "+get_team_str(a.team))+
+								colorize(a.dcmp_make)+
 								::mapf(
 									td1,
 									std::vector<std::string>{
-										make_link(get<0>(a)),
-										nickname(get<0>(a)),
-										as_string(get<2>(a)),
-										as_string(get<3>(a)),
-										as_string(get<4>(a))
+										make_link(a.team),
+										nickname(a.team),
+										as_string(a.dcmp_interesting[0]),
+										as_string(a.dcmp_interesting[1]),
+										as_string(a.dcmp_interesting[2])
 									}
 								)
 								)+
-								colorize(get<5>(a))+
-								td(get<6>(a))+
-								td(get<7>(a))+
-								td(get<8>(a))+
+								colorize(a.cmp_make)+
+								td(a.cmp_interesting[0])+
+								td(a.cmp_interesting[1])+
+								td(a.cmp_interesting[2])+
 								td(get<1>(used))+ //rookie points
 								td(join("&nbsp;",get<0>(used)))+ //played
 								td(get<2>(used)) //remaining events
@@ -274,7 +377,7 @@ string gen_html(
 						},
 						enumerate_from(1,reversed(sorted(
 							result,
-							[](auto x){ return make_tuple(get<1>(x),get<5>(x),x); }
+							[](auto x){ return make_tuple(x.dcmp_make,x.cmp_make,x); }
 						)))
 					)
 				)
@@ -284,7 +387,7 @@ string gen_html(
 	);
 }
 
-pair<tba::Event_key,std::string> championship_event(auto &f,tba::District_key const& d){
+std::vector<pair<tba::Event_key,std::string>> championship_event(auto &f,tba::District_key const& d){
 	auto f1=filter(
 		[](auto x)->bool{
 			//This is here because there is an event whose code is "mbfrc25"
@@ -298,9 +401,12 @@ pair<tba::Event_key,std::string> championship_event(auto &f,tba::District_key co
 		},
 		district_events_simple(f,d)
 	);
-	assert(f1.size()==1);
-	auto e=f1[0];
-	return make_pair(e.key,e.name);
+	assert(f1.size()>=1);
+	assert(f1.size()<=MAX_DCMPS);
+	return mapf(
+		[](auto x){ return make_pair(x.key,x.name); },
+		f1
+	);
 }
 
 int team_number(tba::Team_key const& a){
@@ -321,8 +427,18 @@ int make_spreadsheet(
 		ofstream o(output_dir+"/"+filename);
 		o<<"Team #,CMP,Event,P(DCMP)\n";
 		for(auto [district,teams]:m){
-			auto [event_key,event_name]=championship_event(f,district);
+			//auto [event_key,event_name]=championship_event(f,district);
+			auto e=championship_event(f,district);
+			auto [event_key,event_name]=e[0];
 			for(auto [team,p]:teams){
+				auto [event_key,event_name]=[&](){
+					if(e.size()==1){
+						return e[0];
+					}
+					auto x=calc_dcmp_home(f,team);
+					assert(x<e.size());
+					return e[x];
+				}();
 				o<<team_number(team)<<","<<event_key<<","<<event_name<<","<<p<<"\n";
 			}
 		}

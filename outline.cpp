@@ -16,6 +16,14 @@ TODO: Find table of # of chairman's winners per DCMP
 Engineering inspiration (#?)
 Rookie All-Star (probability that given out?)
 district championship winners -> just assume that they would have enough points anyway?
+
+General outline of how to deal w/ California:
+1) Teams become not just a # of points but also a tag of which dcmp they are eligible for
+2) the point distributions after each event become two distributions, one for each tag
+
+simple way: 
+1) ignore going to cmp, just look at the halves as if they were individual w/ out of state plays
+2) assume equal # of teams from each side of the DCMP makes it to cmp.
 */
 
 #include<fstream>
@@ -38,6 +46,8 @@ district championship winners -> just assume that they would have enough points 
 #include "multiset_flat.h"
 #include "status.h"
 #include "run.h"
+#include "ca.h"
+#include "outline.h"
 
 //start generic stuff
 
@@ -59,6 +69,24 @@ struct hash_pair{
 //start program-specific stuff.
 
 using namespace std;
+
+California_region california_region(tba::Team const& team){
+	if(team.postal_code){
+		return california_region(Zipcode(*team.postal_code));
+	}
+	if(team.city){
+		return california_region(City(*team.city));
+	}
+	assert(0);
+}
+
+auto california_region(tba::Event const& event){
+	if(event.postal_code){
+		return california_region(Zipcode(*event.postal_code));
+	}
+	PRINT(event);
+	nyi
+}
 
 std::map<Point,Pr> operator+(std::map<Point,Pr> a,int i){
 	std::map<Point,Pr> r;
@@ -102,7 +130,7 @@ Run_result run_inner(
 	bool ignore_chairmans,
 	tba::District_key district,
 	tba::Year year,
-	int dcmp_size
+	std::vector<int> dcmp_size
 ){
 	bool dcmp_played=0;
 
@@ -141,7 +169,7 @@ Run_result run_inner(
 		d1=filter([&](auto x){ return not_going.count(x.team_key)==0; },d1);
 	}
 
-	map<tba::Team_key,pair<bool,Team_dist>> by_team;
+	map<tba::Team_key,Team_status> by_team;
 	map<tba::Team_key,tuple<vector<int>,int,int>> points_used;
 	for(auto team:d1){
 		auto max_counters=2-int(team.event_points.size());
@@ -205,12 +233,13 @@ Run_result run_inner(
 			team.rookie_bonus,
 			events_left
 		);
-		by_team[team.team_key]=make_pair(chairmans.count(team.team_key),std::move(dist));
+		Dcmp_home dcmp_home=calc_dcmp_home(f,team.team_key);
+		by_team[team.team_key]=Team_status(chairmans.count(team.team_key),std::move(dist),dcmp_home);
 	}
 
 	map<Point,Pr> by_points; //# of teams expected to end at each # of points
 	for(auto [team,data1]:by_team){
-		auto [cm,data]=data1;
+		auto [cm,data,dcmp_home]=data1;
 		(void)team;
 		for(auto [pts,pr]:data){
 			auto f=by_points.find(pts);
@@ -263,7 +292,7 @@ map<tba::Team_key,Pr> run(
 	std::string const& output_dir, //output
 	tba::District_key district, //data in
 	tba::Year year, //data in & out
-	int dcmp_size, //how
+	std::vector<int> dcmp_size, //how
 	string const& title, //output
 	string const& district_short, //output
 	std::string extra="", //output
@@ -281,7 +310,7 @@ map<tba::Team_key,Pr> run(
 			cout<<i<<",";
 		}
 		for(auto [team,data1]:results.by_team){
-			auto [cmd,data]=data1;
+			auto [cmd,data,dcmp_home]=data1;
 			cout<<team<<",";
 			for(auto i:range_st<140>()){
 				auto f=data.find(i);
@@ -305,7 +334,7 @@ map<tba::Team_key,Pr> run(
 		auto g=gen_html(
 			results.result,
 			team_info,
-			to_map(results.cutoff_pr),
+			results.cutoff_pr,
 			to_map(results.cmp_cutoff_pr),
 			title,
 			district_short,
@@ -323,14 +352,14 @@ map<tba::Team_key,Pr> run(
 		cout.precision(3);
 		for(auto a:reversed(sorted(
 			results.result,
-			[](auto x){ return make_pair(get<1>(x),x); }
+			[](auto x){ return make_pair(x.dcmp_make,x); }
 		))){
-			cout<<get<0>(a).str().substr(3,100)<<"\t";
-			cout<<get<1>(a)<<"\t";
-			cout<<get<2>(a)<<"\t";
-			cout<<get<3>(a)<<"\t";
-			cout<<get<4>(a)<<"\t";
-			auto f=filter_unique([=](auto const& f){ return f.key==get<0>(a); },team_info);
+			cout<<a.team.str().substr(3,100)<<"\t";
+			cout<<a.dcmp_make<<"\t";
+			cout<<a.dcmp_interesting[0]<<"\t";
+			cout<<a.dcmp_interesting[1]<<"\t";
+			cout<<a.dcmp_interesting[2]<<"\t";
+			auto f=filter_unique([=](auto const& f){ return f.key==a.team; },team_info);
 			using namespace tba;
 			cout<<f.nickname<<"\n";
 		}
@@ -338,7 +367,7 @@ map<tba::Team_key,Pr> run(
 
 	return to_map(::mapf(
 		[](auto x){
-			return make_pair(get<0>(x),get<1>(x));
+			return make_pair(x.team,x.dcmp_make);
 		},
 		results.result
 	));
@@ -368,9 +397,16 @@ std::ostream& operator<<(std::ostream& o,Team_data const& a){
 
 using District_data=map<tba::Team_key,Team_data>;
 
+Dcmp_home calc_dcmp_home(TBA_fetcher &fetcher,tba::Team_key const& team_key){
+	auto t=team(fetcher,team_key);
+	if(t.state_prov!="California"){
+		return 0;
+	}
+	auto c=california_region(t);
+	return (Dcmp_home)c;
+}
+
 Run_input to_run_input_equal(TBA_fetcher &fetcher,tba::District_key district,District_data data){
-	(void)data;
-	//(void)events;
 	Run_input r;
 	r.dcmp_size=dcmp_size(district);
 	r.worlds_slots=worlds_slots(district);
@@ -378,9 +414,11 @@ Run_input to_run_input_equal(TBA_fetcher &fetcher,tba::District_key district,Dis
 	//this is the baseline for how many points at an upcoming district event
 	const auto pr=flat_map2(historical_event_pts(fetcher));
 
-	r.by_team=map_values(
-		[=](auto x)->pair<bool,Team_dist>{
-			return make_pair(
+	r.by_team=to_map(mapf(
+		[&](auto data)->std::pair<tba::Team_key,Team_status>{
+			auto [team,x]=data;
+			Dcmp_home dcmp_home=calc_dcmp_home(fetcher,team);
+			return make_pair(team,Team_status(
 				x.won_district_chairmans,
 				[=]()->Team_dist{
 					if(x.unplayed_district_events_scheduled==2){
@@ -392,11 +430,12 @@ Run_input to_run_input_equal(TBA_fetcher &fetcher,tba::District_key district,Dis
 					}else{
 						assert(0);
 					}
-				}()
-			);
+				}(),
+				dcmp_home
+			));
 		},
 		data
-	);
+	));
 
 	r.dcmp_played=[&]()->bool{
 		auto e=tba::district_events_simple(fetcher,district);
@@ -644,6 +683,53 @@ int main1(int argc,char **argv){
 	}
 
 	auto d=districts(tba_fetcher,args.year);
+	print_lines(d);
+
+	{
+		auto k=tba::District_key("2026ca");
+		auto cal_teams=district_teams(tba_fetcher,k);
+		auto m=MAP(california_region,cal_teams);
+		PRINT(count(m));
+
+		//for each of the teams, how many are going to each event?
+		//for each event, how many teams from each region are going?
+		//can we identify events as being part of the region based on listed location?
+		//
+		auto d=district_events(tba_fetcher,k);
+		auto m2=MAP(california_region,d);
+		PRINT(count(m2));
+
+		for(auto x:d){
+			auto k=x.key;
+			auto e=event_teams(tba_fetcher,k);
+			auto n=MAP(california_region,e);
+			cout<<k<<" "<<california_region(x)<<" ";
+			PRINT(count(n));
+		}
+	}
+
+#if 0
+	for(auto team:tba::district_teams(tba_fetcher,tba::District_key("2026ca"))){
+		cout<<team.team_number<<"\t"<<california_region(team)<<"\n";
+/*		PRINT(team.team_number);
+		if(!team.postal_code){
+			cout<<"No zip\n";
+			PRINT(team);
+			if(team.city){
+				City city(*team.city);
+				auto c=california_region(city);
+				PRINT(c);
+			}else{
+				nyi
+			}
+			continue;
+		}
+		assert(team.postal_code);
+		auto c=california_region(Zipcode(*team.postal_code));
+		PRINT(c);*/
+	}
+#endif
+
 	map<tba::District_key,map<tba::Team_key,Pr>> dcmp_pr;
 
 	for(auto year_info:d){
@@ -656,7 +742,7 @@ int main1(int argc,char **argv){
 		dcmp_pr[district]=run(tba_fetcher,args.output_dir,district,args.year,dcmp_size(district),title,year_info.abbreviation);
 
 		if(district=="2022ne"){
-			run(tba_fetcher,args.output_dir,district,args.year,16,"New England Championship Pre-Qualify",year_info.abbreviation,"_cmp",1);
+			run(tba_fetcher,args.output_dir,district,args.year,std::vector<int>{{16}},"New England Championship Pre-Qualify",year_info.abbreviation,"_cmp",1);
 		}
 	}
 

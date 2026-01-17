@@ -280,6 +280,15 @@ std::string join(std::vector<T> const& a){
 	return ss.str();
 }
 
+template<typename T,size_t N>
+std::string join(std::array<T,N> const& a){
+	std::stringstream ss;
+	for(auto const& x:a){
+		ss<<x;
+	}
+	return ss.str();
+}
+
 template<typename A,typename B,typename C,typename D,typename E>
 std::string join(std::tuple<A,B,C,D,E> const& t){
 	std::stringstream ss;

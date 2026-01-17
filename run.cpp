@@ -1,8 +1,17 @@
 #include "run.h"
 #include<random>
 #include "multiset_flat.h"
+#include "set.h"
 
 using namespace std;
+
+template<typename T,size_t N,typename B>
+std::array<T,N>& operator|=(std::array<T,N> &a,std::array<B,N> const& b){
+	for(auto i:range_st<N>()){
+		a[i]|=b[i];
+	}
+	return a;
+}
 
 flat_map<Point,Pr> convolve(std::map<Point,Pr> const& a,std::map<Point,Pr> const& b){
 	flat_map<Point,Pr> r;
@@ -190,7 +199,32 @@ auto find_cutoff(flat_map2<pair<bool,Point>,unsigned> const& these_points,unsign
 			return make_pair(points.second,1-double(excess)/teams);
 		}
 	}
+
+	if(these_points.empty()){
+		return make_pair(Point(0),1.0);
+	}
+	PRINT(these_points);
+	PRINT(eliminating);
 	assert(0);
+}
+
+template<typename T,size_t N>
+auto find_cutoff(std::array<T,N> const& a,auto const& b){
+	return mapf([&](auto const& x){ return find_cutoff(x,b); },a);
+}
+
+template<typename T,size_t N,typename B>
+auto find_cutoff(std::array<T,N> const& a,std::vector<B> const& b){
+	return mapf(
+		[&](auto i){
+			if(i<b.size()){
+				return find_cutoff(a[i],b[i]);
+			}else{
+				return find_cutoff(a[i],B{});
+			}
+		},
+		range_st<N>()
+	);
 }
 
 Run_result run_calc(
@@ -214,10 +248,24 @@ Run_result run_calc(
 	//This function exists to run the calculations of how teams are
 	//expected to do, seperatedly from doing any IO.
 
-	auto teams_advancing=input.dcmp_size;
-	auto teams_competing=input.by_team.size();
-	unsigned teams_left_out=max(0,(int)teams_competing-(int)teams_advancing); //Ontario had more slots than teams in 2022.
-	unsigned cmp_teams_left_out=max(0,input.dcmp_size-input.worlds_slots);
+	//auto teams_advancing=input.dcmp_size;
+	//auto teams_competing=input.by_team.size();
+	//unsigned teams_left_out=max(0,(int)teams_competing-(int)teams_advancing); //Ontario had more slots than teams in 2022.
+	auto teams_competing=[=](auto dcmp_index){
+		auto m=mapf([](auto x){ return x.second.dcmp_home; },input.by_team);
+		auto s=to_multiset(m);
+		return s.count(dcmp_index);
+	};
+
+	auto teams_left_out=mapf(
+		[=](auto p){
+			auto [i,teams_advancing]=p;
+			auto t=teams_competing(i);
+			return max(0,(int)t-(int)teams_advancing);
+		},
+		enumerate(input.dcmp_size)
+	);
+	unsigned cmp_teams_left_out=max(0,(int)sum(input.dcmp_size)-input.worlds_slots);
 
 	//monte carlo method for where the cutoff is
 
@@ -243,7 +291,9 @@ Run_result run_calc(
 	};
 
 	//multiset<pair<Point,Pr>> dcmp_cutoffs,cmp_cutoff;
-	multiset_flat<pair<Point,Pr>> dcmp_cutoffs,cmp_cutoff;
+	using Cutoff=multiset_flat<pair<Point,Pr>>;
+	std::array<Cutoff,MAX_DCMPS> dcmp_cutoffs;
+	Cutoff cmp_cutoff;
 
 	/*usually want this to be like 2k
 	but theoretically the numbers should get better up to about 20k iterations
@@ -254,41 +304,48 @@ Run_result run_calc(
 	*/
 	static const auto iterations=2000;
 
-	flat_map2<pair<bool,Point>,unsigned> final_points;
+	using Final_points=flat_map2<pair<bool,Point>,unsigned>;
+	std::array<Final_points,MAX_DCMPS> final_points;
 
 	for(auto iteration:range_st<iterations>()){
 		(void)iteration;
 		//PRINT(iteration);
-		final_points.clear();
-
+		//final_points.clear();
+		for(auto &x:final_points){
+			x.clear();
+		}
 
 		for(auto const& [team,data]:input.by_team){
-			auto const& [cm,dist]=data;
-			final_points[pair<bool,Point>(cm,sample(dist))]++;
+			auto const& [cm,dist,dcmp_home]=data;
+			final_points[dcmp_home][pair<bool,Point>(cm,sample(dist))]++;
 		}
 
 		auto dcmp_cutoff=find_cutoff(final_points,teams_left_out);
 		dcmp_cutoffs|=dcmp_cutoff;
 
 		flat_map2<pair<bool,Point>,unsigned> post_dcmp_points;
-		for(auto [earned,teams]:final_points){
-			auto [cm,points]=earned;
+		for(auto i:range_st<MAX_DCMPS>()){
+			auto & final_points_this=final_points[i];//not sure that this should really be mutable.
+			auto const& dcmp_cutoff_this=dcmp_cutoff[i];
+			for(auto [earned,teams]:final_points_this){
+				auto [cm,points]=earned;
 
-			if(!cm && points<dcmp_cutoff.first) continue;
-			if(points==dcmp_cutoff.first){
-				teams*=(1-dcmp_cutoff.second);
-			}
-
-			//for(auto _:range(teams)){
-			//	(void)_;
-			for(unsigned i=0;i<teams;i++){
-				int pts;
-				if(input.dcmp_played){
-					pts=points;
-				}else{
-					pts=points+sample(input.dcmp_distribution1);
+				if(!cm && points<dcmp_cutoff_this.first) continue;
+				if(points==dcmp_cutoff_this.first){
+					teams*=(1-dcmp_cutoff_this.second);
 				}
-				post_dcmp_points[make_pair(0,pts)]++;
+
+				//for(auto _:range(teams)){
+				//	(void)_;
+				for(unsigned i=0;i<teams;i++){
+					int pts;
+					if(input.dcmp_played){
+						pts=points;
+					}else{
+						pts=points+sample(input.dcmp_distribution1);
+					}
+					post_dcmp_points[make_pair(0,pts)]++;
+				}
 			}
 		}
 
@@ -296,10 +353,19 @@ Run_result run_calc(
 	}
 
 	//map<pair<Point,Pr>,Pr> cutoff_pr=flat_map2(map_values(
-	auto cutoff_pr=flat_map2(map_values(
+	/*auto cutoff_pr=flat_map2(map_values(
 		[=](auto x){ return (0.0+x)/iterations; },
 		count(dcmp_cutoffs)
-	));
+	));*/
+	auto cutoff_pr=mapf(
+		[=](auto const& dcmp_cutoffs_this){
+			return flat_map2(map_values(
+				[=](auto x){ return (0.0+x)/iterations; },
+				count(dcmp_cutoffs_this)
+			));
+		},
+		dcmp_cutoffs
+	);
 
 	//map<pair<Point,Pr>,Pr> cmp_cutoff_pr=map_values(
 	auto cmp_cutoff_pr=flat_map2(map_values(
@@ -325,21 +391,22 @@ Run_result run_calc(
 		}
 		return r;
 	};
-	auto interesting_cutoffs_dcmp=interesting_cutoffs(cutoff_pr);
+	//auto interesting_cutoffs_dcmp=interesting_cutoffs(cutoff_pr);
+	auto interesting_cutoffs_dcmp=mapf(interesting_cutoffs,cutoff_pr);
 	auto interesting_cutoffs_cmp=interesting_cutoffs(cmp_cutoff_pr);
 
-	vector<Result_tuple> result;
+	vector<Output_tuple> result;
 	for(auto team:input.d1){
 		//probability that get in
 		//subtract the cutoff pr
-		auto [cm,team_pr]=input.by_team[team.team_key];
+		auto [cm,team_pr,dcmp_home]=input.by_team[team.team_key];
 		double pr_make=0;
 		double pr_miss=0;
 		if(cm){
 			pr_make=1;
 			pr_miss=0;
 		}else{
-			for(auto [cutoff,c_pr]:cutoff_pr){
+			for(auto [cutoff,c_pr]:cutoff_pr[dcmp_home]){
 				for(auto [team_value,t_pr]:team_pr){
 					auto combined_pr=c_pr*t_pr;
 					if(team_value>cutoff.first){
@@ -360,7 +427,7 @@ Run_result run_calc(
 			if(cm){
 				return team_pr;
 			}
-			return when_greater(team_pr,cutoff_pr);
+			return when_greater(team_pr,cutoff_pr[dcmp_home]);
 		}();
 		auto post_dcmp_dist=convolve(dcmp_entry_dist,input.dcmp_distribution1);
 		auto post_total=sum(values(post_dcmp_dist));
@@ -392,10 +459,11 @@ Run_result run_calc(
 
 		if(cm){
 			assert(pr_make>.99);
-			result|=Result_tuple(
+			result|=Output_tuple(
 				team.team_key,
-				1.0,0,0,0,
-				cmp_make,cmp_interesting[0],cmp_interesting[1],cmp_interesting[2]
+				input.by_team[team.team_key].dcmp_home,
+				1.0,std::array<Point,3>{0,0,0},
+				cmp_make,std::array<Point,3>{cmp_interesting[0],cmp_interesting[1],cmp_interesting[2]}
 			);
 		}else{
 			//PRINT(total);
@@ -403,22 +471,23 @@ Run_result run_calc(
 			//PRINT(pr_make);
 			//points needed to have 50% odds; 5% odds; 95% odds, or quartiles?
 			vector<Point> interesting;
-			for(auto [pr,pts]:interesting_cutoffs_dcmp){
+			for(auto [pr,pts]:interesting_cutoffs_dcmp[dcmp_home]){
 				//cout<<pr<<":"<<max(0.0,pts-points_so_far)<<"\n";
 				auto value=max(Point(0),Point(pts.first-points_so_far));
 				interesting|=value;
 			}
 			assert(interesting.size()==3);
 
-			result|=make_tuple(
+			result|=Output_tuple(
 				team.team_key,
-				pr_make,interesting[0],interesting[1],interesting[2],
-				cmp_make,cmp_interesting[0],cmp_interesting[1],cmp_interesting[2]
+				input.by_team[team.team_key].dcmp_home,
+				pr_make,std::array<Point,3>{interesting[0],interesting[1],interesting[2]},
+				cmp_make,std::array<Point,3>{cmp_interesting[0],cmp_interesting[1],cmp_interesting[2]}
 			);
 		}
 	}
 
-	auto x=::mapf([](auto x){ return get<1>(x); },result);
+	auto x=::mapf([](auto x){ return x.dcmp_make; },result);
 	//PRINT(sum(x)); //this number should be really close to the number of slots available at the event.
 
 	return Run_result{result,cutoff_pr,cmp_cutoff_pr,input.points_used,input.by_team};

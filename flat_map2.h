@@ -13,6 +13,33 @@ std::vector<T> sorted(std::initializer_list<T> const& a){
 }
 
 template<typename K,typename V>
+struct const_proxy{
+	K const& first;
+	V const& second;
+
+	auto operator<=>(const_proxy const&)const{
+		nyi
+	}
+
+	bool operator==(const_proxy const& p)const{
+		return first==p.first && second==p.second;
+	}
+};
+
+template<typename K,typename V>
+std::ostream& operator<<(std::ostream& o,const_proxy<K,V> const& a){
+	return o<<"("<<a.first<<","<<a.second<<")";
+}
+
+template<typename Func,typename K,typename V>
+auto mapf(Func f,const_proxy<K,V> const& a){
+	return std::make_pair(
+		f(a.first),
+		f(a.second)
+	);
+}
+
+template<typename K,typename V>
 class flat_map2{
 	//Doing pair of vectors rather than vector of pairs
 	//This will complicate some operations like find()
@@ -106,19 +133,6 @@ class flat_map2{
 		auto operator<=>(iterator const&)const=default;
 	};
 
-	struct const_proxy{
-		K const& first;
-		V const& second;
-
-		auto operator<=>(const_proxy const&)const{
-			nyi
-		}
-
-		bool operator==(const_proxy const& p)const{
-			return first==p.first && second==p.second;
-		}
-	};
-
 	struct const_iterator{
 		using K_it=typename KS::const_iterator;
 		using V_it=typename VS::const_iterator;
@@ -131,8 +145,8 @@ class flat_map2{
 			return *this;
 		}
 
-		const_proxy operator*()const{
-			return const_proxy{*first,*second};
+		const_proxy<K,V> operator*()const{
+			return const_proxy<K,V>{*first,*second};
 		}
 
 		auto operator<=>(const_iterator const&)const=default;
@@ -204,7 +218,16 @@ class flat_map2{
 		keys.clear();
 		values.clear();
 	}
+
+	auto empty()const{
+		return keys.empty();
+	}
 };
+
+template<typename K,typename V>
+std::ostream& operator<<(std::ostream& o,flat_map2<K,V> const& a){
+	return o<<a.to_map();
+}
 
 template<typename K,typename V>
 std::map<K,V> to_map(flat_map2<K,V> const& a){
