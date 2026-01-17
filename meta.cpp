@@ -355,11 +355,23 @@ optional<map<Team,Season_result>> season_results(tba::District_key const& distri
 }
 
 double compare(map<Team,bool> a,map<Team,double> b){
+	//a=actual
+	//b=predicted
 	{
 		//make teams that do not appear in the predictions implicitly a 0% chance.
 		auto a_only=keys(a)-keys(b);
 		for(auto k:a_only){
 			b[k]=0;
+		}
+	}
+
+	{
+		//make teams that do not appear in the final results as misses
+		//this actually happens when teams are scheduled for events and then do not
+		//appear in any.
+		auto b_only=keys(b)-keys(a);
+		for(auto k:b_only){
+			a[k]=0;
 		}
 	}
 
@@ -373,6 +385,12 @@ double compare(map<Team,bool> a,map<Team,double> b){
 		}
 		PRINT(ak-bk);
 		PRINT(bk-ak);
+
+		for(auto k:bk-ak){
+			cout<<k<<"\n";
+			PRINT(a[k]);
+			PRINT(b[k]);
+		}
 	}
 	assert(ak==bk);
 	return mean(mapf(

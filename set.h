@@ -70,6 +70,12 @@ std::set<T>& operator-=(std::set<T> &a,std::set<T> const& b){
 }
 
 template<typename T>
+std::set<T>& operator-=(std::set<T> &a,T const& b){
+	a.erase(b);
+	return a;
+}
+
+template<typename T>
 std::set<T> operator&(std::set<T> const& a,std::set<T> const& b){
 	std::set<T> r;
 	std::set_intersection(

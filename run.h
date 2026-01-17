@@ -15,7 +15,7 @@ using Team_dist=flat_map2<Point,Pr>;
 
 struct Team_status{
 	bool district_chairmans;
-	Team_dist point_dist;
+	Team_dist point_dist; //number of points expected pre-dcmp
 	Dcmp_home dcmp_home;
 };
 

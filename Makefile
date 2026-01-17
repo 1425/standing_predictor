@@ -33,6 +33,7 @@ OUTLINE_OBJS= \
 	run.o \
 	ca.o \
 	zipcodes.o \
+	skill.o \
 	$(TBA_OBJS)
 
 outline: $(OUTLINE_OBJS)

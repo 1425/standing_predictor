@@ -48,6 +48,7 @@ simple way:
 #include "run.h"
 #include "ca.h"
 #include "outline.h"
+#include "skill.h"
 
 //start generic stuff
 
@@ -65,6 +66,13 @@ struct hash_pair{
 		return h1^h2;
 	}
 };
+
+template<typename K,typename V>
+auto get_key(std::map<K,V> const& a,K const& k){
+	auto f=a.find(k);
+	assert(f!=a.end());
+	return f->second;
+}
 
 //start program-specific stuff.
 
@@ -169,6 +177,8 @@ Run_result run_inner(
 		d1=filter([&](auto x){ return not_going.count(x.team_key)==0; },d1);
 	}
 
+	auto skills=calc_skill(f,district);
+
 	map<tba::Team_key,Team_status> by_team;
 	map<tba::Team_key,tuple<vector<int>,int,int>> points_used;
 	for(auto team:d1){
@@ -213,7 +223,8 @@ Run_result run_inner(
 				));
 			}
 			if(events_left==2){
-				return Team_dist{convolve(pr,pr)};
+				return get_key(skills,team.team_key);
+				//return Team_dist{convolve(pr,pr)};
 			}
 			PRINT(team);
 			PRINT(events_left);
