@@ -13,6 +13,37 @@ std::array<T,N>& operator|=(std::array<T,N> &a,std::array<B,N> const& b){
 	return a;
 }
 
+bool approx_equal(double a,double b){
+	return fabs(a-b)<.01;
+}
+
+flat_map<Point,Pr> convolve(flat_map2<Point,Pr> const& a,std::map<Point,flat_map2<Point,double>> const& b){
+	//convolution may not be the correct name for this operation.
+	//for each item in the first distribution, take a corresponding distribution out of 'b'
+	//and and add the value from there
+
+	flat_map<Point,Pr> r;
+	for(auto [k,v]:a){
+		auto find_dist=[&](){
+			auto f=b.find(k);
+			if(f!=b.end()){
+				return f->second;
+			}
+			auto m=max(keys(b));
+			auto f2=b.find(m);
+			assert(f2!=b.end());
+			return f2->second;
+		};
+		for(auto [k2,v2]:find_dist()){
+			auto k3=k+k2;
+			auto v3=v*v2;
+			r[k3]+=v3;
+		}
+	}
+
+	return r;
+}
+
 flat_map<Point,Pr> convolve(std::map<Point,Pr> const& a,std::map<Point,Pr> const& b){
 	flat_map<Point,Pr> r;
 	for(auto [a1,ap]:a){
@@ -228,23 +259,24 @@ auto find_cutoff(std::array<T,N> const& a,std::vector<B> const& b){
 }
 
 Run_result run_calc(
-#if 0
-	int dcmp_size,
-	int worlds_slots,
-
-	/*for each team, did they win a district chairmans's award and how
-	  many points are they expected to have by the time of the district
-	  championship
-	  */
-	map<tba::Team_key,pair<bool,Team_dist>> by_team,
-
-	bool dcmp_played,
-	flat_map2<Point,Pr> dcmp_distribution1,
-	std::vector<tba::District_Ranking> d1,
-	map<tba::Team_key,tuple<vector<int>,int,int>> points_used //this is only passed through
-#endif
 	Run_input input
 ){
+	#if 0
+	//check that this incoming distributions look ok.
+	for(auto [k,v]:input.by_team){
+		auto s=sum(values(v.point_dist));
+		assert(approx_equal(1,s));
+	}
+
+	for(auto [k,v]:input.dcmp_distribution1){
+		auto s=sum(values(v));
+		PRINT(k)
+		PRINT(v);
+		PRINT(s);
+		assert(approx_equal(1,s));
+	}
+	#endif
+
 	//This function exists to run the calculations of how teams are
 	//expected to do, seperatedly from doing any IO.
 
@@ -287,6 +319,8 @@ Run_result run_calc(
 				return value;
 			}
 		}
+		PRINT(num);
+		PRINT(total);
 		assert(0);
 	};
 
@@ -306,6 +340,11 @@ Run_result run_calc(
 
 	using Final_points=flat_map2<pair<bool,Point>,unsigned>;
 	std::array<Final_points,MAX_DCMPS> final_points;
+
+	/*for(auto [k,v]:input.dcmp_distribution1){
+		cout<<k<<" "<<sum(values(v))<<"\n";
+	}
+	nyi*/
 
 	for(auto iteration:range_st<iterations>()){
 		(void)iteration;
@@ -335,14 +374,33 @@ Run_result run_calc(
 					teams*=(1-dcmp_cutoff_this.second);
 				}
 
-				//for(auto _:range(teams)){
-				//	(void)_;
 				for(unsigned i=0;i<teams;i++){
 					int pts;
 					if(input.dcmp_played){
 						pts=points;
 					}else{
-						pts=points+sample(input.dcmp_distribution1);
+						auto const& dists=input.dcmp_distribution1;
+						auto f=dists.find(points);
+						auto d=[&](){
+							if(f==input.dcmp_distribution1.end()){
+								/*PRINT(points);
+								PRINT(keys(input.dcmp_distribution1));
+								assert(0);*/
+								auto m=max(keys(dists));
+								if(points>m){
+									auto f2=dists.find(m);
+									assert(f2!=dists.end());
+									return f2->second;
+								}
+								PRINT(points);
+								PRINT(keys(dists));
+								nyi
+							}else{
+								return f->second;
+							}
+						}();
+						//pts=points+sample(input.dcmp_distribution1[points]);
+						pts=points+sample(d);
 					}
 					post_dcmp_points[make_pair(0,pts)]++;
 				}
@@ -429,6 +487,7 @@ Run_result run_calc(
 			}
 			return when_greater(team_pr,cutoff_pr[dcmp_home]);
 		}();
+
 		auto post_dcmp_dist=convolve(dcmp_entry_dist,input.dcmp_distribution1);
 		auto post_total=sum(values(post_dcmp_dist));
 		Pr cmp_make=0;

@@ -42,7 +42,7 @@ struct Run_input{
 	std::map<tba::Team_key,Team_status> by_team;
 
 	bool dcmp_played;
-	flat_map2<Point,Pr> dcmp_distribution1;
+	std::map<Point,Team_dist> dcmp_distribution1;
 	std::vector<tba::District_Ranking> d1;
 	std::map<tba::Team_key,std::tuple<std::vector<int>,int,int>> points_used; //this is only passed through
 };

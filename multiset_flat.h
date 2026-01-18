@@ -22,6 +22,13 @@ class multiset_flat{
 		return *this;
 	}
 
+	multiset_flat& operator|=(multiset_flat const& a){
+		for(auto [k,v]:a.data){
+			data[k]+=v;
+		}
+		return *this;
+	}
+
 	auto const& get()const{
 		return data;
 	}
@@ -29,11 +36,28 @@ class multiset_flat{
 	size_t size()const{
 		return sum(values(data));
 	}
+
+	size_t count(T const& t)const{
+		auto f=data.find(t);
+		if(f==data.end()){
+			return 0;
+		}
+		return f->second;
+	}
+
+	auto set()const{
+		return keys(data);
+	}
 };
 
 template<typename T>
 std::ostream& operator<<(std::ostream& o,multiset_flat<T> const& a){
 	return o<<a.get();
+}
+
+template<typename T>
+auto to_set(multiset_flat<T> const& a){
+	return a.set();
 }
 
 template<typename T>

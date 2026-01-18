@@ -52,7 +52,7 @@ int pre_dcmp_pts(tba::District_Ranking const& a){
 	));
 }
 
-map<int,Team_dist> calc_skill(TBA_fetcher& f);
+std::pair<map<Point,Team_dist>,map<Point,Team_dist>> calc_skill(TBA_fetcher& f);
 
 std::vector<int> team_points(TBA_fetcher& f,Team_key team,Year year){
 	auto t=team_events_year(f,team,year);
@@ -108,7 +108,7 @@ Year year(District_key a){
 	return Year(stoi(s));
 }
 
-map<Team_key,Team_dist> calc_skill(TBA_fetcher &f,District_key const& district){
+std::pair<map<Team_key,Team_dist>,map<Point,Team_dist>> calc_skill(TBA_fetcher &f,District_key const& district){
 	auto d=district_rankings(f,district);
 	assert(d);
 	//should fall back to something else if this fails
@@ -135,7 +135,7 @@ map<Team_key,Team_dist> calc_skill(TBA_fetcher &f,District_key const& district){
 	 * */
 	std::map<Team_key,Team_dist> r;
 
-	auto c=calc_skill(f);
+	auto [c,at_dcmp]=calc_skill(f);
 
 	for(auto x:current){
 		auto team=x.team_key;
@@ -166,17 +166,17 @@ map<Team_key,Team_dist> calc_skill(TBA_fetcher &f,District_key const& district){
 		}
 		r[team]=c[to_index];
 	}
-	return r;
+	return make_pair(r,at_dcmp);
 }
 
-map<int,Team_dist> calc_skill_inner(TBA_fetcher& f);
+std::pair<map<Point,Team_dist>,map<Point,Team_dist>> calc_skill_inner(TBA_fetcher& f);
 
-map<int,Team_dist> calc_skill(TBA_fetcher& f){
+std::pair<map<Point,Team_dist>,map<Point,Team_dist>> calc_skill(TBA_fetcher& f){
 	static auto a=calc_skill_inner(f);
 	return a;
 }
 
-map<int,Team_dist> calc_skill_inner(TBA_fetcher& f){
+std::pair<map<Point,Team_dist>,map<Point,Team_dist>> calc_skill_inner(TBA_fetcher& f){
 	/*
 	for each district:
 		calc list of years that it has existed w/ a dcmp
@@ -231,7 +231,7 @@ map<int,Team_dist> calc_skill_inner(TBA_fetcher& f){
 	}
 
 	//goes to pre-dcmp and overall total pts
-	std::map<std::pair<Year,Team_key>,std::pair<int,int>> pts;
+	std::map<std::pair<Year,Team_key>,std::pair<Point,Point>> pts;
 
 	for(auto [k,v]:district_years){
 		for(auto year:v){
@@ -253,7 +253,7 @@ map<int,Team_dist> calc_skill_inner(TBA_fetcher& f){
 
 	//PRINT(count(values(pts)));
 
-	map<int,std::multiset<int>> adjacent,adjacent2;
+	map<Point,multiset_flat<Point>> adjacent,adjacent2,at_dcmp;
 	for(auto [k,v]:pts){
 		auto [year,team]=k;
 		auto k2=make_pair(year+1,team);
@@ -263,6 +263,12 @@ map<int,Team_dist> calc_skill_inner(TBA_fetcher& f){
 		}
 		adjacent[v.first]|=f->second.first;
 		adjacent2[v.second]|=f->second.first;
+		
+		Point dcmp_pts=v.second-v.first;
+		//assuming that if there was an appearance, then there were points...
+		if(dcmp_pts){
+			at_dcmp[v.first]|=dcmp_pts;
+		}
 	}
 
 	/*for(auto [k,v]:adjacent){
@@ -276,23 +282,26 @@ map<int,Team_dist> calc_skill_inner(TBA_fetcher& f){
 
 	//using Dist=std::multiset<int>;
 
-	auto calc_smoothed=[=](std::map<int,std::multiset<int>> in){
-		map<int,std::multiset<int>> smoothed;
+	auto calc_smoothed=[=](std::map<Point,multiset_flat<Point>> &in){
+		map<Point,multiset_flat<Point>> smoothed;
 
-		for(auto k:keys(in)){
+		auto k=keys(in);
+		int min1=min(k);
+		int max1=max(k)+10;
+		for(auto k:range(min1,max1)){
 			auto get_samples=[&](){
-				for(int width=0;width<100;width++){
+				for(int width=0;width<200;width++){
 					auto to_use=range(k-width,k+width+1);
-					std::multiset<int> found;
+					multiset_flat<Point> found;
 					for(auto n:to_use){
 						found|=in[n];
 					}
 					if(found.size()>=100){
-						//PRINT(width)
 						return found;
 					}
 				}
 				//not enough data; should not be reachable.
+				PRINT(k);
 				assert(0);
 			}();
 
@@ -302,9 +311,9 @@ map<int,Team_dist> calc_skill_inner(TBA_fetcher& f){
 	};
 
 	auto s1=calc_smoothed(adjacent);
-	auto s2=calc_smoothed(adjacent2);
-
-	/*for(auto [k,v]:s1){
+	//auto s2=calc_smoothed(adjacent2);
+	auto s3=calc_smoothed(at_dcmp);
+	/*for(auto [k,v]:s3){
 		cout<<k<<" "<<v.size()<<"\t";
 		cout<<std_dev(v);
 		cout<<"\t"<<quartiles(v)<<"\n";
@@ -315,16 +324,23 @@ map<int,Team_dist> calc_skill_inner(TBA_fetcher& f){
 	PRINT(sd1);
 	PRINT(sd2);*/
 
-	return map_values(
-		[](auto const& x)->Team_dist{
-			Team_dist r;
-			for(auto k:to_set(x)){
-				r[k]=(double)x.count(k)/x.size();
-			}
-			return r;
-		},
-		s1
-	);
+	auto to_pr=[](auto const& m){
+		return map_values(
+			[](auto const& x)->Team_dist{
+				Team_dist r;
+				for(auto k:to_set(x)){
+					r[k]=(double)x.count(k)/x.size();
+				}
+				return r;
+			},
+			m
+		);
+	};
+
+	auto pre_dcmp=to_pr(s1);
+	auto at_dcmp_out=to_pr(s3);
+
+	return std::make_pair(pre_dcmp,at_dcmp_out);
 }
 
 void demo(){

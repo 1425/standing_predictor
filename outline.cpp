@@ -223,7 +223,7 @@ Run_result run_inner(
 				));
 			}
 			if(events_left==2){
-				return get_key(skills,team.team_key);
+				return get_key(skills.first,team.team_key);
 				//return Team_dist{convolve(pr,pr)};
 			}
 			PRINT(team);
@@ -262,7 +262,7 @@ Run_result run_inner(
 		}
 	}
 
-	auto dcmp_distribution1=flat_map2<Point,Pr>{dcmp_played?map<Point,Pr>{{0,1}}:dcmp_distribution(f)};
+	auto dcmp_distribution1=skills.second;
 
 	bool sum_display=0;
 	if(sum_display){
@@ -694,52 +694,6 @@ int main1(int argc,char **argv){
 	}
 
 	auto d=districts(tba_fetcher,args.year);
-	print_lines(d);
-
-	{
-		auto k=tba::District_key("2026ca");
-		auto cal_teams=district_teams(tba_fetcher,k);
-		auto m=MAP(california_region,cal_teams);
-		PRINT(count(m));
-
-		//for each of the teams, how many are going to each event?
-		//for each event, how many teams from each region are going?
-		//can we identify events as being part of the region based on listed location?
-		//
-		auto d=district_events(tba_fetcher,k);
-		auto m2=MAP(california_region,d);
-		PRINT(count(m2));
-
-		for(auto x:d){
-			auto k=x.key;
-			auto e=event_teams(tba_fetcher,k);
-			auto n=MAP(california_region,e);
-			cout<<k<<" "<<california_region(x)<<" ";
-			PRINT(count(n));
-		}
-	}
-
-#if 0
-	for(auto team:tba::district_teams(tba_fetcher,tba::District_key("2026ca"))){
-		cout<<team.team_number<<"\t"<<california_region(team)<<"\n";
-/*		PRINT(team.team_number);
-		if(!team.postal_code){
-			cout<<"No zip\n";
-			PRINT(team);
-			if(team.city){
-				City city(*team.city);
-				auto c=california_region(city);
-				PRINT(c);
-			}else{
-				nyi
-			}
-			continue;
-		}
-		assert(team.postal_code);
-		auto c=california_region(Zipcode(*team.postal_code));
-		PRINT(c);*/
-	}
-#endif
 
 	map<tba::District_key,map<tba::Team_key,Pr>> dcmp_pr;
 

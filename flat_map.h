@@ -35,7 +35,7 @@ class flat_map{
 		auto f=std::lower_bound(
 			data.begin(),
 			data.end(),
-			make_pair(k,V{}),
+			std::make_pair(k,V{}),
 			[](auto a,auto b){ return a.first<b.first; }
 		);
 		if(f==data.end() || f->first!=k){
