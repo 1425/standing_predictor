@@ -176,6 +176,7 @@ std::vector<T> operator+(std::vector<T> a,T b){
 }
 
 double sum(std::vector<double> const& v);
+size_t sum(std::vector<bool> const&);
 
 template<typename T>
 T sum(std::vector<T> const& a){

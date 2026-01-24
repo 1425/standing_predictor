@@ -223,7 +223,7 @@ Run_result run_inner(
 				));
 			}
 			if(events_left==2){
-				return get_key(skills.first,team.team_key);
+				return get_key(skills.pre_dcmp,team.team_key);
 				//return Team_dist{convolve(pr,pr)};
 			}
 			PRINT(team);
@@ -262,7 +262,7 @@ Run_result run_inner(
 		}
 	}
 
-	auto dcmp_distribution1=skills.second;
+	auto dcmp_distribution1=skills.at_dcmp;
 
 	bool sum_display=0;
 	if(sum_display){

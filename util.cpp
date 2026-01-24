@@ -29,6 +29,16 @@ double sum(std::vector<int> const& v){
 	return x;
 }
 
+size_t sum(std::vector<bool> const& a){
+	size_t i=0;
+	for(auto elem:a){
+		if(elem){
+			i++;
+		}
+	}
+	return i;
+}
+
 std::vector<std::string> split(std::string const& s){
 	std::vector<std::string> r;
 	std::stringstream ss;

@@ -14,6 +14,46 @@ using Points=tba::Points;
 
 using namespace std;
 
+template<typename K>
+std::array<K,5> quartiles(flat_map2<K,Pr> a){
+	assert(!a.empty());
+	std::array<K,5> r;
+	r[0]=a.begin()->first;
+	r[4]=(a.end()-1)->first;
+
+	Pr total=0;
+	auto it=a.begin();
+	while(it!=a.end() && total<.25){
+		total+=it->second;
+		++it;
+	}
+	if(it!=a.end()){
+		r[1]=it->first;
+	}else{
+		r[1]=r[4];
+	}
+
+	while(it!=a.end() && total<.5){
+		total+=it->second;
+		++it;
+	}
+	if(it!=a.end()){
+		r[2]=it->first;
+	}else{
+		r[2]=r[4];
+	}
+	while(it!=a.end() && total<.75){
+		total+=it->second;
+		++it;
+	}
+	if(it!=a.end()){
+		r[3]=it->first;
+	}else{
+		r[3]=r[4];
+	}
+	return r;
+}
+
 template<typename T>
 auto median(std::multiset<T> const& a){
 	return median(multiset_flat<T>(to_vec(a)));
@@ -23,7 +63,7 @@ template<typename T>
 auto quartiles(std::multiset<T> const& a){
 	auto b=sorted(to_vec(a));
 	assert(!b.empty());
-	return make_tuple(b[b.size()/4],b[b.size()/4],b[b.size()*3/4]);
+	return make_tuple(b[b.size()/4],b[b.size()/2],b[b.size()*3/4]);
 }
 
 std::optional<District_key> prev(TBA_fetcher& f,District_key a){
@@ -51,8 +91,6 @@ int pre_dcmp_pts(tba::District_Ranking const& a){
 		take(2,a.event_points)
 	));
 }
-
-std::pair<map<Point,Team_dist>,map<Point,Team_dist>> calc_skill(TBA_fetcher& f);
 
 std::vector<int> team_points(TBA_fetcher& f,Team_key team,Year year){
 	auto t=team_events_year(f,team,year);
@@ -108,75 +146,11 @@ Year year(District_key a){
 	return Year(stoi(s));
 }
 
-std::pair<map<Team_key,Team_dist>,map<Point,Team_dist>> calc_skill(TBA_fetcher &f,District_key const& district){
-	auto d=district_rankings(f,district);
-	assert(d);
-	//should fall back to something else if this fails
-	auto &current=*d;
+struct Skill_by_pts{
+	std::map<Point,Team_dist> pre_dcmp,at_dcmp,second_event;
+};
 
-	auto prev_district=prev(f,district);
-	//PRINT(prev_district);
-	auto prev=[&](){
-		if(prev_district){
-			auto d=district_rankings(f,*prev_district);
-			assert(d);
-			return *d;
-		}
-		return std::vector<tba::District_Ranking>();
-	}();
-
-	/*
-	 * 1) figure out which teams are in the district in the given year
-	 * 2) Figure out which events that team has played this year
-	 * 2) for each of those teams, figure out how they did last year
-	 * 3) call calc_skill() to try to project if no events played this year
-	 * 4) figure out how many pts to expect if has played one event w/ results...
-	 * for now, could just do the existing thing when one event has been played
-	 * */
-	std::map<Team_key,Team_dist> r;
-
-	auto [c,at_dcmp]=calc_skill(f);
-
-	for(auto x:current){
-		auto team=x.team_key;
-		auto found=filter([=](auto y){ return y.team_key==team; },prev);
-		int to_index;
-
-		if(found.empty()){
-			//for now, putting in generic data about how good teams are
-			//would be better if looked at how good this team was outside
-			//of the district if it existed and how good rookies are if 
-			//not
-			to_index=old_points(f,team,year(district));
-
-			//auto h=flat_map2(historical_event_pts(f));
-			//r[team]=convolve(h,h);
-			//continue;
-		}else{
-
-			if(found.size()!=1){
-				PRINT(district);
-				PRINT(team);
-				PRINT(found);
-			}
-			assert(found.size()==1);
-			auto old=found[0];
-			auto pre_dcmp=pre_dcmp_pts(old);
-			to_index=pre_dcmp;
-		}
-		r[team]=c[to_index];
-	}
-	return make_pair(r,at_dcmp);
-}
-
-std::pair<map<Point,Team_dist>,map<Point,Team_dist>> calc_skill_inner(TBA_fetcher& f);
-
-std::pair<map<Point,Team_dist>,map<Point,Team_dist>> calc_skill(TBA_fetcher& f){
-	static auto a=calc_skill_inner(f);
-	return a;
-}
-
-std::pair<map<Point,Team_dist>,map<Point,Team_dist>> calc_skill_inner(TBA_fetcher& f){
+Skill_by_pts calc_skill_inner(TBA_fetcher& f){
 	/*
 	for each district:
 		calc list of years that it has existed w/ a dcmp
@@ -232,6 +206,7 @@ std::pair<map<Point,Team_dist>,map<Point,Team_dist>> calc_skill_inner(TBA_fetche
 
 	//goes to pre-dcmp and overall total pts
 	std::map<std::pair<Year,Team_key>,std::pair<Point,Point>> pts;
+	std::map<Point,multiset_flat<Point>> second_event_raw;
 
 	for(auto [k,v]:district_years){
 		for(auto year:v){
@@ -247,6 +222,12 @@ std::pair<map<Point,Team_dist>,map<Point,Team_dist>> calc_skill_inner(TBA_fetche
 				auto district_events=take(2,a.event_points);
 				int n=a.rookie_bonus+sum(mapf([](auto x){ return (int)x.total; },district_events));
 				pts[make_pair(year,a.team_key)]=make_pair(n,a.point_total);
+
+				if(district_events.size()==2){
+					auto a=district_events[0].total;
+					auto b=district_events[1].total;
+					second_event_raw[a]|=b;
+				}
 			}
 		}
 	}
@@ -339,8 +320,76 @@ std::pair<map<Point,Team_dist>,map<Point,Team_dist>> calc_skill_inner(TBA_fetche
 
 	auto pre_dcmp=to_pr(s1);
 	auto at_dcmp_out=to_pr(s3);
+	auto second_event=to_pr(calc_smoothed(second_event_raw));
 
-	return std::make_pair(pre_dcmp,at_dcmp_out);
+	return Skill_by_pts(pre_dcmp,at_dcmp_out,second_event);
+}
+
+Skill_by_pts const& calc_skill(TBA_fetcher& f){
+	static auto a=calc_skill_inner(f);
+	return a;
+}
+
+Skill_estimates calc_skill(TBA_fetcher &f,District_key const& district){
+	auto d=district_rankings(f,district);
+	assert(d);
+	//should fall back to something else if this fails
+	auto &current=*d;
+
+	auto prev_district=prev(f,district);
+	//PRINT(prev_district);
+	auto prev=[&](){
+		if(prev_district){
+			auto d=district_rankings(f,*prev_district);
+			assert(d);
+			return *d;
+		}
+		return std::vector<tba::District_Ranking>();
+	}();
+
+	/*
+	 * 1) figure out which teams are in the district in the given year
+	 * 2) Figure out which events that team has played this year
+	 * 2) for each of those teams, figure out how they did last year
+	 * 3) call calc_skill() to try to project if no events played this year
+	 * 4) figure out how many pts to expect if has played one event w/ results...
+	 * for now, could just do the existing thing when one event has been played
+	 * */
+	std::map<Team_key,Team_dist> r;
+
+	auto [c,at_dcmp,second_event]=calc_skill(f);
+
+	for(auto x:current){
+		auto team=x.team_key;
+		auto found=filter([=](auto y){ return y.team_key==team; },prev);
+		int to_index;
+
+		if(found.empty()){
+			//for now, putting in generic data about how good teams are
+			//would be better if looked at how good this team was outside
+			//of the district if it existed and how good rookies are if 
+			//not
+			to_index=old_points(f,team,year(district));
+
+			//auto h=flat_map2(historical_event_pts(f));
+			//r[team]=convolve(h,h);
+			//continue;
+		}else{
+
+			if(found.size()!=1){
+				PRINT(district);
+				PRINT(team);
+				PRINT(found);
+			}
+			assert(found.size()==1);
+			auto old=found[0];
+			auto pre_dcmp=pre_dcmp_pts(old);
+			to_index=pre_dcmp;
+		}
+		r[team]=c[to_index];
+	}
+
+	return Skill_estimates(r,at_dcmp,second_event);
 }
 
 void demo(){

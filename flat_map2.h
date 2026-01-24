@@ -40,6 +40,11 @@ auto mapf(Func f,const_proxy<K,V> const& a){
 }
 
 template<typename K,typename V>
+V second(const_proxy<K,V> const& a){
+	return a.second;
+}
+
+template<typename K,typename V>
 class flat_map2{
 	//Doing pair of vectors rather than vector of pairs
 	//This will complicate some operations like find()
@@ -106,7 +111,10 @@ class flat_map2{
 
 		iterator(K_it a,V_it b):first(a),second(b){}
 
-		iterator(iterator const&);
+		iterator(iterator const& a):
+			first(a.first),
+			second(a.second)
+		{}
 
 		~iterator(){
 			delete p;
@@ -116,6 +124,13 @@ class flat_map2{
 			first++;
 			second++;
 			return *this;
+		}
+
+		iterator operator-(int i)const{
+			iterator r(*this);
+			r.first-=i;
+			r.second-=i;
+			return r;
 		}
 
 		proxy operator*(){
@@ -222,6 +237,10 @@ class flat_map2{
 	auto empty()const{
 		return keys.empty();
 	}
+
+	auto const& get_keys()const{
+		return keys;
+	}
 };
 
 template<typename K,typename V>
@@ -239,12 +258,32 @@ auto values(flat_map2<K,V> const& a){
 	return a.get_values();
 }
 
+template<typename K,typename V>
+auto keys(flat_map2<K,V> const& a){
+	return a.get_keys();
+}
+
 template<typename Func,typename K,typename V>
 auto mapf(Func f,flat_map2<K,V> const& a){
 	using U=decltype(f(*std::begin(a)));
 	std::vector<U> r(a.size());
 	std::transform(a.begin(),a.end(),r.begin(),f);
 	return r;
+}
+
+template<typename K,typename V>
+auto to_vec(flat_map2<K,V> const& a){
+	using P=std::pair<K,V>;
+	std::vector<P> r;
+	for(auto x:a){
+		r|=P(x.first,x.second);
+	}
+	return r;
+}
+
+template<typename K,typename V>
+auto sorted(flat_map2<K,V> const& a){
+	return to_vec(a); //because the items are already in sorted order
 }
 
 #endif
