@@ -167,7 +167,13 @@ class flat_map2{
 		auto operator<=>(const_iterator const&)const=default;
 	};
 
-	const_iterator find(K)const;
+	const_iterator find(K const& k)const{
+		auto f=std::lower_bound(keys.begin(),keys.end(),k);
+		if(f==keys.end() || *f!=k){
+			return const_iterator{keys.end(),values.end()};
+		}
+		return const_iterator{f,values.begin()+(f-keys.begin())};
+	}
 
 	iterator find(K const& k){
 		auto f=std::lower_bound(keys.begin(),keys.end(),k);

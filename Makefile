@@ -1,4 +1,5 @@
-CXXFLAGS=-std=c++20 -Wall -Wextra -Ofast -fdiagnostics-color=always
+#CXXFLAGS=-std=c++20 -Wall -Wextra -Ofast -fdiagnostics-color=always
+CXXFLAGS=-std=c++20 -Wall -Wextra -Og -g -fdiagnostics-color=always
 LIBS=-lsqlite3 -lcurl -lsimdjson
 CC=$(CXX)
 
@@ -34,6 +35,7 @@ OUTLINE_OBJS= \
 	ca.o \
 	zipcodes.o \
 	skill.o \
+	skill_opr.o \
 	$(TBA_OBJS)
 
 outline: $(OUTLINE_OBJS)

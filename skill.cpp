@@ -66,6 +66,20 @@ auto quartiles(std::multiset<T> const& a){
 	return make_tuple(b[b.size()/4],b[b.size()/2],b[b.size()*3/4]);
 }
 
+Skill_method decode(std::span<char*> a,Skill_method const*){
+	assert(a.size()==1);
+	std::string s(a[0]);
+	#define X(A) if(s==""#A){ return Skill_method::A; }
+	SKILL_METHOD(X)
+	#undef X
+
+	cerr<<"Invalid argument for skill method.  Options are:\n";
+	#define X(A) cerr<<"\t"#A<<"\n";
+	SKILL_METHOD(X)
+	#undef X
+	exit(1);
+}
+
 std::optional<District_key> prev(TBA_fetcher& f,District_key a){
 	Year year(stoi(a.get().substr(0,4)));
 	auto abbrev=a.get().substr(4,100);

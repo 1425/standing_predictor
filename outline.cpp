@@ -49,6 +49,7 @@ simple way:
 #include "ca.h"
 #include "outline.h"
 #include "skill.h"
+#include "skill_opr.h"
 
 //start generic stuff
 
@@ -138,7 +139,8 @@ Run_result run_inner(
 	bool ignore_chairmans,
 	tba::District_key district,
 	tba::Year year,
-	std::vector<int> dcmp_size
+	std::vector<int> dcmp_size,
+	Skill_method skill_method
 ){
 	bool dcmp_played=0;
 
@@ -177,7 +179,18 @@ Run_result run_inner(
 		d1=filter([&](auto x){ return not_going.count(x.team_key)==0; },d1);
 	}
 
-	auto skills=calc_skill(f,district);
+	auto skills=[&]()->std::optional<Skill_estimates>{
+		switch(skill_method){
+			case Skill_method::POINTS:
+				return calc_skill(f,district);
+			case Skill_method::OPR:
+				return calc_skill_opr(f,district);
+			case Skill_method::NONE:
+				return std::nullopt;
+			default:
+				assert(0);
+		}
+	}();
 
 	map<tba::Team_key,Team_status> by_team;
 	map<tba::Team_key,tuple<vector<int>,int,int>> points_used;
@@ -223,8 +236,11 @@ Run_result run_inner(
 				));
 			}
 			if(events_left==2){
-				return get_key(skills.pre_dcmp,team.team_key);
-				//return Team_dist{convolve(pr,pr)};
+				if(skills){
+					return get_key(skills->pre_dcmp,team.team_key);
+				}else{
+					return Team_dist{convolve(pr,pr)};
+				}
 			}
 			PRINT(team);
 			PRINT(events_left);
@@ -262,7 +278,17 @@ Run_result run_inner(
 		}
 	}
 
-	auto dcmp_distribution1=skills.at_dcmp;
+	auto dcmp_distribution1=[&](){
+		if(skills){
+			return skills->at_dcmp;
+		}else{
+			std::map<Point,Team_dist> r;
+			for(auto i:range(500)){
+				r[i]=Team_dist(dcmp_distribution(f));
+			}
+			return r;
+		}
+	}();
 
 	bool sum_display=0;
 	if(sum_display){
@@ -298,8 +324,21 @@ Run_result run_inner(
 	});
 }
 
+struct Run_inputs{
+	std::string output_dir; //output
+	std::optional<tba::District_key> district; //data in
+	std::optional<tba::Year> year; //data in & out
+	std::vector<int> dcmp_size; //how
+	string title; //output
+	string district_short; //output
+	std::string extra=""; //output
+	bool ignore_chairmans=0;
+	Skill_method skill_method=Skill_method::NONE;
+};
+
 map<tba::Team_key,Pr> run(
-	TBA_fetcher &f,
+	TBA_fetcher& f,
+/*	TBA_fetcher &f,
 	std::string const& output_dir, //output
 	tba::District_key district, //data in
 	tba::Year year, //data in & out
@@ -307,11 +346,14 @@ map<tba::Team_key,Pr> run(
 	string const& title, //output
 	string const& district_short, //output
 	std::string extra="", //output
-	bool ignore_chairmans=0 //how
+	bool ignore_chairmans=0, //how
+	Skill_method skill_method=Skill_method::NONE*/
+	Run_inputs inputs
 ){
 	//this function exists to separate the input & calculation from the output
-
-	auto results=run_inner(f,ignore_chairmans,district,year,dcmp_size);
+	auto district=*inputs.district;
+	auto year=*inputs.year;
+	auto results=run_inner(f,inputs.ignore_chairmans,district,year,inputs.dcmp_size,inputs.skill_method);
 
 	//print_lines(by_team);
 	bool by_team_csv=0;
@@ -347,13 +389,13 @@ map<tba::Team_key,Pr> run(
 			team_info,
 			results.cutoff_pr,
 			to_map(results.cmp_cutoff_pr),
-			title,
-			district_short,
+			inputs.title,
+			inputs.district_short,
 			year,
-			dcmp_size,
+			inputs.dcmp_size,
 			results.points_used
 		);
-		ofstream f(output_dir+"/"+district.get()+extra+".html");
+		ofstream f(inputs.output_dir+"/"+district.get()+inputs.extra+".html");
 		f<<g;
 	}
 
@@ -645,6 +687,7 @@ struct Args{
 	optional<tba::District_key> district;
 	TBA_fetcher_config tba;
 	bool demo=0,historical_demo=0;
+	Skill_method skill_method=Skill_method::POINTS;
 };
 
 Args parse_args(int argc,char **argv){
@@ -676,6 +719,11 @@ Args parse_args(int argc,char **argv){
 		"Explore predictability throughout a season",
 		r.historical_demo
 	);
+	p.add(
+		"--skill",{"METHOD"},
+		"How to measure skill of individual teams",
+		r.skill_method
+	);
 	p.parse(argc,argv);
 	return r;
 }
@@ -704,10 +752,24 @@ int main1(int argc,char **argv){
 		}
 		PRINT(district);
 		auto title=year_info.display_name+" District Championship Predictions "+::as_string(args.year);
-		dcmp_pr[district]=run(tba_fetcher,args.output_dir,district,args.year,dcmp_size(district),title,year_info.abbreviation);
+		Run_inputs run_inputs;
+		run_inputs.output_dir=args.output_dir;
+		run_inputs.district=district;
+		run_inputs.year=args.year;
+		run_inputs.dcmp_size=dcmp_size(district);
+		run_inputs.title=title;
+		run_inputs.district_short=year_info.abbreviation;
+		run_inputs.skill_method=args.skill_method;
+
+		//dcmp_pr[district]=run(tba_fetcher,args.output_dir,district,args.year,dcmp_size(district),title,year_info.abbreviation);
+		dcmp_pr[district]=run(tba_fetcher,run_inputs);
 
 		if(district=="2022ne"){
-			run(tba_fetcher,args.output_dir,district,args.year,std::vector<int>{{16}},"New England Championship Pre-Qualify",year_info.abbreviation,"_cmp",1);
+			run_inputs.dcmp_size=std::vector<int>{{16}};
+			run_inputs.title="New England Championship Pre-Qualify";
+			run_inputs.extra="_cmp";
+			run_inputs.ignore_chairmans=1;
+			run(tba_fetcher,run_inputs);
 		}
 	}
 
