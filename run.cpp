@@ -355,7 +355,7 @@ Run_result run_calc(
 		}
 
 		for(auto const& [team,data]:input.by_team){
-			auto const& [cm,dist,dcmp_home]=data;
+			auto const& [cm,dist,dcmp_home,already_earned]=data;
 			final_points[dcmp_home][pair<bool,Point>(cm,sample(dist))]++;
 		}
 
@@ -454,10 +454,10 @@ Run_result run_calc(
 	auto interesting_cutoffs_cmp=interesting_cutoffs(cmp_cutoff_pr);
 
 	vector<Output_tuple> result;
-	for(auto team:input.d1){
+	for(auto [team,team_data]:input.by_team){
 		//probability that get in
 		//subtract the cutoff pr
-		auto [cm,team_pr,dcmp_home]=input.by_team[team.team_key];
+		auto [cm,team_pr,dcmp_home,already_earned]=input.by_team[team];
 		double pr_make=0;
 		double pr_miss=0;
 		if(cm){
@@ -510,7 +510,7 @@ Run_result run_calc(
 			assert(residual<.01 && residual>-.01);
 		}
 
-		auto points_so_far=team.point_total;
+		auto points_so_far=already_earned;
 		vector<Point> cmp_interesting;
 		for(auto [pr,pts]:interesting_cutoffs_cmp){
 			cmp_interesting|=max(Point(0),Point(pts.first-points_so_far));
@@ -519,8 +519,8 @@ Run_result run_calc(
 		if(cm){
 			assert(pr_make>.99);
 			result|=Output_tuple(
-				team.team_key,
-				input.by_team[team.team_key].dcmp_home,
+				team,
+				input.by_team[team].dcmp_home,
 				1.0,std::array<Point,3>{0,0,0},
 				cmp_make,std::array<Point,3>{cmp_interesting[0],cmp_interesting[1],cmp_interesting[2]}
 			);
@@ -538,8 +538,8 @@ Run_result run_calc(
 			assert(interesting.size()==3);
 
 			result|=Output_tuple(
-				team.team_key,
-				input.by_team[team.team_key].dcmp_home,
+				team,
+				input.by_team[team].dcmp_home,
 				pr_make,std::array<Point,3>{interesting[0],interesting[1],interesting[2]},
 				cmp_make,std::array<Point,3>{cmp_interesting[0],cmp_interesting[1],cmp_interesting[2]}
 			);

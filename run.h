@@ -1,7 +1,6 @@
 #ifndef RUN_H
 #define RUN_H
 
-#include "../tba/data.h"
 #include "output.h"
 #include "flat_map2.h"
 #include "outline.h"
@@ -17,6 +16,7 @@ struct Team_status{
 	bool district_chairmans;
 	Team_dist point_dist; //number of points expected pre-dcmp
 	Dcmp_home dcmp_home;
+	Point already_earned;
 };
 
 std::ostream& operator<<(std::ostream&,Team_status const&);
@@ -34,16 +34,10 @@ struct Run_input{
 	std::vector<int> dcmp_size;
 	int worlds_slots;
 
-	/*for each team, did they win a district chairmans's award and how
-	many points are they expected to have by the time of the district
-	championship
-	*/
-	//std::map<tba::Team_key,std::pair<bool,Team_dist>> by_team;
 	By_team by_team;
 
 	bool dcmp_played;
 	std::map<Point,Team_dist> dcmp_distribution1;
-	std::vector<tba::District_Ranking> d1;
 };
 
 Run_result run_calc(Run_input);

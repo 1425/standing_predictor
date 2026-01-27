@@ -263,12 +263,12 @@ std::tuple<Run_result,Points_used,By_team> run_inner(
 			events_left
 		);
 		Dcmp_home dcmp_home=calc_dcmp_home(f,team.team_key);
-		by_team[team.team_key]=Team_status(chairmans.count(team.team_key),std::move(dist),dcmp_home);
+		by_team[team.team_key]=Team_status(chairmans.count(team.team_key),std::move(dist),dcmp_home,team.point_total);
 	}
 
 	map<Point,Pr> by_points; //# of teams expected to end at each # of points
 	for(auto [team,data1]:by_team){
-		auto [cm,data,dcmp_home]=data1;
+		auto [cm,data,dcmp_home,point_total]=data1;
 		(void)team;
 		for(auto [pts,pr]:data){
 			auto f=by_points.find(pts);
@@ -321,8 +321,7 @@ std::tuple<Run_result,Points_used,By_team> run_inner(
 			worlds_slots(district),
 			by_team,
 			dcmp_played,
-			dcmp_distribution1,
-			d1
+			dcmp_distribution1
 		}),
 		points_used,
 		by_team
@@ -368,7 +367,7 @@ map<tba::Team_key,Pr> run(
 			cout<<i<<",";
 		}
 		for(auto [team,data1]:by_team){
-			auto [cmd,data,dcmp_home]=data1;
+			auto [cmd,data,dcmp_home,already_earned]=data1;
 			cout<<team<<",";
 			for(auto i:range_st<140>()){
 				auto f=data.find(i);
@@ -489,7 +488,8 @@ Run_input to_run_input_equal(TBA_fetcher &fetcher,tba::District_key district,Dis
 						assert(0);
 					}
 				}(),
-				dcmp_home
+				dcmp_home,
+				sum(x.district_points_earned)
 			));
 		},
 		data
