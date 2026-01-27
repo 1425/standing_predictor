@@ -134,7 +134,9 @@ struct Run_result{
 	map<tba::Team_key,pair<bool,Team_dist>> by_team;
 };*/
 
-Run_result run_inner(
+using Points_used=map<tba::Team_key,tuple<vector<int>,int,int>>;
+
+std::pair<Run_result,Points_used> run_inner(
 	TBA_fetcher &f,
 	bool ignore_chairmans,
 	tba::District_key district,
@@ -193,7 +195,7 @@ Run_result run_inner(
 	}();
 
 	map<tba::Team_key,Team_status> by_team;
-	map<tba::Team_key,tuple<vector<int>,int,int>> points_used;
+	Points_used points_used;
 	for(auto team:d1){
 		auto max_counters=2-int(team.event_points.size());
 		auto events_scheduled=team_events_year_keys(f,team.team_key,year);
@@ -313,15 +315,17 @@ Run_result run_inner(
 		}
 	}
 
-	return run_calc(Run_input{
-		dcmp_size,
-		worlds_slots(district),
-		by_team,
-		dcmp_played,
-		dcmp_distribution1,
-		d1,
+	return make_pair(
+		run_calc(Run_input{
+			dcmp_size,
+			worlds_slots(district),
+			by_team,
+			dcmp_played,
+			dcmp_distribution1,
+			d1
+		}),
 		points_used
-	});
+	);
 }
 
 struct Run_inputs{
@@ -353,7 +357,7 @@ map<tba::Team_key,Pr> run(
 	//this function exists to separate the input & calculation from the output
 	auto district=*inputs.district;
 	auto year=*inputs.year;
-	auto results=run_inner(f,inputs.ignore_chairmans,district,year,inputs.dcmp_size,inputs.skill_method);
+	auto [results,points_used]=run_inner(f,inputs.ignore_chairmans,district,year,inputs.dcmp_size,inputs.skill_method);
 
 	//print_lines(by_team);
 	bool by_team_csv=0;
@@ -393,7 +397,7 @@ map<tba::Team_key,Pr> run(
 			inputs.district_short,
 			year,
 			inputs.dcmp_size,
-			results.points_used
+			points_used
 		);
 		ofstream f(inputs.output_dir+"/"+district.get()+inputs.extra+".html");
 		f<<g;

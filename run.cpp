@@ -549,6 +549,6 @@ Run_result run_calc(
 	auto x=::mapf([](auto x){ return x.dcmp_make; },result);
 	//PRINT(sum(x)); //this number should be really close to the number of slots available at the event.
 
-	return Run_result{result,cutoff_pr,cmp_cutoff_pr,input.points_used,input.by_team};
+	return Run_result{result,cutoff_pr,cmp_cutoff_pr,input.by_team};
 }
 
