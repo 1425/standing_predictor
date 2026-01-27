@@ -136,7 +136,7 @@ struct Run_result{
 
 using Points_used=map<tba::Team_key,tuple<vector<int>,int,int>>;
 
-std::pair<Run_result,Points_used> run_inner(
+std::tuple<Run_result,Points_used,By_team> run_inner(
 	TBA_fetcher &f,
 	bool ignore_chairmans,
 	tba::District_key district,
@@ -194,7 +194,7 @@ std::pair<Run_result,Points_used> run_inner(
 		}
 	}();
 
-	map<tba::Team_key,Team_status> by_team;
+	By_team by_team;
 	Points_used points_used;
 	for(auto team:d1){
 		auto max_counters=2-int(team.event_points.size());
@@ -315,7 +315,7 @@ std::pair<Run_result,Points_used> run_inner(
 		}
 	}
 
-	return make_pair(
+	return make_tuple(
 		run_calc(Run_input{
 			dcmp_size,
 			worlds_slots(district),
@@ -324,7 +324,8 @@ std::pair<Run_result,Points_used> run_inner(
 			dcmp_distribution1,
 			d1
 		}),
-		points_used
+		points_used,
+		by_team
 	);
 }
 
@@ -357,7 +358,7 @@ map<tba::Team_key,Pr> run(
 	//this function exists to separate the input & calculation from the output
 	auto district=*inputs.district;
 	auto year=*inputs.year;
-	auto [results,points_used]=run_inner(f,inputs.ignore_chairmans,district,year,inputs.dcmp_size,inputs.skill_method);
+	auto [results,points_used,by_team]=run_inner(f,inputs.ignore_chairmans,district,year,inputs.dcmp_size,inputs.skill_method);
 
 	//print_lines(by_team);
 	bool by_team_csv=0;
@@ -366,7 +367,7 @@ map<tba::Team_key,Pr> run(
 		for(auto i:range_st<140>()){
 			cout<<i<<",";
 		}
-		for(auto [team,data1]:results.by_team){
+		for(auto [team,data1]:by_team){
 			auto [cmd,data,dcmp_home]=data1;
 			cout<<team<<",";
 			for(auto i:range_st<140>()){

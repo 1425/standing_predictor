@@ -26,8 +26,9 @@ struct Run_result{
 	using Cutoff=flat_map2<std::pair<Point,double>,double>;
 	std::array<Cutoff,MAX_DCMPS> cutoff_pr;
 	Cutoff cmp_cutoff_pr;
-	std::map<tba::Team_key,Team_status> by_team;
 };
+
+using By_team=std::map<tba::Team_key,Team_status>;
 
 struct Run_input{
 	std::vector<int> dcmp_size;
@@ -38,7 +39,7 @@ struct Run_input{
 	championship
 	*/
 	//std::map<tba::Team_key,std::pair<bool,Team_dist>> by_team;
-	std::map<tba::Team_key,Team_status> by_team;
+	By_team by_team;
 
 	bool dcmp_played;
 	std::map<Point,Team_dist> dcmp_distribution1;
