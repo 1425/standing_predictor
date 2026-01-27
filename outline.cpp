@@ -554,8 +554,6 @@ District_data partial_data(
 	tba::District_key district,
 	std::set<tba::Event_key> const& events
 ){
-	(void)fetcher;
-	(void)district;
 	auto d=tba::district_rankings(fetcher,district);
 	assert(d);
 	District_data r;
@@ -728,10 +726,73 @@ Args parse_args(int argc,char **argv){
 	return r;
 }
 
+using Year=tba::Year;
+
+tba::Date cmp_end(TBA_fetcher& f,Year year){
+	auto found=filter(
+		[](auto x){
+			return x.event_type==tba::Event_type::CMP_DIVISION
+				|| x.event_type==tba::Event_type::CMP_FINALS;
+		},
+		events(f,year)
+	);
+	auto m=mapf([](auto x){ return x.end_date; },found);
+	auto s=to_set(nonempty(m));
+	if(s.size()==1){
+		return *begin(s);
+	}
+	assert(!s.empty());
+	return max(s);
+	auto m1=count(nonempty(m));
+	PRINT(m1);
+	print_lines(found);
+	nyi
+}
+
+using Date=tba::Date;
+using District_key=tba::District_key;
+
+auto identify_time(TBA_fetcher &f){
+	std::map<District_key,std::set<Date>> r;
+	for(auto [district_name,v]:normal_district_years(f)){
+		for(auto year:v){
+			tba::District_key k(::as_string(year)+district_name);
+			//find events
+			auto d=district_events(f,k);
+			if(d.empty()){
+				continue;
+			}
+			assert(!d.empty());
+			auto g=group([](auto x){ return x.event_type; },d);
+			const auto start_date=min(nonempty(mapf(
+				[](auto x){ return x.start_date; },
+				g[tba::Event_type::DISTRICT]
+			)));
+
+			auto event_ends=to_set(nonempty(mapf([](auto x){ return x.end_date; },g[tba::Event_type::DISTRICT])));
+			
+			auto dcmps=g[tba::Event_type::DISTRICT_CMP];
+			auto dcmp_ends=to_set(nonempty(mapf([](auto x){ return x.end_date; },dcmps)));
+
+			set<Date> interesting_dates;
+			interesting_dates|=start_date;
+			interesting_dates|=event_ends;
+			interesting_dates|=dcmp_ends;
+
+			auto cmp1=cmp_end(f,year);
+
+			r[k]=interesting_dates;
+		}
+	}
+	return r;
+}
+
 int main1(int argc,char **argv){
 	auto args=parse_args(argc,argv);
 	std::filesystem::create_directories(args.output_dir);
 	auto tba_fetcher=args.tba.get();
+
+	identify_time(tba_fetcher);
 
 	if(args.demo){
 		return demo(tba_fetcher);

@@ -251,4 +251,16 @@ auto mad(std::multiset<T> a){
 	return mad(to_vec(a));
 }
 
+template<typename T>
+auto take(size_t n,std::set<T> const& a){
+	std::vector<T> r;
+	for(auto x:a){
+		if(r.size()>=n){
+			return r;
+		}
+		r|=x;
+	}
+	return r;
+}
+
 #endif
