@@ -26,24 +26,15 @@ simple way:
 2) assume equal # of teams from each side of the DCMP makes it to cmp.
 */
 
-#include<fstream>
-#include<sstream>
-#include<set>
-#include<span>
 #include<filesystem>
-#include "../tba/db.h"
 #include "../tba/data.h"
 #include "../tba/tba.h"
 #include "arguments.h"
 #include "event.h"
-#include "map.h"
 #include "output.h"
 #include "set.h"
 #include "tba.h"
 #include "util.h"
-#include "flat_map.h"
-#include "flat_map2.h"
-#include "multiset_flat.h"
 #include "status.h"
 #include "run.h"
 #include "ca.h"
@@ -79,6 +70,8 @@ auto get_key(std::map<K,V> const& a,K const& k){
 //start program-specific stuff.
 
 using namespace std;
+
+using District_key=tba::District_key;
 
 California_region california_region(tba::Team const& team){
 	if(team.postal_code){
@@ -182,18 +175,7 @@ std::tuple<Run_result,Points_used,By_team> run_inner(
 		d1=filter([&](auto x){ return not_going.count(x.team_key)==0; },d1);
 	}
 
-	auto skills=[&]()->std::optional<Skill_estimates>{
-		switch(skill_method){
-			case Skill_method::POINTS:
-				return calc_skill(f,district);
-			case Skill_method::OPR:
-				return calc_skill_opr(f,district);
-			case Skill_method::NONE:
-				return std::nullopt;
-			default:
-				assert(0);
-		}
-	}();
+	auto skills=skill_estimates(f,district,skill_method);
 
 	By_team by_team;
 	Points_used points_used;
@@ -239,11 +221,7 @@ std::tuple<Run_result,Points_used,By_team> run_inner(
 				));
 			}
 			if(events_left==2){
-				if(skills){
-					return get_key(skills->pre_dcmp,team.team_key);
-				}else{
-					return Team_dist{convolve(pr,pr)};
-				}
+				return get_key(skills.pre_dcmp,team.team_key);
 			}
 			PRINT(team);
 			PRINT(events_left);
@@ -281,18 +259,6 @@ std::tuple<Run_result,Points_used,By_team> run_inner(
 		}
 	}
 
-	auto dcmp_distribution1=[&](){
-		if(skills){
-			return skills->at_dcmp;
-		}else{
-			std::map<Point,Team_dist> r;
-			for(auto i:range(500)){
-				r[i]=Team_dist(dcmp_distribution(f));
-			}
-			return r;
-		}
-	}();
-
 	bool sum_display=0;
 	if(sum_display){
 		for(auto [pts,pr]:by_points){
@@ -322,7 +288,7 @@ std::tuple<Run_result,Points_used,By_team> run_inner(
 			worlds_slots(district),
 			by_team,
 			dcmp_played,
-			dcmp_distribution1
+			skills.at_dcmp
 		}),
 		points_used,
 		by_team

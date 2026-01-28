@@ -5,6 +5,7 @@
 #include "set.h"
 #include "multiset_flat.h"
 #include "run.h"
+#include "skill_opr.h"
 
 using Year=tba::Year;
 using District_abbreviation=tba::District_abbreviation;
@@ -13,6 +14,44 @@ using Team_key=tba::Team_key;
 using Points=tba::Points;
 
 using namespace std;
+
+Skill_estimates skill_null(TBA_fetcher &f,District_key const& district){
+	Skill_estimates r;
+	auto pr=flat_map2(historical_event_pts(f));
+
+	r.pre_dcmp=to_map(mapf(
+		[=](auto team){
+			return make_pair(team,convolve(pr,pr));
+		},
+		district_teams_keys(f,district)
+	));
+
+	r.at_dcmp=[&](){
+		std::map<Point,Team_dist> r;
+		for(auto i:range(500)){
+			r[i]=Team_dist(dcmp_distribution(f));
+		}
+		return r;
+	}();
+
+	//r.second_event=;this is not used so far; don't bother setting it.
+	//but it will just be that for any first value, you always get the contents of 'pr'
+
+	return r;
+}
+
+Skill_estimates skill_estimates(TBA_fetcher &f,District_key const& district,Skill_method method){
+	switch(method){
+		case Skill_method::POINTS:
+			return calc_skill(f,district);
+		case Skill_method::OPR:
+			return calc_skill_opr(f,district);
+		case Skill_method::NONE:
+			return skill_null(f,district);
+		default:
+			assert(0);
+	}
+}
 
 template<typename K>
 std::array<K,5> quartiles(flat_map2<K,Pr> a){

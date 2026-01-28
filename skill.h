@@ -29,4 +29,6 @@ std::ostream& operator<<(std::ostream&,Skill_method);
 
 Skill_method decode(std::span<char*>,Skill_method const*);
 
+Skill_estimates skill_estimates(TBA_fetcher&,tba::District_key const&,Skill_method);
+
 #endif
