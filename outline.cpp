@@ -50,6 +50,7 @@ simple way:
 #include "outline.h"
 #include "skill.h"
 #include "skill_opr.h"
+#include "print_r.h"
 
 //start generic stuff
 
@@ -434,7 +435,8 @@ map<tba::Team_key,Pr> run(
 	X(vector<double>,district_points_earned)\
 	X(int,unplayed_district_events_scheduled)\
 	X(bool,won_district_chairmans)\
-	X(optional<int>,dcmp_points)
+	X(optional<int>,dcmp_points)\
+	X(Dcmp_home,dcmp_home)
 
 struct Team_data{
 	#define X(A,B) A B;
@@ -575,6 +577,7 @@ District_data partial_data(
 		assert(district_events.size()<=2);
 
 		Team_data td;
+		td.dcmp_home=calc_dcmp_home(fetcher,team);
 		td.district_points_earned=mapf([](auto x){ return x.total; },district_events);
 
 		//obviously not always true; FIXME
@@ -666,7 +669,7 @@ int historical_demo(TBA_fetcher &fetcher){
 	//Run_input to_run_input_equal(TBA_fetcher &fetcher,tba::District_key district,District_data data){
 	mapf(
 		[&](auto data){
-			print_lines(count(sorted(values(data))));
+			//print_lines(count(sorted(values(data))));
 			return to_run_input_equal(fetcher,district,data);
 		},
 		p
@@ -680,7 +683,38 @@ int historical_demo(TBA_fetcher &fetcher){
 		vector<tba::District_Ranking> d1
 		map<Team_key,tuple<vector<int>,int>> points_used
 	};*/
-	nyi
+	for(auto p1:p){
+		Run_input input;
+		input.dcmp_size=dcmp_size(district);
+		input.worlds_slots=worlds_slots(district);
+		input.by_team=map_values(
+			[](auto x)->Team_status{
+				PRINT(x);
+
+				Team_status r;
+				r.district_chairmans=x.won_district_chairmans;
+				nyi//r.point_dist=;
+				nyi//r.dcmp_home=;
+				nyi//r.already_earned=;
+
+				cout<<"struct Team_status{\n"
+				"        bool district_chairmans;\n"
+				"        Team_dist point_dist; //number of points expected pre-dcmp\n"
+				"        Dcmp_home dcmp_home;\n"
+				"        Point already_earned;\n"
+				"};\n";
+
+				//DESCRIBE(Team_status);
+				nyi
+			},
+			p1
+		);
+		nyi//input.dcmp_played=;
+		nyi//input.dcmp_distribution1=;
+		Run_result result=run_calc(input);
+		print_r(result);
+		nyi
+	}
 	return 0;
 }
 
@@ -792,12 +826,18 @@ auto identify_time(TBA_fetcher &f){
 	return r;
 }
 
+int identify_time_demo(TBA_fetcher &f){
+	auto x=identify_time(f);
+	print_r(x);
+	return 0;
+}
+
 int main1(int argc,char **argv){
 	auto args=parse_args(argc,argv);
 	std::filesystem::create_directories(args.output_dir);
 	auto tba_fetcher=args.tba.get();
 
-	identify_time(tba_fetcher);
+	//return identify_time_demo(tba_fetcher);
 
 	if(args.demo){
 		return demo(tba_fetcher);
