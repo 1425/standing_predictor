@@ -45,6 +45,27 @@ simple way:
 
 //start generic stuff
 
+template<typename T>
+auto to_vec(std::tuple<T,T,T> const& a){
+	return std::array<T,3>{get<0>(a),get<1>(a),get<2>(a)};
+}
+
+template<typename T>
+auto sorted(std::tuple<T,T,T> a){
+	auto v=to_vec(a);
+	std::sort(v.begin(),v.end());
+	return std::make_tuple(v[0],v[1],v[2]);
+}
+
+bool any(auto const& a){
+	for(auto const& x:a){
+		if(x){
+			return 1;
+		}
+	}
+	return 0;
+}
+
 template<typename K,typename V,typename H>
 std::vector<std::pair<K,V>> sorted(std::unordered_map<K,V,H> const& a){
 	std::vector<std::pair<K,V>> v(a.begin(),a.end());
@@ -65,6 +86,30 @@ auto get_key(std::map<K,V> const& a,K const& k){
 	auto f=a.find(k);
 	assert(f!=a.end());
 	return f->second;
+}
+
+template<typename T>
+auto adjacent_pairs(std::vector<T> const& a){
+	std::vector<std::pair<T,T>> r;
+	if(a.size()<2){
+		return r;
+	}
+	for(auto i:range(a.size()-1)){
+		r|=std::make_pair(a[i],a[i+1]);
+	}
+	return r;
+}
+
+template<typename T>
+auto deciles(std::vector<T> a){
+	assert(!a.empty());
+	std::sort(a.begin(),a.end());
+	return mapf(
+		[=](auto i){
+			return a[i*a.size()/10];
+		},
+		range(10)
+	);
 }
 
 //start program-specific stuff.
@@ -629,8 +674,50 @@ vector<District_data> partial_data(TBA_fetcher &fetcher,tba::District_key distri
 	return r;
 }
 
-int historical_demo(TBA_fetcher &fetcher){
-	tba::District_key district{"2024pnw"};
+using Team=tba::Team_key;
+
+void analyze_status(std::map<Team,Team_data> const& a){
+	cout<<"Teams:"<<a.size()<<"\n";
+	#define X(A,B) auto B=mapf([](auto x){ return x.second.B; },a);
+	TEAM_DATA_ITEMS(X)
+	#undef X
+	auto m=mapf([](auto x){ return x.size(); },district_points_earned);
+	cout<<"Points eaned size:"<<count(m)<<"\n";
+	cout<<"Unplaiyed:"<<count(unplayed_district_events_scheduled)<<"\n";
+	cout<<"dcmp_points:"<<nonempty(dcmp_points).size()<<"\n";
+
+	{
+		auto d=to_set(dcmp_home);
+		if(d.size()>1){
+			cout<<"dcmp_home:"<<d<<"\n";
+		}
+	}
+	/*
+	district_points_earned
+	unplayed_district_events_scheduled
+	dcmp_points
+	dcmp_home*/
+}
+
+#define PREDICTION_STATUS(X)\
+	X(Team,team)\
+	X(int,district_events_remaining)\
+	X(Pr,dcmp_pr)\
+	X(Pr,cmp_pr)
+
+struct Prediction_status{
+	PREDICTION_STATUS(INST)
+};
+
+std::ostream& operator<<(std::ostream& o,Prediction_status const& a){
+	o<<"Prediction_status( ";
+	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
+	PREDICTION_STATUS(X)
+	#undef X
+	return o<<")";
+}
+
+std::vector<Prediction_status> historical_demo(TBA_fetcher &fetcher,tba::District_key const& district){
 	auto p=partial_data(fetcher,district);
 	//Run_input to_run_input_equal(TBA_fetcher &fetcher,tba::District_key district,District_data data){
 	mapf(
@@ -640,47 +727,192 @@ int historical_demo(TBA_fetcher &fetcher){
 		},
 		p
 	);
-	/*Run_input{
-		dcmp_size,
-		worlds_slots,
-		map<Team_key,std::pair<bool,Team_dist> by team
-		dcmp_played
-		dcmp_distribution1
-		vector<tba::District_Ranking> d1
-		map<Team_key,tuple<vector<int>,int>> points_used
-	};*/
+
+	if(0){
+		using Team=tba::Team_key;
+		map<Team,vector<Team_data>> m;
+		for(auto set_of_data:p){
+			for(auto [k,v]:set_of_data){
+				m[k]|=v;
+			}
+		}
+		print_r(m);
+		//nyi
+		
+	}
+
+	auto skill=skill_estimates(fetcher,district,Skill_method::NONE);
+	//auto skill=skill_estimates(fetcher,district,Skill_method::POINTS);
+	//auto skill=skill_estimates(fetcher,district,Skill_method::OPR);
+
+	//print_r(skill);
+	//nyi
+
+	vector<Prediction_status> r;
+
 	for(auto p1:p){
+		//cout<<"---------------------\n";
+		//analyze_status(p1);
 		Run_input input;
 		input.dcmp_size=dcmp_size(district);
 		input.worlds_slots=worlds_slots(district);
-		input.by_team=map_values(
-			[](auto x)->Team_status{
-				PRINT(x);
+		input.by_team=to_map(mapf(
+			[&](auto p){
+				auto [team,data]=p;
 
 				Team_status r;
-				r.district_chairmans=x.won_district_chairmans;
-				nyi//r.point_dist=;
-				nyi//r.dcmp_home=;
-				nyi//r.already_earned=;
+				r.district_chairmans=data.won_district_chairmans;
 
-				cout<<"struct Team_status{\n"
-				"        bool district_chairmans;\n"
-				"        Team_dist point_dist; //number of points expected pre-dcmp\n"
-				"        Dcmp_home dcmp_home;\n"
-				"        Point already_earned;\n"
-				"};\n";
+				if(data.unplayed_district_events_scheduled==2){
+					r.point_dist=skill.pre_dcmp[team];
+				}else if(data.unplayed_district_events_scheduled==1){
+					auto already=(Point)sum(data.district_points_earned);
+					auto next=skill.second_event[already];
+					r.point_dist=next+already;
+				}else if(data.unplayed_district_events_scheduled==0){
+					auto already=(Point)sum(data.district_points_earned);
+					r.point_dist[already]=1;
+				}else{
+					assert(0);
+				}
+				r.dcmp_home=calc_dcmp_home(fetcher,team);
+				r.already_earned=sum(data.district_points_earned);
 
-				//DESCRIBE(Team_status);
-				nyi
+				return make_pair(team,r);
 			},
 			p1
-		);
-		nyi//input.dcmp_played=;
-		nyi//input.dcmp_distribution1=;
+		));
+
+		input.dcmp_played=any(mapf([](auto x){ return x.dcmp_points; },values(p1)));
+		input.dcmp_distribution1=skill.at_dcmp;
+		//print_r(input);
+		if(0){
+			auto i2=input;
+			auto bt=i2.by_team;
+			i2.by_team.clear();
+			i2.dcmp_distribution1.clear();
+			print_r(i2);
+			for(auto [k,v]:take(5,bt)){
+				//p.second.point_dist.clear();//because big onscreen.
+				//cout<<"\t"<<v<<"\n";
+
+				auto opts=keys(v.point_dist);
+				//cout<<"\t"<<k<<"\t"<<v.already_earned<<"\t"<<min(opts)<<"\t"<<max(opts)<<"\n";
+				auto t=make_tuple(v.already_earned,min(opts),max(opts));
+				auto t2=sorted(t);
+				if(t!=t2){
+					PRINT(t);
+				}
+				assert(t==t2);
+			}
+		}
 		Run_result result=run_calc(input);
-		print_r(result);
-		nyi
+
+		for(auto x:result.result){
+			auto team=x.team;
+			r|=Prediction_status(
+				team,
+				p1[x.team].unplayed_district_events_scheduled,
+				x.dcmp_make,
+				x.cmp_make
+			);
+		}
+
+		auto cmp_make=mapf([](auto x){ return x.cmp_make; },result.result);
+		auto dcmp_make=mapf([](auto x){ return x.dcmp_make; },result.result);
+
+		auto decile_count=[](auto x){
+			std::map<int,size_t> r;
+			for(auto elem:x){
+				r[elem*10]++;
+			}
+			//return r;
+			//cout<<r<<"\n";
+			for(auto i:range(12)){
+				cout<<r[i]<<",";
+			}
+			cout<<"\n";
+		};
+
+		//PRINT(count(cmp_make));
+		//PRINT(count(dcmp_make));
+
+		//decile_count(cmp_make);
+		decile_count(dcmp_make);
+
+		/*for(auto x:result.cutoff_pr){
+			cout<<"cutoff_pr:"<<quartiles(x)<<"\n";
+		}
+		cout<<"cmp_cutoff_pr:"<<quartiles(result.cmp_cutoff_pr)<<"\n";
+		*/
+		//print_r(result);
 	}
+
+
+	//this stuff passes the basic test that looks basically normal.
+	#if 0
+	auto g=group([](auto x){ return x.team; },r);
+	std::vector<pair<Pr,Pr>> dcmp_pr;
+	for(auto [k,v]:g){
+		//PRINT(k);
+		for(auto [a,b]:adjacent_pairs(v)){
+			dcmp_pr|=make_pair(a.dcmp_pr,b.dcmp_pr);
+		}
+	}
+
+	static constexpr int BUCKETS=20;
+	using Bucket=int;
+	auto bucket=[](Pr a)->Bucket{
+		return a*BUCKETS;
+	};
+
+	map<Bucket,std::multiset<Bucket>> m;
+	for(auto [a,b]:dcmp_pr){
+		m[bucket(a)]|=bucket(b);
+	}
+
+	print_r(m);
+	#endif
+
+	//For each week that occurs, how much does the probability change?
+	//broken up by whether or not the team played.
+
+	map<bool,std::vector<double>> changes;
+	for(auto [k,v]:group([](auto x){ return x.team; },r)){
+		for(auto [a,b]:adjacent_pairs(v)){
+			auto d_pr=b.cmp_pr-a.cmp_pr;
+			auto d_events=a.district_events_remaining-b.district_events_remaining;
+			assert(d_events==0 || d_events==1);
+			changes[d_events]|=d_pr;
+		}
+	}
+
+	for(auto [k,v]:changes){
+		PRINT(k);
+		PRINT(quartiles(v));
+		auto abs=MAP(fabs,v);
+		PRINT(mean(abs));
+		PRINT(deciles(v));
+	}
+
+	return r;
+}
+
+int historical_demo(TBA_fetcher &fetcher){
+	/*
+	 *would be interesting to have a function of:
+	 (what week it is,current probability est,whether have event this week) -> 
+	  (distribution of probabilities after this week)
+
+	  known issues: we have teams that are listed as 50/50 (from ties)
+	  even after the event has happened.
+	 * */
+
+	tba::District_key district{"2024pnw"};
+	historical_demo(fetcher,district);
+	historical_demo(fetcher,tba::District_key("2025pnw"));
+	historical_demo(fetcher,tba::District_key("2026pnw"));
+
 	return 0;
 }
 
@@ -858,6 +1090,9 @@ int main(int argc,char **argv){
 		return 1;
 	}catch(std::invalid_argument const& e){
 		cerr<<"Caught:"<<e<<"\n";
+		return 1;
+	}catch(std::vector<std::string> const& v){
+		cerr<<"Caught:"<<v<<"\n";
 		return 1;
 	}
 }

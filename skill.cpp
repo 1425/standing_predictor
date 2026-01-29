@@ -15,6 +15,14 @@ using Points=tba::Points;
 
 using namespace std;
 
+std::ostream& operator<<(std::ostream& o,Skill_estimates const& a){
+	o<<"Skill_estimates( ";
+	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
+	SKILL_ESTIMATES(X)
+	#undef X
+	return o<<")";
+}
+
 Skill_estimates skill_null(TBA_fetcher &f,District_key const& district){
 	Skill_estimates r;
 	auto pr=flat_map2(historical_event_pts(f));
@@ -34,8 +42,9 @@ Skill_estimates skill_null(TBA_fetcher &f,District_key const& district){
 		return r;
 	}();
 
-	//r.second_event=;this is not used so far; don't bother setting it.
-	//but it will just be that for any first value, you always get the contents of 'pr'
+	for(auto x:range(300)){
+		r.second_event[x]=pr;
+	}
 
 	return r;
 }
@@ -51,46 +60,6 @@ Skill_estimates skill_estimates(TBA_fetcher &f,District_key const& district,Skil
 		default:
 			assert(0);
 	}
-}
-
-template<typename K>
-std::array<K,5> quartiles(flat_map2<K,Pr> a){
-	assert(!a.empty());
-	std::array<K,5> r;
-	r[0]=a.begin()->first;
-	r[4]=(a.end()-1)->first;
-
-	Pr total=0;
-	auto it=a.begin();
-	while(it!=a.end() && total<.25){
-		total+=it->second;
-		++it;
-	}
-	if(it!=a.end()){
-		r[1]=it->first;
-	}else{
-		r[1]=r[4];
-	}
-
-	while(it!=a.end() && total<.5){
-		total+=it->second;
-		++it;
-	}
-	if(it!=a.end()){
-		r[2]=it->first;
-	}else{
-		r[2]=r[4];
-	}
-	while(it!=a.end() && total<.75){
-		total+=it->second;
-		++it;
-	}
-	if(it!=a.end()){
-		r[3]=it->first;
-	}else{
-		r[3]=r[4];
-	}
-	return r;
 }
 
 template<typename T>
@@ -372,7 +341,16 @@ Skill_by_pts calc_skill_inner(TBA_fetcher& f){
 	};
 
 	auto pre_dcmp=to_pr(s1);
-	auto at_dcmp_out=to_pr(s3);
+	auto at_dcmp_out=[=](){
+		//For the values lower than the worst that has been seen, make them equal to that.
+		auto x=to_pr(s3);
+		auto min_seen=min(keys(x));
+		for(auto i:range(min_seen)){
+			x[i]=x[min_seen];
+		}
+		return x;
+	}();
+
 	auto second_event=to_pr(calc_smoothed(second_event_raw));
 
 	return Skill_by_pts(pre_dcmp,at_dcmp_out,second_event);

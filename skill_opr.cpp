@@ -334,7 +334,7 @@ Skill_estimates calc_skill_opr(TBA_fetcher& f,tba::District_key const& district)
 			static constexpr int SMOOTHING_DISTANCE=10; //This was found empirically.
 			static constexpr double BASELINE_WEIGHT=.03;//This was also found empirically.
 			auto d1=smooth_by(SMOOTHING_DISTANCE,to_dist(v));
-			r[k]=weighted_average(baseline,d1,BASELINE_WEIGHT);
+			r[k]=cut_dist(weighted_average(baseline,d1,BASELINE_WEIGHT));
 			//r[k]=to_dist(v);
 		}
 		return r;

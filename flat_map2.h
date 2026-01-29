@@ -247,6 +247,8 @@ class flat_map2{
 	auto const& get_keys()const{
 		return keys;
 	}
+
+	auto operator<=>(flat_map2 const&)const=default;
 };
 
 template<typename K,typename V>

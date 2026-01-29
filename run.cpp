@@ -2,8 +2,25 @@
 #include<random>
 #include "multiset_flat.h"
 #include "set.h"
+#include "print_r.h"
 
 using namespace std;
+
+std::ostream& operator<<(std::ostream& o,Team_status const& a){
+	o<<"Team_status( ";
+	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
+	TEAM_STATUS(X)
+	#undef X
+	return o<<")";
+}
+
+std::ostream& operator<<(std::ostream& o,Run_input const& a){
+	o<<"Run_input( ";
+	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
+	RUN_INPUT_ITEMS(X)
+	#undef X
+	return o<<")";
+}
 
 template<typename T,size_t N,typename B>
 std::array<T,N>& operator|=(std::array<T,N> &a,std::array<B,N> const& b){
@@ -258,9 +275,176 @@ auto find_cutoff(std::array<T,N> const& a,std::vector<B> const& b){
 	);
 }
 
+std::ostream& operator<<(std::ostream& o,Run_result const& a){
+	o<<"Run_result( ";
+	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
+	RUN_RESULT_ITEMS(X)
+	#undef X
+	return o<<")";
+}
+
+void print_r(int n,Run_result const& a){
+	indent(n);
+	cout<<"Run_result\n";
+	n++;
+	#define X(A,B) indent(n); std::cout<<""#B<<"\n"; print_r(n+1,a.B);
+	RUN_RESULT_ITEMS(X)
+	#undef X
+}
+
+void check(int){}
+
+void check(Pr p){
+	assert(p>=0);
+}
+
+void check(Point a){
+	if(a<0) throw "negative points";
+	assert(a>=0);
+}
+
+template<typename K,typename V>
+void check(flat_map2<K,V> const&);
+
+void check(tba::Team_key const&){}
+
+void check(Team_status const& a){
+
+	#define X(A) try{\
+		check(a.A);\
+	}catch(char const *s){\
+		std::vector<std::string> r;\
+		r|=s;\
+		r|=""#A;\
+		r|="Team_status";\
+		throw r;\
+	}catch(std::vector<std::string> const& a){\
+		std::vector<std::string> r;\
+		r|=a;\
+		r|=""#A;\
+		r|="Team_status";\
+		throw r;\
+	}catch(...){\
+		assert(0);\
+	}
+	X(point_dist)
+	X(dcmp_home)
+	X(already_earned)
+	#undef X
+
+	/*try{
+		check(a.point_dist);
+		check(a.dcmp_home);
+		check(a.already_earned);
+	}catch(char const *s){
+		std::vector<std::string> r;
+		r|=s;
+		r|="Team_status";
+		throw r;
+	}*/
+}
+
+
+template<typename K,typename V>
+void check(std::map<K,V> const& a){
+	for(auto [k,v]:a){
+		try{
+			check(k);
+		}catch(std::vector<std::string> const& a){
+			vector<string> r;
+			r|=a;
+			r|="k";
+			r|="map";
+			throw r;
+		}catch(...){
+			assert(0);
+		}
+		try{
+			check(v);
+		}catch(std::vector<std::string> const& a){
+			vector<string> r;
+			r|=a;
+			stringstream ss;
+			ss<<"v("<<k<<")";
+			r|=ss.str();
+			r|="map";
+			throw r;
+		}catch(...){
+			assert(0);
+		}
+	}
+}
+
+void check(Run_input const& a){
+	for(auto x:a.dcmp_size){
+		assert(x>=0);
+	}
+	assert(a.worlds_slots>=0);
+	string s="by_team";
+	try{
+		check(a.by_team);
+		s="dcmp_distribution1";
+		check(a.dcmp_distribution1);
+	}catch(std::vector<string> const& a){
+		vector<string> r;
+		r|=a;
+		r|=s;
+		r|="Run_input";
+		throw r;
+	}catch(...){
+		assert(0);
+	}
+}
+
+template<typename K,typename V>
+void check(flat_map2<K,V> const& a){
+	for(auto [k,v]:a){
+		try{
+			check(k);
+		}catch(std::vector<std::string> const& a){
+			std::vector<std::string> r;
+			r|=a;
+			r|="k";
+			r|="flat_map2";
+			throw r;
+		}catch(const char *s){
+			std::vector<std::string> r;
+			r|=s;
+			r|="k";
+			r|="flat_map2";
+			throw r;
+		}catch(...){
+			assert(0);
+		}
+		try{
+			check(v);
+		}catch(std::vector<std::string> const& a){
+			std::vector<std::string> r;
+			r|=a;
+			r|="v";
+			r|="flat_map2";
+			throw r;
+		}catch(const char *s){
+			std::vector<std::string> r;
+			r|=s;
+			r|="v";
+			r|="flat_map2";
+			throw r;
+		}catch(...){
+			assert(0);
+		}
+	}
+}
+
 Run_result run_calc(
 	Run_input input
 ){
+	try{
+		check(input);
+	}catch(...){
+		print_r(input.by_team[tba::Team_key("frc1294")]);
+		throw;
+	}
 	#if 0
 	//check that this incoming distributions look ok.
 	for(auto [k,v]:input.by_team){
@@ -368,6 +552,7 @@ Run_result run_calc(
 			auto const& dcmp_cutoff_this=dcmp_cutoff[i];
 			for(auto [earned,teams]:final_points_this){
 				auto [cm,points]=earned;
+				assert(points>=0);
 
 				if(!cm && points<dcmp_cutoff_this.first) continue;
 				if(points==dcmp_cutoff_this.first){

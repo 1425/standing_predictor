@@ -439,6 +439,12 @@ std::vector<T> sorted(std::vector<T> a){
 	return a;
 }
 
+template<typename T,size_t N>
+auto sorted(std::array<T,N> a){
+	std::sort(a.begin(),a.end());
+	return a;
+}
+
 template<typename T,typename Func>
 std::vector<T> sorted(std::vector<T> v,Func f){
 	sort(begin(v),end(v),[&](auto a,auto b){ return f(a)<f(b); });

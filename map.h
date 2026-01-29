@@ -89,4 +89,9 @@ std::map<V,std::vector<K>> invert(std::map<K,V> const& a){
 	return r;
 }
 
+template<typename K,typename V>
+auto take(size_t n,std::map<K,V> const& a){
+	return take(n,to_vec(a));
+}
+
 #endif
