@@ -36,7 +36,10 @@ OUTLINE_OBJS= \
 	zipcodes.o \
 	skill.o \
 	skill_opr.o \
-	$(TBA_OBJS)
+	dates.o \
+	print_r.o \
+	$(TBA_OBJS)\
+	$(FRC_API_OBJS)
 
 outline: $(OUTLINE_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@

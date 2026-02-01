@@ -175,3 +175,17 @@ std::string as_pct(double d){
 	return ss.str();
 }
 
+vector_void::vector_void(size_t a):size_(a){}
+
+size_t vector_void::size()const{
+	return size_;
+}
+
+std::set<int> to_set(vector_void const&){
+	return std::set<int>();
+}
+
+std::chrono::year_month_day& operator++(std::chrono::year_month_day& a){
+	a=std::chrono::sys_days{a}+std::chrono::days{1};
+	return a;
+}

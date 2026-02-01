@@ -48,6 +48,13 @@ std::set<T> operator|(std::set<T> a,std::set<T> const& b){
 }
 
 template<typename T>
+std::set<T> to_set(std::vector<T> const& a){
+	std::set<T> r;
+	for(auto x:a) r|=x;
+	return r;
+}
+
+template<typename T>
 std::set<T> operator-(std::set<T> a,T t){
 	a.erase(t);
 	return a;
@@ -62,6 +69,11 @@ std::set<T> operator-(std::set<T> const& a,std::set<T> const& b){
 		std::inserter(r,r.begin())
 	);
 	return r;
+}
+
+template<typename T>
+std::set<T> operator-(std::set<T> const& a,std::vector<T> const& b){
+	return a-to_set(b);
 }
 
 template<typename T>
@@ -83,13 +95,6 @@ std::set<T> operator&(std::set<T> const& a,std::set<T> const& b){
 		b.begin(),b.end(),
 		std::inserter(r,r.begin())
 	);
-	return r;
-}
-
-template<typename T>
-std::set<T> to_set(std::vector<T> const& a){
-	std::set<T> r;
-	for(auto x:a) r|=x;
 	return r;
 }
 

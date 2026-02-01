@@ -9,11 +9,16 @@
 #include<algorithm>
 #include<map>
 #include<cmath>
+#include<variant>
+#include<set>
+#include<chrono>
 
 #define PRINT(X) { std::cout<<""#X<<":"<<(X)<<"\n"; }
 #define nyi { std::cout<<"nyi "<<__FILE__<<":"<<__LINE__<<"\n"; exit(44); }
 
 std::string slurp(std::string const& filename);
+
+std::chrono::year_month_day& operator++(std::chrono::year_month_day&);
 
 template<typename T,typename T2>
 std::vector<T>& operator|=(std::vector<T> &a,T2 t){
@@ -46,6 +51,12 @@ std::ostream& operator<<(std::ostream&,std::pair<A,B> const&);
 
 template<typename T>
 std::ostream& operator<<(std::ostream&,std::optional<T> const&);
+
+template<typename...Ts>
+std::ostream& operator<<(std::ostream&,std::variant<Ts...> const&);
+
+template<typename T>
+std::ostream& operator<<(std::ostream&,std::set<T> const&);
 
 template<typename A,typename B>
 std::ostream& operator<<(std::ostream& o,std::tuple<A,B> const& t){
@@ -188,11 +199,17 @@ T sum(std::vector<T> const& a){
 }
 
 class vector_void{
+	size_t size_;
+
 	public:
-	explicit vector_void(size_t){}
+	explicit vector_void(size_t);
+
+	size_t size()const;
 };
 
 std::ostream& operator<<(std::ostream& o,vector_void);
+
+std::set<int> to_set(vector_void const&);
 
 template<typename Func,typename T>
 auto mapf(Func f,std::vector<T> const& v){
@@ -243,7 +260,7 @@ auto mapf(Func f,std::tuple<A,B,C,D,E,F> const& t)
 	-> std::tuple<G(0),G(1),G(2),G(3),G(4),G(5)>
 	#undef G
 {
-	return make_tuple(
+	return std::make_tuple(
 		#define X(N) f(std::get<N>(t))
 		X(0),X(1),X(2),X(3),X(4),X(5)
 		#undef X
@@ -794,5 +811,35 @@ auto filter_first(Func f,T const& t){
 }
 
 std::string consolidate(std::vector<int> const&);
+
+template<typename...Ts>
+std::ostream& operator<<(std::ostream& o,std::variant<Ts...> const& a){
+	std::visit([&](auto const& x){ o<<x; },a);
+	return o;
+}
+
+template<typename T>
+auto adjacent_pairs(std::vector<T> const& a){
+	std::vector<std::pair<T,T>> r;
+	if(a.size()<2){
+		return r;
+	}
+	for(auto i:range(a.size()-1)){
+		r|=std::make_pair(a[i],a[i+1]);
+	}
+	return r;
+}
+
+template<typename T>
+auto deciles(std::vector<T> a){
+	assert(!a.empty());
+	std::sort(a.begin(),a.end());
+	return mapf(
+		[=](auto i){
+			return a[i*a.size()/10];
+		},
+		range(10)
+	);
+}
 
 #endif

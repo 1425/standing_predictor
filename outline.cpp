@@ -42,6 +42,7 @@ simple way:
 #include "skill.h"
 #include "skill_opr.h"
 #include "print_r.h"
+#include "dates.h"
 
 //start generic stuff
 
@@ -72,44 +73,11 @@ std::vector<std::pair<K,V>> sorted(std::unordered_map<K,V,H> const& a){
 	return sorted(v);
 }
 
-struct hash_pair{
-	template<typename A,typename B>
-	size_t operator()(std::pair<A,B> const& a)const{
-		auto h1=std::hash<A>{}(a.first);
-		auto h2=std::hash<B>{}(a.second);
-		return h1^h2;
-	}
-};
-
 template<typename K,typename V>
 auto get_key(std::map<K,V> const& a,K const& k){
 	auto f=a.find(k);
 	assert(f!=a.end());
 	return f->second;
-}
-
-template<typename T>
-auto adjacent_pairs(std::vector<T> const& a){
-	std::vector<std::pair<T,T>> r;
-	if(a.size()<2){
-		return r;
-	}
-	for(auto i:range(a.size()-1)){
-		r|=std::make_pair(a[i],a[i+1]);
-	}
-	return r;
-}
-
-template<typename T>
-auto deciles(std::vector<T> a){
-	assert(!a.empty());
-	std::sort(a.begin(),a.end());
-	return mapf(
-		[=](auto i){
-			return a[i*a.size()/10];
-		},
-		range(10)
-	);
 }
 
 //start program-specific stuff.
@@ -161,17 +129,6 @@ flat_map2<Point,Pr> operator+(flat_map2<Point,Pr> const& a,int i){
 	}
 	return r;
 }
-
-/*using Result_tuple=tuple<tba::Team_key,Pr,Point,Point,Point,Pr,Point,Point,Point>;
-
-using Team_dist=flat_map2<Point,Pr>;
-
-struct Run_result{
-	std::vector<Result_tuple> result;
-	flat_map2<std::pair<Point,double>,double> cutoff_pr,cmp_cutoff_pr;
-	std::map<tba::Team_key,std::tuple<std::vector<int>,int,int>> points_used;
-	map<tba::Team_key,pair<bool,Team_dist>> by_team;
-};*/
 
 using Points_used=map<tba::Team_key,tuple<vector<int>,int,int>>;
 
@@ -989,6 +946,43 @@ tba::Date cmp_end(TBA_fetcher& f,Year year){
 using Date=tba::Date;
 using District_key=tba::District_key;
 
+void print_r(size_t n,tba::Match const& a){
+	indent(n);
+	cout<<"Match\n";
+	n++;
+	#define X(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
+	TBA_MATCH(X)
+	#undef X
+}
+
+void event_dates(TBA_fetcher &f,tba::Event const& e){
+	//print_r(e);
+	//PRINT(e.start_date)
+	//PRINT(e.end_date)
+
+	auto matches=event_matches(f,e.key);
+	if(matches.empty()){
+		return;
+	}
+
+	for(auto match:matches){
+		print_r(match);
+		//match.time;
+		auto t=match.actual_time;
+		PRINT(t);
+		//match.predicted_time;
+		auto t2=match.post_result_time;
+		(void)t2;
+	}
+	nyi
+}
+
+void event_dates(TBA_fetcher &f,tba::Event_key const& e){
+	auto data=event(f,e);
+	print_r(data);
+	nyi
+}
+
 auto identify_time(TBA_fetcher &f){
 	std::map<District_key,std::set<Date>> r;
 	for(auto [district_name,v]:normal_district_years(f)){
@@ -1000,6 +994,11 @@ auto identify_time(TBA_fetcher &f){
 				continue;
 			}
 			assert(!d.empty());
+
+			for(auto x:d){
+				event_dates(f,x);
+			}
+
 			auto g=group([](auto x){ return x.event_type; },d);
 			const auto start_date=min(nonempty(mapf(
 				[](auto x){ return x.start_date; },
@@ -1017,6 +1016,7 @@ auto identify_time(TBA_fetcher &f){
 			interesting_dates|=dcmp_ends;
 
 			auto cmp1=cmp_end(f,year);
+			(void)cmp1;
 
 			r[k]=interesting_dates;
 		}
@@ -1027,6 +1027,13 @@ auto identify_time(TBA_fetcher &f){
 int identify_time_demo(TBA_fetcher &f){
 	auto x=identify_time(f);
 	print_r(x);
+
+	/* For each date:
+	 * what events are in the past, current and future
+	 * and what season is it?
+	 *
+	 * */
+
 	return 0;
 }
 
@@ -1036,6 +1043,7 @@ int main1(int argc,char **argv){
 	auto tba_fetcher=args.tba.get();
 
 	//return identify_time_demo(tba_fetcher);
+	return dates_demo(tba_fetcher);
 
 	if(args.demo){
 		return demo(tba_fetcher);
@@ -1093,6 +1101,9 @@ int main(int argc,char **argv){
 		return 1;
 	}catch(std::vector<std::string> const& v){
 		cerr<<"Caught:"<<v<<"\n";
+		return 1;
+	}catch(const char *s){
+		cerr<<"Caught:"<<s<<"\n";
 		return 1;
 	}
 }

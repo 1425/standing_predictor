@@ -11,17 +11,28 @@ namespace frc_api{
 	struct Event;
 }
 
+namespace tba{
+	struct Match;
+	struct Team;
+};
+
 void print_r(int,frc_api::Match const&);
 void print_r(int,frc_api::TeamListings const&);
 void print_r(int,frc_api::Event const&);
+void print_r(int,tba::Match const&);
+void print_r(int,tba::Team const&);
+
 
 template<typename T>
 void print_r(int,std::vector<T> const&);
 
+int terminal_width();
+std::string abbreviate(int max_width,std::string const&);
+
 template<typename T>
 void print_r(int n,T const& t){
 	indent(n);
-	std::cout<<t<<"\n";
+	std::cout<<abbreviate(terminal_width()-8*n,::as_string(t))<<"\n";
 }
 
 template<typename A,typename B>
