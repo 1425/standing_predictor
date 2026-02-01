@@ -1,3 +1,4 @@
+#include "declines.h"
 #include<fstream>
 #include<numeric>
 #include<filesystem>
@@ -15,7 +16,7 @@
 #include "tba.h"
 #include "util.h"
 #include "print_r.h"
-#include "declines.h"
+#include "vector_void.h"
 
 /*
 The program is designed to figure out how many teams are declining invitations to their district championship event.  

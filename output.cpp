@@ -8,6 +8,7 @@
 #include "tba.h"
 #include "run.h"
 #include "outline.h"
+#include "vector_void.h"
 
 using namespace std;
 

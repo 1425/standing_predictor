@@ -6,6 +6,7 @@
 #include "multiset_flat.h"
 #include "run.h"
 #include "skill_opr.h"
+#include "vector_void.h"
 
 using Year=tba::Year;
 using District_abbreviation=tba::District_abbreviation;

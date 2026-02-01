@@ -2,6 +2,7 @@
 #define FLAT_MAP2_H
 
 #include "flat_map.h"
+#include "io.h"
 
 template<typename T>
 std::vector<T> sorted(std::initializer_list<T> const& a){

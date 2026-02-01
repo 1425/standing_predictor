@@ -2,6 +2,8 @@
 #include<fstream>
 #include<filesystem>
 #include "set.h"
+#include "io.h"
+#include "vector_void.h"
 
 std::string slurp(std::string const& filename){
 	std::ifstream f(filename.c_str());
@@ -39,62 +41,6 @@ size_t sum(std::vector<bool> const& a){
 	return i;
 }
 
-std::vector<std::string> split(std::string const& s){
-	std::vector<std::string> r;
-	std::stringstream ss;
-	for(auto c:s){
-		if(isblank(c)){
-			if(ss.str().size()){
-				r|=ss.str();
-				ss.str("");
-			}
-		}else{
-			ss<<c;
-		}
-	}
-	if(ss.str().size()){
-		r|=ss.str();
-	}
-	return r;
-}
-
-std::vector<std::string> split(std::string const& s,char delim){
-	std::vector<std::string> r;
-	std::stringstream ss;
-	for(auto c:s){
-		if(c==delim){
-			if(ss.str().size()){
-				r|=ss.str();
-				ss.str("");
-			}
-		}else{
-			ss<<c;
-		}
-	}
-	if(ss.str().size()){
-		r|=ss.str();
-	}
-	return r;
-}
-
-std::string link(std::string const& url,std::string const& body){
-	return tag("a href=\""+url+"\"",body);
-}
-
-std::string td1(std::string const& s){ return td(s); }
-std::string th1(std::string const& s){ return th(s); }
-
-void indent(int x){
-	for(auto _:range(x)){
-		(void)_;
-		std::cout<<"\t";
-	}
-}
-
-std::ostream& operator<<(std::ostream& o,std::invalid_argument const& a){
-	return o<<"invalid_argument("<<a.what()<<")";
-}
-
 std::string tolower(std::string const& s){
 	std::stringstream ss;
 	for(auto c:s){
@@ -129,10 +75,6 @@ std::vector<std::string> find(std::string const& base,std::string const& name){
 		}
 	}
 	return r;
-}
-
-std::ostream& operator<<(std::ostream& o,vector_void){
-	return o<<"vector_void";
 }
 
 static auto consolidate_inner(std::vector<int> const& in){
@@ -173,16 +115,6 @@ std::string as_pct(double d){
 	std::stringstream ss;
 	ss<<int(d*100)<<'%';
 	return ss.str();
-}
-
-vector_void::vector_void(size_t a):size_(a){}
-
-size_t vector_void::size()const{
-	return size_;
-}
-
-std::set<int> to_set(vector_void const&){
-	return std::set<int>();
 }
 
 std::chrono::year_month_day& operator++(std::chrono::year_month_day& a){

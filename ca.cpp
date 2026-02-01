@@ -6,6 +6,8 @@
 #include "util.h"
 #include "zipcodes.h"
 #include "set.h"
+#include "io.h"
+#include "vector_void.h"
 
 using namespace std;
 

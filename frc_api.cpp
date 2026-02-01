@@ -7,6 +7,8 @@
 #include "util.h"
 #include "print_r.h"
 #include "map.h"
+#include "vector_void.h"
+#include "optional.h"
 
 //start generic code
 

@@ -6,6 +6,7 @@
 #include<algorithm>
 #include<fstream>
 #include "util.h"
+#include "io.h"
 
 template<typename K,typename V>
 std::vector<V> seconds(std::map<K,V> const& a){

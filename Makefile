@@ -38,6 +38,8 @@ OUTLINE_OBJS= \
 	skill_opr.o \
 	dates.o \
 	print_r.o \
+	vector_void.o \
+	io.o \
 	$(TBA_OBJS)\
 	$(FRC_API_OBJS)
 
@@ -50,6 +52,7 @@ META_OBJS= \
 	util.o \
 	tba.o \
 	arguments.o \
+	io.o \
 
 meta: $(META_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -lgumbo -o $@
@@ -62,6 +65,7 @@ DECLINE_OBJS= \
 	print_r.o \
 	tba.o \
 	util.o \
+	io.o \
 	$(TBA_OBJS) \
 	$(FRC_API_OBJS)
 

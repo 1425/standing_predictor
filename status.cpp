@@ -14,6 +14,8 @@
 #include "event.h"
 #include "cmp_reason.h"
 #include "run.h"
+#include "vector_void.h"
+#include "array.h"
 
 using namespace std;
 

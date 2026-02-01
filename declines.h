@@ -1,6 +1,9 @@
 #ifndef DECLINES_H
 #define DECLINES_H
 
+#include "io.h"
+#include "vector_void.h"
+
 template<typename T>
 void diff(int n,T const& a,T const& b){
 	if(a!=b){

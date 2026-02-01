@@ -3,6 +3,8 @@
 #include "multiset_flat.h"
 #include "set.h"
 #include "print_r.h"
+#include "vector_void.h"
+#include "array.h"
 
 using namespace std;
 

@@ -4,6 +4,8 @@
 #include<map>
 #include<array>
 #include "util.h"
+#include "io.h"
+#include "array.h"
 
 //start generic code
 

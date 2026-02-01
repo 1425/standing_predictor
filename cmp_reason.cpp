@@ -6,6 +6,8 @@
 #include "status.h"
 #include "print_r.h"
 #include "tba.h"
+#include "vector_void.h"
+#include "optional.h"
 
 using namespace std;
 

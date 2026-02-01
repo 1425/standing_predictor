@@ -2,11 +2,10 @@
 #define FRC_API_H
 
 #include<map>
+#include<set>
 #include "../frc_api/query.h"
 #include "../frc_api/data.h"
 #include "../frc_api/db.h"
-#include "set.h"
-#include "util.h"
 
 struct FRC_api_fetcher{
 	using Out=std::pair<std::optional<frc_api::HTTP_Date>,frc_api::Data>;
