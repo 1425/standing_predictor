@@ -12,6 +12,8 @@ std::string slurp(std::string const& filename);
 std::chrono::year_month_day& operator++(std::chrono::year_month_day&);
 std::chrono::year_month_day operator+(std::chrono::year_month_day,std::chrono::days);
 
+std::chrono::days operator-(std::chrono::year_month_day,std::chrono::year_month_day);
+
 template<typename T,typename T2>
 std::vector<T>& operator|=(std::vector<T> &a,T2 t){
 	a.push_back(std::move(t));

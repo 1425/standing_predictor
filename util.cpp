@@ -121,3 +121,8 @@ std::chrono::year_month_day& operator++(std::chrono::year_month_day& a){
 	a=std::chrono::sys_days{a}+std::chrono::days{1};
 	return a;
 }
+
+std::chrono::days operator-(std::chrono::year_month_day a,std::chrono::year_month_day b){
+	return std::chrono::sys_days(a)-std::chrono::sys_days(b);
+}
+

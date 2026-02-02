@@ -40,6 +40,8 @@ OUTLINE_OBJS= \
 	print_r.o \
 	vector_void.o \
 	io.o \
+	timezone.o \
+	names.o \
 	$(TBA_OBJS)\
 	$(FRC_API_OBJS)
 

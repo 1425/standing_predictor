@@ -95,4 +95,9 @@ auto take(size_t n,std::map<K,V> const& a){
 	return take(n,to_vec(a));
 }
 
+template<typename K,typename V>
+auto adjacent_pairs(std::map<K,V> const& a){
+	return adjacent_pairs(to_vec(a));
+}
+
 #endif

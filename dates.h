@@ -3,6 +3,7 @@
 
 #include<map>
 #include "io.h"
+#include "../tba/data.h"
 
 class TBA_fetcher;
 
@@ -16,5 +17,8 @@ using Dates_result=std::map<
 Dates_result event_times(TBA_fetcher&);
 
 int dates_demo(TBA_fetcher&);
+
+std::vector<tba::Event> all_events(TBA_fetcher&);
+std::vector<tba::Team> teams_year_all(TBA_fetcher&,tba::Year);
 
 #endif
