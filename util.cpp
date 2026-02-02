@@ -1,6 +1,11 @@
 #include "util.h"
 #include<fstream>
 #include<filesystem>
+
+#ifdef __unix__
+#include<cxxabi.h>
+#endif
+
 #include "set.h"
 #include "io.h"
 #include "vector_void.h"
@@ -124,5 +129,17 @@ std::chrono::year_month_day& operator++(std::chrono::year_month_day& a){
 
 std::chrono::days operator-(std::chrono::year_month_day a,std::chrono::year_month_day b){
 	return std::chrono::sys_days(a)-std::chrono::sys_days(b);
+}
+
+std::string demangle(const char *s){
+	assert(s);
+	#ifdef __unix__
+	int status;
+	char *ret=abi::__cxa_demangle(s,0,0,&status);
+	assert(ret);
+	return std::string(ret);
+	#else
+	return s;
+	#endif
 }
 

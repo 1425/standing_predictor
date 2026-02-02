@@ -58,4 +58,9 @@ std::vector<std::pair<A,B>> zip(std::vector<A> const& a,std::vector<B> const& b)
 	);
 }
 
+template<typename A,typename B,typename C,typename D,typename E,typename F>
+size_t match_degree(std::tuple<A,B,C,D,E,F> const& a,std::tuple<A,B,C,D,E,F> const& b){
+	return sum(mapf([](auto p){ return p.first==p.second; },zip(a,b)));
+}
+
 #endif

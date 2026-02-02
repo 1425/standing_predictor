@@ -41,6 +41,9 @@ using Time_ns=std::chrono::duration<long int,std::ratio<1,1000*1000*1000>>;
 
 std::ostream& operator<<(std::ostream&,Time_ns const&);
 
+std::ostream& operator<<(std::ostream&,std::chrono::time_zone const&);
+std::ostream& operator<<(std::ostream&,std::chrono::time_zone const * const);
+
 
 template<typename A,typename B>
 std::ostream& operator<<(std::ostream& o,std::tuple<A,B> const& t){
@@ -205,5 +208,22 @@ auto th(T const& t){ return tag("th",t); }
 std::string th1(std::string const&);
 
 std::string link(std::string const& url,std::string const& body);
+
+template<typename A,typename B,typename C,typename D,typename E,typename F>
+std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C,D,E,F> const& a){
+	o<<"t(";
+	#define X(N) o<<get<N>(a)<<"/";
+	X(0) X(1) X(2) X(3) X(4) X(5)
+	#undef X
+	return o<<")";
+}
+
+namespace tba{
+	struct Event_key;
+	struct Event;
+};
+
+std::string link(tba::Event_key const&,std::string const&);
+std::string link(tba::Event const&,std::string const&);
 
 #endif

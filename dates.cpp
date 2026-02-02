@@ -1,10 +1,5 @@
 #include "dates.h"
 #include<chrono>
-
-#ifdef __unix__
-#include<cxxabi.h>
-#endif
-
 #include "skill_opr.h"
 #include "../tba/tba.h"
 #include "tba.h"
@@ -18,109 +13,13 @@
 #include "event.h"
 #include "timezone.h"
 #include "names.h"
+#include "interval.h"
 
 using namespace std;
 using Team_key=tba::Team_key;
 using Event_key=tba::Event_key;
 using District_key=tba::District_key;
-
-template<typename A,typename B,typename C,typename D,typename E,typename F>
-auto zip(std::tuple<A,B,C,D,E,F> const& a,std::tuple<A,B,C,D,E,F> const& b){
-	return std::make_tuple(
-		#define X(N) make_pair(get<N>(a),get<N>(b))
-		X(0),X(1),X(2),X(3),X(4),X(5)
-		#undef X
-	);
-}
-
-template<typename A,typename B,typename C,typename D,typename E,typename F>
-auto sum(std::tuple<A,B,C,D,E,F> const& a){
-	return get<0>(a)+get<1>(a)+get<2>(a)+get<3>(a)+get<4>(a)+get<5>(a);
-}
-
-template<typename A,typename B,typename C,typename D,typename E,typename F>
-size_t match_degree(std::tuple<A,B,C,D,E,F> const& a,std::tuple<A,B,C,D,E,F> const& b){
-	return sum(mapf([](auto p){ return p.first==p.second; },zip(a,b)));
-}
-
-template<typename A,typename B,typename C,typename D,typename E,typename F>
-std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C,D,E,F> const& a){
-	o<<"t(";
-	#define X(N) o<<get<N>(a)<<"/";
-	X(0) X(1) X(2) X(3) X(4) X(5)
-	#undef X
-	return o<<")";
-}
-
-std::string demangle(const char *s){
-	assert(s);
-	#ifdef __unix__
-	int status;
-	char *ret=abi::__cxa_demangle(s,0,0,&status);
-	assert(ret);
-	return std::string(ret);
-	#else
-	return s;
-	#endif
-}
-
-template<typename T>
-string type_string(T const& x){
-	return demangle(typeid(x).name());
-}
-
-template<typename T>
-struct Interval{
-	T min,max;//both inclusive
-
-	/*auto size()const{
-		if an integer-like type should give max-min+1
-		if a float-like type should give max-min+std::numeric_limits::lowest()
-	}*/
-};
-
-template<typename T>
-std::ostream& operator<<(std::ostream& o,Interval<T> const& a){
-	o<<"("<<a.min<<","<<a.max<<")";
-	return o;
-}
-
-std::ostream& operator<<(std::ostream& o,Interval<tba::Date> const& i){
-	auto [a,b]=i;
-	if(a.year()!=b.year()){
-		return o<<"("<<a<<"-"<<b<<")";
-	}
-	unsigned ad=static_cast<unsigned>(a.day()),bd=static_cast<unsigned>(b.day());
-	if(a.month()==b.month()){
-		return o<<a.month()<<" "<<ad<<"-"<<bd;
-	}
-	return o<<a.month()<<" "<<ad<<" - "<<b.month()<<" "<<bd;
-}
-
-//std::ostream& operator<<(std::ostream& o,Interval<std::chrono::year_month_day>);
-
-std::ostream& operator<<(std::ostream& o,std::chrono::time_zone const& a){
-	o<<"timezone(";
-	o<<a.name();//<<" "<<a.get_info();
-	return o<<")";
-}
-
-std::ostream& operator<<(std::ostream& o,std::chrono::time_zone const * const x){
-	if(!x){
-		return o<<"NULL";
-	}
-	return o<<*x;
-}
-
 using Year=tba::Year;
-
-std::string link(tba::Event_key const& event,std::string const& body){
-	return link("https://www.thebluealliance.com/event/"+event.get(),body);
-}
-
-std::string link(tba::Event const& event,std::string const& body){
-	return link(event.key,body);
-}
 
 //returns whether the dates look ok; 0=ok
 bool examine_event(TBA_fetcher& f,tba::Event event){

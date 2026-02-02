@@ -42,6 +42,7 @@ OUTLINE_OBJS= \
 	io.o \
 	timezone.o \
 	names.o \
+	interval.o \
 	$(TBA_OBJS)\
 	$(FRC_API_OBJS)
 

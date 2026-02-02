@@ -496,4 +496,25 @@ auto adjacent_pairs(std::vector<T> const& a){
 	return r;
 }
 
+template<typename A,typename B,typename C,typename D,typename E,typename F>
+auto zip(std::tuple<A,B,C,D,E,F> const& a,std::tuple<A,B,C,D,E,F> const& b){
+	return std::make_tuple(
+		#define X(N) make_pair(get<N>(a),get<N>(b))
+		X(0),X(1),X(2),X(3),X(4),X(5)
+		#undef X
+	);
+}
+
+template<typename A,typename B,typename C,typename D,typename E,typename F>
+auto sum(std::tuple<A,B,C,D,E,F> const& a){
+	return get<0>(a)+get<1>(a)+get<2>(a)+get<3>(a)+get<4>(a)+get<5>(a);
+}
+
+std::string demangle(const char*);
+
+template<typename T>
+std::string type_string(T const& x){
+	return demangle(typeid(x).name());
+}
+
 #endif
