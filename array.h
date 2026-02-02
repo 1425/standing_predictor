@@ -46,7 +46,13 @@ auto to_array(std::pair<T,T> a){
 auto quartiles(auto a){
 	assert(!a.empty());
 	auto b=sorted(a);
-	return std::array{b[b.size()/4],b[b.size()/2],b[b.size()*3/4]};
+	return std::array{
+		b[0],
+		b[b.size()/4],
+		b[b.size()/2],
+		b[b.size()*3/4],
+		b[b.size()-1]
+	};
 }
 
 template<typename T>

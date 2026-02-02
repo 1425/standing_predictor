@@ -1,5 +1,10 @@
 #include "dates.h"
 #include<chrono>
+
+#ifdef __unix__
+#include<cxxabi.h>
+#endif
+
 #include "skill_opr.h"
 #include "../tba/tba.h"
 #include "tba.h"
@@ -9,9 +14,13 @@
 #include "vector_void.h"
 #include "optional.h"
 #include "array.h"
+#include "util.h"
+#include "event.h"
 
 using namespace std;
 using Team_key=tba::Team_key;
+using Event_key=tba::Event_key;
+using District_key=tba::District_key;
 
 template<typename K,typename V>
 auto adjacent_pairs(std::map<K,V> const& a){
@@ -46,15 +55,56 @@ std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C,D,E,F> const& a){
 	return o<<")";
 }
 
-template<typename T>
-string type_string(T const& x){
-	return typeid(x).name();
+std::string demangle(const char *s){
+	assert(s);
+	#ifdef __unix__
+	int status;
+	char *ret=abi::__cxa_demangle(s,0,0,&status);
+	assert(ret);
+	return std::string(ret);
+	#else
+	return s;
+	#endif
 }
 
 template<typename T>
-class Interval{
+string type_string(T const& x){
+	return demangle(typeid(x).name());
+}
+
+template<typename T>
+struct Interval{
 	T min,max;//both inclusive
+
+	/*auto size()const{
+		if an integer-like type should give max-min+1
+		if a float-like type should give max-min+std::numeric_limits::lowest()
+	}*/
 };
+
+template<typename T>
+std::ostream& operator<<(std::ostream& o,Interval<T> const& a){
+	o<<"("<<a.min<<","<<a.max<<")";
+	return o;
+}
+
+std::ostream& operator<<(std::ostream& o,Interval<tba::Date> const& i){
+	auto [a,b]=i;
+	if(a.year()!=b.year()){
+		return o<<"("<<a<<"-"<<b<<")";
+	}
+	unsigned ad=static_cast<unsigned>(a.day()),bd=static_cast<unsigned>(b.day());
+	if(a.month()==b.month()){
+		return o<<a.month()<<" "<<ad<<"-"<<bd;
+	}
+	return o<<a.month()<<" "<<ad<<" - "<<b.month()<<" "<<bd;
+}
+
+//std::ostream& operator<<(std::ostream& o,Interval<std::chrono::year_month_day>);
+
+auto operator-(std::chrono::year_month_day a,std::chrono::year_month_day b){
+	return std::chrono::sys_days(a)-std::chrono::sys_days(b);
+}
 
 std::ostream& operator<<(std::ostream& o,std::chrono::time_zone const& a){
 	o<<"timezone(";
@@ -67,6 +117,16 @@ std::ostream& operator<<(std::ostream& o,std::chrono::time_zone const * const x)
 		return o<<"NULL";
 	}
 	return o<<*x;
+}
+
+using Year=tba::Year;
+
+std::string link(tba::Event_key const& event,std::string const& body){
+	return link("https://www.thebluealliance.com/event/"+event.get(),body);
+}
+
+std::string link(tba::Event const& event,std::string const& body){
+	return link(event.key,body);
 }
 
 struct Country{
@@ -511,9 +571,8 @@ void show_duration(std::chrono::duration<long int,std::ratio<1,1000*1000*1000>> 
 using Time_ns=std::chrono::duration<long int,std::ratio<1,1000*1000*1000>>;
 
 std::ostream& operator<<(std::ostream& o,Time_ns const& a){
-	(void)o;
-	(void)a;
-	nyi
+	std::chrono::hh_mm_ss hms{a};
+	return o<<hms;
 }
 
 void match_timings(TBA_fetcher &f){
@@ -620,49 +679,85 @@ void match_timings(TBA_fetcher &f){
 
 struct Match_positions{
 	int days_scheduled;
-	using Day=int;
+	using Day=long int;
 	struct Day_info{
-		using Time=double;//TODO: Change this.
+		using Time=Time_ns;
 		Time start,end;
 		int matches;
 	};
 	std::map<Day,Day_info> days;
 };
 
-//1=ok, 0=error
-bool demo2(TBA_fetcher &f,tba::Event_key event){
-	//tba::Event_key event("2016orwil");
-	//PRINT(event);
+std::ostream& operator<<(std::ostream& o,Match_positions::Day_info const& a){
+	o<<"Day_info(";
+	o<<a.start<<" "<<a.end<<" "<<a.matches;
+	return o<<")";
+}
 
+std::ostream& operator<<(std::ostream& o,Match_positions const& a){
+	o<<"Match_positions(";
+	o<<a.days_scheduled<<" "<<a.days;
+	return o<<")";
+}
+
+std::optional<Match_positions> match_schedule(TBA_fetcher &f,tba::Event_key event){
 	auto event_data=tba::event(f,event);
-	//print_r(event_data);
-
-	//PRINT(event_data.start_date);
-	//PRINT(event_data.end_date);
-
 	auto timezone=get_timezone(event_data);
-	//PRINT(timezone);
 
 	auto m=event_matches(f,event);
-	//print_r(m);
 	auto times=sorted(nonempty(mapf([](auto x){ return x.time; },m)));
 	if(times.empty()){
-		return 1;
+		return std::nullopt;
 	}
-
-	//PRINT(min(times));
-	//PRINT(max(times));
 
 	auto from=[=](auto x){
 		return std::chrono::system_clock::from_time_t(x+3600*timezone);
 	};
 
-	/*for(auto x:take(20,times)){
-		PRINT(from(x));
-	}*/
 	assert(event_data.start_date);
 	assert(event_data.end_date);
+
 	const auto playing=to_set(range_inclusive(*event_data.start_date,*event_data.end_date));
+	auto days_scheduled=playing.size();
+	//PRINT(days_scheduled);
+
+	auto to_date_time=[=](time_t x)->std::pair<tba::Date,Time_ns>{
+		auto f=from(x);
+		//PRINT(f);
+		//PRINT(type_string(f));
+		//auto date=std::chrono::year_month_day(f);
+		auto date=std::chrono::floor<std::chrono::days>(f);
+		//PRINT(date);
+		//auto days=std::chrono::duration_cast<std::chrono::days>(f);
+		auto residual=f-date;
+		//PRINT(date);
+		//PRINT(residual);
+		//nyi
+		return make_pair(date,residual);
+	};
+
+	auto to_day_number_time=[=](time_t x){
+		auto y=to_date_time(x);
+		auto day=y.first-*event_data.start_date;
+		return make_pair(day.count(),y.second);
+	};
+
+	auto g=group(
+		[](auto x){ return x.first; },
+		mapf(to_day_number_time,times)
+	);
+
+	auto r=map_values(
+		[](auto x){
+			auto times_of_day=seconds(x);
+			return Match_positions::Day_info(min(times_of_day),max(times_of_day),x.size());
+		},
+		g
+	);
+	return Match_positions(days_scheduled,r);
+	/*print_r(r);
+	nyi*/
+	#if 0
 	auto check_date=[&](auto x){
 		auto days_since_epoch = std::chrono::floor<std::chrono::days>(x);
 		std::chrono::year_month_day ymd{days_since_epoch};
@@ -675,6 +770,7 @@ bool demo2(TBA_fetcher &f,tba::Event_key event){
 	};
 
 	return check_date(from(min(times))) && check_date(from(max(times)));
+	#endif
 
 	//PRINT(from(min(times)));
 	//PRINT(from(max(times)));
@@ -700,7 +796,10 @@ std::ostream& operator<<(std::ostream& o,Name_contents const& a){
 }
 
 Name_contents parse_name(std::string const& name){
-	//PRINT(name);
+	//Note that this is very approximate.
+	//because the delimiters are chars that can appear in the names of
+	//financial sponsors and organizations.
+	
 	auto sp=split(name,'/');
 	assert(sp.size()>=1);
 
@@ -729,16 +828,6 @@ auto parse_name(tba::Team const& t){
 	return parse_name(t.name);
 }
 
-std::vector<string> get_location_names(int){
-	nyi
-}
-
-/*
- * It would be interesting to see how sponsors, etc. change over the years for each team
- * */
-
-using Year=tba::Year;
-
 std::vector<tba::Team> teams_year_all(TBA_fetcher &f,Year year){
 	std::vector<tba::Team> r;
 	size_t page=0;
@@ -752,6 +841,11 @@ std::vector<tba::Team> teams_year_all(TBA_fetcher &f,Year year){
 		}
 	}
 	return r;
+}
+
+std::vector<tba::Team> all_teams(TBA_fetcher &f){
+	//just asking for one year because it actually doesn't give different results for different years.
+	return teams_year_all(f,Year(2026));
 }
 
 void check_sponsors(TBA_fetcher& f){
@@ -777,16 +871,9 @@ void check_sponsors(TBA_fetcher& f){
 	}
 }
 
-/*
- * Would be interesting to find matches of teams and events
- * to find the hosts, if there is one.
- *
- * would be interesting to parse out the official names of teams
- * */
-void find_hosts(TBA_fetcher &f){
-	//check_sponsors(f);
-	//exit(0);
-
+auto find_hosts(TBA_fetcher &f){
+	//See if we can figure out if there is a specific team that might be hosting the event.
+	map<tba::Event_key,std::set<Team_key>> r;
 	for(auto event:reversed(all_events(f))){
 
 		auto get_loc=[&](auto x){
@@ -799,71 +886,76 @@ void find_hosts(TBA_fetcher &f){
 				x.location_name
 			);
 		};
-
-		/*event.city
-			state_prov
-			country
-			address
-			postal_code
-			location_name*/
+		(void)get_loc;
 
 		auto teams=event_teams(f,event.key);
-		/*assert(!x.empty());
-		auto a=x[0];
-		print_r(a);*/
 
-		mapf(
-			[](auto x){
-				/*if(x.key==tba::Team_key("frc1425")){
-					PRINT(parse_name(x.name));
-				}*/
-				return parse_name(x.name);
-			},
-			teams
-		);
-
-		auto matched=reversed(sorted(mapf(
+		/*auto matched=reversed(sorted(mapf(
 			[&](auto x){ return make_pair(match_degree(get_loc(x),get_loc(event)),x); },
 			teams
 		)));
 
-		matched=filter([](auto x){ return x.first>2; },matched);
-
-		//print_r(event.key);
-		//cout<<event.key<<"\t"<<get_loc(event)<<"\n";
-		//PRINT(take(5,matched));
-		/*for(auto [n,team]:take(5,matched)){
-			cout<<"\t"<<n<<"\t"<<team.key<<"\t"<<get_loc(team)<<"\n";
-		}*/
+		matched=filter([](auto x){ return x.first>2; },matched);*/
 
 		if(event.location_name){
 			auto f2=filter([=](auto x){ return parse_name(x).orgs.count(*event.location_name); },teams);
 
-			if(f2.size()>1){
-				cout<<event.key<<"";
-				cout<<"\t"<<get_loc(event)<<"\n";
-				//for(auto t:mapf(get_loc,f2)){
-				for(auto t:f2){
-					//cout<<"\t"<<t<<"\n";
-					print_r(1,t);
-				}
-				//assert(f2.size()==1);
-			}
+			r[event.key]=to_set(mapf([](auto x){ return x.key; },f2));
 		}
 
-		/*a.city
-			state_prov
-			country
-			address
-			postal_code
-			location_name*/
-
-		//nyi
 	}
+	return r;
 }
 
-int dates_demo(TBA_fetcher &f){
-	find_hosts(f);
+void common_sponsors(TBA_fetcher &f){
+	//Figure out what the most common sponsors are for teams.
+	std::multiset<string> sponsors,orgs;
+	std::multiset<int> num_sponsors,num_orgs;
+
+	for(auto team:all_teams(f)){
+		auto p=parse_name(team);
+		sponsors|=p.sponsors;
+		orgs|=p.orgs;
+
+		num_sponsors|=p.sponsors.size();
+		num_orgs|=p.orgs.size();
+	}
+
+	PRINT(quartiles(num_sponsors));
+	PRINT(quartiles(num_orgs));
+
+	auto show=[](string label,auto x){
+		auto c=reversed(sorted(swap_pairs(count(x))));
+		cout<<label<<"\n";
+		for(auto x:take(20,c)){
+			cout<<"\t"<<x<<"\n";
+		}
+	};
+	show("sponsors",sponsors);
+	show("orgs",orgs);
+}
+
+using Day=int;
+
+using Dates_result=std::map<
+	Day,
+	map<Day,pair<Time_ns,Time_ns>>
+>;
+
+Dates_result event_times_inner(TBA_fetcher&);
+
+Dates_result event_times(TBA_fetcher &f){
+	static auto r=event_times_inner(f);
+	return r;
+}
+
+Dates_result event_times_inner(TBA_fetcher &f){
+	/*common_sponsors(f);
+	return 0;*/
+
+	/*auto h=find_hosts(f);
+	print_r(h);*/
+
 	/*Interesting questions to ask about schedules
 	 * 1) typical lengths scheduled (overall dist)
 	 * 2) for each length, what's a typical distribution of # of matches on each day
@@ -872,14 +964,74 @@ int dates_demo(TBA_fetcher &f){
 	 *
 	 * */
 
+	std::map<int,std::vector<Match_positions>> found;
+
 	for(auto const& event:all_events(f)){
-		auto b=demo2(f,event.key);
-		if(!b){
-			cout<<"fail in:"<<event.key<<"\n\n";
+		auto b=match_schedule(f,event.key);
+		if(b){
+			auto c=*b;
+			found[c.days_scheduled]|=c;
 		}
 	}
 
-	return 0;
+	#if 0
+	for(auto [length,events]:found){
+		cout<<"Events of length "<<length<<"\n";
+		multiset<long int> days_played;
+		for(auto x:events){
+			days_played|=keys(x.days);
+		}
+		PRINT(count(days_played));
+
+		for(auto day:to_set(days_played)){
+			vector<Match_positions::Day_info> here;
+			for(auto x:events){
+				auto f=x.days.find(day);
+				if(f!=x.days.end()){
+					here|=f->second;
+				}
+			}
+			cout<<day<<" "<<here.size()<<"\n";
+			auto starts=mapf([](auto x){ return x.start; },here);
+			auto ends=mapf([](auto x){ return x.end; },here);
+			auto matches=mapf([](auto x){ return x.matches; },here);
+			cout<<"\t"<<quartiles(starts)<<"\n";
+			cout<<"\t"<<quartiles(ends)<<"\n";
+			cout<<"\t"<<quartiles(matches)<<"\n";
+		}
+	}
+	#endif
+
+	return map_values(
+		[=](auto events){
+			multiset<long int> days_played;
+			for(auto event:events){
+				days_played|=keys(event.days);
+			}
+			set<long int> days_to_care;
+			for(auto [day,n]:count(days_played)){
+				if(n>events.size()/3){
+					days_to_care|=day;
+				}
+			}
+			map<Day,pair<Time_ns,Time_ns>> r;
+			for(auto day:days_to_care){
+				vector<Match_positions::Day_info> here;
+				for(auto x:events){
+					auto f=x.days.find(day);
+					if(f!=x.days.end()){
+						here|=f->second;
+					}
+				}
+				auto starts=mapf([](auto x){ return x.start; },here);
+				auto ends=mapf([](auto x){ return x.end; },here);
+				r[day]=make_pair(median(starts),median(ends));
+			}
+			//PRINT(r);
+			return r;
+		},
+		found
+	);
 
 	//match_timings(f);
 	//choose some event and then for each of the days that it says it's going on 
@@ -973,5 +1125,325 @@ int dates_demo(TBA_fetcher &f){
 	
 	PRINT(z);
 
+	nyi//return 0;
+}
+
+//should always return between 1-7
+int days(tba::Event const& a){
+	assert(a.start_date);
+	assert(a.end_date);
+	return (*a.end_date-*a.start_date).count()+1;
+}
+
+//returns std::chrono::time_point
+auto operator+(std::chrono::year_month_day a,Time_ns b){
+	return std::chrono::sys_days(a)+b;
+}
+
+std::chrono::year_month_day operator+(
+	std::chrono::year_month_day a,
+	std::chrono::duration<long,std::ratio<86400,1>> b
+){
+	return std::chrono::sys_days(a)+b;
+}
+
+using Time=std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<long int, std::ratio<1, 1000000000> > >;
+
+auto expected_running(TBA_fetcher &f,Event_key event){
+	//Note: Timezone for all of these results is local to the event!
+
+	//cout<<"expected_running("<<event<<")\n";
+
+	//figure out timestamps for when expect the event to start and end
+	//event_times(f,)
+	//probably want to give some time for the awards to show up after the last match is played.
+	//if looking for when all the results are going to come in.
+	auto event_data=tba::event(f,event);
+	auto d=days(event_data);
+	auto times=event_times(f);
+	auto found=times.find(d);
+	if(found==times.end()){
+		cout<<"days:"<<d<<"\n";
+	}
+	assert(found!=times.end());
+	auto a=found->second;
+
+	auto start=*event_data.start_date;
+	std::vector<Interval<Time>> r;
+	for(auto [day,time_range]:a){
+		auto [time_start,time_end]=time_range;
+		auto d2=std::chrono::days(day);
+		auto s=start+d2+time_start;
+		auto e=start+d2+time_end;
+		using T=decltype(s);
+		auto x=Interval<T>{s,e};
+		r|=x;
+	}
+	return r;
+}
+
+int as_date(int);
+
+std::chrono::year_month_day as_date(Time a){
+	return std::chrono::floor<std::chrono::days>(a);
+	//auto days=std::chrono::duration_cast<std::chrono::days>(a);
+	//return std::chrono::year_month_day(std::chrono::sys_days(days));
+	PRINT(type_string(a));
+	nyi
+}
+
+auto expected_running(TBA_fetcher &f,Year year){
+	auto e=tba::events(f,year);
+	auto m=mapf([&](auto x){ return make_pair(x,expected_running(f,x)); },keys(e));
+	//for now, going to ignore that all of the timezones are different for the results.
+	using Date=std::chrono::year_month_day;
+	map<
+		Date,
+		std::vector<std::pair<Event_key,Interval<Time>>>
+	> by_date;
+	//could also look at this as for each time interval, what are the changes that happen
+	//at any time, would be interesting to know how many events are going on
+	//for any interval of time, what are the things going on?
+	//when are the times where no event are actively happening?
+
+
+	for(auto [event,days]:m){
+		for(auto interval:days){
+			by_date[as_date(interval.min)]|=make_pair(event,interval);
+		}
+	}
+
+	return by_date;
+}
+
+template<typename T>
+auto consolidate(std::vector<T> );
+
+std::chrono::year_month_day operator+(std::chrono::year_month_day a,int b){
+	//interpreting b as a number of days.
+	return a+std::chrono::days(b);
+}
+
+template<typename T>
+auto consolidate(std::set<T> const& a){
+	std::vector<Interval<T>> r;
+	std::optional<T> start;
+	std::optional<T> last;
+	for(auto x:a){
+		if(last){
+			if(x==*last+1){
+				last=x;
+			}else{
+				r|=Interval<T>{*start,*last};
+				start=last=x;
+			}
+		}else{
+			start=last=x;
+		}
+	}
+	if(start){
+		r|=Interval<T>(*start,*last);
+	}
+	return r;
+}
+
+bool cmp(tba::Event_type a){
+	return a==tba::Event_type::CMP_DIVISION || a==tba::Event_type::CMP_FINALS;
+}
+
+std::optional<std::tuple<string,string,string>> parse_district_event_name(std::string const& s){
+	auto sp=split(s);
+	auto district_abbrev=sp[0];
+	if(sp[1]!="District"){
+		return std::nullopt;
+	}
+	vector<string> name;
+	size_t i=2;
+	while(i<sp.size() && sp[i]!="Event"){
+		name|=sp[i];
+		i++;
+	}
+	assert(i<sp.size());
+	i++;
+	vector<string> sponsor;
+	if(i<sp.size()){
+		assert(sp[i]=="presented");
+		i++;
+		assert(sp[i]=="by");
+		i++;
+		while(i<sp.size()){
+			sponsor|=sp[i];
+			i++;
+		}
+	}
+	return std::make_tuple(district_abbrev,join(" ",name),join(" ",sponsor));
+}
+
+auto abbrev(District_key a){
+	return a.get().substr(4,100);
+}
+
+auto display_name(TBA_fetcher& f,District_key district){
+	auto a=abbrev(district);
+	auto x=tba::history(f,a);
+	auto found=filter([=](auto x){ return x.year==year(district); },x);
+	assert(found.size()==1);
+	auto f1=found[0];
+	//PRINT(f1);
+	return f1.display_name;
+}
+
+auto district_display_names(TBA_fetcher &f){
+	//could have this go through all the years
+	auto d=tba::districts(f,Year(2026));
+	return mapf([](auto x){ return x.display_name; },d);
+}
+
+std::optional<tuple<string,string,string>> parse_dcmp_name(TBA_fetcher &f,std::string const& s){
+	auto n=district_display_names(f);
+	auto found=filter([=](auto x){ return prefix(s,x); },n);
+	switch(found.size()){
+		case 0:
+			return std::nullopt;
+		case 1:{
+			auto d=found[0];
+			auto sp=split(s.substr(d.size(),s.size()));
+			if(sp[0]=="FIRST"){
+				sp=skip(1,sp);
+			}
+			vector<string> name;
+			size_t i=0;
+			while(i<sp.size() && sp[i]!="presented"){
+				name|=sp[i];
+				i++;
+			}
+			vector<string> sponsor;
+			if(i<sp.size()){
+				i++;
+				assert(sp[i]=="by");
+				i++;
+				while(i<sp.size()){
+					sponsor|=sp[i++];
+				}
+			}
+			//can also parse an optional "presented by" at the end
+			//return s.substr(d.size(),s.size());
+			return make_tuple(d,join(" ",name),join(" ",sponsor));
+		}
+		default:
+			print_lines(found);
+			assert(0);
+	}
+}
+
+std::string parse_event_name(TBA_fetcher &f,std::string const& s){
+	{
+		auto x=parse_district_event_name(s);
+		if(x){
+			return get<1>(*x);
+		}
+	}
+
+	{
+		auto x=parse_dcmp_name(f,s);
+		if(x){
+			return get<1>(*x);
+		}
+	}
+
+	if(s=="FIRST Championship - FIRST Robotics Competition"){
+		return "Worlds";
+	}
+	return s;
+
+	//return s;
+
+	//"<> District ... Event [presented by ...]";
+	auto sp=split(s);
+	auto district_abbrev=sp[0];
+	//sp[1]=="District"
+}
+
+void schedule_demo(TBA_fetcher &f){
+	District_key district("2026ca");
+
+	auto d=sort_by(
+		district_events(f,district),
+		[](auto x){ return x.start_date; }
+	);
+
+	{
+		auto e=events(f,year(district));
+		auto f=filter([](auto x){ return x.event_type==tba::Event_type::CMP_FINALS; },e);
+		d|=f;
+	}
+
+	ofstream file("what.html");
+	file<<"<table border>";
+	file<<tr(th("Event")+th("Status")+th("Type")+th("Date")+th("Teams"));
+
+	for(auto event:d){
+		file<<"<tr>";
+		file<<td(link(event,parse_event_name(f,event.name)));
+		file<<td("status");
+		file<<td(event.event_type);
+		//file<<td(event.start_date);
+		file<<td(Interval<std::chrono::year_month_day>(*event.start_date,*event.end_date));
+		//file<<td(event.end_date);
+		auto teams=[&]()->int{
+			switch(event.event_type){
+				case tba::Event_type::DISTRICT:
+					return event_teams_keys(f,event.key).size();
+				case tba::Event_type::DISTRICT_CMP:{
+					auto x=dcmp_size(district);
+					return x[0];
+				}
+				case tba::Event_type::CMP_FINALS:
+					return worlds_slots(district);
+				default:
+					assert(0);
+			}
+		}();
+		file<<td(teams);
+		file<<"</tr>";
+	}
+	file<<"</table>";
+}
+
+int dates_demo(TBA_fetcher &f){
+	schedule_demo(f);
+	return 0;
+
+	/*Would be nice to have a listing for a district of the status
+	 * For each event: 
+	 *  -# of teams attending
+	 *  -# eligible to earn points
+	 *  -status (upcoming/in progress/complete)
+	 *  -what days it's scheduled for
+	 * For the DCMP:
+	 *  -# of team slots
+	 *  -status (upcoming/in progress/complete)
+	 *  -how many of the slots are taken
+	 *  -how many teams are still in the running for the remaining slots
+	 * For the CMP:
+	 *  -# of points slots
+	 *  -status (upcoming...)
+	 *  -# of slots taken
+	 *  -how many teams are still in the running for remaining slots
+	 *
+	 * name | status | type | scheduled dates | # of slots
+	 *
+	 * */
+	//auto e=event_times(f);
+	//print_r(e);
+	//auto e=expected_running(f,Event_key("2026orwil"));
+	auto e=expected_running(f,Year(2025));
+	//print_r(e);
+	auto k=keys(e);
+	cout<<"Runs where there are events happening:\n";
+	for(auto x:consolidate(k)){
+		auto days=x.max-x.min+std::chrono::days(1);
+		cout<<x<<days<<"\n";
+	}
 	return 0;
 }

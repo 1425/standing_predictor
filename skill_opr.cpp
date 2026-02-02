@@ -135,10 +135,6 @@ auto smooth_by(size_t,auto const& a){
 	return a;
 }
 
-Year year(District_key const& a){
-	return Year(stoi(a.get()));
-}
-
 bool normal_event(Event_Simple const& a){
 	using enum tba::Event_type;
 	switch(a.event_type){

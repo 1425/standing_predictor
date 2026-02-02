@@ -120,21 +120,6 @@ tuple<T,T,T> summary(map<T,Pr> const& a){
 	);
 }
 
-template<typename T>
-string join(string const& s,vector<T> const& v){
-	if(v.empty()) return "";
-
-	std::stringstream ss;
-	auto at=v.begin();
-	ss<<*at;
-	at++;
-	while(at!=v.end()){
-		ss<<s<<*at;
-		at++;
-	}
-	return ss.str();
-}
-
 string gen_html(
 	vector<Output_tuple> const& result,
 	vector<tba::Team> const& team_info,

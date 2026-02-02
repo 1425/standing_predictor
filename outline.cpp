@@ -87,6 +87,9 @@ auto get_key(std::map<K,V> const& a,K const& k){
 using namespace std;
 
 using District_key=tba::District_key;
+using Team=tba::Team_key;
+using Year=tba::Year;
+using Date=tba::Date;
 
 California_region california_region(tba::Team const& team){
 	if(team.postal_code){
@@ -313,16 +316,6 @@ struct Run_inputs{
 
 map<tba::Team_key,Pr> run(
 	TBA_fetcher& f,
-/*	TBA_fetcher &f,
-	std::string const& output_dir, //output
-	tba::District_key district, //data in
-	tba::Year year, //data in & out
-	std::vector<int> dcmp_size, //how
-	string const& title, //output
-	string const& district_short, //output
-	std::string extra="", //output
-	bool ignore_chairmans=0, //how
-	Skill_method skill_method=Skill_method::NONE*/
 	Run_inputs inputs
 ){
 	//this function exists to separate the input & calculation from the output
@@ -633,8 +626,6 @@ vector<District_data> partial_data(TBA_fetcher &fetcher,tba::District_key distri
 	return r;
 }
 
-using Team=tba::Team_key;
-
 void analyze_status(std::map<Team,Team_data> const& a){
 	cout<<"Teams:"<<a.size()<<"\n";
 	#define X(A,B) auto B=mapf([](auto x){ return x.second.B; },a);
@@ -688,7 +679,6 @@ std::vector<Prediction_status> historical_demo(TBA_fetcher &fetcher,tba::Distric
 	);
 
 	if(0){
-		using Team=tba::Team_key;
 		map<Team,vector<Team_data>> m;
 		for(auto set_of_data:p){
 			for(auto [k,v]:set_of_data){
@@ -922,8 +912,6 @@ Args parse_args(int argc,char **argv){
 	return r;
 }
 
-using Year=tba::Year;
-
 tba::Date cmp_end(TBA_fetcher& f,Year year){
 	auto found=filter(
 		[](auto x){
@@ -944,9 +932,6 @@ tba::Date cmp_end(TBA_fetcher& f,Year year){
 	print_lines(found);
 	nyi
 }
-
-using Date=tba::Date;
-using District_key=tba::District_key;
 
 void print_r(size_t n,tba::Match const& a){
 	indent(n);

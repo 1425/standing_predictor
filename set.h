@@ -181,6 +181,20 @@ std::multiset<T>& operator|=(std::multiset<T>& a,T t){
 	return a;
 }
 
+template<typename A,typename B>
+std::multiset<A>& operator|=(std::multiset<A>& a,B const& b){
+	a.insert(b);
+	return a;
+}
+
+template<typename T>
+std::multiset<T>& operator|=(std::multiset<T>& a,std::set<T> const& b){
+	for(auto const& elem:b){
+		a|=elem;
+	}
+	return a;
+}
+
 template<typename T>
 std::multiset<T>& operator|=(std::multiset<T>& a,std::multiset<T> const& b){
 	a.insert(b.begin(),b.end());
@@ -266,6 +280,11 @@ auto take(size_t n,std::set<T> const& a){
 		r|=x;
 	}
 	return r;
+}
+
+template<typename T>
+auto sorted(std::multiset<T> const& a){
+	return to_vec(a);
 }
 
 #endif

@@ -8,6 +8,7 @@
 #include<map>
 #include<variant>
 #include<sstream>
+#include<chrono>
 
 #define PRINT(X) { std::cout<<""#X<<":"<<(X)<<"\n"; }
 #define nyi { std::cout<<"nyi "<<__FILE__<<":"<<__LINE__<<"\n"; exit(44); }
@@ -32,6 +33,14 @@ std::ostream& operator<<(std::ostream&,std::variant<Ts...> const&);
 
 template<typename T>
 std::ostream& operator<<(std::ostream&,std::set<T> const&);
+
+template<typename T>
+std::ostream& operator<<(std::ostream&,std::vector<T> const&);
+
+using Time_ns=std::chrono::duration<long int,std::ratio<1,1000*1000*1000>>;
+
+std::ostream& operator<<(std::ostream&,Time_ns const&);
+
 
 template<typename A,typename B>
 std::ostream& operator<<(std::ostream& o,std::tuple<A,B> const& t){

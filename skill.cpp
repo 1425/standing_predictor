@@ -164,7 +164,7 @@ int old_points(TBA_fetcher& f,Team_key const& team,Year year){
 	return sum(t);
 }
 
-Year year(District_key a){
+Year year(District_key const& a){
 	auto s=a.get().substr(0,4);
 	return Year(stoi(s));
 }

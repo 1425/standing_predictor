@@ -75,4 +75,6 @@ std::array<K,5> quartiles(flat_map2<K,Pr> a){
 	return r;
 }
 
+tba::Year year(tba::District_key const&);
+
 #endif

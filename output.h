@@ -53,4 +53,19 @@ int make_spreadsheet(
 	std::string const& output_dir
 );
 
+template<typename T>
+std::string join(std::string const& s,std::vector<T> const& v){
+	if(v.empty()) return "";
+
+	std::stringstream ss;
+	auto at=v.begin();
+	ss<<*at;
+	at++;
+	while(at!=v.end()){
+		ss<<s<<*at;
+		at++;
+	}
+	return ss.str();
+}
+
 #endif
