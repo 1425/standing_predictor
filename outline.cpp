@@ -45,8 +45,28 @@ simple way:
 #include "dates.h"
 #include "vector_void.h"
 #include "optional.h"
+#include "plot.h"
 
 //start generic stuff
+
+template<typename K,typename V,typename T>
+auto zip(std::map<K,V> const& a,std::vector<T> const& b){
+	auto ai=a.begin();
+	auto ae=a.end();
+
+	auto bi=b.begin();
+	auto be=b.end();
+
+	using P=std::pair<std::pair<K,V>,T>;
+	std::vector<P> r;
+	while(ai!=ae && bi!=be){
+		r|=P(*ai,*bi);
+
+		++ai;
+		++bi;
+	}
+	return r;
+}
 
 template<typename T>
 auto to_vec(std::tuple<T,T,T> const& a){
@@ -58,15 +78,6 @@ auto sorted(std::tuple<T,T,T> a){
 	auto v=to_vec(a);
 	std::sort(v.begin(),v.end());
 	return std::make_tuple(v[0],v[1],v[2]);
-}
-
-bool any(auto const& a){
-	for(auto const& x:a){
-		if(x){
-			return 1;
-		}
-	}
-	return 0;
 }
 
 template<typename K,typename V,typename H>
@@ -88,6 +99,7 @@ using namespace std;
 
 using District_key=tba::District_key;
 using Team=tba::Team_key;
+using Team_key=tba::Team_key;
 using Year=tba::Year;
 using Date=tba::Date;
 
@@ -314,6 +326,39 @@ struct Run_inputs{
 	Skill_method skill_method=Skill_method::NONE;
 };
 
+auto plot(flat_map2<short int,double> a,auto title){
+	using P=std::pair<int,double>;
+	std::vector<P> data;
+	for(auto [k,v]:a){
+		data|=P(k,v);
+	}
+	return plot(data,::as_string(title));
+}
+
+void team_dists(District_key district,std::map<Team_key,Team_status> const& by_team){
+	std::vector<Plot_setup> setups;
+	for(auto [k,v]:by_team){
+		Plot_setup p;
+		p.title=::as_string(k);
+		p.data=mapf([](auto x){ return Plot_point(x.first,x.second); },v.point_dist);
+		setups|=p;
+	}
+	auto plots=plot(setups);
+
+	ofstream f("teams_"+::as_string(district)+".html");
+	f<<"<html><body>\n";
+	for(auto [team_info,plot]:zip(by_team,plots)){
+		auto [k,v]=team_info;
+		f<<h2(k);
+		f<<quartiles(v.point_dist);
+		PRINT(k);
+		//PRINT(v);
+		//f<<plot(v.point_dist,k);
+		f<<plot;
+	}
+	f<<"</body></html>";
+}
+
 map<tba::Team_key,Pr> run(
 	TBA_fetcher& f,
 	Run_inputs inputs
@@ -343,6 +388,11 @@ map<tba::Team_key,Pr> run(
 			}
 			cout<<"\n";
 		}
+	}
+
+	bool by_team_chart=0;
+	if(by_team_chart){
+		team_dists(district,by_team);
 	}
 
 	cout<<"Championship cutoff\n";

@@ -9,6 +9,7 @@ class TBA_fetcher;
 
 using Day=int;
 
+//From # of scheduled days to what time matches are expected on each day.
 using Dates_result=std::map<
 	Day,
 	std::map<Day,std::pair<Time_ns,Time_ns>>

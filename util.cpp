@@ -143,3 +143,8 @@ std::string demangle(const char *s){
 	#endif
 }
 
+bool all_equal(std::pair<long int,bool> const& a){
+	return a.first==(long int)a.second;
+}
+
+

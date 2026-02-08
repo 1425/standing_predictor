@@ -80,3 +80,7 @@ std::string link(tba::Event const& event,std::string const& body){
 	return link(event.key,body);
 }
 
+std::ostream& operator<<(std::ostream& o,std::stringstream const& ss){
+	return o<<ss.str();
+}
+

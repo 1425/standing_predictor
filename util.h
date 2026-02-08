@@ -517,4 +517,25 @@ std::string type_string(T const& x){
 	return demangle(typeid(x).name());
 }
 
+bool any(auto const& a){
+	for(auto const& x:a){
+		if(x){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+template<typename T>
+bool all(std::vector<T> const& a){
+	for(auto const& x:a){
+		if(!x){
+			return 0;
+		}
+	}
+	return 1;
+}
+
+bool all_equal(std::pair<long int,bool> const&);
+
 #endif

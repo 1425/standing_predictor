@@ -9,6 +9,7 @@
 #include "run.h"
 #include "outline.h"
 #include "vector_void.h"
+#include "plot.h"
 
 using namespace std;
 
@@ -206,6 +207,14 @@ string gen_html(
 
 	auto cutoff_table=[=](string s,auto cutoff_pr){
 		auto simple=simplify(cutoff_pr);
+		auto chart=plot([&](){
+			std::vector<std::pair<int,double>> r;
+			auto ks=keys(simple);
+			for(auto k:range_inclusive(min(ks),max(ks))){
+				r|=make_pair(k,simple[k]);
+			}
+			return r;
+		}());
 		return h2(s+" cutoff value")+
 		table(tr(
 			td(tag("table border",
@@ -230,7 +239,7 @@ string gen_html(
 						;
 					}()
 				)
-			)
+			)+td(chart)
 		));
 	};
 

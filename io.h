@@ -43,7 +43,7 @@ std::ostream& operator<<(std::ostream&,Time_ns const&);
 
 std::ostream& operator<<(std::ostream&,std::chrono::time_zone const&);
 std::ostream& operator<<(std::ostream&,std::chrono::time_zone const * const);
-
+std::ostream& operator<<(std::ostream&,std::stringstream const&);
 
 template<typename A,typename B>
 std::ostream& operator<<(std::ostream& o,std::tuple<A,B> const& t){
@@ -86,7 +86,7 @@ std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C,D,E> const& t){
 template<typename T>
 std::ostream& operator<<(std::ostream& o,std::vector<T> const& v){
 	o<<"[ ";
-	for(auto x:v){
+	for(auto const& x:v){
 		o<<x<<" ";
 	}
 	return o<<"]";

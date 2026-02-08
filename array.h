@@ -1,6 +1,12 @@
 #ifndef ARRAY_H
 #define ARRAY_H
 
+#include<array>
+
+template<size_t N>
+struct array_void{
+};
+
 template<typename T,size_t N>
 auto sorted(std::array<T,N> a){
 	std::sort(a.begin(),a.end());
@@ -25,11 +31,18 @@ std::array<size_t,N> range_st(){
 template<typename Func,typename T,size_t N>
 auto mapf(Func f,std::array<T,N> const& a){
 	using E=decltype(f(*begin(a)));
-	std::array<E,N> r;
-	for(auto i:range_st<N>()){
-		r[i]=f(a[i]);
+	if constexpr(std::is_same<void,E>()){
+		for(auto const& elem:a){
+			f(elem);
+		}
+		return array_void<N>();
+	}else{
+		std::array<E,N> r;
+		for(auto i:range_st<N>()){
+			r[i]=f(a[i]);
+		}
+		return r;
 	}
-	return r;
 }
 
 template<typename T,size_t N>

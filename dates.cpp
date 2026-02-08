@@ -21,100 +21,177 @@ using Event_key=tba::Event_key;
 using District_key=tba::District_key;
 using Year=tba::Year;
 
-//returns whether the dates look ok; 0=ok
-bool examine_event(TBA_fetcher& f,tba::Event event){
-		bool shown=0;
-		auto show=[&](){
-			if(shown){
-				return;
+void show_duration(std::chrono::duration<long int,std::ratio<1,1000*1000*1000>> a){
+	std::chrono::hh_mm_ss hms{a};
+	cout<<hms;
+}
+
+std::ostream& operator<<(std::ostream& o,Time_ns const& a){
+	std::chrono::hh_mm_ss hms{a};
+	return o<<hms;
+}
+
+//returns std::chrono::time_point
+auto operator+(std::chrono::year_month_day a,Time_ns b){
+	return std::chrono::sys_days(a)+b;
+}
+
+std::chrono::year_month_day operator+(
+	std::chrono::year_month_day a,
+	std::chrono::duration<long,std::ratio<86400,1>> b
+){
+	return std::chrono::sys_days(a)+b;
+}
+
+using Time=std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<long int, std::ratio<1, 1000000000> > >;
+
+std::chrono::year_month_day as_date(Time a){
+	return std::chrono::floor<std::chrono::days>(a);
+	//auto days=std::chrono::duration_cast<std::chrono::days>(a);
+	//return std::chrono::year_month_day(std::chrono::sys_days(days));
+	PRINT(type_string(a));
+	nyi
+}
+
+std::chrono::year_month_day operator+(std::chrono::year_month_day a,int b){
+	//interpreting b as a number of days.
+	return a+std::chrono::days(b);
+}
+
+template<typename T>
+auto consolidate(std::vector<T> );
+
+template<typename T>
+auto consolidate(std::set<T> const& a){
+	std::vector<Interval<T>> r;
+	std::optional<T> start;
+	std::optional<T> last;
+	for(auto x:a){
+		if(last){
+			if(x==*last+1){
+				last=x;
+			}else{
+				r|=Interval<T>{*start,*last};
+				start=last=x;
 			}
-			PRINT(event.key);
-			cout<<event.key<<"\t"<<event.start_date<<"\t"<<event.end_date<<"\n";
-			shown=1;
-		};
-
-		assert(event.start_date);
-		assert(event.end_date);
-
-		auto scheduled_dates=range_inclusive(*event.start_date,*event.end_date);
-
-		using YMD=std::chrono::year_month_day;
-		std::set<YMD> dates;
-		auto add_date=[&](std::chrono::year_month_day a){
-			dates|=a;
-		};
-
-		for(auto m:tba::event_matches(f,event.key)){
-			std::vector<time_t> times;
-			times|=m.time;
-			times|=m.actual_time;
-			times|=m.predicted_time;
-			times|=m.post_result_time;
-
-			//if(!m.time && !m.actual_time && !m.predicted_time && !m.post_result_time){
-			if(times.empty()){
-				continue;
-			}
-
-			for(auto time:times){
-				//show();
-				auto x=std::chrono::system_clock::from_time_t(time);
-				auto days_since_epoch = std::chrono::floor<std::chrono::days>(x);
-
-				std::chrono::year_month_day ymd{days_since_epoch};
-				//cout<<ymd<<"\n";
-				add_date(ymd);
-				/*auto year = static_cast<int>(ymd.year());
-				auto month = static_cast<unsigned>(ymd.month());
-				auto day = static_cast<unsigned>(ymd.day());
-				PRINT(year) PRINT(month) PRINT(day)*/
-			}
-			if(!times.empty()){
-				//delay in seconds
-				auto diff=max(times)-min(times);
-				if(diff>3600){
-					/*show();
-					PRINT(diff);
-					print_lines(times);
-					nyi*/
-				}
-				//PRINT(diff);
-			}
-
-			//print_r(m);
-			//nyi
+		}else{
+			start=last=x;
 		}
+	}
+	if(start){
+		r|=Interval<T>(*start,*last);
+	}
+	return r;
+}
 
-		//remove obvious nonsense.
-		//dates-=std::chrono::year_month_day{std::chrono::year{1900}/1/1};
+std::vector<tba::Team> teams_year_all(TBA_fetcher &f,Year year){
+	std::vector<tba::Team> r;
+	size_t page=0;
+	while(1){
+		auto found=teams_year(f,year,page);
+		r|=found;
+		page++;
 
-		auto out_of_bounds=dates-scheduled_dates;
-		if(!out_of_bounds.empty()){
-			return 1;
-			show();
-			PRINT(event);
-			cout<<"schedule:\t"<<scheduled_dates<<"\n";
-			cout<<"matches:\t"<<dates<<"\n";
+		if(found.empty()){
+			break;
 		}
-		//assert(out_of_bounds.empty());
-		//if(shown) PRINT(dates);
-	return 0;
+	}
+	return r;
 }
 
 std::vector<tba::Event> all_events(TBA_fetcher &f){
 	return flatten(mapf([&](auto year){ return tba::events(f,year); },years()));
 }
 
-void show_duration(std::chrono::duration<long int,std::ratio<1,1000*1000*1000>> a){
-	std::chrono::hh_mm_ss hms{a};
-	cout<<hms;
+//should always return between 1-7
+int days(tba::Event const& a){
+	assert(a.start_date);
+	assert(a.end_date);
+	return (*a.end_date-*a.start_date).count()+1;
 }
 
-using Time_ns=std::chrono::duration<long int,std::ratio<1,1000*1000*1000>>;
+bool cmp(tba::Event_type a){
+	return a==tba::Event_type::CMP_DIVISION || a==tba::Event_type::CMP_FINALS;
+}
 
-std::ostream& operator<<(std::ostream& o,Time_ns const& a){
-	std::chrono::hh_mm_ss hms{a};
-	return o<<hms;
+//returns whether the dates look ok; 0=ok
+bool examine_event(TBA_fetcher& f,tba::Event event){
+	bool shown=0;
+	auto show=[&](){
+		if(shown){
+			return;
+		}
+		PRINT(event.key);
+		cout<<event.key<<"\t"<<event.start_date<<"\t"<<event.end_date<<"\n";
+		shown=1;
+	};
+
+	assert(event.start_date);
+	assert(event.end_date);
+
+	auto scheduled_dates=range_inclusive(*event.start_date,*event.end_date);
+
+	using YMD=std::chrono::year_month_day;
+	std::set<YMD> dates;
+	auto add_date=[&](std::chrono::year_month_day a){
+		dates|=a;
+	};
+
+	for(auto m:tba::event_matches(f,event.key)){
+		std::vector<time_t> times;
+		times|=m.time;
+		times|=m.actual_time;
+		times|=m.predicted_time;
+		times|=m.post_result_time;
+
+		//if(!m.time && !m.actual_time && !m.predicted_time && !m.post_result_time){
+		if(times.empty()){
+			continue;
+		}
+
+		for(auto time:times){
+			//show();
+			auto x=std::chrono::system_clock::from_time_t(time);
+			auto days_since_epoch = std::chrono::floor<std::chrono::days>(x);
+
+			std::chrono::year_month_day ymd{days_since_epoch};
+			//cout<<ymd<<"\n";
+			add_date(ymd);
+			/*auto year = static_cast<int>(ymd.year());
+			auto month = static_cast<unsigned>(ymd.month());
+			auto day = static_cast<unsigned>(ymd.day());
+			PRINT(year) PRINT(month) PRINT(day)*/
+		}
+		if(!times.empty()){
+			//delay in seconds
+			auto diff=max(times)-min(times);
+			if(diff>3600){
+				/*show();
+				PRINT(diff);
+				print_lines(times);
+				nyi*/
+			}
+			//PRINT(diff);
+		}
+
+		//print_r(m);
+		//nyi
+	}
+
+	//remove obvious nonsense.
+	//dates-=std::chrono::year_month_day{std::chrono::year{1900}/1/1};
+
+	auto out_of_bounds=dates-scheduled_dates;
+	if(!out_of_bounds.empty()){
+		return 1;
+		show();
+		PRINT(event);
+		cout<<"schedule:\t"<<scheduled_dates<<"\n";
+		cout<<"matches:\t"<<dates<<"\n";
+	}
+	//assert(out_of_bounds.empty());
+	//if(shown) PRINT(dates);
+	return 0;
 }
 
 void match_timings(TBA_fetcher &f){
@@ -219,21 +296,6 @@ void match_timings(TBA_fetcher &f){
 	nyi
 }
 
-std::vector<tba::Team> teams_year_all(TBA_fetcher &f,Year year){
-	std::vector<tba::Team> r;
-	size_t page=0;
-	while(1){
-		auto found=teams_year(f,year,page);
-		r|=found;
-		page++;
-
-		if(found.empty()){
-			break;
-		}
-	}
-	return r;
-}
-
 auto find_hosts(TBA_fetcher &f){
 	//See if we can figure out if there is a specific team that might be hosting the event.
 	map<tba::Event_key,std::set<Team_key>> r;
@@ -270,27 +332,6 @@ auto find_hosts(TBA_fetcher &f){
 	return r;
 }
 
-//should always return between 1-7
-int days(tba::Event const& a){
-	assert(a.start_date);
-	assert(a.end_date);
-	return (*a.end_date-*a.start_date).count()+1;
-}
-
-//returns std::chrono::time_point
-auto operator+(std::chrono::year_month_day a,Time_ns b){
-	return std::chrono::sys_days(a)+b;
-}
-
-std::chrono::year_month_day operator+(
-	std::chrono::year_month_day a,
-	std::chrono::duration<long,std::ratio<86400,1>> b
-){
-	return std::chrono::sys_days(a)+b;
-}
-
-using Time=std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::duration<long int, std::ratio<1, 1000000000> > >;
-
 auto expected_running(TBA_fetcher &f,Event_key event){
 	//Note: Timezone for all of these results is local to the event!
 
@@ -324,16 +365,6 @@ auto expected_running(TBA_fetcher &f,Event_key event){
 	return r;
 }
 
-int as_date(int);
-
-std::chrono::year_month_day as_date(Time a){
-	return std::chrono::floor<std::chrono::days>(a);
-	//auto days=std::chrono::duration_cast<std::chrono::days>(a);
-	//return std::chrono::year_month_day(std::chrono::sys_days(days));
-	PRINT(type_string(a));
-	nyi
-}
-
 auto expected_running(TBA_fetcher &f,Year year){
 	auto e=tba::events(f,year);
 	auto m=mapf([&](auto x){ return make_pair(x,expected_running(f,x)); },keys(e));
@@ -356,41 +387,6 @@ auto expected_running(TBA_fetcher &f,Year year){
 	}
 
 	return by_date;
-}
-
-template<typename T>
-auto consolidate(std::vector<T> );
-
-std::chrono::year_month_day operator+(std::chrono::year_month_day a,int b){
-	//interpreting b as a number of days.
-	return a+std::chrono::days(b);
-}
-
-template<typename T>
-auto consolidate(std::set<T> const& a){
-	std::vector<Interval<T>> r;
-	std::optional<T> start;
-	std::optional<T> last;
-	for(auto x:a){
-		if(last){
-			if(x==*last+1){
-				last=x;
-			}else{
-				r|=Interval<T>{*start,*last};
-				start=last=x;
-			}
-		}else{
-			start=last=x;
-		}
-	}
-	if(start){
-		r|=Interval<T>(*start,*last);
-	}
-	return r;
-}
-
-bool cmp(tba::Event_type a){
-	return a==tba::Event_type::CMP_DIVISION || a==tba::Event_type::CMP_FINALS;
 }
 
 void schedule_demo(TBA_fetcher &f){

@@ -43,6 +43,8 @@ OUTLINE_OBJS= \
 	timezone.o \
 	names.o \
 	interval.o \
+	plot.o \
+	subprocess.o \
 	$(TBA_OBJS)\
 	$(FRC_API_OBJS)
 
