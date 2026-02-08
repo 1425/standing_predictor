@@ -7,6 +7,8 @@
 #include<cmath>
 #include<chrono>
 
+#define INST(A,B) A B;
+
 std::string slurp(std::string const& filename);
 
 std::chrono::year_month_day& operator++(std::chrono::year_month_day&);

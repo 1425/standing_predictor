@@ -1,8 +1,10 @@
 #include "plot.h"
+#include<fstream>
 #include<boost/beast/core/detail/base64.ipp>
 #include "rand.h"
 #include "subprocess.h"
 #include "vector_void.h"
+#include "io.h"
 
 using namespace std;
 

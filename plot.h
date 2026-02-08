@@ -4,7 +4,7 @@
 #include<string>
 #include<vector>
 #include<optional>
-#include "run.h"
+#include "util.h"
 
 std::string plot(std::vector<std::pair<int,double>> const&,std::optional<std::string> title=std::nullopt);
 

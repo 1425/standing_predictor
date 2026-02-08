@@ -3,12 +3,8 @@
 
 #include "output.h"
 
-#define INST(A,B) A B;
-
 flat_map2<Point,Pr> convolve(flat_map2<Point,Pr> const&,flat_map2<Point,Pr> const&);
 flat_map<Point,Pr> convolve(std::map<Point,Pr> const&,std::map<Point,Pr> const&);
-
-using Team_dist=flat_map2<Point,Pr>;
 
 #define TEAM_STATUS(X)\
 	X(bool,district_chairmans)\

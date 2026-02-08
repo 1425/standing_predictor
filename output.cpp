@@ -10,8 +10,19 @@
 #include "outline.h"
 #include "vector_void.h"
 #include "plot.h"
+#include "print_r.h"
+#include "skill.h"
 
 using namespace std;
+using Team_key=tba::Team_key;
+
+std::ostream& operator<<(std::ostream& o,Team_points_used const& a){
+	o<<"Team_points_used(";
+	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
+	TEAM_POINTS_USED(X)
+	#undef X
+	return o<<")";
+}
 
 std::ostream& operator<<(std::ostream& o,Output_tuple const& a){
 	o<<"Output_tuple( ";
@@ -121,6 +132,24 @@ tuple<T,T,T> summary(map<T,Pr> const& a){
 	);
 }
 
+auto find_charts(std::map<Team_key,Team_points_used> const& a){
+	std::vector<Plot_setup> setups;
+	for(auto [k,v]:a){
+		Plot_setup p;
+		p.title=::as_string(k);
+		p.data=mapf([](auto x){ return Plot_point(x.first,x.second); },v.pre_dcmp_dist);
+		setups|=p;
+	}
+	auto plots=plot(setups);
+	return to_map(mapf(
+		[](auto const& x){
+			auto [in,out]=x;
+			return make_pair(in.first,out);
+		},
+		zip(a,plots)
+	));
+}
+
 string gen_html(
 	vector<Output_tuple> const& result,
 	vector<tba::Team> const& team_info,
@@ -130,7 +159,7 @@ string gen_html(
 	string const& district_short,
 	tba::Year year,
 	std::vector<int> dcmp_size,
-	map<tba::Team_key,tuple<vector<int>,int,int>> points_used
+	map<tba::Team_key,Team_points_used> points_used
 ){
 	std::map<tba::Team_key,tba::Team> by_team;
 	for(auto x:team_info){
@@ -197,8 +226,7 @@ string gen_html(
 				+join(::mapf(
 					[](auto x){
 						auto [team,data]=x;
-						auto [played,rookie,events_left]=data;
-						return tr(td(as_num(team))+td(rookie)+td(played)+td(events_left));
+						return tr(td(as_num(team))+td(data.rookie_bonus)+td(data.event_points_earned)+td(data.events_left));
 					},
 					sorted(to_vec(points_used),[](auto x){ return as_num(x.first); })
 				))
@@ -318,9 +346,49 @@ string gen_html(
 		))
 	);
 
+	//std::map<Team_key,std::string> charts; //TODO: Put a bunch of stuff here.
+	auto charts=find_charts(points_used);
+
+	auto fancy=[&](auto a){
+		//nickname(a.team),
+		auto x=points_used[a.team];
+		//print_r(x);
+		stringstream ss;
+		ss<<"<span class=\"tooltip\">"<<nickname(a.team);
+		ss<<"<span class=\"tooltiptext\">"<<h3("Expected "+::as_string(a.team)+ " pre-dcmp points")+charts[a.team]<<"</span>";
+		ss<<"</span>\n";
+		return ss.str();
+		//return nickname(a.team)+as_string(quartiles(x.pre_dcmp_dist))+charts[a.team];
+	};
+
+	string style="\n\
+		.tooltip{\n\
+		        position:relative;\n\
+		        display: inline-block;\n\
+		        border-bottom: 1px dotted black;\n\
+		        cursor: pointer;\n\
+		}\n\
+		.tooltip .tooltiptext{\n\
+		        visibility: hidden;\n\
+		        background-color: black;\n\
+		        color: #ffffff;\n\
+		        text-align: center;\n\
+		        padding: 5px 0;\n\
+		        border-radius: 6px;\n\
+		        position: absolute;\n\
+		        z-index: 1;\n\
+		        bottom: 100%;\n\
+		        left: 50%;\n\
+		        margin-left: -65px;\n\
+		}\n\
+		.tooltip:hover .tooltiptext{\n\
+		        visibility: visible;\n\
+		}\n";
+
+
 	return tag("html",
 		tag("head",
-			tag("title",title)
+			tag("title",title)+tag("style",style)
 		)+
 		tag("body",
 			tag("h1",title)+
@@ -354,7 +422,8 @@ string gen_html(
 									td1,
 									std::vector<std::string>{
 										make_link(a.team),
-										nickname(a.team),
+										//nickname(a.team),
+										fancy(a),
 										as_string(a.dcmp_interesting[0]),
 										as_string(a.dcmp_interesting[1]),
 										as_string(a.dcmp_interesting[2])
@@ -365,9 +434,9 @@ string gen_html(
 								td(a.cmp_interesting[0])+
 								td(a.cmp_interesting[1])+
 								td(a.cmp_interesting[2])+
-								td(get<1>(used))+ //rookie points
-								td(join("&nbsp;",get<0>(used)))+ //played
-								td(get<2>(used)) //remaining events
+								td(used.rookie_bonus)+
+								td(join("&nbsp;",used.event_points_earned))+
+								td(used.events_left)
 							);
 						},
 						enumerate_from(1,reversed(sorted(

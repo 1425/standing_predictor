@@ -49,25 +49,6 @@ simple way:
 
 //start generic stuff
 
-template<typename K,typename V,typename T>
-auto zip(std::map<K,V> const& a,std::vector<T> const& b){
-	auto ai=a.begin();
-	auto ae=a.end();
-
-	auto bi=b.begin();
-	auto be=b.end();
-
-	using P=std::pair<std::pair<K,V>,T>;
-	std::vector<P> r;
-	while(ai!=ae && bi!=be){
-		r|=P(*ai,*bi);
-
-		++ai;
-		++bi;
-	}
-	return r;
-}
-
 template<typename T>
 auto to_vec(std::tuple<T,T,T> const& a){
 	return std::array<T,3>{get<0>(a),get<1>(a),get<2>(a)};
@@ -147,7 +128,7 @@ flat_map2<Point,Pr> operator+(flat_map2<Point,Pr> const& a,int i){
 	return r;
 }
 
-using Points_used=map<tba::Team_key,tuple<vector<int>,int,int>>;
+using Points_used=map<tba::Team_key,Team_points_used>;
 
 std::tuple<Run_result,Points_used,By_team> run_inner(
 	TBA_fetcher &f,
@@ -255,10 +236,11 @@ std::tuple<Run_result,Points_used,By_team> run_inner(
 			//assert(accounted_pts==team.point_total);
 		}
 
-		points_used[team.team_key]=make_tuple(
-			::mapf([](auto x){ return int(x.total); },team.event_points),
+		points_used[team.team_key]=Team_points_used(
+			::mapf([](auto x){ return Point(x.total); },team.event_points),
 			team.rookie_bonus,
-			events_left
+			events_left,
+			skills.pre_dcmp[team.team_key]
 		);
 		Dcmp_home dcmp_home=calc_dcmp_home(f,team.team_key);
 		by_team[team.team_key]=Team_status(chairmans.count(team.team_key),std::move(dist),dcmp_home,team.point_total);

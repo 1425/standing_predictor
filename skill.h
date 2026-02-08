@@ -1,7 +1,7 @@
 #ifndef SKILL_H
 #define SKILL_H
 
-#include "run.h"
+#include "output.h"
 
 #define SKILL_METHOD(X)\
 	X(POINTS)\

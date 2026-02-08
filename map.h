@@ -100,4 +100,23 @@ auto adjacent_pairs(std::map<K,V> const& a){
 	return adjacent_pairs(to_vec(a));
 }
 
+template<typename K,typename V,typename T>
+auto zip(std::map<K,V> const& a,std::vector<T> const& b){
+	auto ai=a.begin();
+	auto ae=a.end();
+
+	auto bi=b.begin();
+	auto be=b.end();
+
+	using P=std::pair<std::pair<K,V>,T>;
+	std::vector<P> r;
+	while(ai!=ae && bi!=be){
+		r|=P(*ai,*bi);
+
+		++ai;
+		++bi;
+	}
+	return r;
+}
+
 #endif
