@@ -3,6 +3,7 @@
 
 #include<string>
 #include<set>
+#include<vector>
 
 struct TBA_fetcher;
 
@@ -20,5 +21,7 @@ struct Team_name_contents{
 
 Team_name_contents parse_name(std::string const&);
 Team_name_contents parse_name(tba::Team const&);
+
+std::vector<tba::Team> all_teams(TBA_fetcher&);
 
 #endif

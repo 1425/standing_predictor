@@ -7,6 +7,8 @@
 #include "run.h"
 #include "skill_opr.h"
 #include "vector_void.h"
+#include "names.h"
+#include "print_r.h"
 
 using Year=tba::Year;
 using District_abbreviation=tba::District_abbreviation;
@@ -171,7 +173,49 @@ Year year(District_key const& a){
 
 struct Skill_by_pts{
 	std::map<Point,Team_dist> pre_dcmp,at_dcmp,second_event;
+	Team_dist rookie_pre_dcmp;
 };
+
+std::vector<Year> previous_years(TBA_fetcher &f){
+	auto s=tba::status(f);
+	return range(Year(1992),Year(s.current_season));
+}
+
+Team_dist rookie_pre_dcmp(TBA_fetcher& f){
+	//get the district points for all the districts
+	map<pair<Year,Team_key>,Point> pts;
+
+	//asking for previous years so don't see incomplete results for current season.
+	for(auto year:previous_years(f)){
+		for(auto d:districts(f,year)){
+			//PRINT(d);
+			auto rank=district_rankings(f,d.key);
+			if(!rank) continue;
+			auto r1=*rank;
+			for(auto x:r1){
+				auto team=x.team_key;
+				auto counting_events=take(2,x.event_points);
+				if(counting_events.empty()){
+					//This does actually happen that teams just don't show up
+					//especially with rookies
+				}
+				auto pts_earned=sum(mapf([](auto x){ return x.total; },take(2,x.event_points)));
+				pts[make_pair(year,team)]=pts_earned;
+			}
+		}
+	}
+
+	std::multiset<Point> found;
+	for(auto team:all_teams(f)){
+		assert(team.rookie_year);
+		auto f=pts.find(make_pair(*team.rookie_year,team.key));
+		if(f==pts.end()){
+			continue;
+		}
+		found|=f->second;
+	}
+	return to_dist(found);
+}
 
 Skill_by_pts calc_skill_inner(TBA_fetcher& f){
 	/*
@@ -202,7 +246,7 @@ Skill_by_pts calc_skill_inner(TBA_fetcher& f){
 
 	std::set<tba::District_abbreviation> district_names;
 
-	for(auto year:range(Year{1992},Year{2027})){
+	for(auto year:previous_years(f)){
 		auto d=districts(f,year);
 		for(auto elem:d){
 			district_names|=elem.abbreviation;
@@ -221,9 +265,6 @@ Skill_by_pts calc_skill_inner(TBA_fetcher& f){
 		auto x=tba::dcmp_history(f,d);
 		auto years=to_set(mapf([](auto x){ return x.event.year; },x));
 		years-=Year(2020);//because the dcmp events did not happen in a normal way.
-		years-=Year(2026);//because at the time of writing, this season is not over.
-		//print_lines(x.event);
-		//PRINT(years);
 		district_years[d]=years;
 	}
 
@@ -354,7 +395,12 @@ Skill_by_pts calc_skill_inner(TBA_fetcher& f){
 
 	auto second_event=to_pr(calc_smoothed(second_event_raw));
 
-	return Skill_by_pts(pre_dcmp,at_dcmp_out,second_event);
+	return Skill_by_pts(
+		pre_dcmp,
+		at_dcmp_out,
+		second_event,
+		rookie_pre_dcmp(f)
+	);
 }
 
 Skill_by_pts const& calc_skill(TBA_fetcher& f){
@@ -389,7 +435,8 @@ Skill_estimates calc_skill(TBA_fetcher &f,District_key const& district){
 	 * */
 	std::map<Team_key,Team_dist> r;
 
-	auto [c,at_dcmp,second_event]=calc_skill(f);
+	//auto [c,at_dcmp,second_event]=calc_skill(f);
+	auto calc_skill1=calc_skill(f);
 
 	for(auto x:current){
 		auto team=x.team_key;
@@ -418,10 +465,14 @@ Skill_estimates calc_skill(TBA_fetcher &f,District_key const& district){
 			auto pre_dcmp=pre_dcmp_pts(old);
 			to_index=pre_dcmp;
 		}
-		r[team]=c[to_index];
+		if(to_index==0){
+			r[team]=calc_skill1.rookie_pre_dcmp;
+		}else{
+			r[team]=calc_skill1.pre_dcmp[to_index];
+		}
 	}
 
-	return Skill_estimates(r,at_dcmp,second_event);
+	return Skill_estimates(r,calc_skill1.at_dcmp,calc_skill1.second_event);
 }
 
 void demo(){

@@ -27,7 +27,7 @@ auto filter(Func f,Team_dist b){
 	return r;
 }
 
-void check_dist(Team_dist a){
+void check_dist(Team_dist const& a){
 	auto s=sum(values(a));
 	bool ok=(s>=.99 && s<=1.01);
 	if(!ok){
@@ -35,17 +35,6 @@ void check_dist(Team_dist a){
 		PRINT(s);
 	}
 	assert(ok);
-}
-
-template<typename T>
-auto to_dist(std::multiset<T> const& a){
-	assert(!a.empty());
-	flat_map2<T,Pr> r;
-	for(auto k:to_set(a)){
-		r[k]=(0.0+a.count(k))/a.size();
-	}
-	check_dist(r);
-	return r;
 }
 
 template<typename T>
