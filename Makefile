@@ -45,6 +45,11 @@ OUTLINE_OBJS= \
 	interval.o \
 	plot.o \
 	subprocess.o \
+	lock.o \
+	rand.o \
+	rank_pts.o \
+	pick_points.o\
+	rank_limits.o\
 	$(TBA_OBJS)\
 	$(FRC_API_OBJS)
 

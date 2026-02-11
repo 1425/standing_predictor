@@ -13,6 +13,7 @@ namespace frc_api{
 namespace tba{
 	struct Match;
 	struct Team;
+	struct Match_Score_Breakdown_2024_Alliance;
 };
 
 void print_r(int,frc_api::Match const&);
@@ -20,7 +21,18 @@ void print_r(int,frc_api::TeamListings const&);
 void print_r(int,frc_api::Event const&);
 void print_r(int,tba::Match const&);
 void print_r(int,tba::Team const&);
+void print_r(int,tba::Match_Score_Breakdown_2024_Alliance const&);
 
+#define BREAKDOWN(YEAR)\
+	namespace tba{ struct Match_Score_Breakdown_##YEAR##_Alliance; }\
+	void print_r(int,tba::Match_Score_Breakdown_##YEAR##_Alliance const&);
+BREAKDOWN(2023)
+BREAKDOWN(2022)
+BREAKDOWN(2020)
+BREAKDOWN(2017)
+BREAKDOWN(2016)
+BREAKDOWN(2015)
+//BREAKDOWN(2014)
 
 template<typename T>
 void print_r(int,std::vector<T> const&);

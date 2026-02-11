@@ -58,38 +58,6 @@ Team_dist cut_dist(Team_dist const& a){
 	return r;
 }
 
-template<typename K,typename V>
-V get(flat_map2<K,V> const& a,auto const& k,auto const& otherwise){
-	auto f=a.find(k);
-	if(f==a.end()){
-		return otherwise;
-	}
-	return (*f).second;
-}
-
-template<typename K,typename V>
-V get(flat_map2<K,V> const& a,auto const& k){
-	auto f=a.find(k);
-	assert(f!=a.end());
-	return (*f).second;
-}
-
-template<typename K,typename V>
-V get(std::map<K,V> const& a,auto const& k){
-	auto f=a.find(k);
-	assert(f!=a.end());
-	return f->second;
-}
-
-template<typename K,typename V>
-V get(std::map<K,V> const& a,auto const& k,auto const& otherwise){
-	auto f=a.find(k);
-	if(f==a.end()){
-		return otherwise;
-	}
-	return f->second;
-}
-
 Team_dist weighted_average(Team_dist const& a,Team_dist const& b,double weight){
 	Team_dist r;
 	for(auto k:to_set(keys(a))|to_set(keys(b))){

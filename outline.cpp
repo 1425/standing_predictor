@@ -46,6 +46,7 @@ simple way:
 #include "vector_void.h"
 #include "optional.h"
 #include "plot.h"
+#include "lock.h"
 
 //start generic stuff
 
@@ -1063,6 +1064,7 @@ int main1(int argc,char **argv){
 
 	//return identify_time_demo(tba_fetcher);
 	//return dates_demo(tba_fetcher);
+	//return lock_demo(tba_fetcher);
 
 	if(args.demo){
 		return demo(tba_fetcher);
@@ -1112,9 +1114,9 @@ int main1(int argc,char **argv){
 int main(int argc,char **argv){
 	try{
 		return main1(argc,argv);
-	}catch(std::string const& s){
+	/*}catch(std::string const& s){
 		cerr<<"Caught:"<<s<<"\n";
-		return 1;
+		return 1;*/
 	}catch(std::invalid_argument const& e){
 		cerr<<"Caught:"<<e<<"\n";
 		return 1;
@@ -1123,6 +1125,9 @@ int main(int argc,char **argv){
 		return 1;
 	}catch(const char *s){
 		cerr<<"Caught:"<<s<<"\n";
+		return 1;
+	}catch(tba::Decode_error const& a){
+		cerr<<"Caught:"<<a<<"\n";
 		return 1;
 	}
 }

@@ -2,6 +2,7 @@
 #define ARRAY_H
 
 #include<array>
+#include<numeric>
 
 template<size_t N>
 struct array_void{
@@ -37,12 +38,27 @@ auto mapf(Func f,std::array<T,N> const& a){
 		}
 		return array_void<N>();
 	}else{
-		std::array<E,N> r;
-		for(auto i:range_st<N>()){
-			r[i]=f(a[i]);
+		using R=std::array<E,N>;
+		if constexpr(std::is_constructible<R>::value){
+			R r;
+			for(size_t i=0;i<N;++i){
+				r[i]=f(a[i]);
+			}
+			return r;
+		}else{
+			alignas(R) char buf[sizeof(R)];
+			R& r=*(R*)buf;
+			for(size_t i=0;i<N;++i){
+				new(&r[i]) E(f(a[i]));
+			}
+			return r;
 		}
-		return r;
 	}
+}
+
+template<typename T,size_t N>
+auto enumerate(std::array<T,N> const& a){
+	return mapf([=](auto i){ return std::make_pair(i,a[i]); },range_st<N>());
 }
 
 template<typename T,size_t N>
@@ -54,6 +70,31 @@ std::array<T,N> as_array(std::vector<T> const& a){
 template<typename T>
 auto to_array(std::pair<T,T> a){
 	return std::array<T,2>{a.first,a.second};
+}
+
+template<typename T,size_t N>
+bool contains(std::array<T,N> const& a,T const& b){
+	for(auto const& elem:a){
+		if(elem==b){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+template<typename T,size_t N,size_t M>
+std::array<T,N*M> flatten(std::array<std::array<T,N>,M> const& a){
+	using R=std::array<T,N*M>;
+	alignas(R) char buf[sizeof(R)];
+	R& r=*(R*)buf;
+	size_t i=0;
+	for(auto const& x:a){
+		for(auto const& elem:x){
+			new(&r[i]) T(elem);
+			i++;
+		}
+	}
+	return r;
 }
 
 auto quartiles(auto a){
@@ -78,6 +119,16 @@ auto deciles(std::vector<T> a){
 		},
 		range_st<10>()
 	);
+}
+
+template<typename A,typename B,size_t N>
+std::array<std::pair<A,B>,N> zip(std::array<A,N> const& a,std::array<B,N> const& b){
+	return mapf([=](auto i){ return std::make_pair(a[i],b[i]); },range_st<N>());
+}
+
+template<typename T,size_t N>
+auto sum(std::array<T,N> const& a){
+	return std::accumulate(a.begin(),a.end(),T{});
 }
 
 #endif

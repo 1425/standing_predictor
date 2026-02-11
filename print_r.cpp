@@ -77,5 +77,26 @@ void print_r(int n,tba::Match const& a){
 	#undef X
 }
 
+#define PRINT_R_INNER(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
+
+#define PRINT_R_ITEM(NAME,ITEMS) \
+        void print_r(int n,NAME const& a){\
+                indent(n);\
+                cout<<""#NAME<<"\n";\
+                n++;\
+                ITEMS(PRINT_R_INNER)\
+        }
+
+PRINT_R_ITEM(tba::Match_Score_Breakdown_2024_Alliance,TBA_MATCH_SCORE_BREAKDOWN_2024_ALLIANCE)
+PRINT_R_ITEM(tba::Match_Score_Breakdown_2023_Alliance,TBA_MATCH_SCORE_BREAKDOWN_2023_ALLIANCE)
+PRINT_R_ITEM(tba::Match_Score_Breakdown_2022_Alliance,TBA_MATCH_SCORE_BREAKDOWN_2022_ALLIANCE)
+PRINT_R_ITEM(tba::Match_Score_Breakdown_2020_Alliance,TBA_MATCH_SCORE_BREAKDOWN_2020_ALLIANCE)
+PRINT_R_ITEM(tba::Match_Score_Breakdown_2017_Alliance,TBA_MATCH_SCORE_BREAKDOWN_2017_ALLIANCE)
+PRINT_R_ITEM(tba::Match_Score_Breakdown_2016_Alliance,TBA_MATCH_SCORE_BREAKDOWN_2016_ALLIANCE)
+//PRINT_R_ITEM(tba::Match_Score_Breakdown_2014_Alliance,TBA_MATCH_SCORE_BREAKDOWN_2014_ALLIANCE)
+
+//#define BREAKDOWN_IMPL(YEAR) PRINT_R_ITEM(tba::Match_Score_Breakdown_##YEAR##_Alliance,TBA_MATCH_SCORE_BREAKDOWN_##YEAER##_ALLIANCE)
+
+//BREAKDOWN_IMPL(2023)
 
 

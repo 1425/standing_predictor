@@ -160,8 +160,20 @@ std::tuple<B,C,D,E> tail(std::tuple<A,B,C,D,E> const& t){
 template<typename T>
 std::vector<std::pair<size_t,T>> enumerate_from(size_t start,std::vector<T> const& v){
 	std::vector<std::pair<size_t,T>> r;
-	for(auto elem:v){
+	for(auto const& elem:v){
 		r|=std::make_pair(start++,elem);
+	}
+	return r;
+}
+
+template<typename T,size_t N>
+std::array<std::pair<size_t,T>,N> enumerate_from(size_t start,std::array<T,N> const& a){
+	using P=std::pair<size_t,T>;
+	std::array<P,N> r;
+	size_t i=0;
+	for(auto const& elem:a){
+		r[i]=P(start+i,elem);
+		i++;
 	}
 	return r;
 }
@@ -258,13 +270,23 @@ std::vector<T> reversed(std::vector<T> a){
 
 template<template<typename...> typename V,typename ...T>
 auto max(V<T...> const& v){
-	assert(!v.empty());
+	if(v.empty()){
+		throw std::invalid_argument("max needs non-empty sequence");
+	}
 	using E=std::tuple_element_t<0,std::tuple<T...>>;
 	E r=*begin(v);
 	for(auto elem:v){
 		r=std::max(r,elem);
 	}
 	return r;
+}
+
+template<typename T>
+std::optional<T> maybe_max(std::vector<T> const& a){
+	if(a.empty()){
+		return std::nullopt;
+	}
+	return max(a);
 }
 
 template<template<typename...> typename V,typename ...T>
@@ -539,5 +561,16 @@ bool all(std::vector<T> const& a){
 }
 
 bool all_equal(std::pair<long int,bool> const&);
+
+template<typename T,size_t N>
+std::vector<T> flatten(std::vector<std::array<T,N>> const& a){
+	std::vector<T> r;
+	for(auto const& x:a){
+		for(auto const& elem:x){
+			r|=elem;
+		}
+	}
+	return r;
+}
 
 #endif

@@ -7,6 +7,7 @@
 #include<algorithm>
 #include<iostream>
 #include<map>
+#include "util.h"
 
 //start stuff using std::set
 
@@ -171,6 +172,42 @@ std::set<T> or_all(std::vector<std::vector<T>> const& a){
 template<typename Func,typename T>
 auto mapf(Func f,std::set<T> const& a){
 	return mapf(f,to_vec(a));
+}
+
+template<typename T>
+std::vector<T> operator-(std::vector<T> const& a,std::set<T> const& b){
+	return filter([&](auto x){ return !b.count(x); },a);
+}
+
+template<typename T>
+T choose(std::set<T> const& a){
+	//obviously not an efficient way to do this.
+	return choose(to_vec(a));
+}
+
+template<typename T,size_t N>
+auto to_set(std::array<T,N> const& a){
+	return std::set<T>{a.begin(),a.end()};
+}
+
+template<typename T>
+auto to_set(std::set<T> a){
+	return a;
+}
+
+template<typename T>
+std::set<T> choose(size_t n,std::set<T> a){
+	std::set<T> r;
+	while(n && !a.empty()){
+		auto here=choose(a);
+		r|=here;
+		a-=here;
+		n--;
+	}
+	if(n){
+		throw "not enough options";
+	}
+	return r;
 }
 
 //start stuff using std::multiset

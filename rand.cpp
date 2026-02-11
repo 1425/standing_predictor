@@ -1,29 +1,37 @@
-#ifndef RAND_H
-#define RAND_H
-
-#include<variant>
-#include "vector_void.h"
-
-namespace tba{
-	class Team_key;
-	class Event_key;
-};
+#include "rand.h"
 
 tba::Team_key rand(tba::Team_key const*);
 tba::Event_key rand(tba::Event_key const*);
 
-bool rand(bool const*);
-short rand(short const*);
-unsigned short rand(unsigned short const*);
-int rand(int const*);
-unsigned rand(unsigned const*);
-double rand(double*);
-std::string rand(std::string const*);
+bool rand(bool const*){
+	return rand()%2;
+}
 
-template<typename T,size_t N>
-auto rand(std::array<T,N> const*);
+short rand(short const*){
+	return rand();
+}
 
-template<typename A,typename B>
+unsigned short rand(unsigned short const*){
+	return rand();
+}
+
+int rand(int const*){
+	return rand();
+}
+
+unsigned rand(unsigned const*){
+	return (unsigned)rand();
+}
+
+double rand(double*){
+	return rand();
+}
+
+std::string rand(std::string const*){
+	return "rand_string";
+}
+
+/*template<typename A,typename B>
 auto rand(std::pair<A,B> const*){
 	return std::make_pair(rand((A*)0),rand((B*)0));
 }
@@ -51,8 +59,7 @@ template<typename K,typename V>
 std::map<K,V> rand(std::map<K,V> const*){
 	std::map<K,V> r;
 	for(auto k:rand((std::vector<K>*)0)){
-		//r[k]=rand((V*)0);
-		r.insert(std::make_pair(k,rand((V*)0)));
+		r[k]=rand((V*)0);
 	}
 	return r;
 }
@@ -64,16 +71,4 @@ std::variant<A,B> rand(std::variant<A,B> const*){
 	}
 	return rand((B*)0);
 }
-
-template<typename T,size_t N>
-auto rand(std::array<T,N> const*){
-	return mapf(
-		[](auto _){
-			(void)_;
-			return rand((T*)0);
-		},
-		range_st<N>()
-	);
-}
-
-#endif
+*/

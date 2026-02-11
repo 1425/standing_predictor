@@ -6,6 +6,8 @@
 #include "util.h"
 #include "io.h"
 #include "array.h"
+#include "util.h"
+#include "vector_void.h"
 
 //start generic code
 
@@ -54,6 +56,26 @@ int rank_pts(unsigned teams,unsigned rank){
 		f=cache.find(teams);
 	}
 
-	return f->second[rank];
+	//return f->second[rank];
+	auto const& x=f->second;
+	auto f2=x.find(rank);
+	if(f2==x.end()){
+		std::stringstream ss;
+		ss<<"Failed to find rank "<<rank<<" in event of "<<teams<<" teams";
+		throw ss.str();
+	}
+	return f2->second;
 }
 
+unsigned rank_pts(unsigned teams){
+	//Total number of ranking points for an event of a given size.
+	try{
+		return sum(mapf(
+			[&](auto i){ return rank_pts(teams,i); },
+			range_inclusive(1u,teams)
+		));
+	}catch(...){
+		//no within the range of size of events for which district points are awarded.
+		return 0;
+	}
+}

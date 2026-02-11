@@ -37,6 +37,9 @@ std::ostream& operator<<(std::ostream&,std::set<T> const&);
 template<typename T>
 std::ostream& operator<<(std::ostream&,std::vector<T> const&);
 
+template<typename T,size_t N>
+std::ostream& operator<<(std::ostream&,std::array<T,N> const&);
+
 using Time_ns=std::chrono::duration<long int,std::ratio<1,1000*1000*1000>>;
 
 std::ostream& operator<<(std::ostream&,Time_ns const&);

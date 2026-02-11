@@ -22,5 +22,36 @@ auto to_dist(std::multiset<T> const& a){
 	return r;
 }
 
+template<typename K,typename V>
+V get(flat_map2<K,V> const& a,auto const& k,auto const& otherwise){
+	auto f=a.find(k);
+	if(f==a.end()){
+		return otherwise;
+	}
+	return (*f).second;
+}
+
+template<typename K,typename V>
+V get(flat_map2<K,V> const& a,auto const& k){
+	auto f=a.find(k);
+	assert(f!=a.end());
+	return (*f).second;
+}
+
+template<typename K,typename V>
+V get(std::map<K,V> const& a,auto const& k){
+	auto f=a.find(k);
+	assert(f!=a.end());
+	return f->second;
+}
+
+template<typename K,typename V>
+V get(std::map<K,V> const& a,auto const& k,auto const& otherwise){
+	auto f=a.find(k);
+	if(f==a.end()){
+		return otherwise;
+	}
+	return f->second;
+}
 
 #endif

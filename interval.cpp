@@ -12,3 +12,10 @@ std::ostream& operator<<(std::ostream& o,Interval<tba::Date> const& i){
 	return o<<a.month()<<" "<<ad<<" - "<<b.month()<<" "<<bd;
 }
 
+std::ostream& operator<<(std::ostream& o,Interval_compare a){
+	#define X(A) if(a==Interval_compare::A) return o<<""#A;
+	INTERVAL_COMPARE(X)
+	#undef X
+	assert(0);
+}
+
