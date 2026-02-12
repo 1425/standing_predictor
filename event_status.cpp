@@ -70,6 +70,9 @@ Event_status event_status(TBA_fetcher& tba_fetcher,tba::Event_key const& event){
 	}
 
 	auto e=event_district_points(tba_fetcher,event);
+	if(!e){
+		return Event_status::FUTURE;
+	}
 	assert(e);
 	auto v=values(e->points);
 	if(v.empty()){

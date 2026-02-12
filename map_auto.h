@@ -36,14 +36,17 @@ class map_auto{
 		return data[a];
 	}
 
+	V const& operator[](K const& a)const{
+		//in case whatever the underlying thing is allows this.
+		//return data[a];
+		auto f=data.find(a);
+		if(f==data.end()){
+			throw "not found";
+		}
+		return f->second;
+	}
+
 	using const_iterator=typename Data::const_iterator;
-	/*using const_iterator=typename std::conditional<
-		small_int((K*)0),
-		typename map_small_int<K,V>::const_iterator,
-		typename map<K,V>::const_iterator
-	>;*/
-	//using const_iterator=typename std::map<K,V>::const_iterator;
-	//using const_iterator=int;
 
 	const_iterator begin()const{
 		return data.begin();
@@ -57,12 +60,30 @@ class map_auto{
 		return data.find(k);
 	}
 
+	using iterator=typename Data::iterator;
+
+	iterator begin(){
+		return data.begin();
+	}
+
+	iterator end(){
+		return data.end();
+	}
+
+	iterator find(K const& k){
+		return data.find(k);
+	}
+
 	Data const& get()const{
 		return data;
 	}
 
-	size_t size()const{
+	constexpr size_t size()const{
 		return data.size();
+	}
+
+	constexpr auto empty()const{
+		return data.empty();
 	}
 };
 
@@ -98,6 +119,20 @@ auto dict_auto(std::vector<std::pair<K,V>> const& a){
 		r[k]=v;
 	}
 	return r;
+}
+
+template<typename K,typename V>
+auto to_map_auto(std::map<K,V> const& a){
+	map_auto<K,V> r;
+	for(auto [k,v]:a){
+		r[k]=v;
+	}
+	return r;
+}
+
+template<typename K,typename V>
+auto print_r(int n,map_auto<K,V> const& a){
+	return print_r(n,a.get());
 }
 
 #endif

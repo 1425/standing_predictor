@@ -47,6 +47,7 @@ simple way:
 #include "optional.h"
 #include "plot.h"
 #include "lock.h"
+#include "rank_limits.h"
 
 //start generic stuff
 
@@ -903,7 +904,7 @@ struct Args{
 	tba::Year year{2022};
 	optional<tba::District_key> district;
 	TBA_fetcher_config tba;
-	bool demo=0,historical_demo=0;
+	bool demo=0,historical_demo=0,rank_limits_demo=0;
 	Skill_method skill_method=Skill_method::POINTS;
 };
 
@@ -940,6 +941,11 @@ Args parse_args(int argc,char **argv){
 		"--skill",{"METHOD"},
 		"How to measure skill of individual teams",
 		r.skill_method
+	);
+	p.add(
+		"--rank_limits_demo",{},
+		"Attempt to find limits of pre-alliance selection ranks.  Experimental.",
+		r.rank_limits_demo
 	);
 	p.parse(argc,argv);
 	return r;
@@ -1065,6 +1071,11 @@ int main1(int argc,char **argv){
 	//return identify_time_demo(tba_fetcher);
 	//return dates_demo(tba_fetcher);
 	//return lock_demo(tba_fetcher);
+
+	if(args.rank_limits_demo){
+		rank_limits_demo(tba_fetcher);
+		return 0;
+	}
 
 	if(args.demo){
 		return demo(tba_fetcher);

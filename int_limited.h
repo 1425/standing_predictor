@@ -27,7 +27,7 @@ class Int_limited{
 		static_assert(MIN<=MAX);
 	}
 
-	Int_limited(Data a):data(a){
+	constexpr Int_limited(Data a):data(a){
 		assert(a>=MIN);
 		assert(a<=MAX);
 	}
@@ -55,6 +55,11 @@ class Int_limited{
 		auto r=*this;
 		data++;
 		return r;
+	}
+
+	Int_limited& operator++(){
+		data++;
+		return *this;
 	}
 
 	auto operator<=>(Int_limited const&)const=default;

@@ -324,4 +324,14 @@ auto sorted(std::multiset<T> const& a){
 	return to_vec(a);
 }
 
+template<typename Func,typename T>
+auto group(Func f,std::set<T> const& a){
+	using E=decltype(f(*a.begin()));
+	std::map<E,std::set<T>> r;
+	for(auto const& x:a){
+		r[f(x)]|=x;
+	}
+	return r;
+}
+
 #endif

@@ -16,6 +16,8 @@
 #include "run.h"
 #include "vector_void.h"
 #include "array.h"
+#include "skill_opr.h"
+#include "optional.h"
 
 using namespace std;
 
@@ -239,9 +241,11 @@ static std::set<tba::Team_key> district_teams_at_cmp(TBA_fetcher& tba_fetcher,tb
 	return teams&cmp_teams(tba_fetcher,year);
 }
 
-static auto elimination_points(TBA_fetcher &tba_fetcher,tba::Event_key const& event){
+static optional<vector<Point>> elimination_points(TBA_fetcher &tba_fetcher,tba::Event_key const& event){
 	auto e=tba::event_district_points(tba_fetcher,event);
-	assert(e);
+	if(!e){
+		return std::nullopt;
+	}
 	return mapf([](auto x){ return Point(x.elim_points); },values(e->points));
 }
 
@@ -255,10 +259,10 @@ static std::vector<tba::Event_key> local_district_events(TBA_fetcher &tba_fetche
 }
 
 static map<Point,double> elimination_points(TBA_fetcher &tba_fetcher,tba::Year year){
-	auto m=mapf(
+	auto m=nonempty(mapf(
 		[&](auto x){ return elimination_points(tba_fetcher,x); },
 		local_district_events(tba_fetcher,year)
-	);
+	));
 	auto m2=flatten(m);
 	auto c=count(flatten(m));
 	return to_map(mapf([=](auto x){ return make_pair(x.first,double(x.second)/m2.size()); },c));
@@ -281,27 +285,27 @@ static void elimination_points(TBA_fetcher &tba_fetcher){
 	}
 }
 
-static auto award_points(TBA_fetcher &tba_fetcher,tba::Event_key const& event){
+static std::optional<std::vector<Point>> award_points(TBA_fetcher &tba_fetcher,tba::Event_key const& event){
 	auto e=tba::event_district_points(tba_fetcher,event);
-	assert(e);
+	if(!e){
+		return std::nullopt;
+	}
 	return mapf([](auto x){ return Point(x.award_points); },values(e->points));
 }
 
 static map<Point,double> award_points(TBA_fetcher &tba_fetcher,tba::Year const& year){
-	auto m=mapf(
+	auto m=nonempty(mapf(
 		[&](auto x){ return award_points(tba_fetcher,x); },
 		local_district_events(tba_fetcher,year)
-	);
+	));
 	//if(m.empty()) return;
 	auto m2=flatten(m);
 	auto c=count(m2);
 	return to_map(mapf([=](auto x){ return make_pair(x.first,double(x.second)/m2.size()); },c));
 }
 
-auto years=range(tba::Year{1992},tba::Year{2025});
-
 static void award_points(TBA_fetcher &tba_fetcher){
-	for(auto year:years){
+	for(auto year:years()){
 		auto x=award_points(tba_fetcher,year);
 		PRINT(year);
 		PRINT(x);
@@ -313,24 +317,27 @@ static void award_points(TBA_fetcher &tba_fetcher){
 
 //would be interesting to see how much correlation there is between award points & elimination points
 
-static auto award_plus_elim(TBA_fetcher &tba_fetcher,tba::Event_key event){
+static optional<std::vector<Point>> award_plus_elim(TBA_fetcher &tba_fetcher,tba::Event_key event){
 	auto e=tba::event_district_points(tba_fetcher,event);
+	if(!e){
+		return std::nullopt;
+	}
 	assert(e);
 	return mapf([](auto x){ return Point(x.award_points+x.elim_points); },values(e->points));
 }
 
 static map<Point,double> award_plus_elim(TBA_fetcher &tba_fetcher,tba::Year year){
-	auto m=mapf(
+	auto m=nonempty(mapf(
 		[&](auto x){ return award_plus_elim(tba_fetcher,x); },
 		local_district_events(tba_fetcher,year)
-	);
+	));
 	auto m2=flatten(m);
 	auto c=count(m2);
 	return to_map(mapf([=](auto x){ return make_pair(x.first,double(x.second)/m2.size()); },c));
 }
 
 static void award_plus_elim(TBA_fetcher &tba_fetcher){
-	for(auto year:years){
+	for(auto year:years()){
 		auto a=award_plus_elim(tba_fetcher,year);
 		cout<<year<<" ";
 		for(auto [k,v]:a){
@@ -575,12 +582,18 @@ std::multiset<tba::Award_type> award_types(TBA_fetcher &f,tba::Event_key event){
 }
 
 void by_event_size(TBA_fetcher &tba_fetcher){
-	for(auto year:years){
+	for(auto year:years()){
 		using T=tuple<int,int,int,double,double>;
 		map<int,vector<T>> m;
 		vector<multiset<tba::Award_type>> award_types_x;
 		for(auto event:local_district_events(tba_fetcher,year)){
 			auto e=event_district_points(tba_fetcher,event);
+			if(!e){
+				cout<<"No district points: "<<event<<"\n";
+				continue;
+				//PRINT(year);
+				//PRINT(event);
+			}
 			assert(e);
 			auto v=mapf(
 				[](auto x){
@@ -721,9 +734,7 @@ int demo(TBA_fetcher& tba_fetcher){
 		//nyi
 	}*/
 
-	auto years=range(tba::Year(2004),tba::Year(2025));
-
-	for(auto year:years){
+	for(auto year:years()){
 		auto e=event_status(tba_fetcher,year);
 		cout<<year<<count(seconds(e))<<"\n";
 

@@ -20,6 +20,69 @@
 #include "map_small_int.h"
 #include "map_fixed.h"
 #include "map_auto.h"
+#include "declines.h"
+
+template<long long MIN1,long long MAX1,long long MIN2,long long MAX2>
+auto diff(int n,Int_limited<MIN1,MAX1> const& a,Int_limited<MIN2,MAX2> const& b){
+	if(a!=b){
+		indent(n);
+		std::cout<<"diff: "<<a<<"\t"<<b<<"\n";
+	}
+}
+
+template<long long MIN,long long MAX>
+auto diff(int n,int a,Int_limited<MIN,MAX> b){
+	return diff(n,a,b.get());
+}
+
+template<typename T>
+auto diff(int n,T a,Interval<T> b){
+	if( !(a==b.min && a==b.max) ){
+		indent(n);
+		std::cout<<a<<"\t"<<b<<"\n";
+	}
+}
+
+template<typename K1,typename V1,typename K2,typename V2>
+auto diff(int n,map_auto<K1,V1> const& a,map_auto<K2,V2> const& b){
+	bool shown=0;
+	auto show=[&](){
+		if(!shown){
+			indent(n);
+			n++;
+			std::cout<<"map_auto\n";
+			shown=1;
+		}
+	};
+
+	auto k1=keys(a);
+	auto k2=keys(b);
+	auto a_only=k1-k2;
+	if(!a_only.empty()){
+		show();
+		indent(n);
+		std::cout<<"a only:"<<a_only<<"\n";
+	}
+	auto b_only=k2-k1;
+	if(!b_only.empty()){
+		show();
+		indent(n);
+		std::cout<<"b only:"<<b_only<<"\n";
+	}
+	for(auto k:k1&k2){
+		auto a1=a[k];
+		auto b1=b[k];
+		if(a1!=b1){
+			show();
+			diff(n,a1,b1);
+		}
+	}
+}
+
+template<typename A,typename B>
+auto diff(A const& a,B const& b){
+	return diff(0,a,b);
+}
 
 template<typename K,typename V>
 auto dict(std::vector<std::pair<K,V>> const& a){
@@ -39,6 +102,64 @@ std::array<A,N>& operator+=(std::array<A,N> &a,std::array<B,N> const& b){
 }
 
 using namespace std;
+
+template<template<typename,typename> class MAP,typename Team>
+std::optional<string> check_rank_limits(MAP<Team,Interval<Rank>> const& a){
+	//0=ok,1=error
+	if(a.empty()){
+		return std::nullopt;
+	}
+	//first, check that all of the limits exists in the range expected for an event of this many teams
+	auto overall_range=*or_all(values(a));
+	const Interval<Rank> expected(1,a.size());
+	if(!match(overall_range,expected)){
+		/*print_r(a);
+		PRINT(expected);
+		PRINT(overall_range)*/
+		return "out of range";
+	}
+	assert(match(overall_range,expected));
+
+	//second check that for each rank that should exist at this event, there is at least one team that can fill it
+	for(auto rank:range_inclusive<Rank>(1u,a.size())){
+		auto f=filter([=](auto x){ return subset(rank,x); },values(a)).size();
+		if(f==0){
+			return "unfilled slot";
+		}
+		//assert(f.size()>=1);
+	}
+
+	//third: for any possible range of ranks, check that they number of teams that must exist in there
+	//is possible (could be too many or too few)
+	
+	for(auto min:range_inclusive<Rank>(1,a.size())){
+		for(auto max:range_inclusive<Rank>(min,a.size())){
+			size_t size=max-min+1;
+			Interval<Rank> i{min,max};
+			auto always=filter([=](auto x){ return subset(x,i); },values(a)).size();
+			assert(always<=size);
+
+			auto possible=filter([=](auto x){ return overlap(x,i); },values(a)).size();
+			assert(possible>=size);
+		}
+	}
+	return std::nullopt;
+}
+
+template<template<typename,typename> typename MAP,typename Team>
+auto check_rank_limits(MAP<Team,Rank> const& a){
+	return check_rank_limits(map_values([](auto x){ return Interval(x); },a));
+}
+
+template<typename T>
+auto check_rank_limits(std::optional<T> const& a){
+	using E=decltype(check_rank_limits(*a));
+	using R=optional<E>;
+	if(a){
+		return R(check_rank_limits(*a));
+	}
+	return R();
+}
 
 template<typename A,typename B>
 auto teams(std::pair<A,B> const& p){
@@ -340,6 +461,34 @@ optional<array<RP,2>> rp(tba::Match const& a){
 	return total;
 }
 
+optional<map<tba::Team_key,Rank>> listed_ranks(TBA_fetcher &f,tba::Event_key const& event){
+	//should try to compare the results of this with the results of get().
+	auto e1=event_rankings(f,event);
+	if(!e1) return std::nullopt;
+	auto const& e=*e1;
+	auto const& r1=e.rankings;
+	if(!r1) return std::nullopt;
+	auto const& r=*r1;
+	if(r.empty()) return std::nullopt;
+	auto found=dict(
+		mapf(
+			[](auto x){
+				assert(x.rank);
+				Rank rank=*x.rank;
+				return make_pair(x.team_key,rank);
+			},
+			r
+		)
+	);
+	if(check_rank_limits(found)){
+		//then the data is invalid
+		//this is known to be the case for a number of offseason events with unusual ranking systems
+		//and also for a bunch of the 2021ir... groups
+		return std::nullopt;
+	}
+	return found;
+}
+
 Ranking_match_status<tba::Team_key> get(TBA_fetcher &f,tba::Event_key const& event){
 	//Note that at the moment this doesn't have incomplete events to look at
 	//so it's only half tested.
@@ -347,6 +496,8 @@ Ranking_match_status<tba::Team_key> get(TBA_fetcher &f,tba::Event_key const& eve
 	/* Also, it seems like there are quite a few matches where it doesn't understand 
 	 * what is going on already - so that would be good to work out.
 	 *
+	 * also, should look at events that have no matches listed that are in the future and fill in that 
+	 * everyone is effectively tied at 0.
 	 * */
 
 	Ranking_match_status<tba::Team_key> r;
@@ -822,6 +973,7 @@ Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& eve
 	assert(min_pts_taken<=total_points);
 	r.unclaimed_points=total_points-min_pts_taken;
 	return r;*/
+
 	Team_namer namer;
 	auto g=namer.convert(get(f,event));
 	Rank_results<Team_alias> r;
@@ -832,8 +984,40 @@ Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& eve
 	size_t min_pts_taken=sum(MAP(min,values(r.points)));
 	assert(min_pts_taken<=total_points);
 	r.unclaimed_points=total_points-min_pts_taken;
-	PRINT(namer);
+	//PRINT(namer);
 	return namer.convert(r);
+}
+
+template<typename Team,typename T>
+bool valid_outcome(map_auto<Team,T> const& a,map_auto<Team,Interval<T>> const& b){
+	if(keys(a)!=keys(b)){
+		return 0;
+	}
+	for(auto k:keys(a)){
+		if(!subset(a[k],b[k])){
+			return 0;
+		}
+	}
+	return 1;
+}
+
+template<typename T>
+std::optional<Interval<T>> or_all(std::vector<Interval<T>> a){
+	if(a.empty()){
+		return std::nullopt;
+	}
+	auto m1=min(MAP(min,a));
+	auto m2=max(MAP(max,a));
+	return Interval<T>{m1,m2};
+}
+
+tba::Year year(tba::Event_key const& a){
+	try{
+		return tba::Year(stoi(a.get().substr(0,4)));
+	}catch(std::invalid_argument const&){
+		PRINT(a);
+		nyi
+	}
 }
 
 void rank_limits_demo(TBA_fetcher &f){
@@ -847,10 +1031,78 @@ void rank_limits_demo(TBA_fetcher &f){
 	//for(auto event:reversed(take(50,all_events(f)))){
 	//for(auto event:take(550,reversed(all_events(f)))){
 
+	#if 0
+	auto event_keys=mapf(
+		[](auto x){ return x.key; },
+		filter(
+			[](auto const& x){
+				//skip because some offseasons are known to have weird ranking systems.
+				return x.event_type!=tba::Event_type::OFFSEASON;
+			},
+			all_events(f)
+		)
+	);
+	auto g=group(
+		[&](auto x){
+			auto error=check_rank_limits(listed_ranks(f,x));
+			return std::make_pair(year(x),error);
+		},
+		event_keys
+	);
+	//print_r(g);
+	for(auto [k,v]:g){
+		cout<<k<<"\t"<<v.size()<<"\t"<<take(25,v)<<"\n";
+	}
+	return;
+	#endif
+	//	auto a1=listed_ranks(f,event.key);
+	//	check_
+
 	for(auto event:all_events(f)){
 		PRINT(event.key);
+		if(event.event_type==tba::Event_type::CMP_FINALS){
+			//then rankings are not meaningful.
+			continue;
+		}
+		if(event.event_type==tba::Event_type::OFFSEASON){
+			//then rankings are not meaningful.
+			continue;
+		}
+
+		//print_r(event);
+
 		auto r=rank_limits(f,event.key);
-		print_r(r);
+	//	print_r(r);
+		auto a1=listed_ranks(f,event.key);
+		if(a1){
+			auto const& a=to_map_auto(*a1);
+
+			auto b=r.ranks;
+
+			if(check_rank_limits(b)){
+				nyi
+				continue;
+			}
+			if(check_rank_limits(a)){
+				nyi
+				continue;
+			}
+	
+			if(valid_outcome(a,b)){
+				cout<<"\tok\n";
+			}else{
+				//print_r(a);
+				//print_r(b);
+				diff(a,b);
+				auto g=group([&](auto k){ return subset(a[k],b[k]); },keys(a));
+				print_r(g);
+				/*for(auto k:keys(a)){
+					assert(subset(a[k],b[k]));
+				}*/
+				//nyi
+			}
+		}
+
 		/*
 		auto g=get(f,event.key);
 		//print_r(g);

@@ -69,6 +69,7 @@ using Pick_points=std::variant<Picks_no_data,Picks_in_progress,Picks_complete>;
 	X(NO_DATA)
 
 Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval<Rank>> const& ranks){
+//Pick_points pick_points(TBA_fetcher& f,Event const& event,Rank_range const& ranks){
 	auto e=tba::event_alliances(f,event);
 	if(!e){
 		return Picks_no_data{};
@@ -181,8 +182,6 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 	}
 	return r;
 }
-
-
 
 int pick_points_demo(TBA_fetcher &f){
 	auto data=rand((std::map<Team,Interval<Rank>>*)0);

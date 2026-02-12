@@ -53,6 +53,8 @@ class map_small_int{
 		return const_iterator{this,data.size()};
 	}
 
+	using iterator=const_iterator;
+
 	V& operator[](K const& k){
 		while(data.size()<=k){
 			data|=std::nullopt;
