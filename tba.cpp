@@ -211,3 +211,13 @@ std::ostream& operator<<(std::ostream& o,No_data const& a){
 	return o<<"No_data("<<a.url<<")";
 }
 
+tba::Year year(tba::District_key const& a){
+	auto s=a.get().substr(0,4);
+	return tba::Year(stoi(s));
+}
+
+tba::Year year(tba::Event_key const& a){
+	auto s=a.get().substr(0,4);
+	return tba::Year(stoi(s));
+}
+

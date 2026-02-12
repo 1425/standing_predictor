@@ -134,6 +134,14 @@ auto apply_monotonic(Func f,Interval<T> const& a){
 	return Interval{std::min(x1,x2),std::max(x1,x2)};
 }
 
-
+template<typename T>
+std::optional<Interval<T>> or_all(std::vector<Interval<T>> a){
+	if(a.empty()){
+		return std::nullopt;
+	}
+	auto m1=min(MAP(min,a));
+	auto m2=max(MAP(max,a));
+	return Interval<T>{m1,m2};
+}
 
 #endif

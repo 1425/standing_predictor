@@ -22,129 +22,7 @@
 #include "map_auto.h"
 #include "declines.h"
 #include "skill_opr.h"
-
-template<typename T>
-std::optional<Interval<T>> or_all(std::vector<Interval<T>> a){
-	if(a.empty()){
-		return std::nullopt;
-	}
-	auto m1=min(MAP(min,a));
-	auto m2=max(MAP(max,a));
-	return Interval<T>{m1,m2};
-}
-
-tba::Year year(tba::Event_key const& a){
-	try{
-		return tba::Year(stoi(a.get().substr(0,4)));
-	}catch(std::invalid_argument const&){
-		PRINT(a);
-		nyi
-	}
-}
-
-template<template<typename,typename> typename MAP,typename K,typename V>
-std::optional<V> maybe_get(MAP<K,V> const& a,K const& k){
-	auto f=a.find(k);
-	if(f==a.end()){
-		return std::nullopt;
-	}
-	return f->second;
-}
-
-template<
-	template<typename,typename> typename MAP1,
-	template<typename,typename> typename MAP2,
-	typename K,
-	typename V1,
-	typename V2
->
-auto join(MAP1<K,V1> const& a,MAP2<K,V2> const& b){
-	using P=std::pair<std::optional<V1>,std::optional<V2>>;
-	std::map<K,P> r;
-	for(auto k:keys(a)|keys(b)){
-		r[k]=P(maybe_get(a,k),maybe_get(b,k));
-	}
-	return r;
-}
-
-template<long long MIN1,long long MAX1,long long MIN2,long long MAX2>
-auto diff(int n,Int_limited<MIN1,MAX1> const& a,Int_limited<MIN2,MAX2> const& b){
-	if(a!=b){
-		indent(n);
-		std::cout<<"diff: "<<a<<"\t"<<b<<"\n";
-	}
-}
-
-template<long long MIN,long long MAX>
-auto diff(int n,int a,Int_limited<MIN,MAX> b){
-	return diff(n,a,b.get());
-}
-
-template<typename T>
-auto diff(int n,T a,Interval<T> b){
-	if( !(a==b.min && a==b.max) ){
-		indent(n);
-		std::cout<<a<<"\t"<<b<<"\n";
-	}
-}
-
-template<typename K1,typename V1,typename K2,typename V2>
-auto diff(int n,map_auto<K1,V1> const& a,map_auto<K2,V2> const& b){
-	bool shown=0;
-	auto show=[&](){
-		if(!shown){
-			indent(n);
-			n++;
-			std::cout<<"map_auto\n";
-			shown=1;
-		}
-	};
-
-	auto k1=keys(a);
-	auto k2=keys(b);
-	auto a_only=k1-k2;
-	if(!a_only.empty()){
-		show();
-		indent(n);
-		std::cout<<"a only:"<<a_only<<"\n";
-	}
-	auto b_only=k2-k1;
-	if(!b_only.empty()){
-		show();
-		indent(n);
-		std::cout<<"b only:"<<b_only<<"\n";
-	}
-	for(auto k:k1&k2){
-		auto a1=a[k];
-		auto b1=b[k];
-		if(a1!=b1){
-			show();
-			diff(n,a1,b1);
-		}
-	}
-}
-
-template<typename A,typename B>
-auto diff(A const& a,B const& b){
-	return diff(0,a,b);
-}
-
-template<typename K,typename V>
-auto dict(std::vector<std::pair<K,V>> const& a){
-	std::map<K,V> r;
-	for(auto [k,v]:a){
-		r[k]=v;
-	}
-	return r;
-}
-
-template<typename A,typename B,size_t N>
-std::array<A,N>& operator+=(std::array<A,N> &a,std::array<B,N> const& b){
-	for(auto i:range_st<N>()){
-		a[i]+=b[i];
-	}
-	return a;
-}
+#include "rp.h"
 
 using namespace std;
 
@@ -226,32 +104,18 @@ auto teams(map_small_int<Team_alias,V> const& a){
 	return keys(a);
 }
 
-/*template<typename V>
-std::set<Team_alias> teams(map_small_int<Team_alias,V> const& a){
-	return keys(a);
-}*/
-
 template<typename V>
 std::set<Team_alias> teams(map_fixed<Team_alias,V> const& a){
 	return keys(a);
 }
-
-/*template<typename K,typename V>
-auto teams(map_fixed<K,V> const& a){
-	return keys(a);
-}*/
 
 template<size_t N>
 set_limited<tba::Team_key,N> teams(set_limited<tba::Team_key,N> const& a){
 	return a;
 }
 
-//using Team=tba::Team_key;
-
 template<typename Team>
 using Alliance=set_limited<Team,3>;
-
-//using Match=std::array<Alliance,2>;//all teams contained should be unique
 
 template<typename Team>
 class Match{
@@ -267,8 +131,6 @@ class Match{
 	auto const& get()const{
 		return data;
 	}
-
-	//operator Data()const;
 
 	using const_iterator=Data::const_iterator;
 
@@ -316,8 +178,6 @@ std::set<Team> teams(Match<Team> const& a){
 
 template<typename Team>
 using Schedule=std::vector<Match<Team>>;
-
-using RP=Int_limited<0,200>;
 
 template<typename Team>
 using Standings=map_auto<Team,RP>;
@@ -389,140 +249,6 @@ std::set<Team> teams(Ranking_match_status<Team> const& a){
 	auto t2=teams(a.schedule);
 	assert( (t2-t1).empty());
 	return t1;
-}
-
-/*RP rp(tba::Ranking const& a){
-	//this is obviously incomplete because it doesn't know about any bonus RP.
-	//and probably have to look at the match details to see that...
-	print_r(a);
-	nyi
-}*/
-RP rp(int);
-
-template<typename T>
-RP rp(T const& a){
-	print_r(a);
-	nyi
-}
-
-using Bonus_rp=Int_limited<0,3>;//depends on year
-
-RP rp(tba::Match_Score_Breakdown_2025_Alliance const& a){
-	return a.rp;
-}
-
-RP rp(tba::Match_Score_Breakdown_2024_Alliance const& a){
-	return a.rp;
-}
-
-RP rp(tba::Match_Score_Breakdown_2023_Alliance const& a){
-	return a.rp;
-}
-
-RP rp(tba::Match_Score_Breakdown_2022_Alliance const& a){
-	return a.rp;
-}
-
-RP rp(tba::Match_Score_Breakdown_2020_Alliance const& a){
-	return a.rp;
-}
-
-auto rp(tba::Match_Score_Breakdown_2017_Alliance const& a){
-	//warning: this doesn't include the win/tie pts!
-	Bonus_rp r=0;
-	if(a.kPaRankingPointArchieved){
-		//sic ,int
-	}
-	if(a.rotorRankingPointAchieved){
-		r++;
-	}
-	return r;
-}
-
-auto rp(tba::Match_Score_Breakdown_2014_Alliance const&){
-	//no bonus RP and not w/l/t info in here!
-	return Bonus_rp(0);
-}
-
-auto rp(tba::Match_Score_Breakdown_2016_Alliance const& a){
-	//warning: no w/l/t in here!
-	Bonus_rp r=0;
-	if(a.teleopTowerCaptured){
-		r++;
-	}
-	if(a.teleopDefensesBreached){
-		r++;
-	}
-	return r;
-}
-
-RP rp(tba::Match_Score_Breakdown_2015_Alliance const&){
-	return 0;
-}
-
-#define X(NAME) auto rp(tba::Match_Score_Breakdown_##NAME const& a){\
-	using T=decltype(rp(a.red));\
-	return std::array<T,2>{{rp(a.red),rp(a.blue)}};\
-}
-X(2026)
-X(2025)
-X(2024)
-X(2023)
-X(2022)
-X(2020)
-X(2017)
-X(2016)
-X(2015)
-X(2014)
-#undef X
-
-using RP_count=std::variant<std::array<RP,2>,std::array<Bonus_rp,2>>;
-
-template<typename... Ts>
-auto rp(std::variant<Ts...> const& a){
-	return std::visit([](auto const& x){ return RP_count(rp(x)); },a);
-}
-
-template<typename T>
-auto rp(std::optional<T> const& a){
-	using N=decltype(rp(*a));
-	using R=std::optional<N>;
-	if(!a){
-		return R(std::nullopt);
-	}
-	return R(rp(*a));
-}
-
-optional<array<RP,2>> rp(tba::Match const& a){
-	//print_r(a);
-	auto r1=rp(a.score_breakdown);
-	if(!r1){
-		return std::nullopt;
-	}
-	auto r=*r1;
-	if(std::holds_alternative<std::array<RP,2>>(r)){
-		return std::get<std::array<RP,2>>(r);
-	}
-	array<RP,2> total;
-	auto bonus=std::get<std::array<Bonus_rp,2>>(r);
-	total+=bonus;
-
-	switch(a.winning_alliance){
-		case tba::Winning_alliance::red:
-			total[0]+=2;
-			break;
-		case tba::Winning_alliance::blue:
-			total[1]+=2;
-			break;
-		case tba::Winning_alliance::NONE:
-			//assuming that this means a tie.
-			total[0]++;
-			total[1]++;
-			break;
-		default:
-			assert(0);
-	}
-	return total;
 }
 
 optional<map<tba::Team_key,Rank>> listed_ranks(TBA_fetcher &f,tba::Event_key const& event){
@@ -619,35 +345,6 @@ Ranking_match_status<Team> apply(Ranking_match_status<Team> a,int match_index,Ma
 	}
 	a.schedule.erase(a.schedule.begin()+match_index);
 	return a;
-}
-
-RP max_rp_per_match(tba::Year a){
-	const auto year=a.get();
-	if(year<=2014){
-		return 2;
-	}
-	if(year==2015){
-		return 0;
-	}
-	if(year>=2016 || year<=2020){
-		return 4;
-	}
-	if(year==2021){
-		return 0;
-	}
-	if(year==2022){
-		return 4;
-	}
-	if(year==2023){
-		return 5;
-	}
-	if(year==2024){
-		return 4;
-	}
-	if(year==2025 || year==2026){
-		return 6;
-	}
-	return 6;
 }
 
 template<typename Team>
@@ -857,41 +554,6 @@ map_auto<Team,Interval<Rank>> rank_limits_basic(Ranking_match_status<Team> const
 
 	return point_ranges;*/
 }
-
-/*template<typename Team>
-using Rank_range=map_auto<Team,Interval<Rank>>;
-
-template<typename Team>
-using Point_range=map_auto<Team,Interval<Point>>;
-
-#define RANK_RESULTS(X)\
-	X(Rank_range<Team>,ranks)\
-	X(Point_range<Team>,points)\
-	X(unsigned,unclaimed_points)
-
-template<typename Team>
-struct Rank_results{
-	RANK_RESULTS(INST)
-};
-
-template<typename Team>
-std::ostream& operator<<(std::ostream& o,Rank_results<Team> const& a){
-	o<<"Rank_result( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	RANK_RESULTS(X)
-	#undef X
-	return o<<")";
-}
-
-template<typename Team>
-void print_r(int n,Rank_results<Team> const& a){
-	indent(n);
-	cout<<"Rank_results\n";
-	n++;
-	#define X(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
-	RANK_RESULTS(X)
-	#undef X
-}*/
 
 auto teams(std::set<tba::Team_key> const& a){
 	return a;
@@ -1115,29 +777,6 @@ std::optional<bool> rankings_consistent(TBA_fetcher &f,tba::Event_key const& eve
 		}
 	}
 	return 1;
-}
-
-void rp_distribution(TBA_fetcher &f){
-	for(auto year:years()){
-		PRINT(year);
-		std::multiset<optional<array<RP,2>>> found;
-		for(auto event:events(f,year)){
-			//PRINT(event.key);
-			for(auto match:event_matches(f,event.key)){
-				auto x=rp(match);
-				/*if(!x) continue;
-				PRINT(x);
-				nyi*/
-				if(!x){
-					found|=x;
-				}else{
-					found|=sorted(*x);
-				}
-			}
-		}
-		PRINT(found.size());
-		print_r(count(found));
-	}
 }
 
 void rank_limits_demo(TBA_fetcher &f){

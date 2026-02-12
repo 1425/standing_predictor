@@ -5,6 +5,8 @@
 #include<cassert>
 #include<vector>
 #include<cstdlib>
+#include<cstdint>
+#include<ostream>
 
 template<long long MIN,long long MAX>
 auto get_int(){

@@ -166,11 +166,6 @@ int old_points(TBA_fetcher& f,Team_key const& team,Year year){
 	return sum(t);
 }
 
-Year year(District_key const& a){
-	auto s=a.get().substr(0,4);
-	return Year(stoi(s));
-}
-
 struct Skill_by_pts{
 	std::map<Point,Team_dist> pre_dcmp,at_dcmp,second_event;
 	Team_dist rookie_pre_dcmp;

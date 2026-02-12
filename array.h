@@ -131,4 +131,12 @@ auto sum(std::array<T,N> const& a){
 	return std::accumulate(a.begin(),a.end(),T{});
 }
 
+template<typename A,typename B,size_t N>
+std::array<A,N>& operator+=(std::array<A,N> &a,std::array<B,N> const& b){
+	for(auto i:range_st<N>()){
+		a[i]+=b[i];
+	}
+	return a;
+}
+
 #endif

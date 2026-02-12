@@ -3,6 +3,9 @@
 
 #include "io.h"
 #include "vector_void.h"
+#include "int_limited.h"
+#include "interval.h"
+#include "map_auto.h"
 
 template<typename T>
 void diff(int n,T const& a,T const& b){
@@ -102,6 +105,68 @@ void diff(int n,std::optional<T> const& a,std::optional<T> const& b){
 		indent(n);
 		std::cout<<"No a\n";
 	}
+}
+
+template<long long MIN1,long long MAX1,long long MIN2,long long MAX2>
+auto diff(int n,Int_limited<MIN1,MAX1> const& a,Int_limited<MIN2,MAX2> const& b){
+	if(a!=b){
+		indent(n);
+		std::cout<<"diff: "<<a<<"\t"<<b<<"\n";
+	}
+}
+
+template<long long MIN,long long MAX>
+auto diff(int n,int a,Int_limited<MIN,MAX> b){
+	return diff(n,a,b.get());
+}
+
+template<typename T>
+auto diff(int n,T a,Interval<T> b){
+	if( !(a==b.min && a==b.max) ){
+		indent(n);
+		std::cout<<a<<"\t"<<b<<"\n";
+	}
+}
+
+template<typename K1,typename V1,typename K2,typename V2>
+auto diff(int n,map_auto<K1,V1> const& a,map_auto<K2,V2> const& b){
+	bool shown=0;
+	auto show=[&](){
+		if(!shown){
+			indent(n);
+			n++;
+			std::cout<<"map_auto\n";
+			shown=1;
+		}
+	};
+
+	auto k1=keys(a);
+	auto k2=keys(b);
+	auto a_only=k1-k2;
+	if(!a_only.empty()){
+		show();
+		indent(n);
+		std::cout<<"a only:"<<a_only<<"\n";
+	}
+	auto b_only=k2-k1;
+	if(!b_only.empty()){
+		show();
+		indent(n);
+		std::cout<<"b only:"<<b_only<<"\n";
+	}
+	for(auto k:k1&k2){
+		auto a1=a[k];
+		auto b1=b[k];
+		if(a1!=b1){
+			show();
+			diff(n,a1,b1);
+		}
+	}
+}
+
+template<typename A,typename B>
+auto diff(A const& a,B const& b){
+	return diff(0,a,b);
 }
 
 template<typename T>

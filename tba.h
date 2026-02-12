@@ -62,4 +62,7 @@ std::set<tba::Team_key> chairmans_winners(TBA_fetcher&,tba::District_key const&)
 std::map<Point,Pr> dcmp_distribution(TBA_fetcher&);
 std::map<Point,Pr> historical_event_pts(TBA_fetcher&);
 
+tba::Year year(tba::District_key const&);
+tba::Year year(tba::Event_key const&);
+
 #endif

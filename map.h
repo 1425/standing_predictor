@@ -7,6 +7,7 @@
 #include<fstream>
 #include "util.h"
 #include "io.h"
+#include "optional.h"
 
 template<typename K,typename V>
 std::vector<V> seconds(std::map<K,V> const& a){
@@ -115,6 +116,31 @@ auto zip(std::map<K,V> const& a,std::vector<T> const& b){
 
 		++ai;
 		++bi;
+	}
+	return r;
+}
+
+template<
+	template<typename,typename> typename MAP1,
+	template<typename,typename> typename MAP2,
+	typename K,
+	typename V1,
+	typename V2
+>
+auto join(MAP1<K,V1> const& a,MAP2<K,V2> const& b){
+	using P=std::pair<std::optional<V1>,std::optional<V2>>;
+	std::map<K,P> r;
+	for(auto k:keys(a)|keys(b)){
+		r[k]=P(maybe_get(a,k),maybe_get(b,k));
+	}
+	return r;
+}
+
+template<typename K,typename V>
+auto dict(std::vector<std::pair<K,V>> const& a){
+	std::map<K,V> r;
+	for(auto [k,v]:a){
+		r[k]=v;
 	}
 	return r;
 }

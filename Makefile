@@ -50,6 +50,7 @@ OUTLINE_OBJS= \
 	rank_pts.o \
 	pick_points.o\
 	rank_limits.o\
+	rp.o \
 	$(TBA_OBJS)\
 	$(FRC_API_OBJS)
 
