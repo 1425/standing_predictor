@@ -24,6 +24,11 @@ class Int_limited{
 	using Data=decltype(get_int<MIN,MAX>());
 	Data data;
 
+	void check()const{
+		assert(data>=MIN);
+		assert(data<=MAX);
+	}
+
 	public:
 	Int_limited():data(MIN){
 		static_assert(MIN<=MAX);
@@ -50,17 +55,20 @@ class Int_limited{
 
 	Int_limited& operator+=(int a){
 		data+=a;
+		check();
 		return *this;
 	}
 
 	Int_limited operator++(int){
 		auto r=*this;
 		data++;
+		check();
 		return r;
 	}
 
 	Int_limited& operator++(){
 		data++;
+		check();
 		return *this;
 	}
 

@@ -103,6 +103,10 @@ auto rp(std::optional<T> const& a){
 }
 
 optional<array<RP,2>> rp(tba::Match const& a){
+	if(a.comp_level!=tba::Competition_level::qm){
+		return array<RP,2>{0,0};
+	}
+
 	//print_r(a);
 	auto r1=rp(a.score_breakdown);
 	if(!r1){
@@ -116,6 +120,8 @@ optional<array<RP,2>> rp(tba::Match const& a){
 	auto bonus=std::get<std::array<Bonus_rp,2>>(r);
 	total+=bonus;
 
+	//assuming that if don't have the points in the score breakdown, this is an
+	//older game with 2 RP for a win.
 	switch(a.winning_alliance){
 		case tba::Winning_alliance::red:
 			total[0]+=2;
@@ -164,7 +170,15 @@ RP max_rp_per_match(tba::Year const& a){
 }
 
 
+
 void rp_distribution(TBA_fetcher &f){
+	PRINT(sizeof(RP));
+	RP a;
+	PRINT(a);
+	a++;
+	PRINT(a);
+	return;
+
 	for(auto year:years()){
 		PRINT(year);
 		std::multiset<optional<array<RP,2>>> found;

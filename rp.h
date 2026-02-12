@@ -13,7 +13,7 @@ namespace tba{
 class TBA_fetcher;
 
 //actual max here is something like 72.
-using RP=Int_limited<0,200>;
+using RP=Int_limited<0,72>;
 
 std::optional<std::array<RP,2>> rp(tba::Match const&);
 

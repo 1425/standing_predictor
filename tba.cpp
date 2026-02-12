@@ -221,3 +221,7 @@ tba::Year year(tba::Event_key const& a){
 	return tba::Year(stoi(s));
 }
 
+tba::Year year(tba::Event const& a){
+	return year(a.key);
+}
+

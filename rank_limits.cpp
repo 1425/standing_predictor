@@ -251,6 +251,39 @@ std::set<Team> teams(Ranking_match_status<Team> const& a){
 	return t1;
 }
 
+auto teams(std::set<tba::Team_key> const& a){
+	return a;
+}
+
+auto teams(std::set<Team_alias> const& a){
+	return a;
+}
+
+template<long long MIN,long long MAX>
+auto teams(Interval<Int_limited<MIN,MAX>> const& a){
+	return std::set<tba::Team_key>{};
+}
+
+auto teams(std::pair<Team_alias,Rank> a){
+	return std::set<Team_alias>{a.first};
+}
+
+template<typename K,typename V>
+auto teams(std::map<K,V> const& a){
+	//return teams(keys(a))|teams(values(a));
+	return or_all(MAP(teams,a));
+}
+
+template<typename T>
+std::set<Team_alias> teams(std::map<Team_alias,T> const& a){
+	return keys(a);
+}
+
+template<typename A,typename B>
+auto teams(map_auto<A,B> const& a){
+	return teams(a.get());
+}
+
 optional<map<tba::Team_key,Rank>> listed_ranks(TBA_fetcher &f,tba::Event_key const& event){
 	//should try to compare the results of this with the results of get().
 	auto e1=event_rankings(f,event);
@@ -279,7 +312,7 @@ optional<map<tba::Team_key,Rank>> listed_ranks(TBA_fetcher &f,tba::Event_key con
 	return found;
 }
 
-Ranking_match_status<tba::Team_key> get(TBA_fetcher &f,tba::Event_key const& event){
+Ranking_match_status<tba::Team_key> ranking_match_status(TBA_fetcher &f,tba::Event_key const& event){
 	//Note that at the moment this doesn't have incomplete events to look at
 	//so it's only half tested.
 
@@ -292,6 +325,10 @@ Ranking_match_status<tba::Team_key> get(TBA_fetcher &f,tba::Event_key const& eve
 
 	Ranking_match_status<tba::Team_key> r(year(event));
 	for(auto match:tba::event_matches(f,event)){
+		if(match.comp_level!=tba::Competition_level::qm){
+			continue;
+		}
+
 		auto f=[](auto x){
 			auto found=to_set(x.team_keys)-to_set(x.surrogate_team_keys);
 			if(found.size()>3){
@@ -315,16 +352,13 @@ Ranking_match_status<tba::Team_key> get(TBA_fetcher &f,tba::Event_key const& eve
 
 		auto rp_totals_m=rp(match);
 		if(!rp_totals_m){
+			//cout<<"RP? "<<match.key<<"\n";
 			r.schedule|=match1;
 		}else{
 			auto rp_totals=*rp_totals_m;
-			if(sum(rp_totals)==0){
-				r.schedule|=match1;
-			}else{
-				for(auto [teams,pts]:zip(match1,rp_totals)){
-					for(auto team:teams){
-						r.standings[team]+=pts;
-					}
+			for(auto [teams,pts]:zip(match1,rp_totals)){
+				for(auto team:teams){
+					r.standings[team]+=pts;
 				}
 			}
 		}
@@ -349,21 +383,6 @@ Ranking_match_status<Team> apply(Ranking_match_status<Team> a,int match_index,Ma
 
 template<typename Team>
 Ranking_match_status<Team> assume_wins(Ranking_match_status<Team> a,Team const& team){
-	/*for(auto [match_index,match]:enumerate(a.schedule)){
-		for(auto [i,alliance]:enumerate(match)){
-			if(contains(alliance,team)){
-				Match_result match_result;
-				if(i==0){
-					match_result={MAX_RP_PER_MATCH,0};
-				}else{
-					match_result={0,MAX_RP_PER_MATCH};
-				}
-				auto b=apply(a,match_index,match_result);
-				return assume_wins(b,team);
-			}
-		}
-	}
-	return a;*/
 	Schedule<Team> &s=a.schedule;
 	auto out=s.begin();
 	for(auto match:a.schedule){
@@ -389,20 +408,6 @@ Ranking_match_status<Team> assume_wins(Ranking_match_status<Team> a,Team const& 
 
 template<typename Team>
 Ranking_match_status<Team> assume_losses(Ranking_match_status<Team> a,Team const& team){
-	/*for(auto [match_index,match]:enumerate(a.schedule)){
-		for(auto [i,alliance]:enumerate(match)){
-			if(contains(alliance,team)){
-				Match_result match_result;
-				if(i==1){
-					match_result={MAX_RP_PER_MATCH,0};
-				}else{
-					match_result={0,MAX_RP_PER_MATCH};
-				}
-				auto b=apply(a,match_index,match_result);
-				return assume_losses(b,team);
-			}
-		}
-	}*/
 	Schedule<Team> &s=a.schedule;
 	auto out=s.begin();
 	for(auto match:a.schedule){
@@ -555,39 +560,6 @@ map_auto<Team,Interval<Rank>> rank_limits_basic(Ranking_match_status<Team> const
 	return point_ranges;*/
 }
 
-auto teams(std::set<tba::Team_key> const& a){
-	return a;
-}
-
-auto teams(std::set<Team_alias> const& a){
-	return a;
-}
-
-template<long long MIN,long long MAX>
-auto teams(Interval<Int_limited<MIN,MAX>> const& a){
-	return std::set<tba::Team_key>{};
-}
-
-auto teams(std::pair<Team_alias,Rank> a){
-	return std::set<Team_alias>{a.first};
-}
-
-template<typename K,typename V>
-auto teams(std::map<K,V> const& a){
-	//return teams(keys(a))|teams(values(a));
-	return or_all(MAP(teams,a));
-}
-
-template<typename T>
-std::set<Team_alias> teams(std::map<Team_alias,T> const& a){
-	return keys(a);
-}
-
-template<typename A,typename B>
-auto teams(map_auto<A,B> const& a){
-	return teams(a.get());
-}
-
 template<typename Team>
 map_auto<Team,Interval<Point>> points(map_auto<Team,Interval<Rank>> const& ranks,size_t event_size){
 	if(event_size<10 || event_size>=80){
@@ -732,7 +704,7 @@ Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& eve
 	return r;*/
 
 	Team_namer namer;
-	auto g=namer.convert(get(f,event));
+	auto g=namer.convert(ranking_match_status(f,event));
 	Rank_results<Team_alias> r;
 	r.ranks=rank_limits_m(g);
 	auto event_size=g.standings.size();
@@ -779,9 +751,70 @@ std::optional<bool> rankings_consistent(TBA_fetcher &f,tba::Event_key const& eve
 	return 1;
 }
 
+bool normal_ranking_expected(tba::Event_type a){
+	switch(a){
+		case tba::Event_type::OFFSEASON:
+		case tba::Event_type::PRESEASON:
+		case tba::Event_type::CMP_FINALS:
+		case tba::Event_type::FOC:
+		case tba::Event_type::REMOTE:
+			return 0;
+		case tba::Event_type::REGIONAL:
+		case tba::Event_type::CMP_DIVISION:
+		case tba::Event_type::DISTRICT_CMP:
+		case tba::Event_type::DISTRICT:
+		case tba::Event_type::DISTRICT_CMP_DIVISION:
+			return 1;
+		default:
+			PRINT(a);
+			assert(0);
+	}
+}
+
+bool normal_ranking_expected(tba::Event const& a){
+	return normal_ranking_expected(a.event_type);
+}
+
+void debug(TBA_fetcher &f){
+	auto found=filter(
+		[&](auto x){
+			return 1//year(x)>=2016 
+				//&& x.event_type!=tba::Event_type::OFFSEASON
+				//&& x.event_type!=tba::Event_type::PRESEASON
+				//&& x.event_type!=tba::Event_type::CMP_FINALS
+				&& normal_ranking_expected(x)
+				&& !rankings_consistent(f,x.key);
+		},
+		all_events(f)
+	);
+	for(auto f1:found){
+		auto l=listed_ranks(f,f1.key);
+		if(!l){
+			cout<<"No ranks at: "<<f1.key<<"\n";
+			continue;
+		}
+		print_r(f1);
+		cout<<"listed ranks:";
+		print_r(l);
+
+		auto status=ranking_match_status(f,f1.key);
+		cout<<"from matches: ";
+		print_r(status);
+		return;
+	}
+
+}
+
 void rank_limits_demo(TBA_fetcher &f){
-	rp_distribution(f);
+	debug(f);
 	return;
+
+
+	//return test_2015(f);
+
+	//print_r(ranking_match_status(f,tba::Event_key("2025orwil")));
+	//rp_distribution(f);
+	//return;
 
 	/*Things that would be interesting to know from the outside:
 	 *1) Get current state: event key -> status item

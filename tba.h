@@ -64,5 +64,6 @@ std::map<Point,Pr> historical_event_pts(TBA_fetcher&);
 
 tba::Year year(tba::District_key const&);
 tba::Year year(tba::Event_key const&);
+tba::Year year(tba::Event const&);
 
 #endif
