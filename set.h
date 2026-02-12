@@ -262,8 +262,9 @@ std::ostream& operator<<(std::ostream& o,std::multiset<T> const& a){
 template<typename T>
 std::map<T,size_t> count(std::multiset<T> const& a){
 	std::map<T,size_t> r;
-	for(auto elem:a){
-		r[elem]=a.count(elem); //slow
+	//if you remove the to_set, this will become O(n*n)
+	for(auto elem:to_set(a)){
+		r[elem]=a.count(elem);
 	}
 	return r;
 }

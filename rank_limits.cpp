@@ -21,6 +21,51 @@
 #include "map_fixed.h"
 #include "map_auto.h"
 #include "declines.h"
+#include "skill_opr.h"
+
+template<typename T>
+std::optional<Interval<T>> or_all(std::vector<Interval<T>> a){
+	if(a.empty()){
+		return std::nullopt;
+	}
+	auto m1=min(MAP(min,a));
+	auto m2=max(MAP(max,a));
+	return Interval<T>{m1,m2};
+}
+
+tba::Year year(tba::Event_key const& a){
+	try{
+		return tba::Year(stoi(a.get().substr(0,4)));
+	}catch(std::invalid_argument const&){
+		PRINT(a);
+		nyi
+	}
+}
+
+template<template<typename,typename> typename MAP,typename K,typename V>
+std::optional<V> maybe_get(MAP<K,V> const& a,K const& k){
+	auto f=a.find(k);
+	if(f==a.end()){
+		return std::nullopt;
+	}
+	return f->second;
+}
+
+template<
+	template<typename,typename> typename MAP1,
+	template<typename,typename> typename MAP2,
+	typename K,
+	typename V1,
+	typename V2
+>
+auto join(MAP1<K,V1> const& a,MAP2<K,V2> const& b){
+	using P=std::pair<std::optional<V1>,std::optional<V2>>;
+	std::map<K,P> r;
+	for(auto k:keys(a)|keys(b)){
+		r[k]=P(maybe_get(a,k),maybe_get(b,k));
+	}
+	return r;
+}
 
 template<long long MIN1,long long MAX1,long long MIN2,long long MAX2>
 auto diff(int n,Int_limited<MIN1,MAX1> const& a,Int_limited<MIN2,MAX2> const& b){
@@ -282,13 +327,32 @@ auto teams(Standings<Team> const& a){
 	return keys(a);
 }
 
+//year is relavent because it changes the ranking rules.
 #define RANKING_MATCH_STATUS(X)\
 	X(Standings<Team>,standings)\
-	X(Schedule<Team>,schedule)
+	X(Schedule<Team>,schedule)\
+	X(tba::Year,year)
+
+#define REMOVE_FIRST(...) REMOVE_FIRST_SUB(__VA_ARGS__)
+#define REMOVE_FIRST_SUB(X, ...) __VA_ARGS__
 
 template<typename Team>
 struct Ranking_match_status{
 	RANKING_MATCH_STATUS(INST)
+
+	explicit Ranking_match_status(tba::Year a):year(a){}
+
+	Ranking_match_status(Ranking_match_status const&)=default;
+
+	Ranking_match_status(
+		#define X(A,B) ,A B##1
+		REMOVE_FIRST(RANKING_MATCH_STATUS(X))
+		#undef X
+	):
+		#define X(A,B) ,B(std::move(B##1))
+		REMOVE_FIRST(RANKING_MATCH_STATUS(X))
+		#undef X
+	{}
 
 	void fill_standings(){
 		for(auto team:teams(schedule)){
@@ -500,7 +564,7 @@ Ranking_match_status<tba::Team_key> get(TBA_fetcher &f,tba::Event_key const& eve
 	 * everyone is effectively tied at 0.
 	 * */
 
-	Ranking_match_status<tba::Team_key> r;
+	Ranking_match_status<tba::Team_key> r(year(event));
 	for(auto match:tba::event_matches(f,event)){
 		auto f=[](auto x){
 			auto found=to_set(x.team_keys)-to_set(x.surrogate_team_keys);
@@ -557,7 +621,34 @@ Ranking_match_status<Team> apply(Ranking_match_status<Team> a,int match_index,Ma
 	return a;
 }
 
-static const RP MAX_RP_PER_MATCH=5;
+RP max_rp_per_match(tba::Year a){
+	const auto year=a.get();
+	if(year<=2014){
+		return 2;
+	}
+	if(year==2015){
+		return 0;
+	}
+	if(year>=2016 || year<=2020){
+		return 4;
+	}
+	if(year==2021){
+		return 0;
+	}
+	if(year==2022){
+		return 4;
+	}
+	if(year==2023){
+		return 5;
+	}
+	if(year==2024){
+		return 4;
+	}
+	if(year==2025 || year==2026){
+		return 6;
+	}
+	return 6;
+}
 
 template<typename Team>
 Ranking_match_status<Team> assume_wins(Ranking_match_status<Team> a,Team const& team){
@@ -581,11 +672,11 @@ Ranking_match_status<Team> assume_wins(Ranking_match_status<Team> a,Team const& 
 	for(auto match:a.schedule){
 		if(match[0].count(team)){
 			for(auto team:match[0]){
-				a.standings[team]+=MAX_RP_PER_MATCH;
+				a.standings[team]+=max_rp_per_match(a.year);
 			}
 		}else if(match[1].count(team)){
 			for(auto team:match[1]){
-				a.standings[team]+=MAX_RP_PER_MATCH;
+				a.standings[team]+=max_rp_per_match(a.year);
 			}
 		}else{
 			*out=match;
@@ -620,11 +711,11 @@ Ranking_match_status<Team> assume_losses(Ranking_match_status<Team> a,Team const
 	for(auto match:a.schedule){
 		if(match[0].count(team)){
 			for(auto team:match[1]){
-				a.standings[team]+=MAX_RP_PER_MATCH;
+				a.standings[team]+=max_rp_per_match(a.year);
 			}
 		}else if(match[1].count(team)){
 			for(auto team:match[0]){
-				a.standings[team]+=MAX_RP_PER_MATCH;
+				a.standings[team]+=max_rp_per_match(a.year);
 			}
 		}else{
 			*out=match;
@@ -682,7 +773,7 @@ map_auto<Team,Interval<Rank>> rank_limits_basic(Ranking_match_status<Team> const
 		return r;
 	}*/
 
-	auto [existing_standings,schedule]=status;
+	//auto [existing_standings,schedule]=status;
 
 	//going to start by assuming that there is only win or loss, no ties
 	//and no bonus RP
@@ -692,7 +783,7 @@ map_auto<Team,Interval<Rank>> rank_limits_basic(Ranking_match_status<Team> const
 	//PRINT(event_size);
 	auto matches_left=[=](){
 		map<Team,unsigned> r;
-		for(auto match:schedule){
+		for(auto match:status.schedule){
 			for(auto alliance:match){
 				for(auto team:alliance){
 					r[team]++;
@@ -719,8 +810,8 @@ map_auto<Team,Interval<Rank>> rank_limits_basic(Ranking_match_status<Team> const
 	//for each team, find interval of RP
 	const auto rp_ranges=[&](){
 		map_auto<Team,Interval<RP>> r;
-		for(auto [team,rp]:existing_standings){
-			r[team]=Interval<RP>(rp,rp+MAX_RP_PER_MATCH*matches_left[team]);
+		for(auto [team,rp]:status.standings){
+			r[team]=Interval<RP>(rp,rp+max_rp_per_match(status.year)*matches_left[team]);
 		}
 		return r;
 	}();
@@ -884,6 +975,10 @@ class Team_namer{
 
 	int convert(int)const;
 
+	tba::Year convert(tba::Year a){
+		return a;
+	}
+
 	static short convert(short a){
 		return a;
 	}
@@ -1001,26 +1096,54 @@ bool valid_outcome(map_auto<Team,T> const& a,map_auto<Team,Interval<T>> const& b
 	return 1;
 }
 
-template<typename T>
-std::optional<Interval<T>> or_all(std::vector<Interval<T>> a){
-	if(a.empty()){
-		return std::nullopt;
+std::optional<bool> rankings_consistent(TBA_fetcher &f,tba::Event_key const& event){
+	auto a1=listed_ranks(f,event);
+	if(!a1){
+		return nullopt;
 	}
-	auto m1=min(MAP(min,a));
-	auto m2=max(MAP(max,a));
-	return Interval<T>{m1,m2};
+
+	auto r=rank_limits(f,event);
+
+	for(auto [k,v]:join(*a1,r.ranks)){
+		auto [a,b]=v;
+		if(a && b){
+			if(!subset(*a,*b)){
+				return 0;
+			}
+		}else{
+			return 0;
+		}
+	}
+	return 1;
 }
 
-tba::Year year(tba::Event_key const& a){
-	try{
-		return tba::Year(stoi(a.get().substr(0,4)));
-	}catch(std::invalid_argument const&){
-		PRINT(a);
-		nyi
+void rp_distribution(TBA_fetcher &f){
+	for(auto year:years()){
+		PRINT(year);
+		std::multiset<optional<array<RP,2>>> found;
+		for(auto event:events(f,year)){
+			//PRINT(event.key);
+			for(auto match:event_matches(f,event.key)){
+				auto x=rp(match);
+				/*if(!x) continue;
+				PRINT(x);
+				nyi*/
+				if(!x){
+					found|=x;
+				}else{
+					found|=sorted(*x);
+				}
+			}
+		}
+		PRINT(found.size());
+		print_r(count(found));
 	}
 }
 
 void rank_limits_demo(TBA_fetcher &f){
+	rp_distribution(f);
+	return;
+
 	/*Things that would be interesting to know from the outside:
 	 *1) Get current state: event key -> status item
 	 2) Given current state:
@@ -1058,8 +1181,24 @@ void rank_limits_demo(TBA_fetcher &f){
 	//	auto a1=listed_ranks(f,event.key);
 	//	check_
 
+	auto interesting_events=filter(
+		[](auto x){ return x.event_type==tba::Event_type::DISTRICT; },
+		all_events(f)
+	);
+
+	for(auto [g,v]:group([](auto x){ return x.year; },interesting_events)){
+		auto m=mapf(
+			[&](auto x){
+				return rankings_consistent(f,x.key);
+			},
+			v
+		);
+		PRINT(g);
+		PRINT(count(m));
+	}
+	return;
+
 	for(auto event:all_events(f)){
-		PRINT(event.key);
 		if(event.event_type==tba::Event_type::CMP_FINALS){
 			//then rankings are not meaningful.
 			continue;
@@ -1072,7 +1211,7 @@ void rank_limits_demo(TBA_fetcher &f){
 		//print_r(event);
 
 		auto r=rank_limits(f,event.key);
-	//	print_r(r);
+		//print_r(r);
 		auto a1=listed_ranks(f,event.key);
 		if(a1){
 			auto const& a=to_map_auto(*a1);
@@ -1089,13 +1228,34 @@ void rank_limits_demo(TBA_fetcher &f){
 			}
 	
 			if(valid_outcome(a,b)){
-				cout<<"\tok\n";
+				//cout<<"\tok\n";
 			}else{
+				PRINT(event.key);
 				//print_r(a);
 				//print_r(b);
-				diff(a,b);
+				//diff(a,b);
 				auto g=group([&](auto k){ return subset(a[k],b[k]); },keys(a));
 				print_r(g);
+
+				size_t ok=0;
+				for(auto [k,v]:join(a,b)){
+					auto [a1,b1]=v;
+					assert(a1 || b1);
+					if(!a1 || !b1){
+						if(a1){
+							cout<<"listed only:"<<k<<" "<<a1<<"\n";
+						}else{
+							cout<<"matches only:"<<k<<" "<<b1<<"\n";
+						}
+					}else{
+						if(!subset(*a1,*b1)){
+							cout<<k<<"\t"<<v<<"\n";
+						}else{
+							ok++;
+						}
+					}
+				}
+				PRINT(ok);
 				/*for(auto k:keys(a)){
 					assert(subset(a[k],b[k]));
 				}*/
@@ -1136,7 +1296,7 @@ void rank_limits_demo(TBA_fetcher &f){
 		schedule|=Match<Team>({a1,a2});
 	}
 	//PRINT(schedule.size());
-	Ranking_match_status<Team> status;
+	Ranking_match_status<Team> status(tba::Year(2016));
 	status.standings=existing_standings;
 	status.schedule=schedule;
 	status.fill_standings();
