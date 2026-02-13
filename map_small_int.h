@@ -6,11 +6,16 @@
 template<typename K,typename V>
 class map_small_int{
 	using P=std::pair<K,V>;
+
+	//this is obviously not the most space-efficient layout, but it does mean
+	//that the pairs can be directly returned and are on a regular stride.
 	using Data=std::vector<std::optional<P>>;
+
 	Data data;
 
 	public:
 
+	#if 0
 	struct const_iterator{
 		map_small_int const *parent;
 		size_t i;
@@ -38,7 +43,15 @@ class map_small_int{
 			return *v;
 		}
 
-		auto operator<=>(const_iterator const&)const=default;
+		//auto operator<=>(const_iterator const&)const=default;
+
+		auto operator<=>(const_iterator const& a)const{
+			return i<=>a.i;
+		}
+
+		bool operator!=(const_iterator const& a)const{
+			return i!=a.i;
+		}
 	};
 
 	const_iterator begin()const{
@@ -52,6 +65,43 @@ class map_small_int{
 	const_iterator end()const{
 		return const_iterator{this,data.size()};
 	}
+	#else
+	struct const_iterator{
+		using It=Data::const_iterator;
+		It at,end;
+
+		public:
+		const_iterator& operator++(){
+			assert(at!=end);
+			++at;
+			while(at!=end && !*at){
+				++at;
+			}
+			return *this;
+		}
+
+		P const& operator*()const{
+			return **at;
+		}
+
+		//auto operator<=>(const_iterator const&)const=default;
+		auto operator<=>(const_iterator const& a)const{
+			return at<=>a.at;
+		}
+
+		auto operator!=(const_iterator const& a)const{
+			return at!=a.at;
+		}
+	};
+
+	const_iterator begin()const{
+		return const_iterator{data.begin(),data.end()};
+	}
+
+	const_iterator end()const{
+		return const_iterator{data.end(),data.end()};
+	}
+	#endif
 
 	using iterator=const_iterator;
 
