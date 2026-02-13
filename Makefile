@@ -1,5 +1,5 @@
-#CXXFLAGS=-std=c++20 -Wall -Wextra -Ofast -fdiagnostics-color=always
-CXXFLAGS=-std=c++20 -Wall -Wextra -Og -g -fdiagnostics-color=always
+#CXXFLAGS=-std=c++23 -Wall -Wextra -Ofast -fdiagnostics-color=always
+CXXFLAGS=-std=c++23 -Wall -Wextra -Og -g -fdiagnostics-color=always
 LIBS=-lsqlite3 -lcurl -lsimdjson
 CC=$(CXX)
 

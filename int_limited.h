@@ -7,6 +7,8 @@
 #include<cstdlib>
 #include<cstdint>
 #include<ostream>
+#include "array.h"
+#include "util.h"
 
 template<long long MIN,long long MAX>
 auto get_int(){
@@ -24,13 +26,13 @@ class Int_limited{
 	using Data=decltype(get_int<MIN,MAX>());
 	Data data;
 
-	void check()const{
+	constexpr void check()const{
 		assert(data>=MIN);
 		assert(data<=MAX);
 	}
 
 	public:
-	Int_limited():data(MIN){
+	constexpr Int_limited():data(MIN){
 		static_assert(MIN<=MAX);
 	}
 
@@ -43,7 +45,7 @@ class Int_limited{
 		return data;
 	}
 
-	operator Data()const{
+	constexpr operator Data()const{
 		return data;
 	}
 
@@ -59,7 +61,7 @@ class Int_limited{
 		return *this;
 	}
 
-	Int_limited operator++(int){
+	constexpr Int_limited operator++(int){
 		auto r=*this;
 		data++;
 		check();
@@ -74,22 +76,51 @@ class Int_limited{
 
 	auto operator<=>(Int_limited const&)const=default;
 
-	bool operator>(size_t a)const{
+	constexpr bool operator>(size_t a)const{
 		return data>(long long)a;
 	}
 
-	bool operator<(auto a)const{
+	constexpr bool operator<(auto a)const{
 		return data<(long long)a;
 	}
 
-	bool operator<=(auto a)const{
+	constexpr bool operator<=(auto a)const{
 		return data<=a;
 	}
 
-	bool operator==(auto a)const{
+	constexpr bool operator==(auto a)const{
 		return data==a;
 	}
+
+	constexpr bool operator>=(auto a)const{
+		return data>=a;
+	}
+
+	template<long long MIN2,long long MAX2>
+	constexpr bool operator<(Int_limited<MIN2,MAX2> a)const{
+		return get()<a.get();
+	}
+
+	template<long long MIN2,long long MAX2>
+	constexpr bool operator<=(Int_limited<MIN2,MAX2> a)const{
+		return get()<=a.get();
+	}
 };
+
+template<typename T,long long MIN,long long MAX>
+bool operator>(T a,Int_limited<MIN,MAX> b){
+	return a>b.get();
+}
+
+template<typename T,long long MIN,long long MAX>
+bool operator<(T a,Int_limited<MIN,MAX> b){
+	return a<b.get();
+}
+
+template<typename T,long long MIN,long long MAX>
+bool operator<=(T a,Int_limited<MIN,MAX> b){
+	return a<=b.get();
+}
 
 template<long long MIN,long long MAX>
 std::ostream& operator<<(std::ostream& o,Int_limited<MIN,MAX> a){
@@ -102,18 +133,28 @@ bool operator<=(size_t a,Int_limited<MIN,MAX> const& b){
 }
 
 template<long long MIN,long long MAX>
-auto options(Int_limited<MIN,MAX> const*){
+constexpr auto options(Int_limited<MIN,MAX> const*){
 	using E=Int_limited<MIN,MAX>;
-	std::vector<E> r;
+	auto r=range_st<MIN,MAX+1>();
+	return MAP(E,r);
+	//return range_st<MIN,MAX+1>();
+	/*std::vector<E> r;
 	for(long long i=MIN;i<=MAX;i++){
 		r|=i;
 	}
-	return r;
+	return r;*/
 }
 
 template<long long MIN,long long MAX>
 auto rand(Int_limited<MIN,MAX> const*){
 	return Int_limited<MIN,MAX>(MIN+rand()%(MAX-MIN+1));
+}
+
+template<long long MIN,long long MAX,size_t N>
+auto sum(std::array<Int_limited<MIN,MAX>,N> const& a){
+	//could put some logic in here to see that this doesn't overflow
+	using R=Int_limited<MIN*N,MAX*N>;
+	return std::accumulate(a.begin(),a.end(),R());
 }
 
 #endif

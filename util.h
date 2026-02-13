@@ -17,7 +17,7 @@ std::chrono::year_month_day operator+(std::chrono::year_month_day,std::chrono::d
 std::chrono::days operator-(std::chrono::year_month_day,std::chrono::year_month_day);
 
 template<typename T,typename T2>
-std::vector<T>& operator|=(std::vector<T> &a,T2 t){
+constexpr std::vector<T>& operator|=(std::vector<T> &a,T2 t){
 	a.push_back(std::move(t));
 	return a;
 }
@@ -332,7 +332,7 @@ constexpr std::vector<T> range(T start,T lim){
 }
 
 template<typename T>
-std::vector<T> range(T lim){
+constexpr std::vector<T> range(T lim){
 	return range(T{0},lim);
 }
 
@@ -571,6 +571,12 @@ std::vector<T> flatten(std::vector<std::array<T,N>> const& a){
 		}
 	}
 	return r;
+}
+
+template<typename Func,typename T>
+auto count_if(Func f,T const& t){
+	auto f1=filter(f,t);
+	return f1.size();
 }
 
 #endif

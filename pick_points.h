@@ -14,7 +14,7 @@ class TBA_fetcher;
 
 //2016micmp has 106 teams
 //2000cmp has 249 teams
-using Rank=Int_limited<1,300>;
+using Rank=Int_limited<1,254>;
 
 int pick_points_demo(TBA_fetcher&);
 

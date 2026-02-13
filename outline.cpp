@@ -1073,7 +1073,8 @@ int main1(int argc,char **argv){
 	//return lock_demo(tba_fetcher);
 
 	if(args.rank_limits_demo){
-		rank_limits_demo(tba_fetcher);
+		//rank_limits_demo(tba_fetcher);
+		pick_points_demo(tba_fetcher);
 		return 0;
 	}
 

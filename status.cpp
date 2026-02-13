@@ -76,12 +76,6 @@ auto operator-(std::multiset<T> a,std::multiset<T> b){
 	return r;
 }
 
-template<typename Func,typename T>
-auto count_if(Func f,T const& t){
-	auto f1=filter(f,t);
-	return f1.size();
-}
-
 template<typename T>
 void print_lines(size_t n,T const& t){
 	for(auto const& elem:t){

@@ -3,6 +3,7 @@
 
 #include<array>
 #include<numeric>
+#include<algorithm>
 
 template<size_t N>
 struct array_void{
@@ -21,7 +22,7 @@ auto second(std::array<T,N> const& a){
 }
 
 template<size_t N>
-std::array<size_t,N> range_st(){
+constexpr std::array<size_t,N> range_st(){
 	std::array<size_t,N> r;
 	for(size_t i=0;i<N;i++){
 		r[i]=i;
@@ -29,8 +30,19 @@ std::array<size_t,N> range_st(){
 	return r;
 }
 
+template<long long MIN,long long LIM>
+constexpr auto range_st(){
+	static constexpr auto N=LIM-MIN;
+	std::array<long long,N> r;
+	for(size_t i=0;i<N;i++){
+		r[i]=MIN+i;
+	}
+	return r;
+}
+
+
 template<typename Func,typename T,size_t N>
-auto mapf(Func f,std::array<T,N> const& a){
+constexpr auto mapf(Func f,std::array<T,N> const& a){
 	using E=decltype(f(*begin(a)));
 	if constexpr(std::is_same<void,E>()){
 		for(auto const& elem:a){

@@ -1,6 +1,9 @@
 #ifndef MAP_FIXED_H
 #define MAP_FIXED_H
 
+#include<bitset>
+#include "multiset_fixed.h"
+
 template<long long MIN,long long MAX1>
 struct Converter<Int_limited<MIN,MAX1>>{
 	using T=Int_limited<MIN,MAX1>;
@@ -20,7 +23,7 @@ template<typename K,typename V>
 class map_fixed{
 	using C=Converter<K>;
 	static constexpr auto N=C::MAX+1;
-	std::array<V,N> data;
+	std::array<V,N> data{}; //note: this is default constructing all these at the beginning
 	std::bitset<N> present;
 
 	public:
@@ -39,6 +42,8 @@ class map_fixed{
 		}
 
 		auto operator*()const{
+			//assert(parent);
+			//assert(parent->present[i]);
 			return std::make_pair(C::to(i),parent->data[i]);
 		}
 
@@ -54,8 +59,16 @@ class map_fixed{
 	}
 
 	const_iterator end()const{
+		/*Could try to make it so that doesn't have to go through the whole thing later
+		 * but this doesn't seem to significantly change performance.
+		 * size_t i;
+		for(i=N;i && !present[i-1];i--){}
+		PRINT(i);
+		return const_iterator{this,i};*/
 		return const_iterator{this,N};
 	}
+
+	using iterator=const_iterator;
 
 	V& operator[](K const& k){
 		if(!present[k]){

@@ -26,64 +26,6 @@
 
 using namespace std;
 
-template<template<typename,typename> class MAP,typename Team>
-std::optional<string> check_rank_limits(MAP<Team,Interval<Rank>> const& a){
-	//0=ok,1=error
-	if(a.empty()){
-		return std::nullopt;
-	}
-	//first, check that all of the limits exists in the range expected for an event of this many teams
-	auto overall_range=*or_all(values(a));
-	const Interval<Rank> expected(1,a.size());
-	if(!match(overall_range,expected)){
-		/*print_r(a);
-		PRINT(expected);
-		PRINT(overall_range)*/
-		return "out of range";
-	}
-	assert(match(overall_range,expected));
-
-	//second check that for each rank that should exist at this event, there is at least one team that can fill it
-	for(auto rank:range_inclusive<Rank>(1u,a.size())){
-		auto f=filter([=](auto x){ return subset(rank,x); },values(a)).size();
-		if(f==0){
-			return "unfilled slot";
-		}
-		//assert(f.size()>=1);
-	}
-
-	//third: for any possible range of ranks, check that they number of teams that must exist in there
-	//is possible (could be too many or too few)
-	
-	for(auto min:range_inclusive<Rank>(1,a.size())){
-		for(auto max:range_inclusive<Rank>(min,a.size())){
-			size_t size=max-min+1;
-			Interval<Rank> i{min,max};
-			auto always=filter([=](auto x){ return subset(x,i); },values(a)).size();
-			assert(always<=size);
-
-			auto possible=filter([=](auto x){ return overlap(x,i); },values(a)).size();
-			assert(possible>=size);
-		}
-	}
-	return std::nullopt;
-}
-
-template<template<typename,typename> typename MAP,typename Team>
-auto check_rank_limits(MAP<Team,Rank> const& a){
-	return check_rank_limits(map_values([](auto x){ return Interval(x); },a));
-}
-
-template<typename T>
-auto check_rank_limits(std::optional<T> const& a){
-	using E=decltype(check_rank_limits(*a));
-	using R=optional<E>;
-	if(a){
-		return R(check_rank_limits(*a));
-	}
-	return R();
-}
-
 template<typename A,typename B>
 auto teams(std::pair<A,B> const& p){
 	auto t=teams(p.first);
@@ -483,10 +425,10 @@ map_auto<Team,Interval<Rank>> rank_limits_basic(Ranking_match_status<Team> const
 	//const auto event_size=existing_standings.size();
 
 	//PRINT(event_size);
-	auto matches_left=[=](){
-		map<Team,unsigned> r;
-		for(auto match:status.schedule){
-			for(auto alliance:match){
+	auto matches_left=[&](){
+		map_auto<Team,unsigned> r;//value here should be in the range 0-12
+		for(auto const& match:status.schedule){
+			for(auto const& alliance:match){
 				for(auto team:alliance){
 					r[team]++;
 				}

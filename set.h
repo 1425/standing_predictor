@@ -155,6 +155,15 @@ std::set<T> or_all(std::vector<std::set<T>> const& a){
 	return r;
 }
 
+template<typename T,size_t N>
+auto or_all(std::array<std::set<T>,N> const& a){
+	std::set<T> r;
+	for(auto const& elem:a){
+		r|=elem;
+	}
+	return r;
+}
+
 template<typename T>
 std::vector<T> to_vec(std::set<T> const& a){
 	return std::vector<T>{a.begin(),a.end()};

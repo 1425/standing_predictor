@@ -2,6 +2,7 @@
 #define MAP_AUTO_H
 
 #include "map_small_int.h"
+#include "map_fixed.h"
 
 template<typename T>
 static constexpr bool small_int(T const*){
@@ -84,6 +85,14 @@ class map_auto{
 
 	constexpr auto empty()const{
 		return data.empty();
+	}
+
+	operator Data&(){
+		return data;
+	}
+
+	operator Data const&()const{
+		return data;
 	}
 };
 
