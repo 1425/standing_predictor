@@ -33,11 +33,11 @@ static std::vector<tba::Team_key> team_winners(std::vector<tba::Award_Recipient>
 	return flatten(MAP(team_winners,a));
 }
 
-static std::vector<tba::Team_key> team_winners(tba::Award const& a){
+std::vector<tba::Team_key> team_winners(tba::Award const& a){
 	return team_winners(a.recipient_list);
 }
 
-static std::vector<tba::Team_key> team_winners(std::vector<tba::Award> const& a){
+std::vector<tba::Team_key> team_winners(std::vector<tba::Award> const& a){
 	return flatten(MAP(team_winners,a));
 }
 

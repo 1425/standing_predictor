@@ -15,6 +15,14 @@
 #include "names.h"
 #include "interval.h"
 
+
+std::optional<std::chrono::days> operator-(std::chrono::year_month_day a,std::optional<std::chrono::year_month_day> const& b){
+	if(!b){
+		return std::nullopt;
+	}
+	return a-*b;
+}
+
 using namespace std;
 using Team_key=tba::Team_key;
 using Event_key=tba::Event_key;
@@ -112,6 +120,17 @@ int days(tba::Event const& a){
 
 bool cmp(tba::Event_type a){
 	return a==tba::Event_type::CMP_DIVISION || a==tba::Event_type::CMP_FINALS;
+}
+
+
+std::chrono::year_month_day current_date(){
+	// Get the current time point from the system clock
+	const std::chrono::time_point now{std::chrono::system_clock::now()};
+
+	// Floor the time point to the nearest day to get a date without time components
+	const std::chrono::year_month_day ymd{std::chrono::floor<std::chrono::days>(now)};
+
+	return ymd;
 }
 
 //returns whether the dates look ok; 0=ok

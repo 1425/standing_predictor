@@ -48,6 +48,7 @@ simple way:
 #include "plot.h"
 #include "lock.h"
 #include "rank_limits.h"
+#include "award_limits.h"
 
 //start generic stuff
 
@@ -905,6 +906,7 @@ struct Args{
 	optional<tba::District_key> district;
 	TBA_fetcher_config tba;
 	bool demo=0,historical_demo=0,rank_limits_demo=0;
+	bool award_limits_demo=0;
 	Skill_method skill_method=Skill_method::POINTS;
 };
 
@@ -946,6 +948,11 @@ Args parse_args(int argc,char **argv){
 		"--rank_limits_demo",{},
 		"Attempt to find limits of pre-alliance selection ranks.  Experimental.",
 		r.rank_limits_demo
+	);
+	p.add(
+		"--award_limits_demo",{},
+		"Attempt to predict award points at an event.  Experimental.",
+		r.award_limits_demo
 	);
 	p.parse(argc,argv);
 	return r;
@@ -1076,6 +1083,10 @@ int main1(int argc,char **argv){
 		//rank_limits_demo(tba_fetcher);
 		pick_points_demo(tba_fetcher);
 		return 0;
+	}
+
+	if(args.award_limits_demo){
+		return award_limits_demo(tba_fetcher);
 	}
 
 	if(args.demo){

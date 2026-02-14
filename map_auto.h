@@ -29,6 +29,14 @@ class map_auto{
 
 	map_auto()=default;
 
+	map_auto(map_auto const& a):
+		data(a.data)
+	{}
+
+	map_auto(map_auto && a):
+		data(std::move(a.data))
+	{}
+
 	template<typename It>
 	map_auto(It begin,It end):
 		data(begin,end)
@@ -38,7 +46,25 @@ class map_auto{
 
 	map_auto(Data&& a):data(std::move(a)){}
 
-	map_auto& operator=(std::map<K,V>);
+	map_auto& operator=(map_auto const& a){
+		data=a.data;
+		return *this;
+	}
+
+	map_auto& operator=(map_auto && a){
+		data=std::move(a.data);
+		return *this;
+	}
+
+	map_auto& operator=(Data const& a){
+		data=a;
+		return *this;
+	}
+
+	map_auto& operator=(Data&& a){
+		data=std::move(a);
+		return *this;
+	}
 
 	V& operator[](K const& a){
 		return data[a];
@@ -94,7 +120,7 @@ class map_auto{
 		return data.empty();
 	}
 
-	operator Data&()&{
+	operator Data&(){
 		return data;
 	}
 
@@ -102,7 +128,9 @@ class map_auto{
 		return data;
 	}
 
-	operator Data&()&&;
+	operator Data&&()&&{
+		return std::move(data);
+	}
 };
 
 template<typename K,typename V>

@@ -31,4 +31,7 @@ std::set<tba::Team_key> cmp_teams(TBA_fetcher &,tba::Year);
 
 std::map<tba::Team_key,Cmp_reason> cmp_reasons(TBA_fetcher &tba_fetcher,tba::Year year);
 
+std::vector<tba::Team_key> team_winners(tba::Award const&);
+std::vector<tba::Team_key> team_winners(std::vector<tba::Award> const&);
+
 #endif

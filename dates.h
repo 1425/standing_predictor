@@ -22,4 +22,9 @@ int dates_demo(TBA_fetcher&);
 std::vector<tba::Event> all_events(TBA_fetcher&);
 std::vector<tba::Team> teams_year_all(TBA_fetcher&,tba::Year);
 
+//in whatever the system timezone is.
+std::chrono::year_month_day current_date();
+
+std::optional<std::chrono::days> operator-(std::chrono::year_month_day,std::optional<std::chrono::year_month_day> const&);
+
 #endif

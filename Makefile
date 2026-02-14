@@ -22,6 +22,7 @@ FRC_API_OBJS= \
 	../frc_api/curl.o
 
 OUTLINE_OBJS= \
+	award_limits.o \
 	outline.o \
 	output.o \
 	util.o \
