@@ -12,6 +12,7 @@
 #include "vector_fixed.h"
 #include "vector_fixed2.h"
 #include "dates.h"
+#include "set_limited.h"
 
 /*For the picking:
  * can put bounds on the number of points earned by each team
@@ -350,7 +351,7 @@ int ranks_from_demo(TBA_fetcher &f){
 
 	auto e=FILTER(normal_ranking_expected,all_events(f));
 	PRINT(e.size());
-	//e=take(300,e);
+	//e=take(600,e);
 	for(auto event:e){
 		if(
 			event.key==tba::Event_key("2006nh")

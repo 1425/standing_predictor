@@ -66,8 +66,8 @@ class Match{
 
 	public:
 
-	Match(Data a):data(a){
-		assert( (a[0]&a[1]).empty());
+	Match(Data a):data(std::move(a)){
+		assert( (data[0]&data[1]).empty());
 	}
 
 	auto const& get()const{
@@ -114,7 +114,8 @@ auto mapf(Func f,Match<Team> const& a){
 }
 
 template<typename Team>
-std::set<Team> teams(Match<Team> const& a){
+//std::set<Team> teams(Match<Team> const& a){
+set_limited<Team,6> teams(Match<Team> const& a){
 	return to_set(teams(a.get()));
 }
 
@@ -157,7 +158,7 @@ struct Ranking_match_status{
 	{}
 
 	void fill_standings(){
-		for(auto team:teams(schedule)){
+		for(auto const& team:teams(schedule)){
 			auto f=standings.find(team);
 			if(f==standings.end()){
 				standings[team]=0;
@@ -279,7 +280,8 @@ Ranking_match_status<tba::Team_key> ranking_match_status(TBA_fetcher &f,tba::Eve
 				//does actually occur in the data.  Specifically at
 				//2024gaalb
 			}
-			return Alliance(take(3,found));
+			//return Alliance(take(3,found));
+			return Alliance(take<3>(found));
 		};
 		//match.alliances.red.team_keys/surrogate_team_keys
 		auto m1=f(match.alliances.red);
@@ -345,7 +347,7 @@ Ranking_match_status<Team> assume_wins(Ranking_match_status<Team> a,Team const& 
 	//now remove the last items beyond what's been written
 	s.erase(out,s.end());
 
-	return a;
+	return std::move(a);
 }
 
 template<typename Team>
@@ -370,7 +372,7 @@ Ranking_match_status<Team> assume_losses(Ranking_match_status<Team> a,Team const
 	//now remove the last items beyond what's been written
 	s.erase(out,s.end());
 
-	return a;
+	return std::move(a);
 }
 
 template<typename Team>
@@ -575,7 +577,7 @@ class Team_namer{
 
 	#define CONVERT(A,B) convert(a.B),
 
-	Team_alias convert(tba::Team_key a){
+	Team_alias convert(tba::Team_key const& a){
 		return to_alias(a);
 	}
 
@@ -584,13 +586,13 @@ class Team_namer{
 	}
 
 	template<typename Team>
-	Alliance<Team_alias> convert(Alliance<Team> a){
+	Alliance<Team_alias> convert(Alliance<Team> const& a){
 		return MAP(convert,a);
 	}
 
 	template<typename Team>
 	Match<Team_alias> convert(Match<Team> const& a){
-		return mapf([&](auto x){ return convert(x); },a);
+		return mapf([&](auto const& x){ return convert(x); },a);
 	}
 
 	template<typename A,typename B>
@@ -611,6 +613,11 @@ class Team_namer{
 
 	template<typename T>
 	auto convert(std::vector<T> const& a){
+		return MAP(convert,a);
+	}
+
+	template<typename T,size_t N>
+	auto convert(vector_fixed<T,N> const& a){
 		return MAP(convert,a);
 	}
 

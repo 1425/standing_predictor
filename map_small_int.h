@@ -15,6 +15,24 @@ class map_small_int{
 
 	public:
 
+	map_small_int()=default;
+
+	map_small_int(std::vector<P>::const_iterator a,std::vector<P>::const_iterator b){
+		//this is not the fastest way to do this.
+		for(auto it=a;it!=b;++it){
+			(*this)[it->first]=it->second;
+		}
+	}
+
+	using I1=std::vector<P>::const_iterator;
+	using It=std::move_iterator<I1>;
+	//template<typename It>
+	map_small_int(It a,It b){
+		for(auto it=a;it!=b;++it){
+			(*this)[std::move(it->first)]=std::move(it->second);
+		}
+	}
+
 	#if 0
 	struct const_iterator{
 		map_small_int const *parent;

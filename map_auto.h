@@ -29,7 +29,14 @@ class map_auto{
 
 	map_auto()=default;
 
+	template<typename It>
+	map_auto(It begin,It end):
+		data(begin,end)
+	{}
+
 	map_auto(Data const& a):data(a){}
+
+	map_auto(Data&& a):data(std::move(a)){}
 
 	map_auto& operator=(std::map<K,V>);
 
@@ -87,13 +94,15 @@ class map_auto{
 		return data.empty();
 	}
 
-	operator Data&(){
+	operator Data&()&{
 		return data;
 	}
 
 	operator Data const&()const{
 		return data;
 	}
+
+	operator Data&()&&;
 };
 
 template<typename K,typename V>
@@ -123,11 +132,20 @@ auto map_values(Func f,map_auto<K,V> const& a){
 
 template<typename K,typename V>
 auto dict_auto(std::vector<std::pair<K,V>> const& a){
-	map_auto<K,V> r;
+	/*map_auto<K,V> r;
 	for(auto [k,v]:a){
 		r[k]=v;
 	}
-	return r;
+	return r;*/
+	return map_auto<K,V>{a.begin(),a.end()};
+}
+
+template<typename K,typename V>
+auto dict_auto(std::vector<std::pair<K,V>> && a){
+	return map_auto<K,V>{
+		std::make_move_iterator(a.begin()),
+		std::make_move_iterator(a.end())
+	};
 }
 
 template<typename K,typename V>

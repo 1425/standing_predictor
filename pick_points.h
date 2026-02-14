@@ -30,7 +30,7 @@ template<typename>
 class Match;
 
 template<typename Team>
-std::set<Team> teams(Match<Team> const&);
+set_limited<Team,6> teams(Match<Team> const&);
 
 template<size_t N>
 set_fixed<tba::Team_key,N> teams(set_fixed<tba::Team_key,N> const& a){
@@ -39,7 +39,7 @@ set_fixed<tba::Team_key,N> teams(set_fixed<tba::Team_key,N> const& a){
 
 template<size_t N>
 auto teams(std::array<tba::Team_key,N> a){
-	return a;
+	return std::move(a);
 }
 
 template<typename T,size_t N>
@@ -58,7 +58,7 @@ auto teams(Interval<T> const& a){
 }
 
 template<typename T>
-std::vector<tba::Team_key> teams(std::vector<T> a){
+std::vector<tba::Team_key> teams(std::vector<T> const& a){
 	return flatten(MAP(teams,a));
 }
 

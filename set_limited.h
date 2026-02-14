@@ -1,8 +1,12 @@
 #ifndef SET_LIMITED_H
 #define SET_LIMITED_H
 
+#include "vector_fixed.h"
+
 template<typename T,size_t N>
 class set_limited{
+	//this is not kept sorted.
+	//so all the lookups are linear.
 	using Data=std::array<T,N>;
 	alignas(Data) char buf[sizeof(Data)];
 	size_t size_=0;
@@ -96,9 +100,29 @@ class set_limited{
 		}
 	}
 
-	set_limited(std::vector<T> a):
-		set_limited(to_set(a))
-	{}
+	set_limited(std::vector<T>&& a){
+		for(auto &elem:a){
+			(*this)|=std::move(elem);
+		}
+	}
+
+	set_limited(std::vector<T> const& a){
+		for(auto const& elem:a){
+			(*this)|=elem;
+		}
+	}
+
+	set_limited(vector_fixed<T,N> const& a){
+		for(auto const& x:a){
+			(*this)|=x;
+		}
+	}
+
+	set_limited(vector_fixed<T,N> && a){
+		for(auto &x:a){
+			(*this)|=std::move(x);
+		}
+	}
 
 	~set_limited(){
 		//for(auto i:range(size_)){
@@ -135,9 +159,36 @@ class set_limited{
 	}
 
 	set_limited& operator|=(T const& t){
-		assert(size_<N);
-		new(&data()[size_]) T(t);
-		size_++;
+		if(!count(t)){
+			assert(size_<N);
+			new(&data()[size_]) T(t);
+			size_++;
+		}
+		return *this;
+	}
+
+	set_limited& operator|=(T&& a){
+		if(!count(a)){
+			assert(size_<N);
+			new(&data()[size_]) T(std::move(a));
+			size_++;
+		}
+		return *this;
+	}
+
+	template<size_t M>
+	set_limited& operator|=(set_limited<T,M> && a){
+		for(auto &x:a){
+			(*this)|=std::move(x);
+		}
+		return *this;
+	}
+
+	template<size_t M>
+	set_limited& operator|=(set_limited<T,M> const& a){
+		for(auto const& x:a){
+			(*this)|=x;
+		}
 		return *this;
 	}
 };
@@ -172,22 +223,61 @@ bool contains(set_limited<T,N> const& a,T const& b){
 	return 0;
 }
 
+#if 0
 template<typename T,size_t N>
 std::set<T> to_set(set_limited<T,N> const& a){
 	return std::set<T>{a.begin(),a.end()};
 }
+#else
+template<typename T,size_t N>
+auto to_set(set_limited<T,N> a){
+	return std::move(a);
+}
+#endif
+
+template<typename T,size_t N>
+set_limited<T,N> to_set(vector_fixed<T,N> const& a){
+	set_limited<T,N> r;
+	for(auto x:a){
+		r|=x;
+	}
+	return r;
+}
+
+template<typename T,size_t N>
+set_limited<T,N> to_set(vector_fixed<T,N> && a){
+	set_limited<T,N> r;
+	for(auto &x:a) r|=std::move(x);
+	return r;
+}
 
 template<typename Func,typename T,size_t N>
 auto mapf(Func f,set_limited<T,N> const& a){
-	return mapf(f,to_set(a));
+	using E=decltype(f(*a.begin()));
+	vector_fixed<E,N> r;
+	for(auto const& elem:a){
+		r|=f(elem);
+	}
+	return r;
 }
 
 template<typename T,size_t N,size_t M>
-std::vector<T> flatten(std::array<set_limited<T,N>,M> const& a){
-	std::vector<T> r;
-	for(auto x:a){
-		for(auto elem:x){
+auto flatten(std::array<set_limited<T,N>,M> const& a){
+	vector_fixed<T,N*M> r;
+	for(auto const& x:a){
+		for(auto const& elem:x){
 			r|=elem;
+		}
+	}
+	return r;
+}
+
+template<typename T,size_t N,size_t M>
+auto flatten(std::array<set_limited<T,N>,M> && a){
+	vector_fixed<T,N*M> r;
+	for(auto& x:a){
+		for(auto& elem:x){
+			r|=std::move(elem);
 		}
 	}
 	return r;
@@ -202,6 +292,73 @@ std::set<T> operator-(std::set<T> a,set_limited<T,N> const& b){
 		a.erase(elem);
 	}
 	return a;
+}
+
+template<typename T,size_t N>
+std::set<T>& operator|=(std::set<T>& a,set_limited<T,N> && b);
+
+template<typename T,size_t N>
+std::set<T>& operator|=(std::set<T>& a,set_limited<T,N> const& b){
+	for(auto x:b){
+		a|=x;
+	}
+	return a;
+}
+
+template<typename T,size_t N,size_t M>
+set_limited<T,N*M> or_all(std::array<set_limited<T,N>,M> && a){
+	set_limited<T,N*M> r;
+	for(auto &x:a){
+		r|=std::move(x);
+	}
+	return r;
+}
+
+template<typename T,size_t N,size_t M>
+auto or_all(std::array<set_limited<T,N>,M> const& a){
+	set_limited<T,N*M> r;
+	for(auto const& x:a){
+		r|=x;
+	}
+	return r;
+}
+
+template<typename T,size_t N>
+std::vector<T>& operator|=(std::vector<T>& a,set_limited<T,N> const& b){
+	a.insert(a.end(),b.begin(),b.end());
+	return a;
+}
+
+template<typename T,size_t N>
+std::vector<T> flatten(std::vector<set_limited<T,N>> const& a){
+	std::vector<T> r;
+	for(auto const& x:a){
+		r|=x;
+	}
+	return r;
+}
+
+template<typename T,size_t N>
+set_limited<T,N> operator-(set_limited<T,N> a,std::set<T> const& b){
+	set_limited<T,N> r;
+	for(auto &x:a){
+		if(!b.count(x)){
+			r|=std::move(x);
+		}
+	}
+	return r;
+}
+
+template<size_t N,typename T>
+auto take(std::set<T> const& a){
+	set_limited<T,N> r;
+	for(auto const& elem:a){
+		if(r.size()>=N){
+			return r;
+		}
+		r|=elem;
+	}
+	return r;
 }
 
 #endif

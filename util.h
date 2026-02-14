@@ -24,9 +24,17 @@ constexpr std::vector<T>& operator|=(std::vector<T> &a,T2 t){
 
 template<typename T,template<typename...> typename COLLECTION,typename ...EXTRA>
 std::vector<T>& operator|=(std::vector<T> &a,COLLECTION<T,EXTRA...> const& b){
-	for(auto const& elem:b){
-		a|=elem;
-	}
+	a.insert(a.end(),b.begin(),b.end());
+	return a;
+}
+
+template<typename T,template<typename...> typename COLLECTION,typename ...EXTRA>
+std::vector<T>& operator|=(std::vector<T> &a,COLLECTION<T,EXTRA...> && b){
+	a.insert(
+		a.end(),
+		std::make_move_iterator(b.begin()),
+		std::make_move_iterator(b.end())
+	);
 	return a;
 }
 
@@ -215,7 +223,22 @@ std::vector<T> filter(F f,std::vector<T> const& v){
 	return r;
 }
 
-#define FILTER(A,B) filter([&](auto x){ return (A)(x); },(B))
+template<typename Func,typename T>
+std::vector<T> filter(Func f,std::vector<T>&& v){
+	//reuse the memory
+	std::vector<T> r=std::move(v);
+	auto out=r.begin();
+	for(auto &elem:r){
+		if(f(elem)){
+			*out=std::move(elem);
+			out++;
+		}
+	}
+	r.erase(out,r.end());
+	return r;
+}
+
+#define FILTER(A,B) filter([&](auto const& x){ return (A)(x); },(B))
 
 template<typename Func,typename T>
 T filter_unique(Func f,std::vector<T> const& a){
@@ -377,11 +400,29 @@ bool all_equal(std::vector<T> const& a){
 
 std::vector<std::string> find(std::string const& base,std::string const& name);
 
-template<template<typename...> typename INNER,typename T,typename ... EXTRA>
+/*template<template<typename...> typename INNER,typename T,typename ... EXTRA>
 auto flatten(std::vector<INNER<T,EXTRA...>> a){
 	std::vector<T> r;
 	for(auto const& elem:a){
 		r|=elem;
+	}
+	return r;
+}*/
+
+template<template<typename...> typename INNER,typename T,typename ... EXTRA>
+auto flatten(std::vector<INNER<T,EXTRA...>> const& a){
+	std::vector<T> r;
+	for(auto const& elem:a){
+		r|=elem;
+	}
+	return r;
+}
+
+template<template<typename...> typename INNER,typename T,typename ... EXTRA>
+auto flatten(std::vector<INNER<T,EXTRA...>> && a){
+	std::vector<T> r;
+	for(auto& elem:a){
+		r|=std::move(elem);
 	}
 	return r;
 }
