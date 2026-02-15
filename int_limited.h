@@ -113,6 +113,11 @@ bool operator>(T a,Int_limited<MIN,MAX> b){
 }
 
 template<typename T,long long MIN,long long MAX>
+bool operator>=(T a,Int_limited<MIN,MAX> b){
+	return a>=b.get();
+}
+
+template<typename T,long long MIN,long long MAX>
 bool operator<(T a,Int_limited<MIN,MAX> b){
 	return a<b.get();
 }

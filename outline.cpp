@@ -911,6 +911,7 @@ struct Args{
 	bool award_limits_demo=0;
 	bool playoff_limits_demo=0;
 	bool timezone_demo=0;
+	bool lock=0;
 	Skill_method skill_method=Skill_method::POINTS;
 };
 
@@ -967,6 +968,11 @@ Args parse_args(int argc,char **argv){
 		"--timezone_demo",{},
 		"Run timezone demo.  Experimental.",
 		r.timezone_demo
+	);
+	p.add(
+		"--lock",{},
+		"Attempt to calculate with 100% certainty.  Experimental.",
+		r.lock
 	);
 	p.parse(argc,argv);
 	return r;
@@ -1117,6 +1123,10 @@ int main1(int argc,char **argv){
 
 	if(args.historical_demo){
 		return historical_demo(tba_fetcher);
+	}
+
+	if(args.lock){
+		return run_lock(tba_fetcher,args.year,args.district);
 	}
 
 	auto d=districts(tba_fetcher,args.year);

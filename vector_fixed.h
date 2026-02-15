@@ -158,6 +158,20 @@ class vector_fixed{
 		size_++;
 		return *this;
 	}
+
+	std::strong_ordering operator<=>(vector_fixed const& a)const{
+		auto cmp=(size()<=>a.size());
+		if(cmp!=std::strong_ordering::equal){
+			return cmp;
+		}
+		for(size_t i=0;i<size();i++){
+			auto c=(*this)[i]<=>a[i];
+			if(c!=std::strong_ordering::equal){
+				return c;
+			}
+		}
+		return std::strong_ordering::equal;
+	}
 };
 
 template<typename T,size_t N>
@@ -231,6 +245,11 @@ auto take(std::vector<T> const& a){
 		r|=a;
 	}
 	return r;
+}
+
+template<typename T,size_t N>
+auto sum(vector_fixed<T,N> const& a){
+	return std::accumulate(a.begin(),a.end(),T());
 }
 
 #endif

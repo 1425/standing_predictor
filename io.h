@@ -201,6 +201,9 @@ template<typename T>
 std::string table(T const& body){ return tag("table",body); }
 
 template<typename T>
+auto h1(T const& t){ return tag("h1",t); }
+
+template<typename T>
 auto h2(T const& t){ return tag("h2",t); }
 
 template<typename T>
@@ -208,6 +211,9 @@ auto h3(T const& t){ return tag("h3",t); }
 
 template<typename T>
 auto th(T const& t){ return tag("th",t); }
+
+template<typename T>
+auto title(T const& t){ return tag("title",t); }
 
 std::string th1(std::string const&);
 

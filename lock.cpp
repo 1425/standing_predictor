@@ -15,12 +15,18 @@
 #include "set_fixed.h"
 #include "rank_limits.h"
 #include "pick_points.h"
+#include "vector_fixed.h"
+#include "event.h"
 
 /*
  * would be good to check some of the assumptions made in here with data
  * also, would be nice to check that some of the the limits...
  *
  * TODO: Team ranking result limits
+1) make the row highlighting work
+2) see about cleaning up how the data is pulled
+3) overall point totals avaible always 0
+4) pts available for finished events should be 0.
  * */
 
 template<typename A,typename B>
@@ -72,7 +78,9 @@ tba::Event_key rand(tba::Event_key const*){
 
 using Age_bonus=Int_limited<0,10>;
 
-using I2=Int_limited<0,200>;
+//using I2=Int_limited<0,200>;
+///using I2=vector_fixed<Int_limited<0,200>,2>;
+using I2=vector_fixed<Point,2>;
 
 //this order will produce inefficient packing.
 #define TEAM_INFO(X)\
@@ -122,6 +130,15 @@ auto rand(Event_finished const*){
 //obviously going to be possible to deal with events that are part-way through.
 using Event_info=std::variant<Event_upcoming,Event_finished>;
 
+Event_info read_event_info(TBA_fetcher &f,tba::Event_key const& event){
+	auto aw=event_awards(f,event);
+	auto c=count_if([](auto x){ return x.award_type==tba::Award_type::CHAIRMANS; },aw);
+	if(c!=0){
+		return Event_finished();
+	}
+	return event_teams(f,event).size();
+}
+
 using Info_by_event=std::map<Event,Event_info>;
 
 #define LOCK_DATA(X)\
@@ -134,6 +151,66 @@ struct Lock_data{
 
 	auto operator<=>(Lock_data const&)const=default;
 };
+
+using Year=tba::Year;
+
+bool won_chairmans(TBA_fetcher &f,Year year,tba::Team_key const& team){
+	auto t=team_awards_year(f,team,year);
+	auto found=count_if([](auto x){ return x.award_type==tba::Award_type::CHAIRMANS; },t);
+	return found!=0;
+}
+
+Lock_data read_lock_data(TBA_fetcher &f,tba::District_key const& district){
+	Lock_data r;
+	//r.by_team
+	auto a=district_rankings(f,district);
+	assert(a);
+	for(auto x:*a){
+		//print_r(x);
+		Team_info team_info;
+
+		//could change this to look only at chairmans awards that are at the counting district events
+		team_info.won_chairmans=won_chairmans(f,year(district),x.team_key);
+
+		auto& at_event=team_info.district_event_points_earned;
+		for(auto y:x.event_points){
+			if(!y.district_cmp && at_event.size()<2){
+				at_event|=y.total;
+			}
+		}
+		//team_info.district_event_points_earned=at_event;
+		team_info.age_bonus=x.rookie_bonus;
+
+		//obviously, want to actually look this up later.
+		team_info.remaining_district_events=at_event.size()<2;
+
+		r.by_team[x.team_key]=team_info;
+	}
+
+	for(auto event:district_events(f,district)){
+		if(
+			event.event_type==tba::Event_type::DISTRICT_CMP
+			|| event.event_type==tba::Event_type::DISTRICT_CMP_DIVISION
+		){
+			continue;
+		}
+		//PRINT(event.event_type);
+		assert(event.event_type==tba::Event_type::DISTRICT);
+		r.by_event[event.key]=read_event_info(f,event.key);
+	}
+	
+	auto d=dcmp_size(district);
+	//Not dealing with California 2026 here!
+	/*thoughts on how to eventually deal with it:
+	 *just go super-conservative and calculate it twice, each with half the teams but 2x the number of events
+	 -could restrict the number of pts available at each event in this case based on the number of teams
+	   from that half of the district that are attending it -> something like min(total pts,83*# of teams)
+	 * */
+	assert(d.size()==1);
+	r.dcmp_size=d[0];
+
+	return r;
+}
 
 std::ostream& operator<<(std::ostream& o,Lock_data const& a){
 	o<<"Lock_data( ";
@@ -211,7 +288,97 @@ int event_points(size_t event_size){
 	return rank+selection+award_points+playoff_pts;
 }
 
-void run(Lock_data const& data){
+/*
+#define LOCK_STATUS(X)\
+	X(Clinched,"#00aa00")\
+	X(In_range,"#aaffaa")\
+	X(Award,"#4444ff")\
+	X(Out_of_range,"#ff4444")\
+	X(Prequalified,"#ff00ff")
+
+enum class Lock_status{
+	#define X(A,B) A,
+	LOCK_STATUS(X)
+	#undef X
+};
+
+using enum Lock_status;
+
+std::ostream& operator<<(std::ostream& o,Lock_status a){
+	#define X(A,B) if(a==A) return o<<""#A;
+	LOCK_STATUS(X)
+	#undef X
+	assert(0);
+}*/
+
+struct Status_prequalified{
+	//could put a reason in here
+	//this isn't meaningful until cmp anyway.
+};
+
+std::ostream& operator<<(std::ostream& o,Status_prequalified const&){
+	return o<<"Prequalified";
+}
+
+struct Status_award{
+	tba::Award_type data;
+};
+
+std::ostream& operator<<(std::ostream& o,Status_award a){
+	return o<<"In via "<<a.data;
+}
+
+struct Status_in{};
+
+std::ostream& operator<<(std::ostream& o,Status_in){
+	return o<<"in";
+}
+
+struct Status_out{};
+
+std::ostream& operator<<(std::ostream& o,Status_out){
+	return o<<"out";
+}
+
+struct Status_in_range{
+	std::string data;
+};
+
+std::ostream& operator<<(std::ostream& o,Status_in_range const& a){
+	return o<<a.data;
+}
+
+struct Status_out_of_range{};
+
+std::ostream& operator<<(std::ostream& o,Status_out_of_range){
+	return o<<"Out of range";
+}
+
+using Status=std::variant<
+	Status_prequalified,
+	Status_award,
+	Status_in,
+	Status_out,
+	Status_in_range,
+	Status_out_of_range
+>;
+
+#define LOCK_STATUS(X)\
+	X(Status_prequalified,"#ff00ff")\
+	X(Status_award,"#4444ff")\
+	X(Status_in,"#00aa00")\
+	X(Status_out,"#555555")\
+	X(Status_in_range,"#aaffaa")\
+	X(Status_out_of_range,"#ff4444")\
+
+std::string color(Status const& a){
+	#define X(A,B) if(std::holds_alternative<A>(a)) return B;
+	LOCK_STATUS(X)
+	#undef X
+	assert(0);
+}
+
+std::tuple<map<Team,Status>,int> run(Lock_data const& data){
 	//print_r(data);
 
 	using Rank_item=std::pair<unsigned short,Point>;
@@ -233,10 +400,13 @@ void run(Lock_data const& data){
 	This means we need to look up from the event size what the limit on pts is
 	Might also want to calculate the maximum pts that can get but theoretically a team could win the chairmans award if there are an events left
 	which effectively means infinite points.
+
+	TODO: Group the teams by # of points so far, that way don't accedentily treat teams differently based on 
+	where they happen to sit when they have equal points.
 	*/
 	vector<tuple<Rank_item,Team,Team_info>> pts;
 	for(auto [team,d]:data.by_team){
-		auto points=d.district_event_points_earned+d.age_bonus;
+		auto points=sum(d.district_event_points_earned)+d.age_bonus;
 		pts|=make_tuple(
 			Rank_item(d.won_chairmans,points),
 			team,
@@ -250,8 +420,8 @@ void run(Lock_data const& data){
 	print_lines(pts);
 	cout<<"\n";*/
 
-	using Marker=std::string;
-	map<Team,Marker> markers;
+	//using Marker=std::string;
+	map<Team,Status> markers;
 
 	//starting by ignoring awards.
 	for(auto [i,t]:enumerate(pts)){
@@ -283,19 +453,19 @@ void run(Lock_data const& data){
 			if(found<needed_passes){
 				//then locked in!
 				//because there aren't enough teams to fill all the slots
-				markers[team]="in";
+				markers[team]=Status_in{};
 			}else{
 				//PRINT(rank_total);
 				if(rank_total.first>left_to_claim.first || rank_total.second>left_to_claim.second){
 					//then locked in
-					markers[team]="in";
+					markers[team]=Status_in{};
 				}else{
 					//not locked in
 
 					auto x=float(rank_total.second)/left_to_claim.second;
 					std::stringstream ss;
 					ss<<"in range "<<rank_total<<" "<<left_to_claim<<" "<<x;
-					markers[team]=ss.str();
+					markers[team]=Status_in_range(ss.str());
 				}
 			}
 		}else{
@@ -304,15 +474,131 @@ void run(Lock_data const& data){
 				//then always to possibility to win
 				//could calculate minimum of what would be needed to get in range
 				//and also could calculate what it would take to get to a lock.
-				markers[team]="possible";
+				markers[team]=Status_out_of_range();
 			}else{
 				//then you're out
-				markers[team]="out";
+				markers[team]=Status_out{};
 			}
 		}
 	}
-	print_lines(markers);
+	//print_lines(markers);
+	return make_tuple(markers,left_to_claim.second);
+}
 
+#define EVENT_DISPLAY(X)\
+	X(std::string,name)\
+	X(std::string,status)\
+	X(size_t,teams)\
+	X(size_t,pts_available)
+
+struct Event_display{
+	EVENT_DISPLAY(INST)
+};
+
+std::ostream& operator<<(std::ostream& o,Event_display const& a){
+	o<<"Event_display( ";
+	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
+	EVENT_DISPLAY(X)
+	#undef X
+	return o<<")";
+}
+
+using Team_district_display=vector_fixed<Point,2>;
+
+#define TEAM_DISPLAY(X)\
+	X(std::string,team)\
+	X(Team_district_display,districts)\
+	X(Point,age_bonus)\
+	X(Point,dcmp_pts)\
+	X(Point,total_pts)\
+	X(Status,locked)
+
+struct Team_display{
+	TEAM_DISPLAY(INST)
+};
+
+std::ostream& operator<<(std::ostream& o,Team_display const& a){
+	o<<"Team_display( ";
+	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
+	TEAM_DISPLAY(X)
+	#undef X
+	return o;
+}
+
+#define LOCK_DISPLAY(X)\
+	X(std::string,district)\
+	X(int,points_remaining)\
+	X(int,available_champs_spots)\
+	X(std::vector<Event_display>,event_status)\
+	X(std::vector<Team_display>,team_display)\
+
+struct Lock_display{
+	LOCK_DISPLAY(INST)
+};
+
+std::ostream& operator<<(std::ostream& o,Lock_display const& a){
+	o<<"Lock_display( ";
+	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
+	LOCK_DISPLAY(X)
+	#undef X
+	return o<<")";
+}
+
+void page(std::ostream& o,Lock_display const& a){
+	o<<"<html>\n";
+	o<<"<head>\n";
+	o<<title("Locks for "+a.district);
+	o<<"</head>\n";
+	o<<"<body>\n";
+	o<<h1("Locks for "+a.district);
+	o<<tag("table border",
+		tr(td("Points remaining")+td(a.points_remaining))+
+		tr(td("Available champs spots")+td(a.available_champs_spots))
+	);
+	o<<h2("Events");
+	o<<tag("table border",
+		tr(th("Name")+th("Status")+th("Teams")+th("Points availble"))+
+		join(mapf(
+			[](auto const& x){
+				return tr(td(x.name)+td(x.status)+td(x.teams)+td(x.pts_available));
+			},
+			a.event_status
+		))
+	);
+	o<<h2("Teams");
+	o<<tag("table border",
+		tr(
+			th("Team")+
+			th("District 1")+
+			th("District 2")+
+			th("Age bonus")+
+			th("DCMP pts")+
+			th("Total pts")+
+			th("Locked?")
+		)+
+		join(mapf(
+			[](auto const& x){
+				auto event=[=](size_t i)->string{
+					if(i>=x.districts.size()){
+						return "-";
+					}
+					return as_string(x.districts[i]);
+				};
+				return tag("tr bgcolor=\""+color(x.locked)+"\"",
+					td(x.team)+
+					td(event(0))+
+					td(event(1))+
+					td(x.age_bonus)+
+					td(x.dcmp_pts)+
+					td(x.total_pts)+
+					td(x.locked)
+				);
+			},
+			a.team_display
+		))
+	);
+	o<<"</body>\n";
+	o<<"</html>\n";
 }
 
 int lock_demo(TBA_fetcher& f,District_key district){
@@ -439,3 +725,77 @@ int lock_demo(TBA_fetcher& f){
 	return 0;
 }
 
+std::string display_name(TBA_fetcher &f,tba::District_key const& k){
+	auto d=districts(f,year(k));
+	auto found=filter_unique([=](auto x){ return x.key==k; },d);
+	return found.display_name;
+}
+
+int run_lock(TBA_fetcher &f,tba::District_key const& district){
+	PRINT(district);
+
+	//it might be cleaner if all the data lookups happened here before calling run.
+	Lock_data in=read_lock_data(f,district);
+	auto [markers,left_to_claim]=run(in);
+	//print_r(out);
+
+	/*X(std::string,district)\
+	X(int,points_remaining)\
+	X(int,available_champs_spots)\
+	X(std::vector<Event_display>,event_status)\
+	X(std::vector<Team_display>,team_display)\*/
+	Lock_display data;
+	data.district=display_name(f,district);
+	data.points_remaining=left_to_claim;
+	data.available_champs_spots=worlds_slots(district);
+
+	/*X(std::string,name)\
+	X(std::string,status)\
+	X(size_t,teams)\
+	X(size_t,pts_available)*/
+	for(auto x:district_events(f,district)){
+		auto ii=in.by_event[x.key];
+		//print_r(ii);
+		Event_display h;
+		//print_r(x);
+		h.name=x.name;
+		h.status=std::holds_alternative<Event_finished>(ii)?"done":"not done";
+		h.teams=event_teams(f,x.key).size();
+		h.pts_available=event_points(h.teams);
+		data.event_status|=h;
+	}
+
+	for(auto [team,mark]:markers){
+		Team_display here;
+		//here.lock_status=Lock_status::Clinched;//TODO: Set this correctly
+		here.team=::as_string(team);
+		auto ih=in.by_team[team];
+		here.districts=ih.district_event_points_earned;
+		here.age_bonus=ih.age_bonus;
+		here.dcmp_pts=0;
+		here.total_pts=sum(here.districts)+here.age_bonus+here.dcmp_pts;
+		here.locked=mark;
+		data.team_display|=here;
+	}
+	data.team_display=sort_by(data.team_display,[](auto x){ return -x.total_pts; });
+	
+	//PRINT(data);
+	{
+		ofstream file(string()+"lock_"+::as_string(district)+".html");
+		page(file,data);
+	}
+	return 0;
+}
+
+int run_lock(TBA_fetcher &f,tba::Year const& year,std::optional<tba::District_key> const& district){
+	if(district){
+		return run_lock(f,*district);
+	}
+	for(auto district:keys(districts(f,year))){
+		int r=run_lock(f,district);
+		if(r){
+			return r;
+		}
+	}
+	return 0;
+}
