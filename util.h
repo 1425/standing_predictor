@@ -229,17 +229,43 @@ std::vector<T> filter(F f,std::vector<T> const& v){
 	return r;
 }
 
+template<typename T>
+bool contains(std::vector<T> const& a,T const& b){
+	for(auto const& x:a){
+		if(x==b){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+template<typename T>
+bool subset(std::vector<T> const& a,std::vector<T> const& b){
+	for(auto const& x:a){
+		if(!contains(b,x)){
+			return 0;
+		}
+	}
+	return 1;
+}
+
 template<typename Func,typename T>
 std::vector<T> filter(Func f,std::vector<T>&& v){
 	//reuse the memory
 	std::vector<T> r=std::move(v);
 	auto out=r.begin();
-	for(auto &elem:r){
-		if(f(elem)){
-			*out=std::move(elem);
+
+	for(auto in=r.begin();in!=r.end();++in){
+		if(f(*in)){
+			//you have to check for this case because moving an object to itself will leave it in
+			//and undefined state.
+			if(out!=in){
+				*out=std::move(*in);
+			}
 			out++;
 		}
 	}
+
 	r.erase(out,r.end());
 	return r;
 }

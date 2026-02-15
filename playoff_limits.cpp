@@ -30,12 +30,15 @@ bool subset(std::set<T> const& a,std::set<T> const& b){
 	return 1;
 }
 
-template<typename T>
+/*
+ * this is O(N*log(N)+M*log(M)+N*log(M))
+ * basic impl is O(N*M)
+ * template<typename T>
 bool subset(std::vector<T> const& a,std::vector<T> const& b){
 	auto s1=to_set(a);
 	auto s2=to_set(b);
 	return subset(s1,s2);
-}
+}*/
 
 using namespace std;
 using Team=tba::Team_key;

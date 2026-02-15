@@ -29,6 +29,11 @@
 4) pts available for finished events should be 0.
  * */
 
+template<typename K,typename V>
+auto sorted(std::map<K,V> const& a){
+	return sorted(to_vec(a));
+}
+
 template<typename A,typename B>
 std::pair<A,B> operator-(std::pair<A,B> const& a,std::pair<A,B> const& b){
 	return std::make_pair(
@@ -58,8 +63,6 @@ using Event=tba::Event_key;
 using Event_key=tba::Event_key;
 using namespace std;
 
-//using Rank=Int_limited<1,100>;
-
 tba::Team_key rand(tba::Team_key const*){
 	std::stringstream ss;
 	ss<<"frc"<<rand()%1000;
@@ -76,7 +79,45 @@ tba::Event_key rand(tba::Event_key const*){
 	return tba::Event_key(ss.str());
 }
 
-using Age_bonus=Int_limited<0,10>;
+using Age_bonus=Int_limited<0,10>;//not encoding that it can only be 0,5,10
+
+bool chairmans_expected(tba::Event_type a){
+	#define X(NAME,RESULT) if(a==tba::Event_type::NAME) return RESULT;
+	X(DISTRICT,1)
+	X(DISTRICT_CMP_DIVISION,0)
+	#undef X
+
+	PRINT(a);
+	nyi
+}
+
+bool chairmans_expected(TBA_fetcher &f,tba::Event_key const& a){
+	auto e=tba::event(f,a);
+	return chairmans_expected(e.event_type);
+}
+
+bool complete(tba::Match const& a){
+	if(a.post_result_time){
+		return 1;
+	}
+	auto s0=a.alliances.red.score.valid();
+	auto s1=a.alliances.blue.score.valid();
+	assert(s0==s1);
+	if(s0){
+		return 1;
+	}
+	print_r(a);
+	nyi
+}
+
+bool matches_complete(TBA_fetcher &f,tba::Event_key const& event){
+	//note that this isn't thinking too hard about whether or not this event ought to have matches.
+	auto e=tba::event_matches(f,event);
+	if(e.empty()){
+		return 0;
+	}
+	return all(MAP(complete,e));
+}
 
 //using I2=Int_limited<0,200>;
 ///using I2=vector_fixed<Int_limited<0,200>,2>;
@@ -136,7 +177,22 @@ Event_info read_event_info(TBA_fetcher &f,tba::Event_key const& event){
 	if(c!=0){
 		return Event_finished();
 	}
+	if(!chairmans_expected(f,event)){
+		//then look at the matches and see if they look done.
+		if(matches_complete(f,event)){
+			return Event_finished();
+		}
+	}
 	return event_teams(f,event).size();
+}
+
+bool done(TBA_fetcher &f,tba::Event_key const& event){
+	auto a=read_event_info(f,event);
+	return std::holds_alternative<Event_finished>(a);
+}
+
+bool done(TBA_fetcher &f,tba::Event const& event){
+	return done(f,event.key);
 }
 
 using Info_by_event=std::map<Event,Event_info>;
@@ -238,6 +294,8 @@ void print_r(int n,Lock_data const& a){
 }
 
 int event_points(size_t event_size){
+	//This is for a normal district event, not a district championship, or a district championship division.
+
 	//ranking
 	auto rank=rank_pts(event_size);
 	//PRINT(rank);
@@ -287,29 +345,6 @@ int event_points(size_t event_size){
 
 	return rank+selection+award_points+playoff_pts;
 }
-
-/*
-#define LOCK_STATUS(X)\
-	X(Clinched,"#00aa00")\
-	X(In_range,"#aaffaa")\
-	X(Award,"#4444ff")\
-	X(Out_of_range,"#ff4444")\
-	X(Prequalified,"#ff00ff")
-
-enum class Lock_status{
-	#define X(A,B) A,
-	LOCK_STATUS(X)
-	#undef X
-};
-
-using enum Lock_status;
-
-std::ostream& operator<<(std::ostream& o,Lock_status a){
-	#define X(A,B) if(a==A) return o<<""#A;
-	LOCK_STATUS(X)
-	#undef X
-	assert(0);
-}*/
 
 struct Status_prequalified{
 	//could put a reason in here
@@ -378,10 +413,41 @@ std::string color(Status const& a){
 	assert(0);
 }
 
-std::tuple<map<Team,Status>,int> run(Lock_data const& data){
+template<typename A,typename B,typename C>
+std::pair<A,B> operator*(pair<A,B> a,C c){
+	a.first*=c;
+	a.second*=c;
+	return a;
+}
+
+using Status_by_team=map<Team,Status>;
+using Points_by_event=map<tba::Event_key,Point>;
+
+#define LOCK_RESULT(X)\
+	X(Status_by_team,by_team)\
+	X(Point,pre_dcmp_points_remaining)\
+	X(Points_by_event,by_event)
+
+struct Lock_result{
+	LOCK_RESULT(INST)
+};
+
+template<typename A,typename B>
+bool both_less(std::pair<A,B> const& a,std::pair<A,B> const& b){
+	return a.first<b.first && a.second<b.second;
+}
+
+template<typename A,typename B>
+bool both_less_eq(std::pair<A,B> const& a,std::pair<A,B> const& b){
+	return a.first<=b.first && a.second<=b.second;
+}
+
+//std::tuple<map<Team,Status>,int> run(Lock_data const& data){
+Lock_result run(Lock_data const& data){
 	//print_r(data);
 
 	using Rank_item=std::pair<unsigned short,Point>;
+	Lock_result r;
 
 	Rank_item left_to_claim;
 	for(auto [k,v]:data.by_event){
@@ -389,6 +455,9 @@ std::tuple<map<Team,Status>,int> run(Lock_data const& data){
 			auto a=std::get<Event_upcoming>(v);
 			left_to_claim.first+=1;
 			left_to_claim.second+=event_points(a);
+			r.by_event[k]=event_points(a);
+		}else{
+			r.by_event[k]=0;
 		}
 	}
 	//PRINT(left_to_claim);
@@ -404,17 +473,17 @@ std::tuple<map<Team,Status>,int> run(Lock_data const& data){
 	TODO: Group the teams by # of points so far, that way don't accedentily treat teams differently based on 
 	where they happen to sit when they have equal points.
 	*/
-	vector<tuple<Rank_item,Team,Team_info>> pts;
+	map<Rank_item,vector<tuple<Team,Team_info>>> by_pts;
 	for(auto [team,d]:data.by_team){
 		auto points=sum(d.district_event_points_earned)+d.age_bonus;
-		pts|=make_tuple(
-			Rank_item(d.won_chairmans,points),
-			team,
-			d
-		);
+		Rank_item ri(d.won_chairmans,points);
+		by_pts[ri]|=make_tuple(team,d);
 	}
 	//std::sort(pts.begin(),pts.end());
-	pts=reversed(sorted(pts));
+	//vector<tuple<Rank_item,std::vector<tuple<Team,Team_info>>>> pts;
+	auto pts=reversed(sorted(by_pts));
+
+	//print_r(pts);
 
 	/*cout<<"Current lineup:\n";
 	print_lines(pts);
@@ -424,72 +493,100 @@ std::tuple<map<Team,Status>,int> run(Lock_data const& data){
 	map<Team,Status> markers;
 
 	//starting by ignoring awards.
-	for(auto [i,t]:enumerate(pts)){
+	size_t i=0;
+	for(auto t:pts){
 		//PRINT(i)
 		//PRINT(t);
 
-		auto [n,team,info]=t;
+		auto [n,teams_here]=t;
 
 		if(i<data.dcmp_size){
 			//currently in range to go
 			//PRINT(info);
 			unsigned needed_passes=data.dcmp_size-i;
 			//PRINT(needed_passes);
-			unsigned found=0;
+			unsigned found=0;//teams found that might be able to pass/tie
 			Rank_item rank_total;
-			for(size_t j=i+1;j<pts.size() && found<needed_passes;j++){
-				if(!get<2>(pts[j]).remaining_district_events){
-					continue;
+			for(
+				size_t j=i+1;
+				j<pts.size() && found<needed_passes && both_less_eq(rank_total,left_to_claim)
+				;j++
+			){
+				size_t found_here=0;
+				auto [rank_next,teams]=pts[j];
+				for(auto [team,team_info]:teams){
+					if(team_info.remaining_district_events){
+						found_here++;
+					}
 				}
-				auto rank_next=get<0>(pts[j]);
 				auto diff=n-rank_next;
 				if(diff.second<0){
 					diff.second=0;
 				}
 				//PRINT(diff);
-				rank_total+=diff;
-				found++;
+				
+				while(found_here && found<needed_passes && both_less_eq(rank_total,left_to_claim)){
+					rank_total+=diff;
+					found++;
+					found_here--;
+				}
+				/*rank_total+=diff*found_here;
+				found+=found_here;*/
+				//need to calculate effort to have at least 1 pass vs the effort to have all of them pass
 			}
 			if(found<needed_passes){
 				//then locked in!
 				//because there aren't enough teams to fill all the slots
-				markers[team]=Status_in{};
+				for(auto [team,info]:teams_here){
+					markers[team]=Status_in{};
+				}
 			}else{
 				//PRINT(rank_total);
 				if(rank_total.first>left_to_claim.first || rank_total.second>left_to_claim.second){
 					//then locked in
-					markers[team]=Status_in{};
+					for(auto [team,info]:teams_here){
+						markers[team]=Status_in{};
+					}
 				}else{
 					//not locked in
-
+					PRINT(rank_total.second);
+					PRINT(left_to_claim.second);
 					auto x=float(rank_total.second)/left_to_claim.second;
 					std::stringstream ss;
 					ss<<"in range "<<rank_total<<" "<<left_to_claim<<" "<<x;
-					markers[team]=Status_in_range(ss.str());
+					for(auto [team,info]:teams_here){
+						markers[team]=Status_in_range(ss.str());
+					}
 				}
 			}
 		}else{
-			//currently in range to miss out
-			if(info.remaining_district_events){
-				//then always to possibility to win
-				//could calculate minimum of what would be needed to get in range
-				//and also could calculate what it would take to get to a lock.
-				markers[team]=Status_out_of_range();
-			}else{
-				//then you're out
-				markers[team]=Status_out{};
+			for(auto [team,info]:teams_here){
+				//currently in range to miss out
+				if(info.remaining_district_events){
+					//then always to possibility to win
+					//could calculate minimum of what would be needed to get in range
+					//and also could calculate what it would take to get to a lock.
+					markers[team]=Status_out_of_range();
+				}else{
+					//then you're out
+					markers[team]=Status_out{};
+				}
 			}
 		}
+		i+=teams_here.size();
 	}
-	//print_lines(markers);
-	return make_tuple(markers,left_to_claim.second);
+	//PRINT(markers);
+	r.by_team=markers;
+	r.pre_dcmp_points_remaining=left_to_claim.second;
+	return r;
 }
 
 #define EVENT_DISPLAY(X)\
 	X(std::string,name)\
 	X(std::string,status)\
 	X(size_t,teams)\
-	X(size_t,pts_available)
+	X(std::string,pts_available)\
+	X(Interval<tba::Date>,date)\
 
 struct Event_display{
 	EVENT_DISPLAY(INST)
@@ -527,7 +624,9 @@ std::ostream& operator<<(std::ostream& o,Team_display const& a){
 
 #define LOCK_DISPLAY(X)\
 	X(std::string,district)\
-	X(int,points_remaining)\
+	X(int,pre_dcmp_points_remaining)\
+	X(int,dcmp_size)\
+	X(int,total_points_remaining)\
 	X(int,available_champs_spots)\
 	X(std::vector<Event_display>,event_status)\
 	X(std::vector<Team_display>,team_display)\
@@ -552,15 +651,17 @@ void page(std::ostream& o,Lock_display const& a){
 	o<<"<body>\n";
 	o<<h1("Locks for "+a.district);
 	o<<tag("table border",
-		tr(td("Points remaining")+td(a.points_remaining))+
+		tr(td("Pre-DCMP points remaining")+td(a.pre_dcmp_points_remaining))+
+		tr(td("District championship size")+td(a.dcmp_size))+
+		tr(td("Total points remaining")+td(a.total_points_remaining))+
 		tr(td("Available champs spots")+td(a.available_champs_spots))
 	);
 	o<<h2("Events");
 	o<<tag("table border",
-		tr(th("Name")+th("Status")+th("Teams")+th("Points availble"))+
+		tr(th("Name")+th("Status")+th("Date")+th("Teams")+th("Points availble"))+
 		join(mapf(
 			[](auto const& x){
-				return tr(td(x.name)+td(x.status)+td(x.teams)+td(x.pts_available));
+				return tr(td(x.name)+td(x.status)+td(x.date)+td(x.teams)+td(x.pts_available));
 			},
 			a.event_status
 		))
@@ -731,12 +832,44 @@ std::string display_name(TBA_fetcher &f,tba::District_key const& k){
 	return found.display_name;
 }
 
+Point event_pts(TBA_fetcher &f,tba::Event_key const& event){
+	//PRINT(event);
+	auto e=tba::event(f,event);
+	//print_r(e);
+	//PRINT(e.event_type);
+
+	assert(e.event_type==tba::Event_type::DISTRICT_CMP || e.event_type==tba::Event_type::DISTRICT_CMP_DIVISION);
+
+	//TODO: Make it so that looks at the number of teams that are expected at the event rather than the
+	//number that are currently qualified
+
+	auto size=tba::event_teams(f,event).size();
+	return event_points(size)*3;
+}
+
+Point event_pts(TBA_fetcher &f,tba::Event const& event){
+	return event_pts(f,event.key);
+}
+
+Point dcmp_points(TBA_fetcher &f,tba::District_key const& district){
+	auto found=filter(
+		[&](auto x){
+			return (x.event_type==tba::Event_type::DISTRICT_CMP || 
+				x.event_type==tba::Event_type::DISTRICT_CMP_DIVISION)
+				&& !done(f,x);
+		},
+		tba::district_events(f,district)
+	);
+	return sum(mapf([&](auto const& x){ return event_pts(f,x); },found));
+}
+
 int run_lock(TBA_fetcher &f,tba::District_key const& district){
 	PRINT(district);
 
 	//it might be cleaner if all the data lookups happened here before calling run.
 	Lock_data in=read_lock_data(f,district);
-	auto [markers,left_to_claim]=run(in);
+	//auto [markers,left_to_claim]=run(in);
+	auto out=run(in);
 	//print_r(out);
 
 	/*X(std::string,district)\
@@ -745,27 +878,56 @@ int run_lock(TBA_fetcher &f,tba::District_key const& district){
 	X(std::vector<Event_display>,event_status)\
 	X(std::vector<Team_display>,team_display)\*/
 	Lock_display data;
-	data.district=display_name(f,district);
-	data.points_remaining=left_to_claim;
+	data.district=display_name(f,district);//This is ugly and unhelpful.  
+	data.pre_dcmp_points_remaining=out.pre_dcmp_points_remaining;
+	data.total_points_remaining=data.pre_dcmp_points_remaining+dcmp_points(f,district);
 	data.available_champs_spots=worlds_slots(district);
+
+	data.dcmp_size=in.dcmp_size;
 
 	/*X(std::string,name)\
 	X(std::string,status)\
 	X(size_t,teams)\
 	X(size_t,pts_available)*/
 	for(auto x:district_events(f,district)){
-		auto ii=in.by_event[x.key];
 		//print_r(ii);
 		Event_display h;
 		//print_r(x);
 		h.name=x.name;
-		h.status=std::holds_alternative<Event_finished>(ii)?"done":"not done";
+		h.status=[&]()->string{
+			auto it=in.by_event.find(x.key);
+			if(it!=in.by_event.end()){
+				auto ii=it->second;
+				return std::holds_alternative<Event_finished>(ii)?"done":"not done";
+			}
+			return ::as_string(read_event_info(f,x.key));
+			//return "no data";
+		}();
+
 		h.teams=event_teams(f,x.key).size();
-		h.pts_available=event_points(h.teams);
+
+		h.pts_available=[&]()->string{
+			auto it=out.by_event.find(x.key);
+			if(it==out.by_event.end()){
+				//dcmp or something.
+				if(done(f,x.key)){
+					return "0";
+				}else{
+					return "?"+::as_string(event_pts(f,x.key));
+				}
+			}
+			return ::as_string(it->second);
+		}();
+
+		assert(x.start_date);
+		assert(x.end_date);
+		h.date=Interval<tba::Date>{*x.start_date,*x.end_date};
+
 		data.event_status|=h;
 	}
+	data.event_status=sort_by(data.event_status,[](auto x){ return x.date.max; });
 
-	for(auto [team,mark]:markers){
+	for(auto [team,mark]:out.by_team){
 		Team_display here;
 		//here.lock_status=Lock_status::Clinched;//TODO: Set this correctly
 		here.team=::as_string(team);

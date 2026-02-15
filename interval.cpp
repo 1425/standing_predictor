@@ -6,10 +6,16 @@ std::ostream& operator<<(std::ostream& o,Interval<tba::Date> const& i){
 		return o<<"("<<a<<"-"<<b<<")";
 	}
 	unsigned ad=static_cast<unsigned>(a.day()),bd=static_cast<unsigned>(b.day());
-	if(a.month()==b.month()){
-		return o<<a.month()<<" "<<ad<<"-"<<bd;
+	if(a.month()!=b.month()){
+		return o<<a.month()<<" "<<ad<<" - "<<b.month()<<" "<<bd;
 	}
-	return o<<a.month()<<" "<<ad<<" - "<<b.month()<<" "<<bd;
+	o<<a.month()<<" ";
+	if(ad==bd){
+		o<<ad;
+	}else{
+		o<<ad<<"-"<<bd;
+	}
+	return o;
 }
 
 std::ostream& operator<<(std::ostream& o,Interval_compare a){
