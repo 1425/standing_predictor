@@ -44,6 +44,7 @@ using Time_ns=std::chrono::duration<long int,std::ratio<1,1000*1000*1000>>;
 
 std::ostream& operator<<(std::ostream&,Time_ns const&);
 
+std::chrono::hours offset(std::chrono::time_zone const&);
 std::ostream& operator<<(std::ostream&,std::chrono::time_zone const&);
 std::ostream& operator<<(std::ostream&,std::chrono::time_zone const * const);
 std::ostream& operator<<(std::ostream&,std::stringstream const&);

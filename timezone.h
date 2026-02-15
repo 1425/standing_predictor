@@ -1,10 +1,17 @@
 #ifndef TIMEZONE_H
 #define TIMEZONE_H
 
+#include<chrono>
+
 namespace tba{
 	struct Event;
 };
 
-int get_timezone(tba::Event const&);
+class TBA_fetcher;
+
+//Offset to UTC
+std::chrono::hours get_timezone(tba::Event const&);
+
+int timezone_demo(TBA_fetcher&);
 
 #endif

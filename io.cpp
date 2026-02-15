@@ -58,10 +58,24 @@ std::ostream& operator<<(std::ostream& o,std::invalid_argument const& a){
 	return o<<"invalid_argument("<<a.what()<<")";
 }
 
+std::chrono::hours offset(std::chrono::time_zone const& a){
+	//This returns floating-point hours.
+
+	//This works by assuming that system_clock is synchronoized to UTC.
+	//That is not technically required by the C++ standard.
+	auto now=std::chrono::system_clock::now();
+	auto info=a.get_info(now);
+	auto x=std::chrono::duration<double,std::ratio<3600>>(info.offset);
+	return std::chrono::hours((int)x.count());
+}
+
+std::ostream& operator<<(std::ostream& o,std::chrono::hours a){
+	return o<<a.count()<<"h";
+}
 
 std::ostream& operator<<(std::ostream& o,std::chrono::time_zone const& a){
 	o<<"timezone(";
-	o<<a.name();//<<" "<<a.get_info();
+	o<<a.name()<<" "<<offset(a);
 	return o<<")";
 }
 

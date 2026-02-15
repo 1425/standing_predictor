@@ -219,6 +219,11 @@ std::set<T> choose(size_t n,std::set<T> a){
 	return r;
 }
 
+template<typename T>
+auto enumerate(std::set<T> const& a){
+	return enumerate(to_vec(a));
+}
+
 //start stuff using std::multiset
 
 template<typename T>

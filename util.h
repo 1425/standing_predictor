@@ -22,6 +22,12 @@ constexpr std::vector<T>& operator|=(std::vector<T> &a,T2 t){
 	return a;
 }
 
+template<typename T>
+auto operator|(std::vector<T> a,T b){
+	a|=b;
+	return a;
+}
+
 template<typename T,template<typename...> typename COLLECTION,typename ...EXTRA>
 std::vector<T>& operator|=(std::vector<T> &a,COLLECTION<T,EXTRA...> const& b){
 	a.insert(a.end(),b.begin(),b.end());

@@ -39,6 +39,11 @@ void print_r(int n,tba::Event const& a){
 }
 
 std::vector<Team> teams(tba::Elimination_Alliance const& a){
+	if(a.backup){
+		//print_r(a);
+		//PRINT(a.backup);
+		return a.picks|a.backup->in;
+	}
 	return a.picks;
 }
 

@@ -13,6 +13,23 @@
 
 using namespace std;
 
+bool prefix(std::optional<std::string> whole,std::string part){
+	if(!whole) return 0;
+	return prefix(*whole,part);
+}
+
+template<typename T>
+bool contains(std::vector<T> const& a,T const& b){
+	return to_set(a).count(b);
+}
+
+bool contains(std::vector<std::string> const& a,const char *s){
+	if(!s){
+		return 0;
+	}
+	return contains(a,std::string(s));
+}
+
 struct Country{
 	std::string s;
 
@@ -37,11 +54,37 @@ std::ostream& operator<<(std::ostream& o,Country const& a){
 struct State_prov{
 	std::string s;
 
+	State_prov& operator=(std::string const& a){
+		s=a;
+		return *this;
+	}
+
 	auto operator<=>(State_prov const&)const=default;
+
+	bool operator==(std::string const& a)const{
+		return s==a;
+	}
 };
 
 std::ostream& operator<<(std::ostream& o,State_prov const& a){
 	return o<<a.s;
+}
+
+#define ADDRESS(X)\
+	X(Country,country)\
+	X(std::optional<State_prov>,state)\
+	X(std::optional<City>,city)
+
+struct Address{
+	ADDRESS(INST)
+};
+
+std::ostream& operator<<(std::ostream& o,Address const& a){
+	o<<"Address( ";
+	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
+	ADDRESS(X)
+	#undef X
+	return o<<")";
 }
 
 static const std::set<std::string> STATE_CODES{
@@ -104,7 +147,23 @@ std::optional<Country> normalize_country(std::optional<std::string> s1){
 	return Country(*s1);
 }
 
+string strip(string s){
+	while(!s.empty() && s[0]==' '){
+		s=s.substr(1,s.size());
+	}
+	while(!s.empty() && s[s.size()-1]==' '){
+		s=s.substr(0,s.size()-1);
+	}
+	return s;
+}
+
+std::optional<std::string> strip(std::optional<std::string> const& a){
+	if(a) return strip(*a);
+	return std::nullopt;
+}
+
 std::optional<State_prov> normalize_state(std::string s){
+	s=strip(s);
 	using R=std::optional<State_prov>;
 	if(s=="Florida" || s=="Fl"){
 		return R("FL");
@@ -267,20 +326,22 @@ Country get_country(tba::Event x){
 			return *n;
 }
 
-int get_timezone(State_prov const& a){
+std::chrono::hours get_timezone(State_prov const& a,std::optional<City> const& city){
 	//This is very approximate.
 	//also ignoring timezones.
 
 	std::set<string> pacific{
 		"CA","NV","OR","WA",
-
+		"AZ",//sometimes
+		
 		//Canada
 		"BC"
 	};
 	std::set<string> mountain{
 		"AZ","CO","ID","KS","MT","NE",
 		"NV","NM","ND","SD","UT","WY",
-		//some of Oregon, TX
+		"TX",//small section
+		//some of Oregon
 
 		//Canada
 		"AB"
@@ -294,7 +355,7 @@ int get_timezone(State_prov const& a){
 		"CT","DE","FL","GA","IN","KT",
 		"ME","MD","MA","MI","NH","NJ",
 		"NY","NC","OH","PA","RI","SC",
-		"TN","VT","VA","WV",
+		"TN","VT","VA","WV","KY",
 
 		//Not a state
 		"DC",
@@ -305,7 +366,8 @@ int get_timezone(State_prov const& a){
 	std::set<string> alaska{"AK"};//most of it, anyway
 	std::set<string> hawaii{"HI"};
 
-	#define X(A,B) if(A.count(a.s)) return B;
+	vector<std::chrono::hours> r;
+	#define X(A,B) if(A.count(a.s)) r|=std::chrono::hours(B);
 	X(hawaii,-10)
 	X(alaska,-9)
 	X(pacific,-8)
@@ -314,53 +376,183 @@ int get_timezone(State_prov const& a){
 	X(eastern,-5)
 	#undef X
 
-	PRINT(a);
-	assert(0);
+	if(r.empty()){
+		PRINT(a);
+		assert(0);
+	}
+
+	if(r.size()==1){
+		return r[0];
+	}
+
+	if(a=="NV" && city=="Las Vegas"){
+		return std::chrono::hours(-8);
+	}
+	if(a=="TN" && city=="Knoxville"){
+		return std::chrono::hours(-5);
+	}
+	#define X(A,B,C) if(a==""#B && city==A) return std::chrono::hours(C);
+	X("Lawrence",KS,-6)
+	X("Grand Forks",ND,-6)
+	X("Oak Ridge",TN,-5)
+	X("Salina",KS,-6)
+	X("Olathe",KS,-6)
+	X("Collierville",TN,-6)
+	X("West Fargo",ND,-6)
+	X("Shawnee",KS,-6)
+	X("Fargo",ND,-6)
+	X("Sevierville",TN,-5)
+	X("Corbin",KY,-5)
+	X("Louisville",KY,-5)
+	X("Phoenix",AZ,-7)
+	X("Chandler",AZ,-7)
+	X("Azusa",AZ,-7)
+	X("Prescott Valley",AZ,-7)
+	X("Flagstaff",AZ,-7)
+	X("Tempe",AZ,-7)
+	X("Glendale",AZ,-7)
+	X("Scottsdale",AZ,-7)
+	X("El Paso",TX,-7)
+	X("Houston",TX,-6)
+	X("Katy",TX,-6)
+	X("Dallas",TX,-6)
+	X("San Antonio",TX,-6)
+	X("Austin",TX,-6)
+	X("Irving",TX,-6)
+	X("Lubbock",TX,-6)
+	X("Texas",TX,-6) //going to assume this means Texas City.
+	X("Conroe",TX,-6)
+	X("Fort Worth",TX,-6)
+	X("Oak Ridge",TX,-6)
+	X("The Woodlands",TX,-6)
+	X("Plano",TX,-6)
+	X("Waco",TX,-6)
+	X("Allen",TX,-6)
+	X("Pasadena",TX,-6)
+	X("Amarillo",TX,-6)
+	X("Channelview",TX,-6)
+	X("Del Rio",TX,-6)
+	X("Greenville",TX,-6)
+	X("Rockwall",TX,-6)
+	X("Dripping Springs",TX,-6)
+	X("New Braunfels",TX,-6)
+	X("Nome",TX,-6)
+	X("Belton",TX,-6)
+	X("League City",TX,-6)
+	X("Frisco",TX,-6)
+	X("Friendswood",TX,-6)
+	X("Corpus Christi",TX,-6)
+	X("Manor",TX,-6)
+	X("Tomball",TX,-6)
+	X("Victoria",TX,-6)
+	X("Abilene",TX,-6)
+	X("Farmersville",TX,-6)
+	X("McAllen",TX,-6)
+	#undef X
+
+	PRINT(a)
+	PRINT(r)
+	PRINT(city);
+	nyi
 }
 
-int get_timezone(Country a,std::optional<State_prov> state){
+bool operator==(State_prov const& a,const char *b){
+	if(!b){
+		return 0;
+	}
+	return a==string(b);
+}
+
+bool operator==(std::optional<State_prov> const& a,const char *b){
+	if(!a){
+		return !b;
+	}
+	return *a==b;
+}
+
+//std::chrono::hours get_timezone(Country a,std::optional<State_prov> state){
+std::chrono::hours get_timezone(Address address){
+	auto a=address.country;
+	auto state=address.state;
+
 	/* This only needs to be very roughly correct so that events that
 	 * happen between like 8am and 8pm end up on the correct date. */
 
 	if(a=="USA" || a=="Canada"){
 		if(state){
-			return get_timezone(*state);
+			return get_timezone(*state,address.city);
 		}
 		//Pacific
-		return -8;
+		return std::chrono::hours(-8);
 	}
 	if(a=="Australia"){
-		return 11; //Sydney summer
+		if(
+			state=="New South Wales" || state=="NSW" || 
+			state=="VIC" || state=="Victoria"
+		){
+			return std::chrono::hours(11); //Sydney summer
+		}else if(state=="WA"){
+			return std::chrono::hours(8);
+		}else{
+			cout<<a<<"\t\""<<state<<"\"\n";
+			nyi
+		}
 	}
 	if(a=="China" || a=="Taiwan"){
-		return 8;
+		return std::chrono::hours(8);
 	}
 	if(a=="Mexico"){
-		//Mexico City
-		return -6;
+		if(
+			state=="DIF" || //Districo Federal
+			state=="MEX" ||
+			state=="COA" //Coahuila
+			||state=="NLE" //Nuevo Leon
+			||state=="PUE" //Puebla
+			||state=="GUA" //Guanajuato
+			||state=="NL" //Nuevo Leon
+		){
+			//Mexico City
+			return std::chrono::hours(-6);
+		}
+		if(
+			state=="BC" //Baja California
+		){
+			return std::chrono::hours(-8);
+		}
+		if(state=="SON"){ //Sonora
+			return std::chrono::hours(-7);
+		}
+
+		PRINT(a); PRINT(state);
+		nyi
 	}
 	if(a=="Brazil"){
-		return -3;
+		if(
+			state=="RS" //Rio Grande do Sul
+			||state=="Rio de Janeiro"
+			||state=="DF"
+			||state=="SC" //Santa Catarina
+			||state=="SP" //São Paulo
+		){
+			//Brasilia standard time
+			return std::chrono::hours(-3);
+		}
+		if(state=="Mato Grosso"){
+			return std::chrono::hours(-4);
+		}
+		PRINT(a);
+		PRINT(state);
+		nyi
 	}
 	if(a=="Israel"){
-		return 2;
+		return std::chrono::hours(2);
 	}
 	if(a=="Turkey"){
-		return 3;
+		return std::chrono::hours(3);
 	}
+	assert(0);
 	PRINT(a);
-	return 0;
-}
-
-int get_timezone(tba::Event const& event){
-	auto country=get_country(event);
-	auto state=[=]()->std::optional<State_prov>{
-		if(event.state_prov){
-			return normalize_state(*event.state_prov);
-		}
-		return std::nullopt;
-	}();
-	return get_timezone(country,state);
+	return std::chrono::hours(0);
 }
 
 struct Match_positions{
@@ -397,7 +589,8 @@ std::optional<Match_positions> match_schedule(TBA_fetcher &f,tba::Event_key even
 	}
 
 	auto from=[=](auto x){
-		return std::chrono::system_clock::from_time_t(x+3600*timezone);
+		//return std::chrono::system_clock::from_time_t(x+3600*timezone);
+		return std::chrono::system_clock::from_time_t(x)+timezone;
 	};
 
 	assert(event_data.start_date);
@@ -661,3 +854,306 @@ Dates_result event_times_inner(TBA_fetcher &f){
 	nyi//return 0;
 }
 
+std::chrono::time_zone const* locate_zone(std::optional<std::string> a){
+	if(!a){
+		return NULL;
+	}
+	return std::chrono::locate_zone(*a);
+}
+
+bool has_matches(TBA_fetcher &f,tba::Event const& e){
+	//asking for the keys because they are faster to parse.
+	return tba::event_matches_keys(f,e.key).size()!=0;
+	//return tba::event_matches(f,e.key).size()!=0;
+}
+
+bool has_times(tba::Match const& a){
+	return a.time || a.actual_time || a.predicted_time || a.post_result_time;
+}
+
+bool has_matches_with_times(TBA_fetcher &f,tba::Event const& e){
+	auto m=tba::event_matches(f,e.key);
+	return any(MAP(has_times,m));
+}
+
+std::optional<std::chrono::hours> offset(std::chrono::time_zone const* a){
+	if(!a){
+		return std::nullopt;
+	}
+	return offset(*a);
+}
+
+template<typename T>
+bool operator==(set<optional<T>> a,set<T> b){
+	for(auto elem:a){
+		if(!elem){
+			return 0;
+		}
+		if(!b.count(*elem)){
+			return 0;
+		}
+	}
+	for(auto x:b){
+		if(!a.count(x)){
+			return 0;
+		}
+	}
+	return 1;
+}
+
+auto normalize_state(tba::Event const& a){
+	return normalize_state(a.state_prov);
+}
+
+string rm_comma(string a){
+	if(a.size() && a[a.size()-1]==','){
+		return a.substr(0,a.size()-1);
+	}
+	return a;
+}
+
+vector<string> rm_commas(vector<string> a){
+	return mapf(rm_comma,a);
+}
+
+bool operator==(City const& a,const char *s){
+	if(!s){
+		return 0;
+	}
+	return a==string(s);
+}
+
+bool operator==(std::optional<City> const& a,const char *s){
+	if(a){
+		return *a==s;
+	}
+
+	return !s;
+}
+
+optional<Address> address(tba::Event const& event){
+	Address r;
+	r.country=get_country(event);
+	r.state=normalize_state(event);
+	if(event.city){
+		r.city=City(strip(*event.city));
+	}
+	if(r.country=="Australia" && !r.state){
+		std::map<string,State_prov> m{
+			{"Melbourne",State_prov("Victoria")},
+			{"Macquarie Park",State_prov("New South Wales")},
+			{"Sydney",State_prov("New South Wales")}
+		};
+		for(auto [k,v]:m){
+			if(k==event.city){
+				r.state=v;
+			}
+		}
+	}
+	if(r.country=="Canada" && !r.state){
+		std::map<string,State_prov> m{
+			{"Hamilton",State_prov("ON")},
+			{"Toronto",State_prov("ON")}
+		};
+		for(auto [k,v]:m){
+			if(k==event.city){
+				r.state=v;
+			}
+		}
+	}
+	
+	if(r.country=="Mexico" && r.city=="Mexicali"){
+		r.state=State_prov("BC");
+	}
+	if(r.country=="Mexico" && r.state=="DIF"){
+		//r.state="DF";//Districto Federal
+	}
+	if(r.country=="Mexico" && !r.state){
+		if(r.city=="Monterrey"){
+			r.state="NLE";//Nuevo Leon
+		}else{
+			PRINT(event);
+			PRINT(r);
+			nyi
+		}
+	}
+	if(r.country=="Mexico" && r.city=="Leon"){
+		r.state="GUA";
+	}
+	if(!r.state && r.city=="Taipei"){
+		r.country=Country("Taiwan");
+	}
+	
+	if(event.key==tba::Event_key("2014bfbg")){
+		r.state=State_prov("KY");
+		r.city=City("Corbin");//guess, based on home of team 3844.
+	}
+	if(event.key==tba::Event_key("2013rsr")){
+		r.state=State_prov("LA");
+	}
+	if(!r.state && split(event.name).at(0)=="Minnesota"){
+		r.state=State_prov("MN");
+	}
+	if(!r.state && event.name=="Monty Madness"){
+		r.state=State_prov("NJ");
+	}
+	if(!r.state && split(event.name).at(0)=="Florida"){
+		r.state=State_prov("FL");
+	}
+	if(!r.state && contains(split(event.name),"Connecticut")){
+		r.state=State_prov("CT");
+	}
+	if(!r.state && contains(split(event.name),"Colorado")){
+		r.state=State_prov("CO");
+	}
+	if(!r.state && contains(split(event.name),"Arizona")){
+		r.state=State_prov("AZ");
+	}
+	if(!r.state && event.name=="Los Angeles Regional"){
+		r.state=State_prov("CA");
+	}
+	if(!r.state && contains(split(event.name),"California")){
+		r.state=State_prov("CA");
+	}
+	if(r.city=="Cuiabu00e1 - MT")nyi
+	if(r.city=="Cuiabá")nyi
+	if(r.country=="Brazil" && r.city && r.city->data.substr(0,5)=="Cuiab"){
+		r.state=State_prov("Mato Grosso");
+	}
+	if(event.key=="2014audd"){
+		r.state=State_prov("New South Wales");
+	}
+	if(
+		r.country=="Brazil" && 
+		(!r.state || r.state=="XX") && 
+		(r.city=="Rio de Janeiro" || r.city=="Rio De Janeiro")
+	){
+		r.state="Rio de Janeiro" ;//or RJ
+	}
+	if(r.country=="Brazil" && !r.state){
+		if(
+			event.address && 
+			contains(rm_commas(split(*event.address)),"RS")
+		){
+			r.state="RS";
+		}else{
+			print_r(event);
+			print_r(r);
+			cout<<"addr \""<<event.address<<"\"\n";
+			nyi
+		}
+	}
+	if(prefix(event.address,"Arizona Veterans Coliseum")){
+		r.city=City("Phoenix");
+	}
+
+	if(r.state=="AZ" && !r.city){
+		PRINT(event);
+		print_r(r);
+		nyi
+	}
+	if(r.state=="AZ" && (r.city=="Pheonix" || r.city=="Phoeniz")){
+		r.city=City("Phoenix");
+	}
+	/*if(r.city=="Texas"){
+		PRINT(event);
+		print_r(r);
+		nyi
+	}*/
+	return r;
+}
+
+auto address(TBA_fetcher &f,tba::Event_key const& key){
+	return address(tba::event(f,key));
+}
+
+std::chrono::hours get_timezone(tba::Event const& event){
+	/*auto country=get_country(event);
+	auto state=[=]()->std::optional<State_prov>{
+		if(event.state_prov){
+			return normalize_state(*event.state_prov);
+		}
+		return std::nullopt;
+	}();
+	return get_timezone(country,state);*/
+	auto a=address(event);
+	assert(a);
+	//return get_timezone(a->country,a->state);
+	return get_timezone(*a);
+}
+
+
+int check_address(TBA_fetcher &f){
+	for(auto event:reversed(all_events(f))){
+		auto a=address(event);
+		if(a && a->state) continue;
+		if(a && (
+			//a->country=="Brazil" || 
+			a->country=="China" ||
+			a->country=="Taiwan" ||
+			a->country=="Israel" ||
+			0//a->country=="Mexico"
+			)
+		) continue;
+		PRINT(event.key);
+		PRINT(a);
+		print_r(event);
+		//if(event.
+		//nyi
+	}
+	return 0;
+}
+
+int timezone_demo(TBA_fetcher &f){
+	cout<<"timezone demo\n";
+
+	//return check_address(f);
+
+	/*auto g=mapf([](auto x){ return x.timezone; },all_events(f));
+	print_r(count(g));
+
+	auto f1=filter([](auto x){ return !x.timezone; },all_events(f));
+	PRINT(keys(f1));*/
+
+	//There are some really funky events like "202121reg" that don't occur in any meaningful sense.
+	//Which for example says that it's in the "America/Anchorage" timezone but ...
+	auto events=filter(
+		[&](auto x){ return has_matches(f,x); },
+		//[&](auto x){ return has_matches_with_times(f,x); },
+		all_events(f)
+	);
+
+	auto m=mapf([](auto x){ return make_tuple(x.timezone,get_timezone(x),x.key); },all_events(f));
+	auto m2=sorted(m);
+	//print_lines(m2);
+
+	map<optional<string>,map<std::chrono::hours,vector<tba::Event_key>>> m3;
+	for(auto x:m2){
+		m3[get<0>(x)][get<1>(x)]|=get<2>(x);
+	}
+
+	for(auto [k,v]:m3){
+		if(!k) continue;//for now, ignore events that don't have a listed timezone.
+
+		if(set{offset(locate_zone(k))}==keys(v)){
+			//cout<<"Looks good\n";
+			continue;
+		}
+		cout<<k<<"\t";
+		cout<<locate_zone(k)<<"\n";
+		for(auto [k2,v2]:v){
+			cout<<"\t"<<k2<<"\t"<<v2.size();
+			//cout<<take(5,v2)<<"\n";
+			//print_r(2,mapf([&](auto x){ return tba::event(f,x); },take(5,v2)));
+			cout<<"\n";
+			for(auto t:take(5,v2)){
+				cout<<"\t\t"<<t<<"\t"<<address(f,t)<<"\n";
+			}
+		}
+	}
+
+	/*for(auto event:all_events(f)){
+		cout<<event.key<<"\t"<<event.timezone<<"\n";
+	}*/
+	return 0;
+}

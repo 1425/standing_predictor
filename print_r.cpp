@@ -99,4 +99,5 @@ PRINT_R_ITEM(tba::Match_Score_Breakdown_2016_Alliance,TBA_MATCH_SCORE_BREAKDOWN_
 
 //BREAKDOWN_IMPL(2023)
 
+PRINT_R_ITEM(tba::Elimination_Alliance,TBA_ELIMINATION_ALLIANCE)
 

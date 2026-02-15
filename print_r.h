@@ -15,6 +15,7 @@ namespace tba{
 	struct Team;
 	struct Match_Score_Breakdown_2024_Alliance;
 	struct Event;
+	struct Elimination_Alliance;
 };
 
 void print_r(int,frc_api::Match const&);
@@ -24,6 +25,7 @@ void print_r(int,tba::Match const&);
 void print_r(int,tba::Team const&);
 void print_r(int,tba::Event const&);
 void print_r(int,tba::Match_Score_Breakdown_2024_Alliance const&);
+void print_r(int,tba::Elimination_Alliance const&);
 
 #define BREAKDOWN(YEAR)\
 	namespace tba{ struct Match_Score_Breakdown_##YEAR##_Alliance; }\

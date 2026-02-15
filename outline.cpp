@@ -49,6 +49,8 @@ simple way:
 #include "lock.h"
 #include "rank_limits.h"
 #include "award_limits.h"
+#include "playoff_limits.h"
+#include "timezone.h"
 
 //start generic stuff
 
@@ -907,6 +909,8 @@ struct Args{
 	TBA_fetcher_config tba;
 	bool demo=0,historical_demo=0,rank_limits_demo=0;
 	bool award_limits_demo=0;
+	bool playoff_limits_demo=0;
+	bool timezone_demo=0;
 	Skill_method skill_method=Skill_method::POINTS;
 };
 
@@ -953,6 +957,16 @@ Args parse_args(int argc,char **argv){
 		"--award_limits_demo",{},
 		"Attempt to predict award points at an event.  Experimental.",
 		r.award_limits_demo
+	);
+	p.add(
+		"--playoff_limits_demo",{},
+		"Attempt to predict playoff pts.  Experimental.",
+		r.playoff_limits_demo
+	);
+	p.add(
+		"--timezone_demo",{},
+		"Run timezone demo.  Experimental.",
+		r.timezone_demo
 	);
 	p.parse(argc,argv);
 	return r;
@@ -1087,6 +1101,14 @@ int main1(int argc,char **argv){
 
 	if(args.award_limits_demo){
 		return award_limits_demo(tba_fetcher);
+	}
+
+	if(args.playoff_limits_demo){
+		return playoff_limits_demo(tba_fetcher);
+	}
+
+	if(args.timezone_demo){
+		return timezone_demo(tba_fetcher);
 	}
 
 	if(args.demo){

@@ -15,6 +15,14 @@ std::ostream& operator<<(std::ostream& o,Zipcode const& a){
 	return o<<a.data;
 }
 
+bool City::operator==(std::string const& s)const{
+	return data==s;
+}
+
+bool City::operator==(City const& a)const{
+	return data==a.data;
+}
+
 std::ostream& operator<<(std::ostream& o,City const& a){
 	return o<<a.data;
 }

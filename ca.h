@@ -25,6 +25,8 @@ struct City{
 	std::string data;
 
 	auto operator<=>(City const&)const=default;
+	bool operator==(std::string const&)const;
+	bool operator==(City const&)const;
 };
 
 std::ostream& operator<<(std::ostream&,City const&);
