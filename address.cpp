@@ -6,6 +6,7 @@
 #include "vector_void.h"
 #include "dates.h"
 #include "tba.h"
+#include "names.h"
 
 using namespace std;
 
@@ -465,8 +466,39 @@ optional<Address> address(tba::Event const& event){
 	return r;
 }
 
+Address address(tba::Team const& team){
+	Address r;
+
+	//this was remarkably painless
+	//everything worked on the first try.
+	
+	assert(team.country);
+	r.country=Country(*normalize_country(*team.country));
+
+	assert(team.state_prov);
+	r.state=[=](){
+		auto n=normalize_state(team.state_prov);
+		assert(n);
+		return *n;
+	}();
+
+	assert(team.city);
+	r.city=City(*team.city);
+	return r;
+}
 
 int check_address(TBA_fetcher &f){
+	auto ta=MAP(address,all_teams(f));
+	auto c=mapf([](auto x){ return x.country; },ta);
+	print_r(count(c));
+	/*
+	for(auto team:all_teams(f)){
+		auto a=address(team);
+		//PRINT(a);
+		//print_r(team);
+		//nyi
+	}*/
+
 	for(auto event:reversed(all_events(f))){
 		auto a=address(event);
 		if(a && a->state) continue;

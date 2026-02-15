@@ -43,6 +43,7 @@ bool operator==(std::optional<State_prov> const&,const char *);
 	X(std::optional<State_prov>,state)\
 	X(std::optional<City>,city)
 
+//Not making the address any more granular because it doesn't need to be for anything that is happening right now.
 struct Address{
 	ADDRESS(INST)
 };
@@ -55,5 +56,6 @@ std::optional<Address> address(TBA_fetcher&,tba::Event_key const&);
 std::set<std::string> const& state_codes();
 Country get_country(tba::Event const&);
 std::optional<State_prov> normalize_state(std::string);
+int check_address(TBA_fetcher&);
 
 #endif

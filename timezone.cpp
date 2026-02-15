@@ -14,6 +14,24 @@
 
 using namespace std;
 
+template<typename T>
+bool operator==(set<optional<T>> a,set<T> b){
+	for(auto elem:a){
+		if(!elem){
+			return 0;
+		}
+		if(!b.count(*elem)){
+			return 0;
+		}
+	}
+	for(auto x:b){
+		if(!a.count(x)){
+			return 0;
+		}
+	}
+	return 1;
+}
+
 bool has_matches(TBA_fetcher &f,tba::Event const& e){
 	//asking for the keys because they are faster to parse.
 	return tba::event_matches_keys(f,e.key).size()!=0;
@@ -34,24 +52,6 @@ std::optional<std::chrono::hours> offset(std::chrono::time_zone const* a){
 		return std::nullopt;
 	}
 	return offset(*a);
-}
-
-template<typename T>
-bool operator==(set<optional<T>> a,set<T> b){
-	for(auto elem:a){
-		if(!elem){
-			return 0;
-		}
-		if(!b.count(*elem)){
-			return 0;
-		}
-	}
-	for(auto x:b){
-		if(!a.count(x)){
-			return 0;
-		}
-	}
-	return 1;
 }
 
 std::chrono::hours get_timezone(State_prov const& a,std::optional<City> const& city){
@@ -593,7 +593,8 @@ std::chrono::hours get_timezone(tba::Event const& event){
 int timezone_demo(TBA_fetcher &f){
 	cout<<"timezone demo\n";
 
-	//return check_address(f);
+
+	return check_address(f);
 
 	/*auto g=mapf([](auto x){ return x.timezone; },all_events(f));
 	print_r(count(g));
