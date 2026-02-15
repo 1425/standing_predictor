@@ -349,4 +349,9 @@ auto group(Func f,std::set<T> const& a){
 	return r;
 }
 
+template<typename T>
+bool contains(std::vector<T> const& a,T const& b){
+	return to_set(a).count(b);
+}
+
 #endif

@@ -626,4 +626,8 @@ auto count_if(Func f,T const& t){
 	return f1.size();
 }
 
+std::string strip(std::string const&);
+
+bool contains(std::vector<std::string> const&,const char *);
+
 #endif

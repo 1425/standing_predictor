@@ -147,4 +147,26 @@ bool all_equal(std::pair<long int,bool> const& a){
 	return a.first==(long int)a.second;
 }
 
+bool contains(std::vector<std::string> const& a,const char *s){
+	if(!s){
+		return 0;
+	}
+	return contains(a,std::string(s));
+}
+
+std::string strip(std::string const& a){
+	auto s=a;
+	while(!s.empty() && s[0]==' '){
+		s=s.substr(1,s.size());
+	}
+	while(!s.empty() && s[s.size()-1]==' '){
+		s=s.substr(0,s.size()-1);
+	}
+	return s;
+}
+
+bool prefix(std::optional<std::string> const& whole,std::string const& part){
+	if(!whole) return 0;
+	return prefix(*whole,part);
+}
 

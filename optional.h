@@ -54,4 +54,7 @@ std::optional<V> maybe_get(MAP<K,V> const& a,K const& k){
 	return f->second;
 }
 
+std::optional<std::string> strip(std::optional<std::string> const&);
+bool prefix(std::optional<std::string> const& whole,std::string const& part);
+
 #endif
