@@ -117,13 +117,26 @@ T sum(std::vector<T> const& a){
 	return r;
 }
 
+template<typename Func,typename A,typename B,typename C>
+auto mapf(Func f,std::tuple<A,B,C> const& t)
+	#define G(N) decltype(f(std::get<N>(t)))
+	-> std::tuple<G(0),G(1),G(2)>
+	#undef G
+{
+	return std::make_tuple(
+		#define X(N) f(std::get<N>(t))
+		X(0),X(1),X(2)
+		#undef X
+	);
+}
+
 template<typename Func,typename A,typename B,typename C,typename D>
 auto mapf(Func f,std::tuple<A,B,C,D> const& t)
 	#define G(N) decltype(f(std::get<N>(t)))
 	-> std::tuple<G(0),G(1),G(2),G(3)>
 	#undef G
 {
-	return make_tuple(
+	return std::make_tuple(
 		#define X(N) f(std::get<N>(t))
 		X(0),X(1),X(2),X(3)
 		#undef X
@@ -136,7 +149,7 @@ auto mapf(Func f,std::tuple<A,B,C,D,E> const& t)
 	-> std::tuple<G(0),G(1),G(2),G(3),G(4)>
 	#undef G
 {
-	return make_tuple(
+	return std::make_tuple(
 		#define X(N) f(std::get<N>(t))
 		X(0),X(1),X(2),X(3),X(4)
 		#undef X
@@ -328,12 +341,16 @@ auto max(V<T...> const& v){
 	if(v.empty()){
 		throw std::invalid_argument("max needs non-empty sequence");
 	}
-	using E=std::tuple_element_t<0,std::tuple<T...>>;
+
+	auto it=std::max_element(v.begin(),v.end());
+	return *it;
+
+	/*using E=std::tuple_element_t<0,std::tuple<T...>>;
 	E r=*begin(v);
 	for(auto elem:v){
 		r=std::max(r,elem);
 	}
-	return r;
+	return r;*/
 }
 
 template<typename T>
@@ -596,8 +613,17 @@ auto adjacent_pairs(std::vector<T> const& a){
 template<typename A,typename B,typename C,typename D,typename E,typename F>
 auto zip(std::tuple<A,B,C,D,E,F> const& a,std::tuple<A,B,C,D,E,F> const& b){
 	return std::make_tuple(
-		#define X(N) make_pair(get<N>(a),get<N>(b))
+		#define X(N) std::make_pair(get<N>(a),get<N>(b))
 		X(0),X(1),X(2),X(3),X(4),X(5)
+		#undef X
+	);
+}
+
+template<typename A,typename B,typename C>
+auto zip(std::tuple<A,B,C> const& a,std::tuple<A,B,C> const& b){
+	return std::make_tuple(
+		#define X(N) std::make_pair(get<N>(a),get<N>(b))
+		X(0),X(1),X(2)
 		#undef X
 	);
 }

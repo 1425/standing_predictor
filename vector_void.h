@@ -12,11 +12,14 @@ class vector_void{
 	explicit vector_void(size_t);
 
 	size_t size()const;
+	bool empty()const;
 };
 
 std::ostream& operator<<(std::ostream& o,vector_void);
 
 std::set<int> to_set(vector_void const&);
+
+vector_void sorted(vector_void);
 
 template<typename Func,typename T>
 auto mapf(Func f,std::vector<T> const& v){
@@ -28,6 +31,7 @@ auto mapf(Func f,std::vector<T> const& v){
 		return vector_void{v.size()};
 	}else{
 		std::vector<decltype(f(v[0]))> r;
+		r.reserve(v.size());
 		for(auto const& elem:v){
 			r|=f(elem);
 		}

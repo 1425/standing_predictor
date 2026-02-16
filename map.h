@@ -64,11 +64,13 @@ std::ostream& operator<<(std::ostream& o,std::map<K,V> const& a){
 	return o<<to_vec(a);
 }
 
+#define GROUP(A,B) group([&](auto const& x){ return (A)(x); },(B))
+
 template<typename Func,typename T>
 auto group(Func f,std::vector<T> const& v){
 	using K=decltype(f(v[0]));
 	std::map<K,std::vector<T>> r;
-	for(auto x:v){
+	for(auto const& x:v){
 		r[f(x)]|=x;
 	}
 	return r;

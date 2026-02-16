@@ -29,6 +29,17 @@ class set_fixed{
 		set_fixed(to_set(a))
 	{}
 
+	constexpr set_fixed(std::initializer_list<T> a){
+		assert(a.size()==N);
+		/*for(size_t i=0;i<a.size();i++){
+			data[i]=a[i];
+		}*/
+		size_t i=0;
+		for(auto x:a){
+			data[i++]=x;
+		}
+	}
+
 	static constexpr auto size(){
 		return N;
 	}
@@ -45,6 +56,16 @@ class set_fixed{
 
 	auto get()const{
 		return data;
+	}
+
+	bool count(auto const& t)const{
+		//since data is kept sorted, could do a binary search.
+		for(auto const& elem:data){
+			if(elem==t){
+				return 1;
+			}
+		}
+		return 0;
 	}
 };
 

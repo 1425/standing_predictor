@@ -11,6 +11,14 @@ class set_flat{
 
 	public:
 
+	set_flat()=default;
+
+	constexpr set_flat(std::initializer_list<T> a){
+		for(auto x:a){
+			(*this)|=x;
+		}
+	}
+
 	auto const& get()const{
 		return data;
 	}
@@ -21,7 +29,7 @@ class set_flat{
 		return data.begin();
 	}
 
-	const_iterator end()const{
+	constexpr const_iterator end()const{
 		return data.end();
 	}
 
@@ -41,7 +49,7 @@ class set_flat{
 		return 0;*/
 	}
 
-	set_flat& operator|=(T const& t){
+	constexpr set_flat& operator|=(T const& t){
 		auto f=std::lower_bound(data.begin(),data.end(),t);
 		if(f==end() || *f!=t){
 			data.insert(f,t);

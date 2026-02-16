@@ -30,6 +30,8 @@ struct State_prov{
 	State_prov& operator=(std::string const&);
 
 	auto operator<=>(State_prov const&)const=default;
+	bool operator<(State_prov const&)const;
+	bool operator==(State_prov const&)const;
 
 	bool operator==(std::string const&)const;
 };
@@ -46,6 +48,8 @@ bool operator==(std::optional<State_prov> const&,const char *);
 //Not making the address any more granular because it doesn't need to be for anything that is happening right now.
 struct Address{
 	ADDRESS(INST)
+
+	auto operator<=>(Address const&)const=default;
 };
 
 std::ostream& operator<<(std::ostream&,Address const&);

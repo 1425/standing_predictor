@@ -51,6 +51,7 @@ simple way:
 #include "award_limits.h"
 #include "playoff_limits.h"
 #include "timezone.h"
+#include "venue.h"
 
 //start generic stuff
 
@@ -912,6 +913,7 @@ struct Args{
 	bool playoff_limits_demo=0;
 	bool timezone_demo=0;
 	bool lock=0;
+	bool venue_demo=0;
 	Skill_method skill_method=Skill_method::POINTS;
 };
 
@@ -973,6 +975,9 @@ Args parse_args(int argc,char **argv){
 		"--lock",{},
 		"Attempt to calculate with 100% certainty.  Experimental.",
 		r.lock
+	);
+	p.add("--venue_demo",{},
+			"Experimental",r.venue_demo
 	);
 	p.parse(argc,argv);
 	return r;
@@ -1098,6 +1103,10 @@ int main1(int argc,char **argv){
 	//return identify_time_demo(tba_fetcher);
 	//return dates_demo(tba_fetcher);
 	//return lock_demo(tba_fetcher);
+
+	if(args.venue_demo){
+		return venue_demo(tba_fetcher);
+	}
 
 	if(args.rank_limits_demo){
 		//rank_limits_demo(tba_fetcher);

@@ -7,6 +7,7 @@
 #include "dates.h"
 #include "tba.h"
 #include "names.h"
+#include "set_fixed.h"
 
 using namespace std;
 
@@ -61,6 +62,10 @@ std::ostream& operator<<(std::ostream& o,Country const& a){
 State_prov& State_prov::operator=(std::string const& a){
 	s=a;
 	return *this;
+}
+
+bool State_prov::operator==(State_prov const& a)const{
+	return s==a.s;
 }
 
 bool State_prov::operator==(std::string const& a)const{
@@ -141,7 +146,9 @@ std::optional<Country> normalize_country(std::optional<std::string> s1){
 	if(s=="Northern Israel"){
 		s="Israel";
 	}
-	std::set<std::string> known{
+
+	//std::set<std::string> known{
+	constexpr set_fixed<std::string_view,9> known{
 		"USA","Canada","Israel","Mexico",
 		"China","Brazil","Australia","Turkey",
 		"Taiwan"
@@ -230,10 +237,29 @@ std::optional<State_prov> normalize_state(std::string s){
 		return std::nullopt;
 	}
 
+	//Austrailia section
+	if(s=="Victoria"){
+		return R("VIC");
+	}
+	if(s=="New South Wales"){
+		return R("NSW");
+	}
+
 	return State_prov(s);
 }
 
 std::optional<State_prov> normalize_state(std::optional<std::string> const& a){
+	if(!a){
+		return std::nullopt;
+	}
+	return normalize_state(*a);
+}
+
+auto normalize_state(State_prov const& a){
+	return normalize_state(a.s);
+}
+
+std::optional<State_prov> normalize_state(std::optional<State_prov> const& a){
 	if(!a){
 		return std::nullopt;
 	}
@@ -463,6 +489,7 @@ optional<Address> address(tba::Event const& event){
 		print_r(r);
 		nyi
 	}*/
+	r.state=normalize_state(r.state);
 	return r;
 }
 

@@ -180,7 +180,14 @@ std::set<T> or_all(std::vector<std::vector<T>> const& a){
 
 template<typename Func,typename T>
 auto mapf(Func f,std::set<T> const& a){
-	return mapf(f,to_vec(a));
+	//return mapf(f,to_vec(a));
+	using E=decltype(f(*a.begin()));
+	std::vector<E> r;
+	r.reserve(a.size());
+	for(auto const& elem:a){
+		r|=f(elem);
+	}
+	return r;
 }
 
 template<typename T>

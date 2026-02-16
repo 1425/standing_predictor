@@ -162,4 +162,6 @@ auto sum(std::array<Int_limited<MIN,MAX>,N> const& a){
 	return std::accumulate(a.begin(),a.end(),R());
 }
 
+Int_limited<0,3> sum(std::tuple<bool,bool,bool> const&);
+
 #endif

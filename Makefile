@@ -22,6 +22,8 @@ FRC_API_OBJS= \
 	../frc_api/curl.o
 
 OUTLINE_OBJS= \
+	int_limited.o \
+	venue.o\
 	address.o \
 	playoff_limits.o \
 	award_limits.o \
