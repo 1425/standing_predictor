@@ -493,20 +493,23 @@ optional<Address> address(tba::Event const& event){
 	return r;
 }
 
-Address address(tba::Team const& team){
+int number(tba::Team_key const& a){
+	return stoi(a.str().substr(3,100));
+}
+
+std::optional<Address> address(tba::Team const& team){
 	Address r;
 
-	//this was remarkably painless
-	//everything worked on the first try.
-	
-	assert(team.country);
+	if(!team.country){
+		return std::nullopt;
+	}
 	r.country=Country(*normalize_country(*team.country));
 
-	assert(team.state_prov);
+	//assert(team.state_prov);
 	r.state=[=](){
 		auto n=normalize_state(team.state_prov);
-		assert(n);
-		return *n;
+		//assert(n);
+		return n;
 	}();
 
 	assert(team.city);
@@ -516,7 +519,7 @@ Address address(tba::Team const& team){
 
 int check_address(TBA_fetcher &f){
 	auto ta=MAP(address,all_teams(f));
-	auto c=mapf([](auto x){ return x.country; },ta);
+	auto c=mapf([](auto x)->optional<Country>{ if(x) return x->country; return std::nullopt; },ta);
 	print_r(count(c));
 	/*
 	for(auto team:all_teams(f)){

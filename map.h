@@ -147,4 +147,14 @@ auto dict(std::vector<std::pair<K,V>> const& a){
 	return r;
 }
 
+template<typename K,typename V>
+auto reverse_pairs(std::map<K,V> const& a){
+	using P=std::pair<V,K>;
+	std::vector<P> r;
+	for(auto const& x:a){
+		r|=P(x.second,x.first);
+	}
+	return r;
+}
+
 #endif

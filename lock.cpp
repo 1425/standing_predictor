@@ -592,7 +592,7 @@ Lock_result run(Lock_data const& data){
 						x=float(rank_total.second)/left_to_claim.second;
 					}
 					std::stringstream ss;
-					ss<<"in range "<<rank_total<<" "<<left_to_claim<<" "<<x;
+					//ss<<"in range "<<rank_total<<" "<<left_to_claim<<" "<<x;
 					ss<<"in range "<<x;
 					for(auto [team,info]:teams_here){
 						markers[team]=Status_in_range(ss.str());

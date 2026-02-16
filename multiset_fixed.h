@@ -1,6 +1,8 @@
 #ifndef MULTISET_FIXED_H
 #define MULTISET_FIXED_H
 
+#include "interval.h"
+
 template<typename T>
 struct Converter{
 

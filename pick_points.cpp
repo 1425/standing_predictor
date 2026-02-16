@@ -549,15 +549,6 @@ double entropy(map_auto<tba::Team_key,Interval<T>> const& a){
 	return sum(MAP(entropy,values(a)));
 }
 
-template<typename K,typename V>
-auto reverse_pairs(map_auto<K,V> const& a){
-	std::vector<std::pair<V,K>> r;
-	for(auto const& x:a){
-		r|=make_pair(x.second,x.first);
-	}
-	return r;
-}
-
 int pick_points_demo(TBA_fetcher &f){
 	return ranks_from_demo(f);
 

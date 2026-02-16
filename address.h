@@ -9,7 +9,8 @@
 
 namespace tba{
 	struct Event;
-	struct Event_key;
+	class Event_key;
+	struct Team;
 };
 
 class TBA_fetcher;
@@ -55,6 +56,7 @@ struct Address{
 std::ostream& operator<<(std::ostream&,Address const&);
 
 std::optional<Address> address(tba::Event const&);
+std::optional<Address> address(tba::Team const&);
 std::optional<Address> address(TBA_fetcher&,tba::Event_key const&);
 
 std::set<std::string> const& state_codes();

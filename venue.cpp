@@ -10,6 +10,8 @@
 #include "tba.h"
 #include "output.h"
 #include "int_limited.h"
+#include "map_auto.h"
+#include "map.h"
 
 using namespace std;
 using Year=tba::Year;
@@ -425,10 +427,183 @@ class Event_grouping{
 		throw std::invalid_argument("unknown event");
 	}
 
-	std::vector<tba::Event_key> find(tba::Event const&)const;
+	std::vector<tba::Event_key> find(tba::Event const& a)const{
+		return find(a.key);
+	}
 };
 
+using Event_key=tba::Event_key;
+using Team=tba::Team_key;
+using Event=tba::Event_key;
+
+template<typename K,typename V>
+std::map<K,V> operator-(std::map<K,V> a,std::vector<K> const& b){
+	for(auto const& k:b){
+		a.erase(k);
+	}
+	return a;
+}
+
+template<typename T>
+auto self_cross_no_dup(std::vector<T> a){
+	std::vector<std::pair<T,T>> r;
+	for(auto it=a.begin();it!=a.end();++it){
+		for(auto i2=it+1;i2!=a.end();++i2){
+			r|=make_pair(*it,*i2);
+		}
+	}
+	return r;
+}
+
+void typical_teams(TBA_fetcher &f,Event_grouping const& grouping,tba::Event const& event){
+	auto found=grouping.find(event);
+	//calculate likelyhood for each team based on history
+	auto ms=to_multiset(flatten(mapf([&](auto x){ return event_teams_keys(f,x); },found)));
+	auto odds=dict(mapf(
+		[&](auto x){
+			assert(found.size());
+			return make_pair(x,float(ms.count(x))/found.size());
+		},
+		to_set(ms)
+	));
+
+	//give the most likely teams
+	{
+		auto top=reversed(sorted(reverse_pairs(odds)));
+		cout<<"\tMost likely: "<<take(5,top)<<"\n";
+	}
+
+	//calculate the 5 top teams that are expected but not present
+	auto here=event_teams_keys(f,event.key);
+	{
+		auto not_here=odds-here;
+		auto top=reversed(sorted(reverse_pairs(not_here)));
+		cout<<"\tMissing: "<<take(5,top)<<"\n";
+	}
+
+	//calculate the 5 top teams that are present but not expected
+	auto odds_here=sorted(mapf(
+		[&](auto x){
+			return make_pair(odds[x],x);
+		},
+		here
+	));
+	cout<<"\tUnexpected:"<<take(5,odds_here)<<"\n";
+
+}
+
+void typical_teams(TBA_fetcher &f,Year year){
+	Event_grouping grouping(all_events(f));
+	for(auto event:events(f,year)){
+		cout<<event.key<<"\n";
+		typical_teams(f,grouping,event);
+	}
+
+	//Event_grouping grouping(all_events(f));
+	//for each team, list the events this year that they would be most expected to be at
+	map<Event_key,map<Team,Pr>> by_event;;
+
+	map<Team,map<Event,Pr>> by_team;
+	for(auto [event,v]:by_event){
+		for(auto [team,pr]:v){
+			by_team[team][event]=pr;
+		}
+	}
+
+	for(auto [team,v]:by_team){
+		cout<<team<<"\t";
+		cout<<reversed(sorted(reverse_pairs(v)))<<"\n";
+		//and how that compares to which events they are attending
+		nyi/*auto events=to_set(tba::team_events_year_keys(f,team));
+		auto m=mapf(
+			[&](auto x){
+				auto [event,p]=x;
+				return make_pair(event,events.count(event)-p);
+			},
+			v
+		);
+		cout<<"\t"<<m<<"\n";*/
+	}
+
+	//would also be intersting to calculate which events overlap the most with each other.
+	//to start with, could just look at the events that are occurring this year
+	//could also use a set of projected teams for district events, etc. that don't have a team list yet.
+	
+	//This is going to be crazy-slow to start with because it's going to be doing something like N^2*log(N) string comparisons
+	auto events_to_compare=events_keys(f,year);
+	map<Event,std::set<Team>> teams_by_event;
+	for(auto event:events_to_compare){
+		teams_by_event[event]=to_set(event_teams_keys(f,event));
+	}
+
+	//similarity metric: # of common teams/total # of teams between the events	
+	auto similarity=reversed(sorted(mapf(
+		[&](auto x){
+			auto a=teams_by_event[x.first];
+			auto b=teams_by_event[x.second];
+			auto both=(a&b).size();
+			auto either=(a|b).size();
+			double value;
+			if(either==0){
+				value=0;
+			}else{
+				value=float(both)/either;
+			}
+			return make_tuple(value,x);
+		},
+		self_cross_no_dup(events_to_compare)
+	)));
+
+	cout<<"Events with most similar composition:\n";
+	print_lines(take(500,similarity));
+}
+
+template<typename T>
+double entropy(std::multiset<T> const& a){
+	auto c=values(count(a));
+	double r=0;
+	for(auto v:c){
+		Pr p=double(v)/a.size();
+		r+=entropy(p);
+	}
+	return r;
+}
+
+template<typename T>
+double entropy(std::vector<T> const& a){
+	return entropy(to_multiset(a));
+}
+
+void most_international(TBA_fetcher &f){
+	Year year(2026);
+	auto m=reversed(sorted(mapf(
+		[&](auto x){
+			auto c=mapf(
+				[](auto x)->optional<Country>{
+					auto a=address(x);
+					if(a){
+						return a->country;
+					}
+					return std::nullopt;
+				},
+				tba::event_teams(f,x)
+			);
+			return make_pair(entropy(c),x);
+		},
+		//events_keys(f,year)
+		keys(all_events(f))
+	)));
+	print_lines(take(50,m));
+}
+
 int venue_demo(TBA_fetcher &f){
+	if(1){
+		most_international(f);
+		return 0;
+	}
+	typical_teams(f,Year(2026));
+	return 0;
+
 	/*for(auto event:all_events(f)){
 		parse_event_name(event.name);
 		//address(event);
@@ -466,6 +641,7 @@ int venue_demo(TBA_fetcher &f){
 
 	Event_grouping grouping(all_events(f));
 
+	//Try to calculate which upcoming events might have openings.
 	for(auto event:events(f,Year(2026))){
 		/*auto v=address(event);
 		assert(v);

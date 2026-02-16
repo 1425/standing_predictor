@@ -190,4 +190,13 @@ auto print_r(int n,map_auto<K,V> const& a){
 	return print_r(n,a.get());
 }
 
+template<typename K,typename V>
+auto reverse_pairs(map_auto<K,V> const& a){
+	std::vector<std::pair<V,K>> r;
+	for(auto const& x:a){
+		r|=std::make_pair(x.second,x.first);
+	}
+	return r;
+}
+
 #endif

@@ -18,8 +18,9 @@ class vector_void{
 std::ostream& operator<<(std::ostream& o,vector_void);
 
 std::set<int> to_set(vector_void const&);
-
 vector_void sorted(vector_void);
+vector_void take(size_t,vector_void);
+vector_void reversed(vector_void);
 
 template<typename Func,typename T>
 auto mapf(Func f,std::vector<T> const& v){
