@@ -6,6 +6,8 @@
 #include "arguments.h"
 #include "vector_void.h"
 #include "print_r.h"
+#include "dates.h"
+#include "skill_opr.h" //for years()
 
 using namespace std;
 
@@ -281,5 +283,22 @@ bool matches_complete(TBA_fetcher &f,tba::Event_key const& event){
 		return 0;
 	}
 	return all(MAP(complete,e));
+}
+
+bool won_chairmans(TBA_fetcher &f,tba::Year year,tba::Team_key const& team){
+	auto t=tba::team_awards_year(f,team,year);
+	auto found=count_if([](auto x){ return x.award_type==tba::Award_type::CHAIRMANS; },t);
+	return found!=0;
+}
+
+bool event_timed_out(TBA_fetcher &f,tba::Event_key const& event){
+	auto e=tba::event(f,event);
+	assert(e.end_date);
+	auto since_end=current_date()-*e.end_date;
+	return since_end>std::chrono::days(3);
+}
+
+std::vector<tba::Event> all_events(TBA_fetcher &f){
+	return flatten(mapf([&](auto year){ return tba::events(f,year); },years()));
 }
 

@@ -69,6 +69,28 @@ META_OBJS= \
 	tba.o \
 	arguments.o \
 	io.o \
+	dates.o\
+	skill_opr.o\
+	skill.o\
+	names.o\
+	run.o\
+	print_r.o\
+	$(FRC_API_OBJS) \
+	output.o\
+	ca.o\
+	zipcodes.o\
+	plot.o\
+	rand.o\
+	subprocess.o\
+	event.o\
+	timezone.o\
+	address.o\
+	print_r.o\
+	pick_points.o\
+	rank_limits.o\
+	rp.o\
+	rank_pts.o\
+	interval.o\
 
 meta: $(META_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -lgumbo -o $@
@@ -83,7 +105,29 @@ DECLINE_OBJS= \
 	util.o \
 	io.o \
 	$(TBA_OBJS) \
-	$(FRC_API_OBJS)
+	$(FRC_API_OBJS)\
+	dates.o\
+	skill_opr.o\
+	skill.o\
+	names.o\
+	run.o\
+	print_r.o\
+	$(FRC_API_OBJS) \
+	output.o\
+	ca.o\
+	zipcodes.o\
+	plot.o\
+	rand.o\
+	subprocess.o\
+	event.o\
+	timezone.o\
+	address.o\
+	print_r.o\
+	pick_points.o\
+	rank_limits.o\
+	rp.o\
+	rank_pts.o\
+	interval.o\
 
 declines: $(DECLINE_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@

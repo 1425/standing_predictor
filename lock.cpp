@@ -7,7 +7,6 @@
 #include "print_r.h"
 #include "rank_pts.h"
 #include "interval.h"
-#include "dates.h"
 #include "../tba/tba.h"
 #include "optional.h"
 #include "skill_opr.h"
@@ -38,19 +37,6 @@ using Event_key=tba::Event_key;
 using Year=tba::Year;
 
 using namespace std;
-
-bool won_chairmans(TBA_fetcher &f,Year year,tba::Team_key const& team){
-	auto t=team_awards_year(f,team,year);
-	auto found=count_if([](auto x){ return x.award_type==tba::Award_type::CHAIRMANS; },t);
-	return found!=0;
-}
-
-bool event_timed_out(TBA_fetcher &f,tba::Event_key const& event){
-	auto e=tba::event(f,event);
-	assert(e.end_date);
-	auto since_end=current_date()-*e.end_date;
-	return since_end>std::chrono::days(3);
-}
 
 using Age_bonus=Int_limited<0,10>;//not encoding that it can only be 0,5,10
 

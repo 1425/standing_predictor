@@ -107,10 +107,6 @@ std::vector<tba::Team> teams_year_all(TBA_fetcher &f,Year year){
 	return r;
 }
 
-std::vector<tba::Event> all_events(TBA_fetcher &f){
-	return flatten(mapf([&](auto year){ return tba::events(f,year); },years()));
-}
-
 //should always return between 1-7
 int days(tba::Event const& a){
 	assert(a.start_date);

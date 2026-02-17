@@ -6,7 +6,6 @@
 #include "dates.h"
 #include "tba.h"
 #include "cmp_reason.h"
-#include "dates.h"
 
 using Team=tba::Team_key;
 using namespace std;
