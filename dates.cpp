@@ -91,21 +91,6 @@ auto consolidate(std::set<T> const& a){
 	return r;
 }
 
-std::vector<tba::Team> teams_year_all(TBA_fetcher &f,Year year){
-	std::vector<tba::Team> r;
-	size_t page=0;
-	while(1){
-		auto found=teams_year(f,year,page);
-		r|=found;
-		page++;
-
-		if(found.empty()){
-			break;
-		}
-	}
-	return r;
-}
-
 //should always return between 1-7
 int days(tba::Event const& a){
 	assert(a.start_date);

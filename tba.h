@@ -81,5 +81,6 @@ std::vector<tba::Event> events(TBA_fetcher&);
 
 std::vector<tba::Year> years();
 std::vector<tba::Team> teams(TBA_fetcher&);
+std::vector<tba::Team> teams(TBA_fetcher &f,tba::Year);
 
 #endif

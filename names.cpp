@@ -9,7 +9,6 @@
 #include "util.h"
 #include "set.h"
 #include "tba.h"
-#include "dates.h"
 #include "declines.h"
 
 using namespace std;
@@ -62,7 +61,7 @@ void check_sponsors(TBA_fetcher& f){
 	//with the same info.
 	map<Team_key,std::map<Year,Team_name_contents>> r;
 	for(auto year:years()){
-		auto teams=teams_year_all(f,Year(2025));
+		auto teams=::teams(f,Year(2025));
 		for(auto const& team:teams){
 			r[team.key][year]=parse_name(team.name);
 		}
