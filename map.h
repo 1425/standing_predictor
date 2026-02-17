@@ -178,4 +178,11 @@ V get(std::map<K,V> const& a,auto const& k,auto const& otherwise){
 	return f->second;
 }
 
+template<typename K,typename V>
+auto get_key(std::map<K,V> const& a,K const& k){
+	auto f=a.find(k);
+	assert(f!=a.end());
+	return f->second;
+}
+
 #endif

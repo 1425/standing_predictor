@@ -1,7 +1,14 @@
 #ifndef SKILL_H
 #define SKILL_H
 
-#include "output.h"
+#include "probability.h"
+
+namespace tba{
+	class Team_key;
+	class District_key;
+}
+
+class TBA_fetcher;
 
 #define SKILL_METHOD(X)\
 	X(POINTS)\

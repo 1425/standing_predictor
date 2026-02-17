@@ -3,7 +3,7 @@
 
 #include "pick_points.h"
 #include "map_auto.h"
-#include "output.h"
+#include "probability.h"
 #include "print_r.h"
 
 class TBA_fetcher;

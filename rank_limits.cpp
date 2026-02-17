@@ -5,7 +5,6 @@
 #include "util.h"
 #include "pick_points.h"
 #include "../tba/tba.h"
-#include "output.h"
 #include "interval.h"
 #include "rank_pts.h"
 #include "tba.h"

@@ -10,6 +10,7 @@
 #include "set.h"
 #include "tba.h"
 #include "declines.h"
+#include "output.h"
 
 using namespace std;
 using Team_key=tba::Team_key;

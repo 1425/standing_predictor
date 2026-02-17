@@ -728,5 +728,16 @@ std::pair<A,B> operator*(std::pair<A,B> a,C c){
 	a.second*=c;
 	return a;
 }
+template<typename T>
+auto to_vec(std::tuple<T,T,T> const& a){
+	return std::array<T,3>{get<0>(a),get<1>(a),get<2>(a)};
+}
+
+template<typename T>
+auto sorted(std::tuple<T,T,T> a){
+	auto v=to_vec(a);
+	std::sort(v.begin(),v.end());
+	return std::make_tuple(v[0],v[1],v[2]);
+}
 
 #endif

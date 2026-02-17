@@ -53,29 +53,10 @@ simple way:
 
 //start generic stuff
 
-template<typename T>
-auto to_vec(std::tuple<T,T,T> const& a){
-	return std::array<T,3>{get<0>(a),get<1>(a),get<2>(a)};
-}
-
-template<typename T>
-auto sorted(std::tuple<T,T,T> a){
-	auto v=to_vec(a);
-	std::sort(v.begin(),v.end());
-	return std::make_tuple(v[0],v[1],v[2]);
-}
-
 template<typename K,typename V,typename H>
 std::vector<std::pair<K,V>> sorted(std::unordered_map<K,V,H> const& a){
 	std::vector<std::pair<K,V>> v(a.begin(),a.end());
 	return sorted(v);
-}
-
-template<typename K,typename V>
-auto get_key(std::map<K,V> const& a,K const& k){
-	auto f=a.find(k);
-	assert(f!=a.end());
-	return f->second;
 }
 
 //start program-specific stuff.

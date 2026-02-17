@@ -16,6 +16,7 @@
 #include "venue.h"
 #include "names.h"
 #include "map_auto.h"
+#include "district_championship_assignment.h"
 
 /*
  * would be good to check some of the assumptions made in here with data

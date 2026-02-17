@@ -5,19 +5,9 @@
 #include "../tba/db.h"
 #include "flat_map2.h"
 #include "district_championship_assignment.h"
+#include "probability.h"
 
 class TBA_fetcher;
-
-using Pr=double; //probability
-
-double entropy(Pr);
-
-//a point total.
-//Note that despite negative point totals being impossible under current
-//rules, some of the code depends on this being signed.
-using Point=short;
-
-using Team_dist=flat_map2<Point,Pr>;
 
 using Extended_cutoff=std::pair<Point,Pr>;
 

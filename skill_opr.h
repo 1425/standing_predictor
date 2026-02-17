@@ -3,6 +3,7 @@
 
 #include "set.h"
 #include "skill.h"
+#include "../tba/data.h"
 
 Skill_estimates calc_skill_opr(TBA_fetcher&,tba::District_key const&);
 

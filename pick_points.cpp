@@ -1,6 +1,5 @@
 #include "pick_points.h"
 #include "../tba/tba.h"
-#include "output.h"
 #include "interval.h"
 #include "set.h"
 #include "vector_void.h"
