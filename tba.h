@@ -80,6 +80,6 @@ bool event_timed_out(TBA_fetcher &,tba::Event_key const&);
 std::vector<tba::Event> events(TBA_fetcher&);
 
 std::vector<tba::Year> years();
-std::vector<tba::Team> all_teams(TBA_fetcher&);
+std::vector<tba::Team> teams(TBA_fetcher&);
 
 #endif

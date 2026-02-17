@@ -516,7 +516,7 @@ std::optional<Address> address(tba::Team const& team){
 }
 
 int check_address(TBA_fetcher &f){
-	auto ta=MAP(address,all_teams(f));
+	auto ta=MAP(address,teams(f));
 	auto c=mapf([](auto x)->optional<Country>{ if(x) return x->country; return std::nullopt; },ta);
 	print_r(count(c));
 	/*

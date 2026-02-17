@@ -86,7 +86,7 @@ void common_sponsors(TBA_fetcher &f){
 	std::multiset<string> sponsors,orgs;
 	std::multiset<int> num_sponsors,num_orgs;
 
-	for(auto team:all_teams(f)){
+	for(auto team:teams(f)){
 		auto p=parse_name(team);
 		sponsors|=p.sponsors;
 		orgs|=p.orgs;

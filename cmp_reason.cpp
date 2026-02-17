@@ -247,18 +247,6 @@ set<tba::Team_key> pre_qualifying(TBA_fetcher &tba_fetcher,tba::Year current_yea
 	//nyi
 }
 
-static std::vector<tba::Team> teams(TBA_fetcher &tba_fetcher){
-	std::vector<tba::Team> r;
-	for(int i=0;;++i){
-		auto t=tba::teams(tba_fetcher,i);
-		if(t.empty()){
-			break;
-		}
-		r|=t;
-	}
-	return r;
-}
-
 static std::set<tba::Team_key> original_teams(TBA_fetcher &tba_fetcher){
 	auto f=filter(
 		[](auto const& team){ return team.rookie_year==tba::Year{1992}; },

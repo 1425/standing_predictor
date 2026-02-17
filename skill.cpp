@@ -200,7 +200,7 @@ Team_dist rookie_pre_dcmp(TBA_fetcher& f){
 	}
 
 	std::multiset<Point> found;
-	for(auto team:all_teams(f)){
+	for(auto team:teams(f)){
 		assert(team.rookie_year);
 		auto f=pts.find(make_pair(*team.rookie_year,team.key));
 		if(f==pts.end()){
