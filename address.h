@@ -5,7 +5,6 @@
 #include<optional>
 #include<set>
 #include "util.h"
-#include "ca.h"
 
 namespace tba{
 	struct Event;
@@ -40,6 +39,24 @@ struct State_prov{
 std::ostream& operator<<(std::ostream&,State_prov const&);
 bool operator==(State_prov const&,const char *);
 bool operator==(std::optional<State_prov> const&,const char *);
+
+struct City{
+	std::string data;
+
+	auto operator<=>(City const&)const=default;
+	bool operator==(std::string const&)const;
+	bool operator==(City const&)const;
+};
+
+std::ostream& operator<<(std::ostream&,City const&);
+
+struct Zipcode{
+	std::string data;
+
+	auto operator<=>(Zipcode const&)const=default;
+};
+
+std::ostream& operator<<(std::ostream&,Zipcode const&);
 
 #define ADDRESS(X)\
 	X(Country,country)\

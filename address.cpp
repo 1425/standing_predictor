@@ -24,6 +24,22 @@ std::optional<Address> address(TBA_fetcher &f,tba::Event_key const& key){
 	return address(tba::event(f,key));
 }
 
+std::ostream& operator<<(std::ostream& o,Zipcode const& a){
+	return o<<a.data;
+}
+
+bool City::operator==(std::string const& s)const{
+	return data==s;
+}
+
+bool City::operator==(City const& a)const{
+	return data==a.data;
+}
+
+std::ostream& operator<<(std::ostream& o,City const& a){
+	return o<<a.data;
+}
+
 bool operator==(City const& a,const char *s){
 	if(!s){
 		return 0;

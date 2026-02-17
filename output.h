@@ -4,7 +4,7 @@
 #include "../tba/data.h"
 #include "../tba/db.h"
 #include "flat_map2.h"
-#include "ca.h"
+#include "district_championship_assignment.h"
 
 class TBA_fetcher;
 

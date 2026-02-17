@@ -1,7 +1,6 @@
 #include "status.h"
 #include "event_status.h"
 #include<iomanip>
-#include "outline.h"
 #include<optional>
 #include<cmath>
 #include "../tba/tba.h"

@@ -11,6 +11,7 @@
 #include "vector_void.h"
 #include "plot.h"
 #include "print_r.h"
+#include "ca.h"
 
 using namespace std;
 using Team_key=tba::Team_key;

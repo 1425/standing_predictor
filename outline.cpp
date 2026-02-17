@@ -37,7 +37,6 @@ simple way:
 #include "util.h"
 #include "status.h"
 #include "run.h"
-#include "ca.h"
 #include "outline.h"
 #include "skill.h"
 #include "skill_opr.h"

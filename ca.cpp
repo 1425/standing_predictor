@@ -10,24 +10,9 @@
 #include "vector_void.h"
 #include "../tba/tba.h"
 #include "tba.h"
+#include "address.h"
 
 using namespace std;
-
-std::ostream& operator<<(std::ostream& o,Zipcode const& a){
-	return o<<a.data;
-}
-
-bool City::operator==(std::string const& s)const{
-	return data==s;
-}
-
-bool City::operator==(City const& a)const{
-	return data==a.data;
-}
-
-std::ostream& operator<<(std::ostream& o,City const& a){
-	return o<<a.data;
-}
 
 std::ostream& operator<<(std::ostream& o,California_region a){
 	#define X(A) if(a==California_region::A) return o<<""#A;
@@ -132,13 +117,3 @@ auto california_region(tba::Event const& event){
 	PRINT(event);
 	nyi
 }
-
-Dcmp_home calc_dcmp_home(TBA_fetcher &fetcher,tba::Team_key const& team_key){
-	auto t=team(fetcher,team_key);
-	if(t.state_prov!="California"){
-		return 0;
-	}
-	auto c=california_region(t);
-	return Dcmp_home(int(c));
-}
-
