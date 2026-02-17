@@ -66,4 +66,12 @@ tba::Year year(tba::District_key const&);
 tba::Year year(tba::Event_key const&);
 tba::Year year(tba::Event const&);
 
+tba::Team_key rand(tba::Team_key const*);
+tba::Event_key rand(tba::Event_key const*);
+
+bool chairmans_expected(tba::Event_type);
+bool chairmans_expected(TBA_fetcher&,tba::Event_key const&);
+
+bool matches_complete(TBA_fetcher &,tba::Event_key const&);
+
 #endif

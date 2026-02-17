@@ -229,7 +229,7 @@ std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C,D,E,F> const& a){
 }
 
 namespace tba{
-	struct Event_key;
+	class Event_key;
 	struct Event;
 };
 

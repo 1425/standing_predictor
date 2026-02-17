@@ -30,96 +30,13 @@
 4) pts available for finished events should be 0.
  * */
 
-template<typename K,typename V>
-auto sorted(std::map<K,V> const& a){
-	return sorted(to_vec(a));
-}
-
-template<typename A,typename B>
-std::pair<A,B> operator-(std::pair<A,B> const& a,std::pair<A,B> const& b){
-	return std::make_pair(
-		a.first-b.first,
-		a.second-b.second
-	);
-}
-
-template<typename A,typename B>
-std::pair<A,B> operator+(std::pair<A,B> const& a,std::pair<A,B> const& b){
-	return std::make_pair(
-		a.first+b.first,
-		a.second+b.second
-	);
-}
-
-template<typename A,typename B>
-std::pair<A,B>& operator+=(std::pair<A,B>& a,std::pair<A,B> const& b){
-	a.first+=b.first;
-	a.second+=b.second;
-	return a;
-}
-
 using District_key=tba::District_key;
 using Team=tba::Team_key;
 using Event=tba::Event_key;
 using Event_key=tba::Event_key;
 using namespace std;
 
-tba::Team_key rand(tba::Team_key const*){
-	std::stringstream ss;
-	ss<<"frc"<<rand()%1000;
-	return tba::Team_key(ss.str());
-}
-
-tba::Event_key rand(tba::Event_key const*){
-	std::stringstream ss;
-	ss<<"2026";
-	for(auto _:range(5)){
-		(void)_;
-		ss<<char('a'+rand()%26);
-	}
-	return tba::Event_key(ss.str());
-}
-
 using Age_bonus=Int_limited<0,10>;//not encoding that it can only be 0,5,10
-
-bool chairmans_expected(tba::Event_type a){
-	#define X(NAME,RESULT) if(a==tba::Event_type::NAME) return RESULT;
-	X(DISTRICT,1)
-	X(DISTRICT_CMP_DIVISION,0)
-	X(DISTRICT_CMP,1)
-	#undef X
-
-	PRINT(a);
-	nyi
-}
-
-bool chairmans_expected(TBA_fetcher &f,tba::Event_key const& a){
-	auto e=tba::event(f,a);
-	return chairmans_expected(e.event_type);
-}
-
-bool complete(tba::Match const& a){
-	if(a.post_result_time){
-		return 1;
-	}
-	auto s0=a.alliances.red.score.valid();
-	auto s1=a.alliances.blue.score.valid();
-	assert(s0==s1);
-	if(s0){
-		return 1;
-	}
-	print_r(a);
-	nyi
-}
-
-bool matches_complete(TBA_fetcher &f,tba::Event_key const& event){
-	//note that this isn't thinking too hard about whether or not this event ought to have matches.
-	auto e=tba::event_matches(f,event);
-	if(e.empty()){
-		return 0;
-	}
-	return all(MAP(complete,e));
-}
 
 //using I2=Int_limited<0,200>;
 ///using I2=vector_fixed<Int_limited<0,200>,2>;
@@ -173,6 +90,13 @@ auto rand(Event_finished const*){
 //obviously going to be possible to deal with events that are part-way through.
 using Event_info=std::variant<Event_upcoming,Event_finished>;
 
+bool event_timed_out(TBA_fetcher &f,tba::Event_key const& event){
+	auto e=tba::event(f,event);
+	assert(e.end_date);
+	auto since_end=current_date()-*e.end_date;
+	return since_end>std::chrono::days(3);
+}
+
 Event_info read_event_info(TBA_fetcher &f,tba::Event_key const& event){
 	auto aw=event_awards(f,event);
 	auto c=count_if([](auto x){ return x.award_type==tba::Award_type::CHAIRMANS; },aw);
@@ -185,6 +109,11 @@ Event_info read_event_info(TBA_fetcher &f,tba::Event_key const& event){
 			return Event_finished();
 		}
 	}
+	
+	if(event_timed_out(f,event)){
+		return Event_finished();
+	}
+
 	return event_size(f,event);
 }
 
@@ -464,16 +393,10 @@ void print_r(int n,Lock_result const& a){
 }
 
 template<typename A,typename B>
-bool both_less(std::pair<A,B> const& a,std::pair<A,B> const& b){
-	return a.first<b.first && a.second<b.second;
+std::vector<A> firsts(std::vector<std::tuple<A,B>> a){
+	return mapf([](auto x){ return get<0>(x); },a);
 }
 
-template<typename A,typename B>
-bool both_less_eq(std::pair<A,B> const& a,std::pair<A,B> const& b){
-	return a.first<=b.first && a.second<=b.second;
-}
-
-//std::tuple<map<Team,Status>,int> run(Lock_data const& data){
 Lock_result run(Lock_data const& data){
 	//print_r(data);
 
@@ -532,84 +455,115 @@ Lock_result run(Lock_data const& data){
 		auto [n,teams_here]=t;
 		//cout<<"\t"<<n<<"\t"<<teams_here.size()<<"\n";
 
-		if(teams_ranked<data.dcmp_size){
+		int needed_passes=(int)data.dcmp_size-(int)teams_ranked-(int)teams_here.size()+1;
+
+		if(needed_passes>0){
 			//currently in range to go
-			//PRINT(info);
-			int needed_passes=(int)data.dcmp_size-(int)teams_ranked-(int)teams_here.size();
-			//cout<<"\t";PRINT(needed_passes);
 			int found=0;//teams found that might be able to pass/tie
 			Rank_item rank_total;
 			//PRINT(rank_total)
+
+			enum Reason{NONE,FOUND_ENOUGH,OUT_OF_POINTS};
+			int reason=NONE;
 			for(
 				size_t j=i+1;
-				j<pts.size() && found<needed_passes && both_less_eq(rank_total,left_to_claim)
+				j<pts.size() //found<needed_passes && both_less_eq(rank_total,left_to_claim)
 				;j++
 			){
-				size_t found_here=0;
 				auto [rank_next,teams]=pts[j];
-				for(auto [team,team_info]:teams){
-					if(team_info.remaining_district_events){
-						found_here++;
-					}
-				}
-				if(!found_here)continue;
 				auto diff=n-rank_next;
 				if(diff.second<0){
 					diff.second=0;
 				}
 				//PRINT(diff);
+
+				size_t found_here=0;
+				for(auto [team,team_info]:teams){
+					if(team_info.remaining_district_events){
+						found_here++;
+					}
+				}
 				
 				while(found_here && found<needed_passes && both_less_eq(rank_total+diff,left_to_claim)){
 					rank_total+=diff;
 					found++;
 					found_here--;
 				}
+
+				if(found>=needed_passes){
+					reason=FOUND_ENOUGH;
+					break;
+				}
+
+				if(!both_less_eq(rank_total+diff,left_to_claim)){
+					//Would require too many points.
+					reason=OUT_OF_POINTS;
+					break;
+				}
+
+				if(!found_here){
+					//need to go look for the next set of teams
+					continue;
+				}
+
+				assert(0);
+
 				/*rank_total+=diff*found_here;
 				found+=found_here;*/
 				//need to calculate effort to have at least 1 pass vs the effort to have all of them pass
 			}
-			//cout<<"\tfound:"<<found<<"\n";
-			//cout<<"\trank_total"<<rank_total<<"\n";
-			if(found<needed_passes){
-				//then locked in!
-				//because there aren't enough teams to fill all the slots
-				for(auto [team,info]:teams_here){
-					markers[team]=Status_in{};
+
+			Status status=[&]()->Status{
+				switch(reason){
+					case NONE:
+						if(found){
+							nyi
+						}else{
+							//ran out of teams to pass
+							return Status_in{};
+						}
+					case FOUND_ENOUGH:{
+						std::stringstream ss;
+						double x=0;
+						if(left_to_claim.second){
+							x=100*float(rank_total.second)/left_to_claim.second;
+						}
+						//ss<<rank_total<<" "<<left_to_claim;
+						ss<<"In range: "<<x<<"%";
+						return Status_in_range{ss.str()};
+					}
+					case OUT_OF_POINTS:
+						return Status_in{};
+					default:
+						assert(0);
 				}
-			}else{
-				//PRINT(rank_total);
-				if(rank_total.first>left_to_claim.first || rank_total.second>left_to_claim.second){
-					//then locked in
-					for(auto [team,info]:teams_here){
-						nyi//markers[team]=Status_in{};
-					}
-				}else{
-					//not locked in
-					//PRINT(rank_total.second);
-					//PRINT(left_to_claim.second);
-					double x=0;
-					if(left_to_claim.second){
-						x=float(rank_total.second)/left_to_claim.second;
-					}
-					std::stringstream ss;
-					//ss<<"in range "<<rank_total<<" "<<left_to_claim<<" "<<x;
-					ss<<"in range "<<x;
-					for(auto [team,info]:teams_here){
-						markers[team]=Status_in_range(ss.str());
-					}
-				}
+			}();
+			for(auto team:firsts(teams_here)){
+				markers[team]=status;
 			}
 		}else{
+			int unclaimed_slots=(int)data.dcmp_size-(int)teams_ranked;
 			for(auto [team,info]:teams_here){
-				//currently in range to miss out
-				if(info.remaining_district_events && left_to_claim.second){
-					//then always to possibility to win
-					//could calculate minimum of what would be needed to get in range
-					//and also could calculate what it would take to get to a lock.
-					markers[team]=Status_out_of_range();
+				if(unclaimed_slots>0){
+					//there are slots available that could theoretically be claimed
+					//without earning any more points.
+					markers[team]=Status_in_range{"0"};
 				}else{
-					//then you're out
-					markers[team]=Status_out{};
+					//currently in range to miss out
+					if(info.remaining_district_events && left_to_claim.second){
+						if(left_to_claim.second){
+							PRINT(left_to_claim);
+							nyi
+						}
+						nyi
+						//then always to possibility to win
+						//could calculate minimum of what would be needed to get in range
+						//and also could calculate what it would take to get to a lock.
+						markers[team]=Status_out_of_range();
+					}else{
+						//then you're out
+						markers[team]=Status_out{};
+					}
 				}
 			}
 		}

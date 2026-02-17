@@ -7,7 +7,7 @@
 
 namespace tba{
 	class Year;
-	class Match;
+	struct Match;
 };
 
 class TBA_fetcher;

@@ -203,7 +203,7 @@ auto teams(std::set<Team_alias> const& a){
 }
 
 template<long long MIN,long long MAX>
-auto teams(Interval<Int_limited<MIN,MAX>> const& a){
+auto teams(Interval<Int_limited<MIN,MAX>> const&){
 	return std::set<tba::Team_key>{};
 }
 

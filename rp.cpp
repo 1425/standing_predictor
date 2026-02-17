@@ -148,7 +148,7 @@ RP max_rp_per_match(tba::Year const& a){
 	if(year==2015){
 		return 0;
 	}
-	if(year>=2016 || year<=2020){
+	if(year>=2016 && year<=2020){
 		return 4;
 	}
 	if(year==2021){

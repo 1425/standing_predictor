@@ -5,6 +5,27 @@
 using namespace std;
 
 std::optional<int> dcmp_size_inner(tba::District_key const& district){
+	std::map<string,int> a{
+		{"2009fim",66},
+		{"2010fim",66},
+		{"2011fim",64},
+		{"2012fim",65},
+		{"2013fim",69},
+		{"2014fim",70},
+		{"2015fim",105},
+
+		{"2016chs",58},
+		{"2017chs",58},
+		{"2018chs",60},
+		{"2020chs",0},
+		{"2021chs",0},
+	};
+
+	auto f=a.find(district.get());
+	if(f!=a.end()){
+		return f->second;
+	}
+
 	if(district=="2019chs") return 58;
 	if(district=="2019isr") return 45;
 	if(district=="2019fma") return 60;

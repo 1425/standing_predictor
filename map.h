@@ -157,4 +157,10 @@ auto reverse_pairs(std::map<K,V> const& a){
 	return r;
 }
 
+template<typename K,typename V>
+auto sorted(std::map<K,V> const& a){
+	return sorted(to_vec(a));
+}
+
+
 #endif

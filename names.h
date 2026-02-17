@@ -5,7 +5,7 @@
 #include<set>
 #include<vector>
 
-struct TBA_fetcher;
+class TBA_fetcher;
 
 namespace tba{
 	struct Team;

@@ -4,6 +4,8 @@
 #include "set.h"
 #include "util.h"
 #include "arguments.h"
+#include "vector_void.h"
+#include "print_r.h"
 
 using namespace std;
 
@@ -223,5 +225,61 @@ tba::Year year(tba::Event_key const& a){
 
 tba::Year year(tba::Event const& a){
 	return year(a.key);
+}
+
+tba::Team_key rand(tba::Team_key const*){
+	std::stringstream ss;
+	ss<<"frc"<<rand()%1000;
+	return tba::Team_key(ss.str());
+}
+
+tba::Event_key rand(tba::Event_key const*){
+	std::stringstream ss;
+	ss<<"2026";
+	for(auto _:range(5)){
+		(void)_;
+		ss<<char('a'+rand()%26);
+	}
+	return tba::Event_key(ss.str());
+}
+
+bool chairmans_expected(tba::Event_type a){
+	#define X(NAME,RESULT) if(a==tba::Event_type::NAME) return RESULT;
+	X(DISTRICT,1)
+	X(DISTRICT_CMP_DIVISION,0)
+	X(DISTRICT_CMP,1)
+	#undef X
+
+	PRINT(a);
+	nyi
+}
+
+bool chairmans_expected(TBA_fetcher &f,tba::Event_key const& a){
+	auto e=tba::event(f,a);
+	return chairmans_expected(e.event_type);
+}
+
+bool complete(tba::Match const& a){
+	if(a.post_result_time){
+		return 1;
+	}
+	auto s0=a.alliances.red.score.valid();
+	auto s1=a.alliances.blue.score.valid();
+	assert(s0==s1);
+	if(s0){
+		return 1;
+	}
+	//if you uncomment the next line you get linker problems (!)
+	//print_r(a);
+	nyi
+}
+
+bool matches_complete(TBA_fetcher &f,tba::Event_key const& event){
+	//note that this isn't thinking too hard about whether or not this event ought to have matches.
+	auto e=tba::event_matches(f,event);
+	if(e.empty()){
+		return 0;
+	}
+	return all(MAP(complete,e));
 }
 
