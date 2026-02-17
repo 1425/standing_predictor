@@ -1,6 +1,5 @@
 #include "dates.h"
 #include<chrono>
-#include "skill_opr.h"
 #include "../tba/tba.h"
 #include "tba.h"
 #include "set.h"

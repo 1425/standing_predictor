@@ -9,7 +9,6 @@
 #include "interval.h"
 #include "../tba/tba.h"
 #include "optional.h"
-#include "skill_opr.h"
 #include "int_limited.h"
 #include "set_fixed.h"
 #include "rank_limits.h"

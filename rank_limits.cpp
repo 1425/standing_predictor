@@ -20,7 +20,6 @@
 #include "map_fixed.h"
 #include "map_auto.h"
 #include "declines.h"
-#include "skill_opr.h"
 #include "rp.h"
 
 using namespace std;

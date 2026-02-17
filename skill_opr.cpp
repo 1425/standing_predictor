@@ -118,10 +118,6 @@ auto normal_events(TBA_fetcher &f,Year year){
 	return mapf([](auto x){ return x.key; },found);
 }
 
-std::vector<Year> years(){
-	return range(Year(1992),Year(2027));
-}
-
 std::map<District_abbreviation,std::set<Year>> normal_district_years(TBA_fetcher &f){
 	const auto district_names=[&](){
 		std::set<tba::District_abbreviation> r;

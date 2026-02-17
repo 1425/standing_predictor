@@ -7,7 +7,6 @@
 #include "vector_void.h"
 #include "print_r.h"
 #include "dates.h"
-#include "skill_opr.h" //for years()
 
 using namespace std;
 
@@ -300,5 +299,9 @@ bool event_timed_out(TBA_fetcher &f,tba::Event_key const& event){
 
 std::vector<tba::Event> all_events(TBA_fetcher &f){
 	return flatten(mapf([&](auto year){ return tba::events(f,year); },years()));
+}
+
+std::vector<tba::Year> years(){
+	return range(tba::Year(1992),tba::Year(2027));
 }
 

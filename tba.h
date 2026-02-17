@@ -79,4 +79,6 @@ bool event_timed_out(TBA_fetcher &,tba::Event_key const&);
 
 std::vector<tba::Event> all_events(TBA_fetcher&);
 
+std::vector<tba::Year> years();
+
 #endif

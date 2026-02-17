@@ -9,7 +9,6 @@
 #include "util.h"
 #include "set.h"
 #include "tba.h"
-#include "skill_opr.h"
 #include "dates.h"
 #include "declines.h"
 

@@ -16,7 +16,6 @@
 #include "run.h"
 #include "vector_void.h"
 #include "array.h"
-#include "skill_opr.h"
 #include "optional.h"
 
 using namespace std;
