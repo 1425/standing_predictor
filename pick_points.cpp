@@ -353,7 +353,7 @@ int ranks_from_demo(TBA_fetcher &f){
 	auto r=ranks_from_alliances(a,30);
 	//print_r(r);
 
-	auto e=FILTER(normal_ranking_expected,all_events(f));
+	auto e=FILTER(normal_ranking_expected,events(f));
 	PRINT(e.size());
 	//e=take(600,e);
 	for(auto event:e){

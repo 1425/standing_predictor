@@ -527,7 +527,7 @@ int check_address(TBA_fetcher &f){
 		//nyi
 	}*/
 
-	for(auto event:reversed(all_events(f))){
+	for(auto event:reversed(events(f))){
 		auto a=address(event);
 		if(a && a->state) continue;
 		if(a && (

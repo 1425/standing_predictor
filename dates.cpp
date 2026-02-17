@@ -213,7 +213,7 @@ void match_timings(TBA_fetcher &f){
 	#if 0
 	using T=tuple<bool,bool,bool,bool>;
 	std::vector<T> v;
-	for(auto const& event:all_events(f)){
+	for(auto const& event:events(f)){
 		auto matches=event_matches(f,event.key);
 		for(auto const& m:matches){
 			v|=T(m.time,m.actual_time,m.predicted_time,m.post_result_time);
@@ -225,7 +225,7 @@ void match_timings(TBA_fetcher &f){
 
 	/*auto example_matches=[&](){
 		std::vector<tba::Match> r;
-		for(auto const& event:all_events(f)){
+		for(auto const& event:events(f)){
 			auto matches=event_matches(f,event.key);
 			r|=matches;
 			if(r.size()>10000){
@@ -243,7 +243,7 @@ void match_timings(TBA_fetcher &f){
 
 	auto times=[&](){
 		vector<time_t> r;
-		for(auto const& event:all_events(f)){
+		for(auto const& event:events(f)){
 			for(auto const& match:event_matches(f,event.key)){
 				r|=match.actual_time;
 				if(r.size()>10000){
@@ -313,7 +313,7 @@ void match_timings(TBA_fetcher &f){
 auto find_hosts(TBA_fetcher &f){
 	//See if we can figure out if there is a specific team that might be hosting the event.
 	map<tba::Event_key,std::set<Team_key>> r;
-	for(auto event:reversed(all_events(f))){
+	for(auto event:reversed(events(f))){
 
 		auto get_loc=[&](auto x){
 			return make_tuple(

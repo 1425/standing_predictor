@@ -206,11 +206,11 @@ int playoff_limits_demo(TBA_fetcher& f){
 	//TODO: Loop through all the events that are expected to be good.
 	playoff_limits_demo(f,tba::Event_key("2025orwil"));
 
-	/*for(auto event:all_events(f)){
+	/*for(auto event:events(f)){
 		playoff_limits_demo(f,event.key);
 	}*/
 
-	auto e=take(1000,all_events(f));
+	auto e=take(1000,events(f));
 	auto k=MAP(key,e);
 	auto g=group(
 		[&](auto x){ return playoff_limits_demo(f,x); },

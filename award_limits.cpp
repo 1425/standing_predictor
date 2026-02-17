@@ -224,7 +224,7 @@ Award_limits award_limits(TBA_fetcher &f,tba::Event_key const& event){
 }
 
 int award_limits_demo(TBA_fetcher &f){
-	for(auto const& event:all_events(f)){
+	for(auto const& event:events(f)){
 		auto a=award_limits(f,event.key);
 		(void)a;
 	}
@@ -241,7 +241,7 @@ std::optional<std::pair<optional<int>,int>> award_pts_demo(TBA_fetcher &f,tba::E
 }
 
 int award_pts_demo(TBA_fetcher &f){
-	auto e=all_events(f);
+	auto e=events(f);
 	auto g=group([](auto x){ return make_pair(x.event_type,x.year); },e);
 	for(auto [k,v]:g){
 		PRINT(k);

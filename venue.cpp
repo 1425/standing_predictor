@@ -484,13 +484,13 @@ void typical_teams(TBA_fetcher &f,Event_grouping const& grouping,tba::Event cons
 }
 
 void typical_teams(TBA_fetcher &f,Year year){
-	Event_grouping grouping(all_events(f));
+	Event_grouping grouping(events(f));
 	for(auto event:events(f,year)){
 		cout<<event.key<<"\n";
 		typical_teams(f,grouping,event);
 	}
 
-	//Event_grouping grouping(all_events(f));
+	//Event_grouping grouping(events(f));
 	//for each team, list the events this year that they would be most expected to be at
 	map<Event_key,map<Team,Pr>> by_event;;
 
@@ -582,7 +582,7 @@ void most_international(TBA_fetcher &f){
 			return make_pair(entropy(c),x);
 		},
 		//events_keys(f,year)
-		keys(all_events(f))
+		keys(events(f))
 	)));
 	print_lines(take(50,m));
 }
@@ -595,12 +595,12 @@ int venue_demo(TBA_fetcher &f){
 	typical_teams(f,Year(2026));
 	return 0;
 
-	/*for(auto event:all_events(f)){
+	/*for(auto event:events(f)){
 		parse_event_name(event.name);
 		//address(event);
 	}*/
 
-	auto g=GROUP(address,all_events(f));
+	auto g=GROUP(address,events(f));
 	using Venue=Address;
 	map<Venue,vector<size_t>> by_venue;
 
@@ -630,7 +630,7 @@ int venue_demo(TBA_fetcher &f){
 		}*/
 	}
 
-	Event_grouping grouping(all_events(f));
+	Event_grouping grouping(events(f));
 
 	//Try to calculate which upcoming events might have openings.
 	for(auto event:events(f,Year(2026))){

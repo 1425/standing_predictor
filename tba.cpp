@@ -297,7 +297,7 @@ bool event_timed_out(TBA_fetcher &f,tba::Event_key const& event){
 	return since_end>std::chrono::days(3);
 }
 
-std::vector<tba::Event> all_events(TBA_fetcher &f){
+std::vector<tba::Event> events(TBA_fetcher &f){
 	return flatten(mapf([&](auto year){ return tba::events(f,year); },years()));
 }
 

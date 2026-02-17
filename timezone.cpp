@@ -405,7 +405,7 @@ Dates_result event_times_inner(TBA_fetcher &f){
 
 	std::map<int,std::vector<Match_positions>> found;
 
-	for(auto const& event:all_events(f)){
+	for(auto const& event:events(f)){
 		auto b=match_schedule(f,event.key);
 		if(b){
 			auto c=*b;
@@ -508,7 +508,7 @@ Dates_result event_times_inner(TBA_fetcher &f){
 	 * and therefore when the odds for different teams are expected to update.
 	 *   */
 
-	const auto all_events1=all_events(f);
+	const auto all_events1=events(f);
 
 	auto m=mapf(
 		//[&](auto x)->std::optional<tuple<string,string,string>>{
@@ -595,10 +595,10 @@ int timezone_demo(TBA_fetcher &f){
 
 	return check_address(f);
 
-	/*auto g=mapf([](auto x){ return x.timezone; },all_events(f));
+	/*auto g=mapf([](auto x){ return x.timezone; },events(f));
 	print_r(count(g));
 
-	auto f1=filter([](auto x){ return !x.timezone; },all_events(f));
+	auto f1=filter([](auto x){ return !x.timezone; },events(f));
 	PRINT(keys(f1));*/
 
 	//There are some really funky events like "202121reg" that don't occur in any meaningful sense.
@@ -606,10 +606,10 @@ int timezone_demo(TBA_fetcher &f){
 	auto events=filter(
 		[&](auto x){ return has_matches(f,x); },
 		//[&](auto x){ return has_matches_with_times(f,x); },
-		all_events(f)
+		::events(f)
 	);
 
-	auto m=mapf([](auto x){ return make_tuple(x.timezone,get_timezone(x),x.key); },all_events(f));
+	auto m=mapf([](auto x){ return make_tuple(x.timezone,get_timezone(x),x.key); },events);
 	auto m2=sorted(m);
 	//print_lines(m2);
 
@@ -638,7 +638,7 @@ int timezone_demo(TBA_fetcher &f){
 		}
 	}
 
-	/*for(auto event:all_events(f)){
+	/*for(auto event:events(f)){
 		cout<<event.key<<"\t"<<event.timezone<<"\n";
 	}*/
 	return 0;

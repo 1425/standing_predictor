@@ -732,7 +732,7 @@ void debug(TBA_fetcher &f){
 				&& normal_ranking_expected(x)
 				&& !rankings_consistent(f,x.key);
 		},
-		all_events(f)
+		events(f)
 	);
 	for(auto f1:found){
 		auto l=listed_ranks(f,f1.key);
@@ -770,8 +770,8 @@ void rank_limits_demo(TBA_fetcher &f){
 		-how many points are unclaimed
 	 * */
 	//rank_limits(f,tba::Event_key("2025orwil"));
-	//for(auto event:reversed(take(50,all_events(f)))){
-	//for(auto event:take(550,reversed(all_events(f)))){
+	//for(auto event:reversed(take(50,events(f)))){
+	//for(auto event:take(550,reversed(events(f)))){
 
 	#if 0
 	auto event_keys=mapf(
@@ -781,7 +781,7 @@ void rank_limits_demo(TBA_fetcher &f){
 				//skip because some offseasons are known to have weird ranking systems.
 				return x.event_type!=tba::Event_type::OFFSEASON;
 			},
-			all_events(f)
+			events(f)
 		)
 	);
 	auto g=group(
@@ -802,7 +802,7 @@ void rank_limits_demo(TBA_fetcher &f){
 
 	auto interesting_events=filter(
 		[](auto x){ return x.event_type==tba::Event_type::DISTRICT; },
-		all_events(f)
+		events(f)
 	);
 
 	for(auto [g,v]:group([](auto x){ return x.year; },interesting_events)){
@@ -817,7 +817,7 @@ void rank_limits_demo(TBA_fetcher &f){
 	}
 	return;
 
-	for(auto event:all_events(f)){
+	for(auto event:events(f)){
 		if(event.event_type==tba::Event_type::CMP_FINALS){
 			//then rankings are not meaningful.
 			continue;
