@@ -40,10 +40,10 @@ bool numeric(string const& s){
 	}
 }
 
-bool suffix(string const& needle,string const& haystack){
+/*bool suffix(string const& needle,string const& haystack){
 	if(needle.size()>haystack.size()) return 0;
 	return needle==haystack.c_str()+(haystack.size()-needle.size());
-}
+}*/
 
 string rm_suffix(string const& sub,string const& whole){
 	assert(suffix(sub,whole));

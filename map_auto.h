@@ -16,13 +16,15 @@ static constexpr bool small_int(Int_limited<MIN,MAX> const*){
 
 template<typename K,typename V>
 class map_auto{
+	public:
 	using Data=typename std::conditional<
 		small_int((K*)0),
 		map_small_int<K,V>,
 		//map_fixed<K,V>,
 		std::map<K,V>
 	>::type;
-	//using Data=std::map<K,V>;
+
+	private:
 	Data data;
 
 	public:
@@ -197,6 +199,11 @@ auto reverse_pairs(map_auto<K,V> const& a){
 		r|=std::make_pair(x.second,x.first);
 	}
 	return r;
+}
+
+template<typename K,typename V>
+map_auto<K,V> rand(map_auto<K,V> const*){
+	return rand((typename map_auto<K,V>::Data*)0);
 }
 
 #endif

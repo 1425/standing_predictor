@@ -164,6 +164,7 @@ auto district_display_names(TBA_fetcher &f){
 }
 
 std::optional<tuple<string,string,string>> parse_dcmp_name(TBA_fetcher &f,std::string const& s){
+	PRINT(s);
 	auto n=district_display_names(f);
 	auto found=filter([=](auto x){ return prefix(s,x); },n);
 	switch(found.size()){
@@ -171,7 +172,9 @@ std::optional<tuple<string,string,string>> parse_dcmp_name(TBA_fetcher &f,std::s
 			return std::nullopt;
 		case 1:{
 			auto d=found[0];
+			PRINT(d);
 			auto sp=split(s.substr(d.size(),s.size()));
+			PRINT(sp);
 			if(sp[0]=="FIRST"){
 				sp=skip(1,sp);
 			}

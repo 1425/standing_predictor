@@ -90,24 +90,6 @@ using Team_key=tba::Team_key;
 using Year=tba::Year;
 using Date=tba::Date;
 
-California_region california_region(tba::Team const& team){
-	if(team.postal_code){
-		return california_region(Zipcode(*team.postal_code));
-	}
-	if(team.city){
-		return california_region(City(*team.city));
-	}
-	assert(0);
-}
-
-auto california_region(tba::Event const& event){
-	if(event.postal_code){
-		return california_region(Zipcode(*event.postal_code));
-	}
-	PRINT(event);
-	nyi
-}
-
 std::map<Point,Pr> operator+(std::map<Point,Pr> a,int i){
 	std::map<Point,Pr> r;
 	for(auto [k,v]:a){
@@ -237,7 +219,7 @@ std::tuple<Run_result,Points_used,By_team> run_inner(
 		{
 			auto accounted_pts=sum(mapf([](auto x){ return x.total; },team.event_points))+team.rookie_bonus;
 			if(accounted_pts!=team.point_total){
-				std::cout<<"Discrepancy:"<<team.team_key<<"\n";
+				std::cout<<"Discrepancy:"<<team.team_key<<" "<<accounted_pts<<" "<<team.point_total<<"\n";
 			}
 			//assert(accounted_pts==team.point_total);
 		}
@@ -456,15 +438,6 @@ std::ostream& operator<<(std::ostream& o,Team_data const& a){
 }
 
 using District_data=map<tba::Team_key,Team_data>;
-
-Dcmp_home calc_dcmp_home(TBA_fetcher &fetcher,tba::Team_key const& team_key){
-	auto t=team(fetcher,team_key);
-	if(t.state_prov!="California"){
-		return 0;
-	}
-	auto c=california_region(t);
-	return (Dcmp_home)c;
-}
 
 Run_input to_run_input_equal(TBA_fetcher &fetcher,tba::District_key district,District_data data){
 	Run_input r;

@@ -8,6 +8,8 @@
 #include "set.h"
 #include "io.h"
 #include "vector_void.h"
+#include "../tba/tba.h"
+#include "tba.h"
 
 using namespace std;
 
@@ -35,47 +37,6 @@ std::ostream& operator<<(std::ostream& o,California_region a){
 	assert(0);
 }
 
-/*template<typename Func,typename T>
-auto filter(Func f,std::vector<T> const& a){
-	std::vector<T> r;
-	for(auto const& x:a){
-		if(f(x)){
-			r|=x;
-		}
-	}
-	return r;
-}*/
-
-/*template<typename T>
-std::ostream& operator<<(std::ostream& o,std::set<T> const& a){
-	o<<"{ ";
-	for(auto const& x:a){
-		o<<x<<" ";
-	}
-	return o<<"}";
-}*/
-
-/*template<typename T>
-std::set<T> operator|(std::set<T> a,std::set<T> const& b){
-	for(auto const& x:b){
-		a.insert(x);
-	}
-	return a;
-}*/
-
-/*template<typename T>
-std::set<T> operator-(std::set<T> a,std::set<T> const& b){
-	for(auto const& x:b){
-		a.erase(x);
-	}
-	return a;
-}*/
-
-/*template<typename T>
-auto to_set(std::vector<T> const& a){
-	return std::set<T>{a.begin(),a.end()};
-}*/
-
 #define ZIP_CODE_DATA(X)\
 	X(Zipcode,zipcode)\
 	X(City,town)\
@@ -87,49 +48,6 @@ std::ostream& operator<<(std::ostream& o,Zip_code_data const& a){
 	o<<"("<<a.zipcode<<" "<<a.town<<" "<<a.county<<")";
 	return o;
 }
-
-/*auto split(std::string const& s,char delim){
-	std::vector<std::string> r;
-	stringstream ss;
-	for(auto x:s){
-		if(x==delim){
-			r|=ss.str();
-			ss.str("");
-		}else{
-			ss<<x;
-		}
-	}
-	r|=ss.str();
-	return r;
-}*/
-
-std::string data(){
-	nyi/*std::string r{
-		#embed "ca_zipcodes.csv"
-	};
-	return r;*/
-}
-
-/*std::vector<Zip_code_data> read_inner1(){
-	//ifstream f("ca_zipcodes.csv");
-	std::stringstream f;
-	f<<data();
-
-	std::vector<Zip_code_data> r;
-	std::string s;
-	while(f.good()){
-		getline(f,s);
-		if(s.empty()) continue;
-		auto sp=split(s,',');
-		if(sp.size()!=3){
-			PRINT(s);
-			PRINT(sp);
-		}
-		assert(sp.size()==3);
-		r|=Zip_code_data(sp[0],sp[1],sp[2]);
-	}
-	return r;
-}*/
 
 auto read_inner(){
 	return mapf(
@@ -147,7 +65,6 @@ auto read_inner(){
 auto const& read(){
 	static auto r=read_inner();
 	return r;
-	//return read_inner();
 }
 
 auto counties(){
@@ -198,32 +115,30 @@ California_region california_region(City const& city){
 	return *begin(m2);
 }
 
-template<typename T>
-auto count(std::vector<T> const& a){
-	std::map<T,size_t> r;
-	for(auto x:a){
-		r[x]++;
+California_region california_region(tba::Team const& team){
+	if(team.postal_code){
+		return california_region(Zipcode(*team.postal_code));
 	}
-	return r;
+	if(team.city){
+		return california_region(City(*team.city));
+	}
+	assert(0);
 }
 
-#if 0
-int main(){
-	auto r=read();
-	//TBA_PRINT(r);
-	//PRINT(norcal());
-	//PRINT(socal());
-
-	auto z=mapf([](auto x){ return x.zipcode; },read());
-	auto m=mapf(california_region,z);
-	PRINT(m);
-	PRINT(count(m));
-	//PRINT(data().size());
-	//PRINT(data().substr(0,100));
-	return 0;
+auto california_region(tba::Event const& event){
+	if(event.postal_code){
+		return california_region(Zipcode(*event.postal_code));
+	}
+	PRINT(event);
+	nyi
 }
-#endif
 
-/*int main(){
-	tba::main();
-}*/
+Dcmp_home calc_dcmp_home(TBA_fetcher &fetcher,tba::Team_key const& team_key){
+	auto t=team(fetcher,team_key);
+	if(t.state_prov!="California"){
+		return 0;
+	}
+	auto c=california_region(t);
+	return Dcmp_home(int(c));
+}
+

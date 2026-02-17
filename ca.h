@@ -4,6 +4,13 @@
 #include<iosfwd>
 #include<string>
 #include<cstdint>
+#include "int_limited.h"
+
+class TBA_fetcher;
+
+namespace tba{
+	class Team_key;
+}
 
 enum class California_region{
 	NORTH,SOUTH
@@ -33,7 +40,9 @@ std::ostream& operator<<(std::ostream&,City const&);
 
 California_region california_region(City const&);
 
-using Dcmp_home=uint8_t;
 static constexpr auto MAX_DCMPS=2;
+using Dcmp_home=Int_limited<0,MAX_DCMPS-1>;
+
+Dcmp_home calc_dcmp_home(TBA_fetcher&,tba::Team_key const&);
 
 #endif

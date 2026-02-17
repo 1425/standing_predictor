@@ -18,6 +18,7 @@
 #include "vector_fixed.h"
 #include "event.h"
 #include "venue.h"
+#include "names.h"
 
 /*
  * would be good to check some of the assumptions made in here with data
@@ -71,7 +72,7 @@ auto rand(Team_info const*){
 	};
 }
 
-using Info_by_team=std::map<Team,Team_info>;
+using Info_by_team=map_auto<Team,Team_info>;
 
 using Event_size=Int_limited<0,80>;
 
@@ -147,9 +148,10 @@ bool won_chairmans(TBA_fetcher &f,Year year,tba::Team_key const& team){
 	return found!=0;
 }
 
-Lock_data read_lock_data(TBA_fetcher &f,tba::District_key const& district){
-	Lock_data r;
-	//r.by_team
+//returns a list with each item representing the status of one of the district events.
+vector<Lock_data> read_lock_data(TBA_fetcher &f,tba::District_key const& district){
+	map<Dcmp_home,Lock_data> r1;
+	//Lock_data r;
 	auto a=district_rankings(f,district);
 	assert(a);
 	for(auto x:*a){
@@ -171,7 +173,8 @@ Lock_data read_lock_data(TBA_fetcher &f,tba::District_key const& district){
 		//obviously, want to actually look this up later.
 		team_info.remaining_district_events=at_event.size()<2;
 
-		r.by_team[x.team_key]=team_info;
+		auto dcmp=calc_dcmp_home(f,x.team_key);
+		r1[dcmp].by_team[x.team_key]=team_info;
 	}
 
 	for(auto event:district_events(f,district)){
@@ -183,20 +186,26 @@ Lock_data read_lock_data(TBA_fetcher &f,tba::District_key const& district){
 		}
 		//PRINT(event.event_type);
 		assert(event.event_type==tba::Event_type::DISTRICT);
-		r.by_event[event.key]=read_event_info(f,event.key);
+
+		for(auto & [k,r]:r1){
+			r.by_event[event.key]=read_event_info(f,event.key);
+		}
 	}
 	
 	auto d=dcmp_size(district);
-	//Not dealing with California 2026 here!
-	/*thoughts on how to eventually deal with it:
-	 *just go super-conservative and calculate it twice, each with half the teams but 2x the number of events
+	/*Notes on dealing with California 2026:
+	For now, just going super-conservative and calculating it twice, each 
+	with half the teams but 2x the number of events
+
 	 -could restrict the number of pts available at each event in this case based on the number of teams
 	   from that half of the district that are attending it -> something like min(total pts,83*# of teams)
 	 * */
-	assert(d.size()==1);
-	r.dcmp_size=d[0];
-
-	return r;
+	for(auto [i,v]:enumerate(d)){
+		auto f=r1.find(i);
+		assert(f!=r1.end());
+		f->second.dcmp_size=v;
+	}
+	return values(r1);
 }
 
 std::ostream& operator<<(std::ostream& o,Lock_data const& a){
@@ -642,10 +651,11 @@ PRINT_R_ITEM(Lock_display,LOCK_DISPLAY)
 void page(std::ostream& o,Lock_display const& a){
 	o<<"<html>\n";
 	o<<"<head>\n";
-	o<<title("Locks for "+a.district);
+	auto title1=a.district+" locks";
+	o<<title(title1);
 	o<<"</head>\n";
 	o<<"<body>\n";
-	o<<h1("Locks for "+a.district);
+	o<<h1(title1);
 	o<<tag("table border",
 		tr(td("Pre-DCMP points remaining")+td(a.pre_dcmp_points_remaining))+
 		tr(td("District championship size")+td(a.dcmp_size))+
@@ -862,15 +872,33 @@ Point dcmp_points(TBA_fetcher &f,tba::District_key const& district){
 	return sum(mapf([&](auto const& x){ return event_pts(f,x); },found));
 }
 
-int run_lock(TBA_fetcher &f,tba::District_key const& district){
-	//PRINT(district);
+std::string parse_district_name(std::string s){
+	std::vector<std::string> v{
+		"FIRST in ",
+		"FIRST In ",
+		"FIRST Canada - ",
+		"FIRST "
+	};
+	for(auto p:v){
+		if(prefix(s,p)){
+			s=s.substr(p.size(),s.size());
+		}
+	}
+	
+	string x=" Robotics";
+	if(suffix(s,x)){
+		s=s.substr(0,s.size()-x.size());
+	}
 
-	//it might be cleaner if all the data lookups happened here before calling run.
-	Lock_data in=read_lock_data(f,district);
-	auto out=run(in);
+	return s;
+}
 
+void show_lock_data(TBA_fetcher &f,tba::District_key const& district,Dcmp_home dcmp_home,Lock_data const& in,Lock_result out){
 	Lock_display data;
-	data.district=display_name(f,district);//This is ugly and unhelpful.  
+	//data.district=parse_event_name(f,display_name(f,district))+" "+as_string((int)dcmp_home);
+	PRINT(display_name(f,district));
+	PRINT(parse_district_name(display_name(f,district)));
+	data.district=parse_district_name(display_name(f,district))+" "+as_string((int)dcmp_home);
 	data.pre_dcmp_points_remaining=out.pre_dcmp_points_remaining;
 	data.total_points_remaining=data.pre_dcmp_points_remaining+dcmp_points(f,district);
 	data.available_champs_spots=worlds_slots(district);
@@ -881,7 +909,7 @@ int run_lock(TBA_fetcher &f,tba::District_key const& district){
 		//print_r(ii);
 		Event_display h;
 		//print_r(x);
-		h.name=x.name;
+		h.name=nice_name(x);
 		h.status=[&]()->string{
 			auto it=in.by_event.find(x.key);
 			if(it!=in.by_event.end()){
@@ -931,9 +959,22 @@ int run_lock(TBA_fetcher &f,tba::District_key const& district){
 	
 	//PRINT(data);
 	{
-		ofstream file(string()+"lock_"+::as_string(district)+".html");
+		ofstream file(string()+"lock_"+::as_string(district)+::as_string((int)dcmp_home)+".html");
 		page(file,data);
 	}
+
+}
+
+int run_lock(TBA_fetcher &f,tba::District_key const& district){
+	//PRINT(district);
+
+	//it might be cleaner if all the data lookups happened here before calling run.
+	vector<Lock_data> in=read_lock_data(f,district);
+	for(auto [i,in1]:enumerate(in)){
+		auto out=run(in1);
+		show_lock_data(f,district,i,in1,out);
+	}
+
 	return 0;
 }
 

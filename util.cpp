@@ -170,3 +170,10 @@ bool prefix(std::optional<std::string> const& whole,std::string const& part){
 	return prefix(*whole,part);
 }
 
+bool suffix(std::string const& whole,std::string const& b){
+	if(b.size()>whole.size()){
+		return 0;
+	}
+	auto sub=whole.substr(whole.size()-b.size(),whole.size());
+	return sub==b;
+}

@@ -715,4 +715,6 @@ bool both_less_eq(std::pair<A,B> const& a,std::pair<A,B> const& b){
 	return a.first<=b.first && a.second<=b.second;
 }
 
+bool suffix(std::string const& whole,std::string const&);
+
 #endif

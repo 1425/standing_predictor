@@ -112,14 +112,6 @@ bool contains(string whole,string part){
 	return !!strstr(whole.c_str(),part.c_str());
 }
 
-bool suffix(string whole,string b){
-	if(b.size()>whole.size()){
-		return 0;
-	}
-	auto sub=whole.substr(whole.size()-b.size(),whole.size());
-	return sub==b;
-}
-
 Event_name parse_event_name(string a){
 	/* Warning: This is not 100% accurate, nor is it intended to be.  
 	 * For example, anything that it doesn't understand will basically get classified as an offseason.
@@ -668,4 +660,14 @@ int venue_demo(TBA_fetcher &f){
 		}
 	}
 	return 0;
+}
+
+std::string nice_name(TBA_fetcher &f,tba::Event_key const& a){
+	auto event=tba::event(f,a);
+	auto p=parse_event_name(event.name);
+	return base(p);
+}
+
+std::string nice_name(tba::Event const& event){
+	return base(parse_event_name(event.name));
 }
