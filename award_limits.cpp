@@ -231,3 +231,42 @@ int award_limits_demo(TBA_fetcher &f){
 	}
 	return 0;
 }
+
+std::optional<std::pair<optional<int>,int>> award_pts_demo(TBA_fetcher &f,tba::Event_key e){
+	auto found=tba::event_district_points(f,e);
+	if(!found){
+		return std::nullopt;
+	}
+	auto ap=mapf([](auto x){ return x.award_points; },values(found->points));
+	return make_pair(maybe_max(ap),int(sum(ap)));
+}
+
+int award_pts_demo(TBA_fetcher &f){
+	auto e=all_events(f);
+	auto g=group([](auto x){ return make_pair(x.event_type,x.year); },e);
+	for(auto [k,v]:g){
+		PRINT(k);
+		auto m=mapf([&](auto x){ return award_pts_demo(f,x.key); },v);
+		auto m2=nonempty(m);
+		//print_lines(m2);
+		auto c=count(m);
+		//print_lines(c);
+		auto f=firsts(m2);
+		cout<<"max:\n";
+		print_lines(count(f));
+
+		cout<<"total\n";
+		auto s=seconds(m2);
+		print_lines(count(s));
+	}
+
+	//auto a=award_pts_demo(f,Event_key("2025orwil"));
+	//PRINT(a);
+
+	//for every event, look at the selection of awards given out and figure out how many points total 
+	//also, which ones overlap with each other (probably just safety)
+	//nyi
+	return 0;
+}
+
+

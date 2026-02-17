@@ -35,7 +35,22 @@ using District_key=tba::District_key;
 using Team=tba::Team_key;
 using Event=tba::Event_key;
 using Event_key=tba::Event_key;
+using Year=tba::Year;
+
 using namespace std;
+
+bool won_chairmans(TBA_fetcher &f,Year year,tba::Team_key const& team){
+	auto t=team_awards_year(f,team,year);
+	auto found=count_if([](auto x){ return x.award_type==tba::Award_type::CHAIRMANS; },t);
+	return found!=0;
+}
+
+bool event_timed_out(TBA_fetcher &f,tba::Event_key const& event){
+	auto e=tba::event(f,event);
+	assert(e.end_date);
+	auto since_end=current_date()-*e.end_date;
+	return since_end>std::chrono::days(3);
+}
 
 using Age_bonus=Int_limited<0,10>;//not encoding that it can only be 0,5,10
 
@@ -91,13 +106,6 @@ auto rand(Event_finished const*){
 //obviously going to be possible to deal with events that are part-way through.
 using Event_info=std::variant<Event_upcoming,Event_finished>;
 
-bool event_timed_out(TBA_fetcher &f,tba::Event_key const& event){
-	auto e=tba::event(f,event);
-	assert(e.end_date);
-	auto since_end=current_date()-*e.end_date;
-	return since_end>std::chrono::days(3);
-}
-
 Event_info read_event_info(TBA_fetcher &f,tba::Event_key const& event){
 	auto aw=event_awards(f,event);
 	auto c=count_if([](auto x){ return x.award_type==tba::Award_type::CHAIRMANS; },aw);
@@ -140,12 +148,29 @@ struct Lock_data{
 	auto operator<=>(Lock_data const&)const=default;
 };
 
-using Year=tba::Year;
+std::ostream& operator<<(std::ostream& o,Lock_data const& a){
+	o<<"Lock_data( ";
+	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
+	LOCK_DATA(X)
+	#undef X
+	return o<<")";
+}
 
-bool won_chairmans(TBA_fetcher &f,Year year,tba::Team_key const& team){
-	auto t=team_awards_year(f,team,year);
-	auto found=count_if([](auto x){ return x.award_type==tba::Award_type::CHAIRMANS; },t);
-	return found!=0;
+auto rand(Lock_data const*){
+	return Lock_data{
+		#define X(A,B) rand((A*)0),
+		LOCK_DATA(X)
+		#undef X
+	};
+}
+
+void print_r(int n,Lock_data const& a){
+	indent(n);
+	cout<<"Lock_data\n";
+	n++;
+	#define X(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
+	LOCK_DATA(X)
+	#undef X
 }
 
 //returns a list with each item representing the status of one of the district events.
@@ -206,31 +231,6 @@ vector<Lock_data> read_lock_data(TBA_fetcher &f,tba::District_key const& distric
 		f->second.dcmp_size=v;
 	}
 	return values(r1);
-}
-
-std::ostream& operator<<(std::ostream& o,Lock_data const& a){
-	o<<"Lock_data( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	LOCK_DATA(X)
-	#undef X
-	return o<<")";
-}
-
-auto rand(Lock_data const*){
-	return Lock_data{
-		#define X(A,B) rand((A*)0),
-		LOCK_DATA(X)
-		#undef X
-	};
-}
-
-void print_r(int n,Lock_data const& a){
-	indent(n);
-	cout<<"Lock_data\n";
-	n++;
-	#define X(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
-	LOCK_DATA(X)
-	#undef X
 }
 
 int event_points(size_t event_size){
@@ -365,13 +365,6 @@ std::string color(Status const& a){
 	assert(0);
 }
 
-template<typename A,typename B,typename C>
-std::pair<A,B> operator*(pair<A,B> a,C c){
-	a.first*=c;
-	a.second*=c;
-	return a;
-}
-
 using Status_by_team=map<Team,Status>;
 using Points_by_event=map<tba::Event_key,Point>;
 
@@ -399,11 +392,6 @@ void print_r(int n,Lock_result const& a){
 #define X(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
 	LOCK_RESULT(X)
 #undef X
-}
-
-template<typename A,typename B>
-std::vector<A> firsts(std::vector<std::tuple<A,B>> a){
-	return mapf([](auto x){ return get<0>(x); },a);
 }
 
 Lock_result run(Lock_data const& data){
@@ -765,43 +753,6 @@ int lock_demo(TBA_fetcher& f,District_key district){
 	nyi
 }
 
-std::optional<std::pair<optional<int>,int>> award_pts_demo(TBA_fetcher &f,tba::Event_key e){
-	auto found=tba::event_district_points(f,e);
-	if(!found){
-		return std::nullopt;
-	}
-	auto ap=mapf([](auto x){ return x.award_points; },values(found->points));
-	return make_pair(maybe_max(ap),int(sum(ap)));
-}
-
-int award_pts_demo(TBA_fetcher &f){
-	auto e=all_events(f);
-	auto g=group([](auto x){ return make_pair(x.event_type,x.year); },e);
-	for(auto [k,v]:g){
-		PRINT(k);
-		auto m=mapf([&](auto x){ return award_pts_demo(f,x.key); },v);
-		auto m2=nonempty(m);
-		//print_lines(m2);
-		auto c=count(m);
-		//print_lines(c);
-		auto f=firsts(m2);
-		cout<<"max:\n";
-		print_lines(count(f));
-
-		cout<<"total\n";
-		auto s=seconds(m2);
-		print_lines(count(s));
-	}
-
-	//auto a=award_pts_demo(f,Event_key("2025orwil"));
-	//PRINT(a);
-
-	//for every event, look at the selection of awards given out and figure out how many points total 
-	//also, which ones overlap with each other (probably just safety)
-	//nyi
-	return 0;
-}
-
 int lock_demo(TBA_fetcher& f){
 	rank_limits_demo(f);
 	return 0;
@@ -818,9 +769,6 @@ int lock_demo(TBA_fetcher& f){
 		//in progress
 	}
 
-	award_pts_demo(f);
-	return 0;
-
 	(void)f;
 	auto data=rand((Lock_data*)0);
 	for(auto _:range(530)){
@@ -833,12 +781,6 @@ int lock_demo(TBA_fetcher& f){
 	data.dcmp_size=40;
 	run(data);
 	return 0;
-}
-
-std::string display_name(TBA_fetcher &f,tba::District_key const& k){
-	auto d=districts(f,year(k));
-	auto found=filter_unique([=](auto x){ return x.key==k; },d);
-	return found.display_name;
 }
 
 Point event_pts(TBA_fetcher &f,tba::Event_key const& event){
@@ -872,33 +814,10 @@ Point dcmp_points(TBA_fetcher &f,tba::District_key const& district){
 	return sum(mapf([&](auto const& x){ return event_pts(f,x); },found));
 }
 
-std::string parse_district_name(std::string s){
-	std::vector<std::string> v{
-		"FIRST in ",
-		"FIRST In ",
-		"FIRST Canada - ",
-		"FIRST "
-	};
-	for(auto p:v){
-		if(prefix(s,p)){
-			s=s.substr(p.size(),s.size());
-		}
-	}
-	
-	string x=" Robotics";
-	if(suffix(s,x)){
-		s=s.substr(0,s.size()-x.size());
-	}
-
-	return s;
-}
-
 void show_lock_data(TBA_fetcher &f,tba::District_key const& district,Dcmp_home dcmp_home,Lock_data const& in,Lock_result out){
 	Lock_display data;
 	//data.district=parse_event_name(f,display_name(f,district))+" "+as_string((int)dcmp_home);
-	PRINT(display_name(f,district));
-	PRINT(parse_district_name(display_name(f,district)));
-	data.district=parse_district_name(display_name(f,district))+" "+as_string((int)dcmp_home);
+	data.district=name(f,district)+" "+as_string((int)dcmp_home);
 	data.pre_dcmp_points_remaining=out.pre_dcmp_points_remaining;
 	data.total_points_remaining=data.pre_dcmp_points_remaining+dcmp_points(f,district);
 	data.available_champs_spots=worlds_slots(district);

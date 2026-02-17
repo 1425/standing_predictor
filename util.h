@@ -717,4 +717,16 @@ bool both_less_eq(std::pair<A,B> const& a,std::pair<A,B> const& b){
 
 bool suffix(std::string const& whole,std::string const&);
 
+template<typename A,typename B>
+std::vector<A> firsts(std::vector<std::tuple<A,B>> a){
+	return mapf([](auto x){ return get<0>(x); },a);
+}
+
+template<typename A,typename B,typename C>
+std::pair<A,B> operator*(std::pair<A,B> a,C c){
+	a.first*=c;
+	a.second*=c;
+	return a;
+}
+
 #endif

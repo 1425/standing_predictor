@@ -147,7 +147,7 @@ auto abbrev(District_key a){
 	return a.get().substr(4,100);
 }
 
-auto display_name(TBA_fetcher& f,District_key district){
+/*auto display_name(TBA_fetcher& f,District_key district){
 	auto a=abbrev(district);
 	auto x=tba::history(f,a);
 	auto found=filter([=](auto x){ return x.year==year(district); },x);
@@ -155,7 +155,7 @@ auto display_name(TBA_fetcher& f,District_key district){
 	auto f1=found[0];
 	//PRINT(f1);
 	return f1.display_name;
-}
+}*/
 
 auto district_display_names(TBA_fetcher &f){
 	//could have this go through all the years
@@ -230,5 +230,37 @@ std::string parse_event_name(TBA_fetcher &f,std::string const& s){
 	auto district_abbrev=sp[0];
 	//sp[1]=="District"
 }
+
+std::string display_name(TBA_fetcher &f,tba::District_key const& k){
+	auto d=districts(f,year(k));
+	auto found=filter_unique([=](auto x){ return x.key==k; },d);
+	return found.display_name;
+}
+
+std::string parse_district_name(std::string s){
+	std::vector<std::string> v{
+		"FIRST in ",
+		"FIRST In ",
+		"FIRST Canada - ",
+		"FIRST "
+	};
+	for(auto p:v){
+		if(prefix(s,p)){
+			s=s.substr(p.size(),s.size());
+		}
+	}
+
+	string x=" Robotics";
+	if(suffix(s,x)){
+		s=s.substr(0,s.size()-x.size());
+	}
+
+	return s;
+}
+
+std::string name(TBA_fetcher &f,tba::District_key const& k){
+	return parse_district_name(display_name(f,k));
+}
+
 
 
