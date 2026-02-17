@@ -132,6 +132,25 @@ std::ostream& operator<<(std::ostream& o,std::variant<Ts...> const& a){
 }
 
 template<typename T>
+std::ostream& operator<<(std::ostream& o,std::set<T> const& a){
+	o<<"{ ";
+	for(auto const& x:a){
+		o<<x<<" ";
+	}
+	return o<<"}";
+}
+
+template<typename T>
+std::ostream& operator<<(std::ostream& o,std::multiset<T> const& a){
+	o<<"{ ";
+	for(auto elem:to_set(a)){
+		o<<elem<<":"<<a.count(elem)<<" ";
+	}
+	o<<"}";
+	return o;
+}
+
+template<typename T>
 std::string as_string(T const& t){
 	std::stringstream ss;
 	ss<<t;
@@ -179,6 +198,21 @@ std::string join(std::pair<A,B> const& p){
 	std::stringstream ss;
 	ss<<p.first;
 	ss<<p.second;
+	return ss.str();
+}
+
+template<typename T>
+std::string join(std::string const& s,std::vector<T> const& v){
+	if(v.empty()) return "";
+
+	std::stringstream ss;
+	auto at=v.begin();
+	ss<<*at;
+	at++;
+	while(at!=v.end()){
+		ss<<s<<*at;
+		at++;
+	}
 	return ss.str();
 }
 

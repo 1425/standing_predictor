@@ -31,7 +31,6 @@ simple way:
 #include "../tba/tba.h"
 #include "arguments.h"
 #include "event.h"
-#include "output.h"
 #include "set.h"
 #include "tba.h"
 #include "util.h"

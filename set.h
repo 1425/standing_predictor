@@ -5,7 +5,6 @@
 #include<optional>
 #include<vector>
 #include<algorithm>
-#include<iostream>
 #include<map>
 #include "util.h"
 
@@ -110,15 +109,6 @@ std::set<T> to_set(std::optional<T> const& a){
 template<typename T>
 bool operator==(std::set<T> const& a,std::vector<T> const& b){
 	return a==to_set(b);
-}
-
-template<typename T>
-std::ostream& operator<<(std::ostream& o,std::set<T> const& a){
-	o<<"{ ";
-	for(auto const& x:a){
-		o<<x<<" ";
-	}
-	return o<<"}";
 }
 
 template<typename K,typename V>
@@ -268,16 +258,6 @@ std::multiset<T>& operator|=(std::multiset<T> &a,std::vector<T> const& b){
 template<typename T>
 auto to_set(std::multiset<T> const& v){
 	return std::set<T>{begin(v),end(v)};
-}
-
-template<typename T>
-std::ostream& operator<<(std::ostream& o,std::multiset<T> const& a){
-	o<<"{ ";
-	for(auto elem:to_set(a)){
-		o<<elem<<":"<<a.count(elem)<<" ";
-	}
-	o<<"}";
-	return o;
 }
 
 template<typename T>
