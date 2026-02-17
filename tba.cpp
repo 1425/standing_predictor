@@ -305,3 +305,7 @@ std::vector<tba::Year> years(){
 	return range(tba::Year(1992),tba::Year(2027));
 }
 
+std::vector<tba::Team> all_teams(TBA_fetcher &f){
+	//just asking for one year because it actually doesn't give different results for different years.
+	return teams_year_all(f,tba::Year(2026));
+}

@@ -1,5 +1,6 @@
 #include "lock.h"
 #include "../tba/data.h"
+#include "../tba/tba.h"
 #include "util.h"
 #include "io.h"
 #include "rand.h"
@@ -7,16 +8,14 @@
 #include "print_r.h"
 #include "rank_pts.h"
 #include "interval.h"
-#include "../tba/tba.h"
 #include "optional.h"
 #include "int_limited.h"
 #include "set_fixed.h"
-#include "rank_limits.h"
-#include "pick_points.h"
 #include "vector_fixed.h"
 #include "event.h"
 #include "venue.h"
 #include "names.h"
+#include "map_auto.h"
 
 /*
  * would be good to check some of the assumptions made in here with data
@@ -739,10 +738,6 @@ int lock_demo(TBA_fetcher& f,District_key district){
 }
 
 int lock_demo(TBA_fetcher& f){
-	rank_limits_demo(f);
-	return 0;
-	//return pick_points_demo(f);
-
 	//TODO: Look at alliance selection
 	{
 		auto x=event_alliances(f,Event("2025orwil"));

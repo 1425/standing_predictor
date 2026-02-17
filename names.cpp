@@ -80,11 +80,6 @@ void check_sponsors(TBA_fetcher& f){
 	}
 }
 
-std::vector<tba::Team> all_teams(TBA_fetcher &f){
-	//just asking for one year because it actually doesn't give different results for different years.
-	return teams_year_all(f,Year(2026));
-}
-
 
 void common_sponsors(TBA_fetcher &f){
 	//Figure out what the most common sponsors are for teams.
