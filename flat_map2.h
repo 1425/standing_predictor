@@ -295,4 +295,20 @@ auto sorted(flat_map2<K,V> const& a){
 	return to_vec(a); //because the items are already in sorted order
 }
 
+template<typename K,typename V>
+V get(flat_map2<K,V> const& a,auto const& k,auto const& otherwise){
+	auto f=a.find(k);
+	if(f==a.end()){
+		return otherwise;
+	}
+	return (*f).second;
+}
+
+template<typename K,typename V>
+V get(flat_map2<K,V> const& a,auto const& k){
+	auto f=a.find(k);
+	assert(f!=a.end());
+	return (*f).second;
+}
+
 #endif

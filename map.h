@@ -162,5 +162,20 @@ auto sorted(std::map<K,V> const& a){
 	return sorted(to_vec(a));
 }
 
+template<typename K,typename V>
+V get(std::map<K,V> const& a,auto const& k){
+	auto f=a.find(k);
+	assert(f!=a.end());
+	return f->second;
+}
+
+template<typename K,typename V>
+V get(std::map<K,V> const& a,auto const& k,auto const& otherwise){
+	auto f=a.find(k);
+	if(f==a.end()){
+		return otherwise;
+	}
+	return f->second;
+}
 
 #endif

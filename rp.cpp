@@ -2,9 +2,9 @@
 #include "io.h"
 #include "../tba/tba.h"
 #include "array.h"
-#include "skill_opr.h"
 #include "print_r.h"
 #include "tba.h"
+#include "set.h"
 
 using namespace std;
 

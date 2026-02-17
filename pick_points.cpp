@@ -6,7 +6,6 @@
 #include "vector_void.h"
 #include "rand.h"
 #include "tba.h"
-#include "skill_opr.h"
 #include "print_r.h"
 #include "rank_limits.h"
 #include "vector_fixed.h"
