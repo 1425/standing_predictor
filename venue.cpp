@@ -10,7 +10,6 @@
 #include "output.h"
 #include "int_limited.h"
 #include "map_auto.h"
-#include "map.h"
 
 using namespace std;
 using Year=tba::Year;

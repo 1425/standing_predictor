@@ -9,7 +9,6 @@
 #include "interval.h"
 #include "rank_pts.h"
 #include "tba.h"
-#include "util.h"
 #include "print_r.h"
 #include "multiset_flat.h"
 #include "set_limited.h"

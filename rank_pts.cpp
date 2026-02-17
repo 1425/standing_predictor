@@ -6,7 +6,6 @@
 #include "util.h"
 #include "io.h"
 #include "array.h"
-#include "util.h"
 #include "vector_void.h"
 
 //start generic code

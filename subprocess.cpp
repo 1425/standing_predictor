@@ -52,7 +52,6 @@ std::vector<Subprocess_result> run_jobs(std::vector<Job> const& a){
 #include "util.h"
 #include "run.h"
 #include "queue.h"
-#include "vector_void.h"
 
 using namespace std;
 
