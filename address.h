@@ -76,9 +76,4 @@ std::optional<Address> address(tba::Event const&);
 std::optional<Address> address(tba::Team const&);
 std::optional<Address> address(TBA_fetcher&,tba::Event_key const&);
 
-std::set<std::string> const& state_codes();
-Country get_country(tba::Event const&);
-std::optional<State_prov> normalize_state(std::string);
-int check_address(TBA_fetcher&);
-
 #endif

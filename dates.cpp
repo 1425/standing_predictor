@@ -300,7 +300,7 @@ auto find_hosts(TBA_fetcher &f){
 	map<tba::Event_key,std::set<Team_key>> r;
 	for(auto event:reversed(events(f))){
 
-		auto get_loc=[&](auto x){
+		/*auto get_loc=[&](auto x){
 			return make_tuple(
 				x.city,
 				normalize_state(x.state_prov),
@@ -310,7 +310,7 @@ auto find_hosts(TBA_fetcher &f){
 				x.location_name
 			);
 		};
-		(void)get_loc;
+		(void)get_loc;*/
 
 		auto teams=event_teams(f,event.key);
 

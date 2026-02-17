@@ -513,7 +513,9 @@ Dates_result event_times_inner(TBA_fetcher &f){
 	auto m=mapf(
 		//[&](auto x)->std::optional<tuple<string,string,string>>{
 		[&](auto const& x){
-			auto c=get_country(x);
+			return address(x);
+
+			/*auto c=get_country(x);
 			if(c=="USA"){
 				if(x.state_prov){
 					auto n=normalize_state(*x.state_prov);
@@ -523,7 +525,7 @@ Dates_result event_times_inner(TBA_fetcher &f){
 					}
 				}
 			}
-			return c;
+			return c;*/
 		},
 		all_events1
 	);
@@ -593,7 +595,7 @@ int timezone_demo(TBA_fetcher &f){
 	cout<<"timezone demo\n";
 
 
-	return check_address(f);
+	//return check_address(f);
 
 	/*auto g=mapf([](auto x){ return x.timezone; },events(f));
 	print_r(count(g));
