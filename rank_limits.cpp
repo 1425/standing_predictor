@@ -536,6 +536,12 @@ map_auto<Team,Interval<Point>> points(map_auto<Team,Interval<Rank>> const& ranks
 }
 
 class Team_namer{
+	//Could alter this to have a template argument that is how many teams it needs to handle
+	//And then make it so that will go up to the next integer size if there are too many teams.
+
+	//Also, could make it so that there is not only the (int)->(string) via the vector
+	//but also a map<string->int> for faster lookups.
+
 	std::vector<tba::Team_key> data;
 
 	public:

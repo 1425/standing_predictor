@@ -650,9 +650,9 @@ int pick_points_demo(TBA_fetcher &f){
 	};
 	
 	for(auto const& event:events(f)){
-		if(event.key=="202121reg"){
-			run(event);
-		}
+		//if(event.key=="202121reg"){
+		run(event);
+		//}
 	}
 	return 0;
 

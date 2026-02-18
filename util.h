@@ -698,23 +698,31 @@ std::string strip(std::string const&);
 bool contains(std::vector<std::string> const&,const char *);
 
 template<typename A,typename B>
-std::pair<A,B> operator-(std::pair<A,B> const& a,std::pair<A,B> const& b){
+auto operator-(std::pair<A,B> const& a,std::pair<A,B> const& b){
 	return std::make_pair(
 		a.first-b.first,
 		a.second-b.second
 	);
 }
 
-template<typename A,typename B>
+/*template<typename A,typename B>
 std::pair<A,B> operator+(std::pair<A,B> const& a,std::pair<A,B> const& b){
+	return std::make_pair(
+		a.first+b.first,
+		a.second+b.second
+	);
+}*/
+
+template<typename A,typename B,typename C,typename D>
+auto operator+(std::pair<A,B> const& a,std::pair<C,D> const& b){
 	return std::make_pair(
 		a.first+b.first,
 		a.second+b.second
 	);
 }
 
-template<typename A,typename B>
-std::pair<A,B>& operator+=(std::pair<A,B>& a,std::pair<A,B> const& b){
+template<typename A,typename B,typename C,typename D>
+std::pair<A,B>& operator+=(std::pair<A,B>& a,std::pair<C,D> const& b){
 	a.first+=b.first;
 	a.second+=b.second;
 	return a;
@@ -725,8 +733,8 @@ bool both_less(std::pair<A,B> const& a,std::pair<A,B> const& b){
 	return a.first<b.first && a.second<b.second;
 }
 
-template<typename A,typename B>
-bool both_less_eq(std::pair<A,B> const& a,std::pair<A,B> const& b){
+template<typename A,typename B,typename C,typename D>
+bool both_less_eq(std::pair<A,B> const& a,std::pair<C,D> const& b){
 	return a.first<=b.first && a.second<=b.second;
 }
 

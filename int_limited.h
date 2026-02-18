@@ -9,6 +9,7 @@
 #include<ostream>
 #include "array.h"
 #include "util.h"
+#include<iostream>
 
 template<long long MIN,long long MAX>
 auto get_int(){
@@ -41,6 +42,17 @@ class Int_limited{
 		assert(a<=MAX);
 	}
 
+	Int_limited& operator=(auto const& a){
+		if(a<MIN || a>MAX){
+			std::cout<<"Int_limited<"<<MIN<<","<<MAX<<">"<<a<<"\n";
+		}
+		assert(a>=MIN);
+		assert(a<=MAX);
+		data=a;
+		check();
+		return *this;
+	}
+
 	auto get()const{
 		return data;
 	}
@@ -52,6 +64,7 @@ class Int_limited{
 	template<long long MIN2,long long MAX2>
 	Int_limited& operator+=(Int_limited<MIN2,MAX2> a){
 		data+=a.get();
+		check();
 		return *this;
 	}
 
@@ -80,6 +93,10 @@ class Int_limited{
 		return data>(long long)a;
 	}
 
+	constexpr bool operator>(auto a)const{
+		return data>a;
+	}
+
 	constexpr bool operator<(auto a)const{
 		return data<(long long)a;
 	}
@@ -104,6 +121,26 @@ class Int_limited{
 	template<long long MIN2,long long MAX2>
 	constexpr bool operator<=(Int_limited<MIN2,MAX2> a)const{
 		return get()<=a.get();
+	}
+
+	template<long long MIN2,long long MAX2>
+	auto operator-(Int_limited<MIN2,MAX2> a)const{
+		long long v1=data;
+		long long v2=a.get();
+		Int_limited<MIN-MAX2,MAX-MIN2> r;
+		r=v1-v2;
+		return r;
+	}
+
+	template<long long MIN2,long long MAX2>
+	auto operator+(Int_limited a)const{
+		Int_limited<MIN+MIN2,MAX+MAX2> r;
+		r=(long long)data+(long long)a.data;
+		return r;
+	}
+
+	auto operator+(auto x)const{
+		return data+x;
 	}
 };
 

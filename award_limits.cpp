@@ -20,10 +20,10 @@ using namespace std;
 
 //Unless otherwise specified, this works with normal points not after the 3x multiplier from dcmp
 
-PRINT_STRUCT(Award_limits,AWARD_LIMITS)
-PRINT_R_ITEM(Award_limits,AWARD_LIMITS)
+PRINT_STRUCT(Rank_status,RANK_STATUS)
+PRINT_R_ITEM(Rank_status,RANK_STATUS)
 
-using Points_by_team=map<Team,Point>;
+using Points_by_team=map<Team,Rank_value>;
 
 #define AWARD_POINTS(X)\
 	X(Points_by_team,by_team)\
@@ -131,6 +131,13 @@ Point points(tba::Award const& a){
 	return points(a.award_type);
 }
 
+Rank_value rank_value(tba::Award const& a){
+	if(a.award_type==tba::Award_type::CHAIRMANS){
+		return make_pair(1,10);
+	}
+	return Rank_value(0,points(a));
+}
+
 bool includes_chairmans(std::vector<tba::Award> a){
 	auto f=filter([](auto x){ return x.award_type==tba::Award_type::CHAIRMANS; },a);
 	if(f.empty()){
@@ -144,13 +151,12 @@ Award_points listed_award_points(TBA_fetcher &f,tba::Event_key event){
 	auto found=tba::event_awards(f,event);
 	auto m=mapf(
 		[](auto x){
-			return make_pair(team_winners(x),points(x));
+			return make_pair(team_winners(x),rank_value(x));
 		},
 		found
 	);
 	Award_points r;
 	for(auto [teams,pts]:m){
-		if(!pts) continue;
 		for(auto team:teams){
 			r.by_team[team]+=pts;
 		}
@@ -172,7 +178,20 @@ Point max_award_points(int event_size){
 	return min(86,int(sum(subset)));
 }
 
-Award_limits award_limits(TBA_fetcher &f,tba::Event_key event,map<Team,Point> already_given){
+Rank_value max_rank_value(int event_size){
+	return make_pair(event_size!=0,max_award_points(event_size));
+}
+
+template<typename A,typename B,typename C,typename D>
+auto min(std::pair<A,B> a,std::pair<C,D> b){
+	using R=std::pair<A,B>;
+	if(a<b){
+		return a;
+	}
+	return R(b);
+}
+
+Rank_status award_limits(TBA_fetcher &f,tba::Event_key event,map<Team,Rank_value> already_given){
 	//1) calculate the total points already awarded
 	//2) calculate total theoretical points at this event
 	//this gives unclaimed total points 
@@ -181,33 +200,32 @@ Award_limits award_limits(TBA_fetcher &f,tba::Event_key event,map<Team,Point> al
 
 	const auto teams=teams_keys(f,event);
 	
-	int points_left=max_award_points(teams.size())-sum(values(already_given));
-	assert(points_left>=0);
+	auto points_left=max_rank_value(teams.size())-sum(values(already_given));
 
-	Award_limits r;
+	Rank_status r;
 	r.unclaimed=points_left;
 
 	for(auto team:teams){
 		auto f=already_given.find(team);
 		if(f==already_given.end()){
-			already_given[team]=0; 
+			already_given[team]=Rank_value(); 
 		}
 	}
 
 	r.by_team=map_values(
-		[=](auto x)->Interval<Point>{
-			using R=Interval<Point>;
-			std::vector<pair<Point,Point>> n{
-				{0,15},
-				{5,10},
-				{8,0},
-				{10,0},
-				{13,0},
-				{15,0}
+		[=](auto x)->Interval<Rank_value>{
+			using R=Interval<Rank_value>;
+			std::vector<pair<Point,Rank_value>> n{
+				{0,Rank_value(1,15)},
+				{5,Rank_value(1,10)},
+				{8,Rank_value(0,0)},
+				{10,Rank_value(0,0)},
+				{13,Rank_value(0,0)},
+				{15,Rank_value(0,0)}
 			};
 			for(auto [a,b]:n){
-				if(x==a){
-					return R(x,x+min(int(b),points_left));
+				if(x.second==a){
+					return R(x,x+min(b,points_left));
 				}
 			}
 			nyi
@@ -222,11 +240,11 @@ auto event_type(TBA_fetcher &f,tba::Event_key event){
 	return x.event_type;
 }
 
-Award_limits award_limits(TBA_fetcher &f,tba::Event_key const& event){
+Rank_status award_limits(TBA_fetcher &f,tba::Event_key const& event){
 	auto b=listed_award_points(f,event);
 	if(b.done){
-		Award_limits r;
-		r.unclaimed=0;
+		Rank_status r;
+		r.unclaimed=Rank_value();
 		for(auto [k,v]:b.by_team){
 			r.by_team[k]=v;
 		}
@@ -235,17 +253,19 @@ Award_limits award_limits(TBA_fetcher &f,tba::Event_key const& event){
 	return award_limits(f,event,b.by_team);
 }
 
-void fill_pct(Award_limits const& a){
+void fill_pct(Rank_status const& a){
 	auto s=sum(values(a.by_team));
-	size_t spread=s.max-s.min;
-	assert(a.unclaimed<=spread);
-	double p=[=]()->double{
+	auto spread=s.max-s.min;
+	//PRINT(a.unclaimed);
+	//PRINT(spread);
+	assert(both_less_eq(a.unclaimed,spread));
+	/*double p=[=]()->double{
 		if(spread){
 			return double(a.unclaimed)/spread;
 		}
 		return 0;
-	}();
-	(void)p;
+	}();*/
+	//(void)p;
 	//cout<<s<<" "<<a.unclaimed<<" "<<p<<"\n";
 }
 
