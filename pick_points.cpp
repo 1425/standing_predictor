@@ -73,7 +73,28 @@ auto teams(std::optional<T> const& a){
 }*/
 
 using Picks_complete=map<Team,Point>;
-using Picks_in_progress=map<Team,Interval<Point>>;
+
+//using Picks_in_progress=map<Team,Interval<Point>>;
+
+#define PICKS_IN_PROGRESS(X)\
+	X(Point_range<tba::Team_key>,by_team)\
+	X(unsigned,unclaimed)
+
+struct Picks_in_progress{
+	PICKS_IN_PROGRESS(INST)
+	
+	auto operator<=>(Picks_in_progress const&)const=default;
+};
+
+std::ostream& operator<<(std::ostream& o,Picks_in_progress const& a){
+	o<<"Picks_in_progress( ";
+	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
+	PICKS_IN_PROGRESS(X)
+	#undef X
+	return o<<")";
+}
+
+PRINT_R_ITEM(Picks_in_progress,PICKS_IN_PROGRESS)
 
 struct Picks_no_data{};
 
@@ -443,8 +464,8 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 	}
 
 	auto t=teams(e);
-	PRINT(t);
-	PRINT(ranks);
+	//PRINT(t);
+	//PRINT(ranks);
 	{
 		auto teams_without_rank_data=t-keys(ranks);
 		if(!teams_without_rank_data.empty()){
@@ -494,23 +515,38 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 	};
 
 	vector<tuple<Alliance_number,int,Point>> still_left;
-	map<Team,Interval<Point>> r;
+	//map<Team,Interval<Point>> r;
+	Picks_in_progress r;
+
 	for(auto p:positions){
 		auto f=find_team(p);
 		if(f){
-			r[*f]=get<2>(p);
+			r.by_team[*f]=get<2>(p);
 		}else{
 			still_left|=p;
 		}
 	}
-	const auto max_pts_left=max(mapf([](auto x){ return get<2>(x); },still_left));
+
+	const auto unpicked_teams=keys(ranks)-keys(r.by_team);
+
+	//Limit still_left to the number of teams that are eligible to be picked still
+	//because otherwise it will look like there are extra points to grab
+	//but it is not possible for anyone to get them.
+	/*if(still_left.size()>unpicked_teams.size()){
+		PRINT(still_left.size());
+		PRINT(unpicked_teams.size());
+	}*/
+	still_left=take(unpicked_teams.size(),still_left);
+
+	const auto max_pts_left=max_else(
+		mapf([](auto x){ return get<2>(x); },still_left),
+		Point(0)
+	);
 	const auto captains_left=filter([](auto x){ return get<1>(x)==0; },still_left);
 
-	const auto unpicked_teams=keys(ranks)-keys(r);
-
 	for(auto [team,rank]:ranks){
-		auto f=r.find(team);
-		if(f!=r.end()){
+		auto f=r.by_team.find(team);
+		if(f!=r.by_team.end()){
 			continue;
 		}
 		auto best_case=max_pts_left;
@@ -530,8 +566,15 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 			return get<2>(capt_left_here[0]);
 		}();
 
-		r[team]=Interval<Point>{min_pts,best_case};
+		r.by_team[team]=Interval<Point>{min_pts,best_case};
 	}
+
+	//this could be tightened up because some teams will have to be captains
+	//so those points are not technically up for grabs.
+	Point direct=sum(mapf([](auto x){ return get<2>(x); },still_left));
+	Point by_team_lim=sum(mapf([](auto x){ return x.max-x.min; },values(r.by_team)));
+
+	r.unclaimed=min(direct,by_team_lim);
 	return r;
 }
 
@@ -546,11 +589,78 @@ double entropy(map_auto<tba::Team_key,Interval<T>> const& a){
 	return sum(MAP(entropy,values(a)));
 }
 
+template<typename Team>
+auto teams(Rank_range<Team> const& a){
+	return keys(a);
+}
+
+template<typename Team>
+auto teams(Point_range<Team> const& a){
+	return keys(a);
+}
+
+template<typename Team>
+auto teams(Rank_results<Team> const& a){
+	auto t=teams(a.ranks);
+	auto t2=teams(a.points);
+	assert(t==t2);
+	return t;
+}
+
 int pick_points_demo(TBA_fetcher &f){
-	return ranks_from_demo(f);
+	auto run=[&](auto event){
+		PRINT(event.key);
+		auto in=rank_limits(f,event.key);
+		in.check();
+
+		auto t1=teams(in);
+		auto t2=teams_keys(f,event);
+
+		//if the TBA call is missing teams, that's fine
+		//but we do care about the other direction.
+		auto missing=t2-t1;
+		assert(missing.empty());
+
+		auto out=pick_points(f,event.key,in.ranks);
+		//using Pick_points=std::variant<Picks_no_data,Picks_in_progress,Picks_complete>;
+		if(std::holds_alternative<Picks_no_data>(out)){
+			return;
+		}
+		if(std::holds_alternative<Picks_in_progress>(out)){
+			auto a=std::get<Picks_in_progress>(out);
+			auto s=sum(values(a.by_team));
+			auto width=s.max-s.min;
+			auto ok=(unsigned(width)>=a.unclaimed);
+			if(!ok){
+				print_r(a);
+				PRINT(width);
+				PRINT(a.unclaimed);
+				//print_r(a);
+				nyi
+			}
+		}else if(std::holds_alternative<Picks_complete>(out)){
+			auto a=std::get<Picks_complete>(out);
+			(void)a;
+			//print_r(a);
+			//nyi
+		}else{
+			print_r(out);
+			nyi
+		}
+	};
+	
+	for(auto const& event:events(f)){
+		if(event.key=="202121reg"){
+			run(event);
+		}
+	}
+	return 0;
+
+	//return ranks_from_demo(f);
 
 	Event event("2025orwil");
 	auto in=rank_limits(f,event);
+	in.check();
 	PRINT(entropy(in.ranks));
 	for(auto s:sorted(MAP(as_string,reverse_pairs(in.ranks)))){
 		cout<<s<<"\n";

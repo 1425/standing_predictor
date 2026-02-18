@@ -35,6 +35,10 @@ struct Interval{
 		max+=a.max;
 		return *this;
 	}
+
+	//This exists so that this type can work with things like std::map
+	//And does not actually give you a logical comparison between two intervals.
+	auto operator<=>(Interval const&)const=default;
 };
 
 template<typename T>

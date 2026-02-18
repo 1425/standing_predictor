@@ -14,7 +14,11 @@ class TBA_fetcher;
 
 //2016micmp has 106 teams
 //2000cmp has 249 teams
-using Rank=Int_limited<1,254>;
+//"202121reg" has 1477 teams
+//very unfortunate that this could not at least stay under 1024 so you could pack 6 of them into 
+//a 64-bit word.
+static constexpr size_t MAX_TEAMS_PER_EVENT=1800;
+using Rank=Int_limited<1,MAX_TEAMS_PER_EVENT>;
 
 int pick_points_demo(TBA_fetcher&);
 

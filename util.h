@@ -361,6 +361,14 @@ std::optional<T> maybe_max(std::vector<T> const& a){
 	return max(a);
 }
 
+template<typename T>
+T max_else(std::vector<T> const& a,T b){
+	if(a.empty()){
+		return b;
+	}
+	return max(a);
+}
+
 template<template<typename...> typename V,typename ...T>
 auto min(V<T...> const& v){
 	assert(!v.empty());
@@ -470,6 +478,13 @@ auto flatten(std::vector<INNER<T,EXTRA...>> const& a){
 template<template<typename...> typename INNER,typename T,typename ... EXTRA>
 auto flatten(std::vector<INNER<T,EXTRA...>> && a){
 	std::vector<T> r;
+
+	size_t size=0;
+	for(auto const& elem:a){
+		size+=elem.size();
+	}
+	r.reserve(size);
+
 	for(auto& elem:a){
 		r|=std::move(elem);
 	}
@@ -738,6 +753,12 @@ auto sorted(std::tuple<T,T,T> a){
 	auto v=to_vec(a);
 	std::sort(v.begin(),v.end());
 	return std::make_tuple(v[0],v[1],v[2]);
+}
+
+template<typename T>
+auto operator|(std::vector<T> a,std::vector<T> b){
+	a|=b;
+	return a;
 }
 
 #endif

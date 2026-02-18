@@ -22,6 +22,15 @@ using Point_range=map_auto<Team,Interval<Point>>;
 template<typename Team>
 struct Rank_results{
         RANK_RESULTS(INST)
+
+	void check()const{
+		auto a=check_rank_limits(ranks);
+		assert(!a);
+
+		auto s=sum(values(points));
+		unsigned spread=s.max-s.min;
+		assert(unclaimed_points<=spread);
+	}
 };
 
 template<typename Team>
@@ -72,26 +81,57 @@ std::optional<std::string> check_rank_limits(MAP<Team,Interval<Rank>> const& a){
 	}
 	assert(match(overall_range,expected));
 
+	//This counting the teams w/ each outcome range to try to avoid going O(N^3)
+	//on the big "events" that are like all 2021 regional teams
+	auto c=count(v);
+
 	//second check that for each rank that should exist at this event, there is at least one team that can fill it
 	for(auto rank:range_inclusive<Rank>(1u,v.size())){
-		auto f=count_if([=](auto x){ return subset(rank,x); },v);
+		/*auto f=count_if([=](auto x){ return subset(rank,x); },v);
 		if(f==0){
 			return "unfilled slot";
-		}
+		}*/
 		//assert(f.size()>=1);
+		auto found=[=](){
+			for(auto [k,v]:c){
+				if(subset(rank,k)){
+					return 1;
+				}
+			}
+			return 0;
+		}();
+		if(found==0){
+			return "unfilled slot";
+		}
 	}
 
 	//third: for any possible range of ranks, check that they number of teams that must exist in there
 	//is possible (could be too many or too few)
-	
+
 	for(auto min:range_inclusive<Rank>(1,a.size())){
 		for(auto max:range_inclusive<Rank>(min,a.size())){
 			size_t size=max-min+1;
 			Interval<Rank> i{min,max};
-			auto always=count_if([=](auto x){ return subset(x,i); },v);
+			/*auto always=count_if([=](auto x){ return subset(x,i); },v);
 			assert(always<=size);
 
 			auto possible=count_if([=](auto x){ return overlap(x,i); },v);
+			assert(possible>=size);*/
+
+			size_t always=0;
+			for(auto [k,v]:c){
+				if(subset(k,i)){
+					always+=v;
+				}
+			}
+			assert(always<=size);
+
+			size_t possible=0;
+			for(auto [k,v]:c){
+				if(overlap(k,i)){
+					possible+=v;
+				}
+			}
 			assert(possible>=size);
 		}
 	}

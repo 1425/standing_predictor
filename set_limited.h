@@ -191,6 +191,25 @@ class set_limited{
 		}
 		return *this;
 	}
+
+	std::strong_ordering operator<=>(set_limited const& a)const{
+		auto c=size()<=>a.size();
+		if(c!=std::strong_ordering::equal){
+			return c;
+		}
+		for(size_t i=0;i<size();i++){
+			auto c=data()[i]<=>a.data()[i];
+			if(c!=std::strong_ordering::equal){
+				return c;
+			}
+		}
+		return std::strong_ordering::equal;
+	}
+
+	bool operator==(set_limited const& a)const{
+		auto x=(*this)<=>a;
+		return x==std::strong_ordering::equal;
+	}
 };
 
 template<typename T,size_t N>

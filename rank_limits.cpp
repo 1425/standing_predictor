@@ -29,7 +29,7 @@ auto teams(std::pair<A,B> const& p){
 	return t;
 }
 
-using Team_alias=Int_limited<0,250>;
+using Team_alias=Int_limited<0,MAX_TEAMS_PER_EVENT>;
 
 template<typename V>
 auto teams(map_small_int<Team_alias,V> const& a){
@@ -84,6 +84,8 @@ class Match{
 		assert(i<2);
 		return data[i];
 	}
+
+	auto operator<=>(Match const&)const=default;
 };
 
 template<typename Team>
@@ -153,14 +155,18 @@ struct Ranking_match_status{
 		#undef X
 	{}
 
-	void fill_standings(){
-		for(auto const& team:teams(schedule)){
+	void fill_standings(TBA_fetcher &f,tba::Event_key event){
+		for(auto const& team:
+			teams(schedule)|teams_keys(f,event)|teams(event_alliances(f,event))
+		){
 			auto f=standings.find(team);
 			if(f==standings.end()){
 				standings[team]=0;
 			}
 		}
 	}
+
+	auto operator<=>(Ranking_match_status const&)const=default;
 };
 
 template<typename Team>
@@ -303,7 +309,7 @@ Ranking_match_status<tba::Team_key> ranking_match_status(TBA_fetcher &f,tba::Eve
 			}
 		}
 	}
-	r.fill_standings();
+	r.fill_standings(f,event);
 	return r;
 }
 
@@ -379,9 +385,16 @@ template<typename Team>
 map_auto<Team,Interval<Rank>> rank_limits_m(Ranking_match_status<Team> const& status){
 	//this will attempt to narrow down based on assuming the results for that team
 
+	//This if is necessary for performance on the very-large ficticious events like 2021irhce
+	//which claim >1700 teams.
+	if(status.schedule.empty()){
+		return rank_limits_basic(status);
+	}
+
 	map_auto<Team,Interval<Rank>> r;
 	for(auto team:keys(status.standings)){
 		//first, look for upper bound
+
 		auto best=[=](){
 			auto a=assume_wins(status,team);
 			auto out=rank_limits_basic(a);
@@ -459,7 +472,7 @@ map_auto<Team,Interval<Rank>> rank_limits_basic(Ranking_match_status<Team> const
 	}();
 
 	//cout<<"RP ranges:\n";
-	//print_r(rp_ranges);
+	//print_r(count(values(rp_ranges)));
 
 	const auto rank_ranges=[=](){
 		map_auto<Team,Interval<Rank>> r;
@@ -916,7 +929,7 @@ void rank_limits_demo(TBA_fetcher &f){
 	Ranking_match_status<Team> status(tba::Year(2016));
 	status.standings=existing_standings;
 	status.schedule=schedule;
-	status.fill_standings();
+	nyi//status.fill_standings();
 
 	auto r=rank_limits_basic(status);
 	auto r2=rank_limits_m(status);

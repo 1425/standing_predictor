@@ -82,6 +82,7 @@ std::vector<tba::Event> events(TBA_fetcher&);
 std::vector<tba::Year> years();
 std::vector<tba::Team> teams(TBA_fetcher&);
 std::vector<tba::Team> teams(TBA_fetcher&,tba::Year);
-std::vector<tba::Team_key> teams_keys(TBA_fetcher&,tba::Event_key);
+std::vector<tba::Team_key> teams_keys(TBA_fetcher&,tba::Event_key const&);
+std::vector<tba::Team_key> teams_keys(TBA_fetcher&,tba::Event const&);
 
 #endif

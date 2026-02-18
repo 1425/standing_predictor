@@ -325,6 +325,12 @@ std::vector<tba::Team> teams(TBA_fetcher &f){
 	return teams(f,tba::Year(2026));
 }
 
-std::vector<tba::Team_key> teams_keys(TBA_fetcher& f,tba::Event_key a){
+std::vector<tba::Team_key> teams_keys(TBA_fetcher& f,tba::Event_key const& a){
 	return tba::event_teams_keys(f,a);
 }
+
+std::vector<tba::Team_key> teams_keys(TBA_fetcher& f,tba::Event const& a){
+	return teams_keys(f,a.key);
+}
+
+

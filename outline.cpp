@@ -1132,9 +1132,9 @@ int main(int argc,char **argv){
 	/*}catch(std::string const& s){
 		cerr<<"Caught:"<<s<<"\n";
 		return 1;*/
-	}catch(std::invalid_argument const& e){
+	/*}catch(std::invalid_argument const& e){
 		cerr<<"Caught:"<<e<<"\n";
-		return 1;
+		return 1;*/
 	}catch(std::vector<std::string> const& v){
 		cerr<<"Caught:"<<v<<"\n";
 		return 1;

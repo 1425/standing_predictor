@@ -11,7 +11,7 @@ static constexpr bool small_int(T const*){
 
 template<long long MIN,long long MAX>
 static constexpr bool small_int(Int_limited<MIN,MAX> const*){
-	return MIN>=0 && MAX<=255;
+	return MIN>=0 && MAX<=2000;
 }
 
 template<typename K,typename V>
@@ -133,6 +133,8 @@ class map_auto{
 	operator Data&&()&&{
 		return std::move(data);
 	}
+
+	auto operator<=>(map_auto const&)const=default;
 };
 
 template<typename K,typename V>
