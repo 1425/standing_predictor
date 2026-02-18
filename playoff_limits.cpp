@@ -18,16 +18,6 @@ bool disjoint(std::vector<std::vector<T>> const& a){
 	return to_set(f).size()==f.size();
 }
 
-template<typename T>
-bool subset(std::set<T> const& a,std::set<T> const& b){
-	for(auto const& elem:a){
-		if(!b.count(elem)){
-			return 0;
-		}
-	}
-	return 1;
-}
-
 /*
  * this is O(N*log(N)+M*log(M)+N*log(M))
  * basic impl is O(N*M)
@@ -41,6 +31,14 @@ bool subset(std::vector<T> const& a,std::vector<T> const& b){
 using namespace std;
 using Team=tba::Team_key;
 using Team_key=tba::Team_key;
+
+std::ostream& operator<<(std::ostream& o,Playoff_limits const& a){
+	o<<"Playoff_limits( ";
+#define X(A,B) o<<""#B<<":"<<a.B<<" ";
+	PLAYOFF_LIMITS(X)
+#undef X
+	return o<<")";
+}
 
 auto alliances(tba::Match const& a){
 	auto f=[](auto x){ return x.team_keys; };
@@ -90,6 +88,16 @@ Playoff_limits playoff_limits(TBA_fetcher&,std::map<Team_key,Interval<bool>> con
 	auto s=sum(values(a));
 	(void)s;//at some point might want to change how this sum works to seperate the halves and do two sums.
 	//PRINT(s);
+	if(s.min!=s.max){
+		//if it looks like it's impossible to have a 24-team playoff, something went wrong earlier...
+		//this can happen at things like an Einstein field.
+		//or 2018oncmp
+		/*if(!subset(24u,s)){
+			print_r(a);
+			PRINT(s);
+		}
+		assert(subset(24u,s));*/
+	}
 	//assert(subset(24,s)); //if it's not possible to have 24 teams, then this is not a case we're 
 			      //going to handle yet
 
@@ -103,7 +111,14 @@ Playoff_limits playoff_limits(TBA_fetcher&,std::map<Team_key,Interval<bool>> con
 			return Interval<Point>{0,0};
 		}
 	},a));
-	r.unclaimed_points=3*(30+20+10*2);
+	std::vector<int> finish_points;
+	for(auto x:{30,20,10,10}){
+		for(auto _:range(3)){
+			finish_points|=x;
+		}
+	}
+	//r.unclaimed_points=3*(30+20+10*2);
+	r.unclaimed_points=sum(take(a.size(),finish_points));
 	return r;
 }
 

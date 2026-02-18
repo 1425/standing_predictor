@@ -207,7 +207,8 @@ Rank_status award_limits(TBA_fetcher &f,tba::Event_key event,map<Team,Rank_value
 	//max is 10+5 (chairmans+safety)
 
 	const auto teams=teams_keys(f,event);
-	
+	//PRINT(teams.size());
+
 	auto points_left=max_rank_value(teams.size())-sum(values(already_given));
 
 	Rank_status r;
@@ -248,11 +249,14 @@ auto event_type(TBA_fetcher &f,tba::Event_key event){
 	return x.event_type;
 }
 
-Rank_status award_limits(TBA_fetcher &f,tba::Event_key const& event){
+Rank_status award_limits(TBA_fetcher &f,tba::Event_key const& event,std::set<Team> const& teams){
 	auto b=listed_award_points(f,event);
 	if(b.done){
 		Rank_status r;
 		r.unclaimed=Rank_value();
+		for(auto team:teams){
+			r.by_team[team]=Rank_value();
+		}
 		for(auto [k,v]:b.by_team){
 			r.by_team[k]=v;
 		}
@@ -279,7 +283,7 @@ void fill_pct(Rank_status const& a){
 
 int award_limits_demo(TBA_fetcher &f){
 	for(auto const& event:events(f)){
-		auto a=award_limits(f,event.key);
+		auto a=award_limits(f,event.key,std::set<tba::Team_key>{});
 		fill_pct(a);
 	}
 	return 0;

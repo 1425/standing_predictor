@@ -12,7 +12,7 @@ class TBA_fetcher;
 
 #define PLAYOFF_LIMITS(X)\
 	X(Point_range<tba::Team_key>,by_team)\
-	X(unsigned,unclaimed_points)
+	X(unsigned,unclaimed_points)\
 
 TBA_MAKE_INST(Playoff_limits,PLAYOFF_LIMITS)
 

@@ -3,6 +3,7 @@
 
 #include<bitset>
 #include "multiset_fixed.h"
+#include "int_limited.h"
 
 template<long long MIN,long long MAX1>
 struct Converter<Int_limited<MIN,MAX1>>{

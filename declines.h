@@ -18,6 +18,17 @@ void diff(int n,T const& a,T const& b){
 }
 
 template<typename T>
+void diff(int n,std::set<T> const& a,std::set<T> const& b){
+	if(a==b) return;
+	auto a1=a-b;
+	auto b1=b-a;
+	indent(n);
+	std::cout<<"a only:"<<a1<<"\n";
+	indent(n);
+	std::cout<<"b only:"<<b1<<"\n";
+}
+
+template<typename T>
 void diff(int n,std::vector<T> const& a,std::vector<T> const& b){
 	/*if(a!=b){
 		indent(n++);

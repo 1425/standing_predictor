@@ -316,7 +316,7 @@ string gen_html(
 	));
 
 	//double total_entropy=sum(::mapf(entropy,seconds(result)));
-	double total_entropy=sum(::mapf(entropy,mapf([](auto x){ return x.dcmp_make; },result)));
+	double total_entropy=sum(::mapf([](auto x){ return entropy(x); },mapf([](auto x){ return x.dcmp_make; },result)));
 	PRINT(total_entropy);
 
 	static const std::vector<std::pair<std::string,std::string>> columns{

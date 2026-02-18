@@ -29,7 +29,9 @@ struct Rank_status{
 
 std::ostream& operator<<(std::ostream&,Rank_status const&);
 
-Rank_status award_limits(TBA_fetcher&,tba::Event_key const&);
+//The set of teams passed in will make it give a rating to each of those even if it doesn't
+//know that they exist for any other reason.
+Rank_status award_limits(TBA_fetcher&,tba::Event_key const&,std::set<tba::Team_key> const&);
 
 int award_limits_demo(TBA_fetcher&);
 

@@ -578,17 +578,6 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 	return r;
 }
 
-template<typename T>
-double entropy(Interval<T> const& a){
-	int n=a.max-a.min+1;
-	return log2(n);
-}
-
-template<typename T>
-double entropy(map_auto<tba::Team_key,Interval<T>> const& a){
-	return sum(MAP(entropy,values(a)));
-}
-
 template<typename Team>
 auto teams(Rank_range<Team> const& a){
 	return keys(a);
@@ -612,12 +601,29 @@ Pick_limits pick_limits(TBA_fetcher &f,tba::Event_key const& event,std::map<tba:
 	if(std::holds_alternative<Picks_no_data>(p)){
 		Pick_limits r;
 		//just going to leave everything blank.
+		//could try to fill this in by looking at what teams play in the finals
+		//but for now, just say that any of the teams might have been picked.
+		for(auto team:keys(ranks)){
+			r.points[team]=Interval<Point>{0,16};
+			r.picked[team]=Interval<bool>{0,1};
+		}
+		std::vector<int> values;
+		for(auto i:reversed(range_inclusive(9,16))){
+			values|=i;
+			values|=i;
+		}
+		values|=reversed(range_inclusive(8,1));
+		r.unclaimed=sum(take(ranks.size(),values));
 		return r;
 	}
 	if(std::holds_alternative<Picks_complete>(p)){
 		auto a=std::get<Picks_complete>(p);
 		//print_r(a);
 		Pick_limits r;
+		for(auto k:keys(ranks)){
+			r.points[k]=0;
+			r.picked[k]=0;
+		}
 		for(auto [k,v]:a){
 			r.points[k]=v;
 			r.picked[k]=(v!=0);

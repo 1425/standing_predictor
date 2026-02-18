@@ -341,4 +341,14 @@ bool contains(std::vector<T> const& a,T const& b){
 	return to_set(a).count(b);
 }*/
 
+template<typename T>
+bool subset(std::set<T> const& a,std::set<T> const& b){
+	for(auto const& elem:a){
+		if(!b.count(elem)){
+			return 0;
+		}
+	}
+	return 1;
+}
+
 #endif

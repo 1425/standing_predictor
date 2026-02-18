@@ -71,8 +71,13 @@ bool subset(Interval<T> a,Interval<T> b){
 	return a.min>=b.min && a.max<=b.max;
 }
 
-template<typename T>
+/*template<typename T>
 bool subset(T a,Interval<T> b){
+	return a>=b.min && a<=b.max;
+}*/
+
+template<typename A,typename B>
+bool subset(A a,Interval<B> b){
 	return a>=b.min && a<=b.max;
 }
 
@@ -152,6 +157,15 @@ std::optional<Interval<T>> or_all(std::vector<Interval<T>> a){
 	auto m1=min(MAP(min,a));
 	auto m2=max(MAP(max,a));
 	return Interval<T>{m1,m2};
+}
+
+template<typename T>
+auto sum(std::vector<Interval<T>> const& a){
+	//seperating these so that you get something useful when T is bool
+	return Interval{
+		sum(MAP(min,a)),
+		sum(MAP(max,a))
+	};
 }
 
 #endif
