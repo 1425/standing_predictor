@@ -23,6 +23,8 @@ using Team_rank_value=std::map<tba::Team_key,Interval<Rank_value>>;
 
 struct Rank_status{
 	RANK_STATUS(INST)
+
+	Rank_status& operator+=(Rank_status const&);
 };
 
 std::ostream& operator<<(std::ostream&,Rank_status const&);

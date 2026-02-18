@@ -49,7 +49,7 @@ simple way:
 #include "playoff_limits.h"
 #include "timezone.h"
 #include "venue.h"
-
+#include "event_limits.h"
 //start generic stuff
 
 template<typename K,typename V,typename H>
@@ -1061,7 +1061,8 @@ int main1(int argc,char **argv){
 
 	if(args.rank_limits_demo){
 		//rank_limits_demo(tba_fetcher);
-		pick_points_demo(tba_fetcher);
+		//pick_points_demo(tba_fetcher);
+		return event_limits_demo(tba_fetcher);
 		return 0;
 	}
 

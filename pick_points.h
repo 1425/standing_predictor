@@ -9,6 +9,7 @@
 #include "util.h"
 #include "vector_void.h"
 #include "interval.h"
+#include "probability.h"
 
 class TBA_fetcher;
 
@@ -73,5 +74,17 @@ auto teams(std::optional<T> const& a){
 	}
 	return teams(*a);
 }
+
+using Picked=std::map<tba::Team_key,Interval<bool>>;
+using Pts=std::map<tba::Team_key,Interval<Point>>;
+
+#define PICK_LIMITS(X)\
+	X(Pts,points)\
+	X(Picked,picked)\
+	X(unsigned,unclaimed)
+
+TBA_MAKE_INST(Pick_limits,PICK_LIMITS)
+
+Pick_limits pick_limits(TBA_fetcher&,tba::Event_key const&,std::map<tba::Team_key,Interval<Rank>> const&);
 
 #endif

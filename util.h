@@ -705,14 +705,6 @@ auto operator-(std::pair<A,B> const& a,std::pair<A,B> const& b){
 	);
 }
 
-/*template<typename A,typename B>
-std::pair<A,B> operator+(std::pair<A,B> const& a,std::pair<A,B> const& b){
-	return std::make_pair(
-		a.first+b.first,
-		a.second+b.second
-	);
-}*/
-
 template<typename A,typename B,typename C,typename D>
 auto operator+(std::pair<A,B> const& a,std::pair<C,D> const& b){
 	return std::make_pair(

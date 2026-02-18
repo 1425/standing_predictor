@@ -333,4 +333,11 @@ std::vector<tba::Team_key> teams_keys(TBA_fetcher& f,tba::Event const& a){
 	return teams_keys(f,a.key);
 }
 
+std::vector<tba::District_key> districts(TBA_fetcher &f){
+	auto found=flatten(mapf([&](auto year){ return tba::districts(f,year); },years()));
+	return mapf([](auto x){ return x.key; },found);
+}
 
+std::vector<tba::Event> events(TBA_fetcher &f,tba::District_key const& district){
+	return tba::district_events(f,district);
+}

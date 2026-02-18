@@ -607,6 +607,48 @@ auto teams(Rank_results<Team> const& a){
 	return t;
 }
 
+Pick_limits pick_limits(TBA_fetcher &f,tba::Event_key const& event,std::map<tba::Team_key,Interval<Rank>> const& ranks){
+	auto p=pick_points(f,event,ranks);
+	if(std::holds_alternative<Picks_no_data>(p)){
+		Pick_limits r;
+		//just going to leave everything blank.
+		return r;
+	}
+	if(std::holds_alternative<Picks_complete>(p)){
+		auto a=std::get<Picks_complete>(p);
+		//print_r(a);
+		Pick_limits r;
+		for(auto [k,v]:a){
+			r.points[k]=v;
+			r.picked[k]=(v!=0);
+		}
+		//do I sperately need to set not picked on the rest?
+		r.unclaimed=0;
+		return r;
+	}
+	if(std::holds_alternative<Picks_in_progress>(p)){
+		auto a=std::get<Picks_in_progress>(p);
+		Pick_limits r;
+		r.points=a.by_team;
+		r.unclaimed=a.unclaimed;
+
+		for(auto [k,v]:r.points){
+			if(min(v)>0){
+				r.picked[k]=1;
+			}else if(max(v)>0){
+				r.picked[k]=Interval<bool>(0,1);
+			}else{
+				r.picked[k]=0;
+			}
+		}
+		return r;
+	}
+	(void)f;
+	(void)event;
+	(void)ranks;
+	nyi
+}
+
 int pick_points_demo(TBA_fetcher &f){
 	auto run=[&](auto event){
 		PRINT(event.key);

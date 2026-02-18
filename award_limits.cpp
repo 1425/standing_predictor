@@ -18,6 +18,14 @@
 using Team=tba::Team_key;
 using namespace std;
 
+Rank_status& Rank_status::operator+=(Rank_status const& a){
+	for(auto [k,v]:a.by_team){
+		by_team[k]+=v;
+	}
+	unclaimed+=a.unclaimed;
+	return *this;
+}
+
 //Unless otherwise specified, this works with normal points not after the 3x multiplier from dcmp
 
 PRINT_STRUCT(Rank_status,RANK_STATUS)

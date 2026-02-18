@@ -40,6 +40,7 @@ bool subset(std::vector<T> const& a,std::vector<T> const& b){
 
 using namespace std;
 using Team=tba::Team_key;
+using Team_key=tba::Team_key;
 
 auto alliances(tba::Match const& a){
 	auto f=[](auto x){ return x.team_keys; };
@@ -85,8 +86,25 @@ auto playoff_matches_simple(TBA_fetcher &f,tba::Event_key const& event){
 	);
 }
 
-map<Team,Interval<Point>> playoff_limits(){
-	nyi
+Playoff_limits playoff_limits(TBA_fetcher&,std::map<Team_key,Interval<bool>> const& a){
+	auto s=sum(values(a));
+	(void)s;//at some point might want to change how this sum works to seperate the halves and do two sums.
+	//PRINT(s);
+	//assert(subset(24,s)); //if it's not possible to have 24 teams, then this is not a case we're 
+			      //going to handle yet
+
+	//going to start by just doing the dumbest thing and ignore all the match results
+	//this can be refined later.
+	Playoff_limits r;
+	r.by_team=to_map_auto(map_values([&](auto v){
+		if(v.max){
+			return Interval<Point>{0,30};
+		}else{
+			return Interval<Point>{0,0};
+		}
+	},a));
+	r.unclaimed_points=3*(30+20+10*2);
+	return r;
 }
 
 std::variant<vector<vector<Team>>,std::string> listed_alliances(TBA_fetcher& f,tba::Event_key const& event){

@@ -22,6 +22,7 @@ FRC_API_OBJS= \
 	../frc_api/curl.o
 
 OUTLINE_OBJS= \
+	event_limits.o\
 	district_championship_assignment.o\
 	int_limited.o \
 	venue.o\
