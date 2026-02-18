@@ -8,6 +8,7 @@
 #include "tba.h"
 #include "vector_void.h"
 #include "optional.h"
+#include "../tba/tba.h"
 
 using namespace std;
 
@@ -61,7 +62,7 @@ static std::set<tba::Team_key> district_quals(
 	std::set<tba::Team_key> const& attending_teams
 ){
 	//first, see if the district is done
-	auto x=district_events(tba_fetcher,district);
+	auto x=tba::district_events(tba_fetcher,district);
 	auto f=filter([](auto x){ return dcmp(x.event_type); },x);
 	assert(f.size());
 	auto cmp_events=keys(f);

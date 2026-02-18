@@ -29,6 +29,12 @@ struct Interval{
 	bool operator==(T const& a){
 		return min==a && max==a;
 	}
+
+	Interval& operator+=(Interval const& a){
+		min+=a.min;
+		max+=a.max;
+		return *this;
+	}
 };
 
 template<typename T>

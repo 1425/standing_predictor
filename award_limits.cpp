@@ -6,10 +6,22 @@
 #include "tba.h"
 #include "cmp_reason.h"
 
+#define PRINT_STRUCT_INNER(A,B) o<<""#B<<":"<<a.B<<" ";
+
+#define PRINT_STRUCT(NAME,ITEMS)\
+	std::ostream& operator<<(std::ostream& o,NAME const& a){\
+		o<<""#NAME<<"( ";\
+		ITEMS(PRINT_STRUCT_INNER)\
+		return o<<")";\
+	}
+
 using Team=tba::Team_key;
 using namespace std;
 
 //Unless otherwise specified, this works with normal points not after the 3x multiplier from dcmp
+
+PRINT_STRUCT(Award_limits,AWARD_LIMITS)
+PRINT_R_ITEM(Award_limits,AWARD_LIMITS)
 
 using Points_by_team=map<Team,Point>;
 
@@ -22,16 +34,8 @@ struct Award_points{
 	AWARD_POINTS(INST)
 };
 
-#define PRINT_STRUCT_INNER(A,B) o<<""#B<<":"<<a.B<<" ";
-
-#define PRINT_STRUCT(NAME,ITEMS)\
-	std::ostream& operator<<(std::ostream& o,NAME const& a){\
-		o<<""#NAME<<"( ";\
-		ITEMS(PRINT_STRUCT_INNER)\
-		return o<<")";\
-	}
-
 PRINT_STRUCT(Award_points,AWARD_POINTS)
+PRINT_R_ITEM(Award_points,AWARD_POINTS)
 
 Point points(tba::Award_type a){
 	#define X(A,B) if(a==tba::Award_type::A) return B;
@@ -152,34 +156,43 @@ Award_points listed_award_points(TBA_fetcher &f,tba::Event_key event){
 		}
 	}
 
-	if(includes_chairmans(found)){
-		r.done=1;
-	}else{
-		//If we don't know if the event is done from the final award being given out
-		//then assume if it's done if it's 3 days since the last scheduled day
-
-		auto e=tba::event(f,event);
-		assert(e.end_date);
-		auto since_end=current_date()-*e.end_date;
-
-		r.done=(since_end>std::chrono::days(3));
-	}
+	r.done=(includes_chairmans(found) || event_timed_out(f,event));
 
 	return r;
 }
 
-Award_limits award_limits(map<Team,Point> award_points){
+Point max_award_points(int event_size){
+	vector<int> v;
+	v|=15;
+	v|=8;
+	for(auto _:range(13)){
+		v|=5;
+	}
+	auto subset=take(event_size,v);
+	return min(86,int(sum(subset)));
+}
+
+Award_limits award_limits(TBA_fetcher &f,tba::Event_key event,map<Team,Point> already_given){
 	//1) calculate the total points already awarded
 	//2) calculate total theoretical points at this event
 	//this gives unclaimed total points 
 	//then calculate limits per team
 	//max is 10+5 (chairmans+safety)
 
-	int points_left=86-sum(values(award_points));
+	const auto teams=teams_keys(f,event);
+	
+	int points_left=max_award_points(teams.size())-sum(values(already_given));
 	assert(points_left>=0);
 
 	Award_limits r;
 	r.unclaimed=points_left;
+
+	for(auto team:teams){
+		auto f=already_given.find(team);
+		if(f==already_given.end()){
+			already_given[team]=0; 
+		}
+	}
 
 	r.by_team=map_values(
 		[=](auto x)->Interval<Point>{
@@ -199,7 +212,7 @@ Award_limits award_limits(map<Team,Point> award_points){
 			}
 			nyi
 		},
-		award_points
+		already_given
 	);
 	return r;
 }
@@ -219,13 +232,27 @@ Award_limits award_limits(TBA_fetcher &f,tba::Event_key const& event){
 		}
 		return r;
 	}
-	return award_limits(b.by_team);
+	return award_limits(f,event,b.by_team);
+}
+
+void fill_pct(Award_limits const& a){
+	auto s=sum(values(a.by_team));
+	size_t spread=s.max-s.min;
+	assert(a.unclaimed<=spread);
+	double p=[=]()->double{
+		if(spread){
+			return double(a.unclaimed)/spread;
+		}
+		return 0;
+	}();
+	(void)p;
+	//cout<<s<<" "<<a.unclaimed<<" "<<p<<"\n";
 }
 
 int award_limits_demo(TBA_fetcher &f){
 	for(auto const& event:events(f)){
 		auto a=award_limits(f,event.key);
-		(void)a;
+		fill_pct(a);
 	}
 	return 0;
 }

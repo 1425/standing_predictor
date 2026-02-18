@@ -4,7 +4,14 @@
 #include<map>
 #include<iosfwd>
 #include<set>
-#include "../tba/tba.h"
+#include<vector>
+
+namespace tba{
+	class Year;
+	class Team_key;
+	class District_key;
+	struct Award;
+};
 
 class TBA_fetcher;
 
