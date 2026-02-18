@@ -7,6 +7,19 @@
 
 using namespace std;
 
+/*
+ * Might we worthwhile to do a quick study of the amount of entropy coming in and out of each of the 
+ * tournament stages
+ *
+ * also, should do a comparison of the overall entropy calculated for event/district with these methods
+ * compared to the basic ones
+ *
+ * also, on the list of things to do should be to look for third events so that the points don't get added
+ * first pass, this should just go when adding up a district
+ * but could eventually go deeper because I'm pretty sure that they won't give teams the chairmans award
+ * at their third event, etc. but should look at that empirically.
+ * */
+
 using Team=tba::Team_key;
 
 template<
@@ -266,10 +279,31 @@ auto event_limits(TBA_fetcher &f,tba::Event const& e){
 	return event_limits(f,e.key);
 }
 
-auto district_limits(TBA_fetcher &f,tba::District_key const& district){
+Rank_status district_limits(TBA_fetcher &f,tba::District_key const& district){
 	auto e=events(f,district);
-	auto m=mapf([&](auto const& x){ return event_limits(f,x); },e);
-	return sum(m);
+
+	//Ignore DCMP points for now.
+	auto e2=filter([](auto x){ return x.event_type==tba::Event_type::DISTRICT; },e);
+
+	//sort so that can figure out third plays
+	e2=sort_by(e2,[](auto x){ return x.start_date; });
+
+	auto m=mapf([&](auto const& x){ return event_limits(f,x); },e2);
+	map<Team,int> plays;
+	Rank_status r;
+	for(auto here:m){
+		for(auto [k,v]:here.by_team){
+			auto&p=plays[k];
+			if(p<2){
+				r.by_team[k]+=v;
+			}
+			p++;
+		}
+		r.unclaimed+=here.unclaimed;
+	}
+	PRINT(count(values(plays)));
+	return r;
+	//return sum(m);
 }
 
 int event_limits_demo(TBA_fetcher &f){
