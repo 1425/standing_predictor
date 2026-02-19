@@ -124,6 +124,7 @@ void lock2_demo(TBA_fetcher &f,tba::District_key district){
 	auto in=district_limits(f,district);
 	
 	PRINT(in);
+	PRINT(entropy(in));
 
 	auto d=[=](){
 		auto x=dcmp_size(district);

@@ -480,6 +480,7 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 	auto e=tba::event_alliances(f,event);
 	if(!e){
 		auto a=listed_pick_points(f,event);
+		PRINT(a);
 		if(a){
 			return *a;
 		}
@@ -488,7 +489,7 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 
 	auto t=teams(e);
 	//PRINT(t);
-	//PRINT(ranks);
+	PRINT(ranks);
 	{
 		auto teams_without_rank_data=t-keys(ranks);
 		if(!teams_without_rank_data.empty()){
@@ -526,7 +527,7 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 		//could put the other teams in here as 0
 		return r;
 	}
-
+	nyi
 	//fill up all the slots
 	//look through the items until find one not filled
 	//also, look to see if there are any captain slots not filled

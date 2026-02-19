@@ -27,4 +27,8 @@ double entropy(map_auto<tba::Team_key,Interval<T>> const& a){
 	return sum(MAP(entropy,values(a)));
 }
 
+std::map<Point,Pr> operator+(std::map<Point,Pr>,int);
+flat_map<Point,Pr> operator+(flat_map<Point,Pr> const&,int);
+flat_map2<Point,Pr> operator+(flat_map2<Point,Pr> const&,int);
+
 #endif

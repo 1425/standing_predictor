@@ -6,6 +6,17 @@
 #include "tba.h"
 #include "cmp_reason.h"
 
+double entropy(Interval<Rank_value> const& a){
+	auto f1=Interval{a.min.first,a.max.first};
+	auto f2=Interval{a.min.second,a.max.second};
+
+	return entropy(f1)+entropy(f2);
+}
+
+double entropy(Rank_status const& a){
+	return sum(MAP(entropy,values(a.by_team)));
+}
+
 #define PRINT_STRUCT_INNER(A,B) o<<""#B<<":"<<a.B<<" ";
 
 #define PRINT_STRUCT(NAME,ITEMS)\

@@ -52,12 +52,6 @@ simple way:
 #include "event_limits.h"
 //start generic stuff
 
-template<typename K,typename V,typename H>
-std::vector<std::pair<K,V>> sorted(std::unordered_map<K,V,H> const& a){
-	std::vector<std::pair<K,V>> v(a.begin(),a.end());
-	return sorted(v);
-}
-
 //start program-specific stuff.
 
 using namespace std;
@@ -67,32 +61,6 @@ using Team=tba::Team_key;
 using Team_key=tba::Team_key;
 using Year=tba::Year;
 using Date=tba::Date;
-
-std::map<Point,Pr> operator+(std::map<Point,Pr> a,int i){
-	std::map<Point,Pr> r;
-	for(auto [k,v]:a){
-		r[k+i]=v;
-	}
-	return r;
-}
-
-flat_map<Point,Pr> operator+(flat_map<Point,Pr> const& a,int i){
-	flat_map<Point,Pr> r;
-	for(auto [k,v]:a){
-		r[k+i]=v;
-	}
-	return r;
-}
-
-flat_map2<Point,Pr> operator+(flat_map2<Point,Pr> const& a,int i){
-	flat_map2<Point,Pr> r;
-	//this is not an efficient way to do this with this data structure
-	//should make a copy and then modify each of the keys
-	for(auto [k,v]:a){
-		r[k+i]=v;
-	}
-	return r;
-}
 
 using Points_used=map<tba::Team_key,Team_points_used>;
 

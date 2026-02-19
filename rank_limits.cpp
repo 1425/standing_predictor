@@ -717,6 +717,27 @@ Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& eve
 
 			return r;
 		}
+
+	}
+
+	if(
+		nonempty_alliances(f,event) || 
+		playoffs_started(f,event) || 
+		awards_done(f,event) ||
+		event_timed_out(f,event)
+	){
+		Rank_results<tba::Team_key> r;
+		auto teams=teams_keys(f,event);
+		//arbitrarily assign ranks to the teams, but give them all 0 points.
+		//This case is here for events like 2020mdow.
+		for(auto [rank,team]:enumerate_from(1,teams)){
+			r.ranks[team]=rank;
+		}
+		for(auto team:teams){
+			r.points[team]=0;
+		}
+		r.unclaimed_points=0;
+		return r;
 	}
 
 	Team_namer namer;

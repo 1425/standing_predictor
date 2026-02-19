@@ -15,6 +15,8 @@ namespace tba{
 //second is how many district points there are to be won
 using Rank_value=std::pair<Int_limited<0,255>,Point>;
 
+double entropy(Interval<Rank_value> const&);
+
 using Team_rank_value=std::map<tba::Team_key,Interval<Rank_value>>;
 
 #define RANK_STATUS(X)\
@@ -28,6 +30,8 @@ struct Rank_status{
 };
 
 std::ostream& operator<<(std::ostream&,Rank_status const&);
+
+double entropy(Rank_status const&);
 
 //The set of teams passed in will make it give a rating to each of those even if it doesn't
 //know that they exist for any other reason.
