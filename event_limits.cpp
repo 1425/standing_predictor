@@ -22,6 +22,18 @@ using namespace std;
 
 using Team=tba::Team_key;
 
+template<typename K,typename V>
+void reserve_if_able(flat_map<K,V> &a,size_t n){
+	a.reserve(n);
+}
+
+void reserve_if_able(auto&,size_t){}
+
+template<typename Func,typename K,typename V>
+auto map_values(Func f,flat_map2<K,V> const& a){
+	return a.map_values(f);
+}
+
 template<
 	template<typename,typename>typename MAP1,
 	template<typename,typename>typename MAP2,
@@ -58,7 +70,8 @@ auto make_dist(std::vector<T> a){
 	return to_dist(to_multiset(a));
 }
 
-map<Point,Pr> normalize(map<Point,Pr> a){
+template<template<typename,typename>typename MAP>
+MAP<Point,Pr> normalize(MAP<Point,Pr> a){
 	auto s=sum(values(a));
 	assert(s>0);
 	return map_values([=](auto x){ return x/s; },a);
@@ -68,9 +81,11 @@ map<Point,Pr> cut_negatives(map<Point,Pr> a){
 	return map_values([](auto x){ return max(x,0.0); },a);
 }
 
-map<Point,Pr> uniform(Interval<Point> a){
+//map<Point,Pr> uniform(Interval<Point> a){
+auto uniform(Interval<Point> a){
 	auto options=a.max-a.min+1;
-	map<Point,Pr> r;
+	flat_map2<Point,Pr> r;
+	reserve_if_able(r,options);
 	for(auto x:range(a)){
 		r[x]=1.0/options;
 	}
@@ -78,17 +93,67 @@ map<Point,Pr> uniform(Interval<Point> a){
 }
 
 template<template<typename,typename> typename MAP>
-map<Point,Pr> cut(MAP<Point,Pr> prior,Interval<Point> allowed){
-	map<Point,Pr> r;
-	for(auto x:range(allowed)){
+//map<Point,Pr> cut(MAP<Point,Pr> prior,Interval<Point> allowed){
+auto cut(MAP<Point,Pr> prior,Interval<Point> allowed){
+	MAP<Point,Pr> r;
+	reserve_if_able(r,allowed.max-allowed.min+1);
+	/* N=prior.size()
+	 * M=range(allowed).size()
+	 *
+	 * original version O(M*log(N)+M*log(M))
+	 * more complicated version: O(log(N)+M)
+	 * because the input is sorted
+	 * */
+	/*for(auto x:range(allowed)){
 		r[x]=prior[x];
+	}*/
+
+	using P=std::pair<Point,Pr>;
+	auto start=lower_bound(prior.begin(),prior.end(),P(allowed.min,0));
+
+	auto end=lower_bound(prior.begin(),prior.end(),P(allowed.max,0));
+	//because Interval is inclusive.
+	if(end!=prior.end() && (*end).first==allowed.max){
+		++end;
 	}
+
+	auto out=r.begin();
+	for(auto it=start;it!=end;++it){
+		out=r.emplace_hint(out,*it);
+	}
+
 	return normalize(r);
+}
+
+template<typename T>
+concept Map_like = requires(T m, typename T::key_type k, typename T::mapped_type v) {
+    // Requires key_type and mapped_type to exist
+    typename T::key_type;
+    typename T::mapped_type;
+
+    // Requires operator[] for insertion/access
+    //{ m[k] } -> std::same_as<typename T::mapped_type&>;
+
+    // Requires the insert function
+    //{ m.insert({k, v}) };
+};
+
+template<
+	Map_like MAP1,
+	template<typename,typename>typename MAP2,
+	typename K,
+	typename V
+>
+MAP1& operator+=(MAP1 &a,MAP2<K,V> const& b){
+	for(auto const& [k,v]:b){
+		a[k]+=v;
+	}
+	return a;
 }
 
 auto force_probability(map<Team,Interval<Point>> by_team,flat_map2<Point,Pr> prior_dist){
 	bool verbose=0;
-	std::map<Point,Pr> existing;
+	flat_map2<Point,Pr> existing;
 	for(auto v:values(by_team)){
 		existing+=uniform(v);
 	}
@@ -99,7 +164,7 @@ auto force_probability(map<Team,Interval<Point>> by_team,flat_map2<Point,Pr> pri
 		cout<<"\n";
 	}
 
-	std::map<Point,Pr> by_cut;
+	flat_map2<Point,Pr> by_cut;
 	for(auto v:values(by_team)){
 		by_cut+=cut(prior_dist,v);
 	}
@@ -307,11 +372,12 @@ Rank_status district_limits(TBA_fetcher &f,tba::District_key const& district){
 }
 
 int event_limits_demo(TBA_fetcher &f){
-	for(auto district:districts(f)){
+	for(auto district:take(20,districts(f))){
 		PRINT(district);
 		auto a=district_limits(f,district);
 		//print_r(a);
 	}
+	return 0;
 	for(auto const& event:events(f)){
 		auto a=event_limits(f,event.key);
 		(void)a;

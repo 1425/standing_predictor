@@ -56,10 +56,13 @@ class flat_map2{
 	VS values;
 
 	public:
+
+	using key_type=K;
+	using mapped_type=V;
+
 	flat_map2(){}
 
 	flat_map2(std::initializer_list<std::pair<K,V>> const& a){
-		//sort(a.begin(),a.end());
 		for(auto const& elem:sorted(a)){
 			keys|=elem.first;
 			values|=elem.second;
@@ -97,29 +100,53 @@ class flat_map2{
 			nyi
 		}
 
+		bool operator<=>(auto)const;
+		//bool operator<(auto)const;
+
+		auto operator<=>(std::pair<K,V> const& a)const{
+			auto c=(first<=>a.first);
+			if(c!=std::strong_ordering::equal){
+				return std::partial_ordering(c);
+			}
+			return second<=>a.second;
+		}
+
+		bool operator<(std::pair<K,V> const& a)const{
+			auto c=(*this)<=>a;
+			return c==std::strong_ordering::less;
+		}
+
+		operator std::pair<K,V>()const{
+			return std::make_pair(first,second);
+		}
+
+		operator std::pair<const K,V>()const{
+			return std::make_pair(first,second);
+		}
+
 		friend std::ostream& operator<<(std::ostream& o,proxy const& a){
 			return o<<"("<<a.first<<","<<a.second<<")";
 		}
 	};
 
 	struct iterator{
+		using iterator_category=typename KS::iterator::iterator_category;
+		using difference_type=typename KS::iterator::difference_type;
+		using value_type=std::pair<K,V>;
+		//using pointer=value_type*;
+		using reference=value_type&;//proxy;
+
 		using K_it=typename KS::iterator;
 		using V_it=typename VS::iterator;
 		K_it first;
 		V_it second;
 
-		proxy *p=nullptr;
-
 		iterator(K_it a,V_it b):first(a),second(b){}
 
-		iterator(iterator const& a):
+		/*iterator(iterator const& a):
 			first(a.first),
 			second(a.second)
-		{}
-
-		~iterator(){
-			delete p;
-		}
+		{}*/
 
 		iterator& operator++(){
 			first++;
@@ -134,16 +161,31 @@ class flat_map2{
 			return r;
 		}
 
+		iterator& operator--(){
+			first--;
+			second--;
+			return *this;
+		}
+
+		iterator& operator+=(long int x){
+			first+=x;
+			second+=x;
+			return *this;
+		}
+
+		difference_type operator-(iterator a)const{
+			auto r1=first-a.first;
+			auto r2=second-a.second;
+			assert(r1==r2);
+			return r1;
+		}
+
 		proxy operator*(){
 			return proxy{*first,*second};
 		}
 
-		proxy* operator->(){
-			if(p){
-				delete p;
-			}
-			p=new proxy{*first,*second};
-			return &*p;
+		std::shared_ptr<proxy> operator->(){
+			return std::make_shared<proxy>(*first,*second);
 		}
 
 		auto operator<=>(iterator const&)const=default;
@@ -211,6 +253,39 @@ class flat_map2{
 		return *v_it;
 	}
 
+	iterator emplace_hint(iterator i,std::pair<K,V> p){
+		while(i<end() && i->first<p.first){
+			++i;
+		}
+		if(i==end()){
+			keys|=p.first;
+			values|=p.second;
+			return end()-1;
+		}
+		
+		if(i->first==p.first){
+			i->second=p.second;
+			return i;
+		}
+
+		auto i1=std::lower_bound(keys.begin(),keys.end(),p.first);
+		auto i2=values.begin()+(i1-keys.begin());
+
+		try{
+			keys.insert(i1,p.first);
+			values.insert(i2,p.second);
+		}catch(...){
+			//detect, but don't handle if either of these fails.  
+			assert(0);
+		}
+		return iterator{i1,i2};
+	}
+
+	void reserve(size_t n){
+		keys.reserve(n);
+		values.reserve(n);
+	}
+
 	std::map<K,V> to_map()const{
 		std::map<K,V> r;
 		for(auto i:range(keys.size())){
@@ -228,7 +303,7 @@ class flat_map2{
 		return r;
 	}*/
 
-	auto get_values()const{
+	auto const& get_values()const{
 		return values;
 	}
 
@@ -249,6 +324,15 @@ class flat_map2{
 		return keys;
 	}
 
+	template<typename Func>
+	auto map_values(Func f)const{
+		using E=decltype(f(values[0]));
+		flat_map2<K,E> r;
+		r.keys=keys;
+		r.values=mapf(f,values);
+		return r;
+	}
+
 	auto operator<=>(flat_map2 const&)const=default;
 };
 
@@ -263,7 +347,7 @@ std::map<K,V> to_map(flat_map2<K,V> const& a){
 }
 
 template<typename K,typename V>
-auto values(flat_map2<K,V> const& a){
+auto const& values(flat_map2<K,V> const& a){
 	return a.get_values();
 }
 

@@ -36,6 +36,15 @@ struct Interval{
 		return *this;
 	}
 
+	auto width()const{
+		return max-min;
+	}
+
+	auto options()const{
+		//this is accurate if T is integer-like, anyway.
+		return width+1;
+	}
+
 	//This exists so that this type can work with things like std::map
 	//And does not actually give you a logical comparison between two intervals.
 	auto operator<=>(Interval const&)const=default;
