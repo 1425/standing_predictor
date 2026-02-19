@@ -66,10 +66,83 @@ auto key(tba::Event const& a){
 	return a.key;
 }
 
-Playoff_limits playoff_limits(TBA_fetcher&,std::map<Team_key,Interval<bool>> const& a){
+bool playoffs_done(TBA_fetcher& f,tba::Event_key const& event){
+	//1) look at the alliances and see if they say done.
+	auto e=event_alliances(f,event);
+	if(e){
+		for(auto x:*e){
+			if(!x.status) continue;
+			auto a=*x.status;
+			if(!std::holds_alternative<tba::Elimination_Alliance_status>(a)){
+				continue;
+			}
+			auto g=std::get<tba::Elimination_Alliance_status>(a);
+			if(g.status=="won"){
+				return 1;
+			}
+		}
+	}
+	//playoff_matches(f,event);
+	return 0;
+}
+
+tba::District_key district(TBA_fetcher &f,tba::Event_key const& event){
+	auto found=filter(
+		[&](auto x){ return contains(events_keys(f,x),event); },
+		districts(f)
+	);
+	assert(found.size()==1);
+	return found[0];
+}
+
+std::optional<map<Team,Point>> listed_playoff_points(TBA_fetcher &f,tba::Event_key const& event){
+	(void)f;
+	(void)event;
+	auto d=tba::district_rankings(f,district(f,event));
+	if(!d){
+		return std::nullopt;
+	}
+
+	std::map<tba::Team_key,Point> r;
+	for(auto team_info:*d){
+		for(auto event_info:team_info.event_points){
+			if(event_info.event_key!=event){
+				continue;
+			}
+			r[team_info.team_key]=event_info.elim_points;
+		}
+	}
+	return r;
+}
+
+Playoff_limits playoff_limits(TBA_fetcher& f,tba::Event_key const& event,std::map<Team_key,Interval<bool>> const& a){
+	//the formula for the number of points actually changes per-year
+	//but before we do that, look at whether the playoffs are complete and 
+	//we can just read out the data from the ranking list.
+	//how to know if playoffs are done:
+	//1) the whole event is done: chairmans, event ways days ago, etc.
+	//2) awards that are known to be after matches have started being given out
+	//3) finals matches have been played enough so that we know a winner
+
+	if(playoffs_done(f,event)){
+		auto listed=listed_playoff_points(f,event);
+		if(listed){
+			Playoff_limits r;
+
+			for(auto team:keys(a)){
+				r.by_team[team]=0;
+			}
+
+			for(auto [k,v]:*listed){
+				r.by_team[k]=v;
+			}
+			r.unclaimed_points=0;
+
+			return r;
+		}
+	}
+
 	auto s=sum(values(a));
-	(void)s;//at some point might want to change how this sum works to seperate the halves and do two sums.
-	//PRINT(s);
 	if(s.min!=s.max){
 		//if it looks like it's impossible to have a 24-team playoff, something went wrong earlier...
 		//this can happen at things like an Einstein field.

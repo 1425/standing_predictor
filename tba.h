@@ -80,6 +80,7 @@ bool event_timed_out(TBA_fetcher &,tba::Event_key const&);
 
 std::vector<tba::Event> events(TBA_fetcher&);
 std::vector<tba::Event> events(TBA_fetcher&,tba::District_key const&);
+std::vector<tba::Event_key> events_keys(TBA_fetcher&,tba::District_key const&);
 
 std::vector<tba::Year> years();
 std::vector<tba::Team> teams(TBA_fetcher&);
@@ -90,5 +91,7 @@ std::vector<tba::District_key> districts(TBA_fetcher&);
 
 std::vector<tba::Match> playoff_matches(TBA_fetcher&,tba::Event_key const&);
 std::vector<tba::Match_Simple> playoff_matches_simple(TBA_fetcher&,tba::Event_key const&);
+
+bool playoffs_started(TBA_fetcher&,tba::Event_key const&);
 
 #endif

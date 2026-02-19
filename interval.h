@@ -52,7 +52,11 @@ struct Interval{
 
 template<typename T>
 std::ostream& operator<<(std::ostream& o,Interval<T> const& a){
-	o<<"("<<a.min<<","<<a.max<<")";
+	if(a.min==a.max){
+		o<<a.min;
+	}else{
+		o<<"("<<a.min<<","<<a.max<<")";
+	}
 	return o;
 }
 

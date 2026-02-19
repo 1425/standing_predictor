@@ -656,6 +656,15 @@ std::ostream& operator<<(std::ostream& o,Team_namer const& a){
 	return o;
 }
 
+bool nonempty_alliances(TBA_fetcher &f,tba::Event_key const& event){
+	auto e=tba::event_alliances(f,event);
+	if(!e){
+		return 0;
+	}
+	auto t=teams(*e);
+	return !t.empty();
+}
+
 Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& event){
 	
 	/*auto g=get(f,event);
@@ -671,10 +680,12 @@ Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& eve
 
 	auto info=ranking_match_status(f,event);
 
-	if(info.schedule.empty()){
+	if(info.schedule.empty() || nonempty_alliances(f,event) || playoffs_started(f,event)){
 		auto a=listed_ranks(f,event);
 		//the listed version is better if no matches are left because then you get all the tiebreakers
-		
+
+		//also, there are events that are finished that don't have the data written down for all of
+		//the qual matches.  For example, 2016mdbet.
 		if(a){
 			Rank_results<tba::Team_key> r;
 			for(auto [team,rank]:*a){
@@ -703,7 +714,6 @@ Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& eve
 
 	Team_namer namer;
 	auto g=namer.convert(info);
-	print_r(g.standings);
 	Rank_results<Team_alias> r;
 	r.ranks=rank_limits_m(g);
 	auto event_size=g.standings.size();
