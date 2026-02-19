@@ -79,6 +79,7 @@ bool won_chairmans(TBA_fetcher &,tba::Year,tba::Team_key const&);
 bool event_timed_out(TBA_fetcher &,tba::Event_key const&);
 
 std::vector<tba::Event> events(TBA_fetcher&);
+std::vector<tba::Event_key> events_keys(TBA_fetcher&);
 std::vector<tba::Event> events(TBA_fetcher&,tba::District_key const&);
 std::vector<tba::Event_key> events_keys(TBA_fetcher&,tba::District_key const&);
 

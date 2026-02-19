@@ -5,6 +5,8 @@
 #include "skill_opr.h"
 #include "declines.h"
 #include "lock2.h"
+#include "pick_points.h"
+#include "winners.h"
 
 using namespace std;
 
@@ -393,8 +395,9 @@ Rank_status district_limits(TBA_fetcher &f,tba::District_key const& district){
 
 int event_limits_demo(TBA_fetcher &f){
 	//return lock2_demo(f);
+	return winners_demo(f);
 
-	if(1){
+	if(0){
 		auto a=event_limits(f,tba::Event_key("2026cahal"));
 		PRINT(entropy(a));
 		return 0;

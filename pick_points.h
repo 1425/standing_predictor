@@ -24,6 +24,7 @@ using Rank=Int_limited<1,MAX_TEAMS_PER_EVENT>;
 int pick_points_demo(TBA_fetcher&);
 
 std::vector<tba::Team_key> teams(tba::Elimination_Alliance const&);
+std::set<tba::Team_key> teams(tba::Award const&);
 
 template<typename T,size_t N>
 class set_limited;
@@ -33,6 +34,8 @@ set_limited<tba::Team_key,N> teams(set_limited<tba::Team_key,N> const&);
 
 template<typename>
 class Match;
+
+std::set<tba::Team_key> teams(std::set<tba::Team_key> const&);
 
 template<typename Team>
 set_limited<Team,6> teams(Match<Team> const&);

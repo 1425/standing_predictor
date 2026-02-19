@@ -39,7 +39,7 @@ static unsigned int playoff_size(TBA_fetcher& tba_fetcher,tba::Event_key event){
 	}
 }
 
-static int event_points_multiplier(TBA_fetcher &tba_fetcher,tba::Event_key event){
+int event_points_multiplier(TBA_fetcher &tba_fetcher,tba::Event_key const& event){
 	auto e=tba::event(tba_fetcher,event);
 	using enum tba::Event_type;
 	switch(e.event_type){

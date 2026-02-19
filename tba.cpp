@@ -308,6 +308,10 @@ std::vector<tba::Event> events(TBA_fetcher &f){
 	return flatten(mapf([&](auto year){ return tba::events(f,year); },years()));
 }
 
+std::vector<tba::Event_key> events_keys(TBA_fetcher &f){
+	return mapf([](auto x){ return x.key; },events(f));
+}
+
 std::vector<tba::Year> years(){
 	return range(tba::Year(1992),tba::Year(2027));
 }

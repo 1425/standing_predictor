@@ -687,6 +687,15 @@ std::vector<T> flatten(std::vector<std::array<T,N>> const& a){
 	return r;
 }
 
+template<typename T,size_t N>
+std::vector<T> flatten(std::array<std::vector<T>,N> const& a){
+	std::vector<T> r;
+	for(auto const& x:a){
+		r|=x;
+	}
+	return r;
+}
+
 template<typename Func,typename T>
 auto count_if(Func f,T const& t){
 	auto f1=filter(f,t);

@@ -197,7 +197,7 @@ std::set<Team> teams(Ranking_match_status<Team> const& a){
 	return t1;
 }
 
-auto teams(std::set<tba::Team_key> const& a){
+std::set<tba::Team_key> teams(std::set<tba::Team_key> const& a){
 	return a;
 }
 

@@ -27,4 +27,6 @@ std::ostream& operator<<(std::ostream& o,Event_status);
 Event_status event_status(TBA_fetcher&,tba::Event_key const&);
 std::map<tba::Event_key,Event_status> event_status(TBA_fetcher&,tba::Year const&);
 
+int event_points_multiplier(TBA_fetcher&,tba::Event_key const&);
+
 #endif

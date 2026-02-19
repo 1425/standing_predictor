@@ -351,4 +351,13 @@ bool subset(std::set<T> const& a,std::set<T> const& b){
 	return 1;
 }
 
+template<typename T,size_t N>
+std::vector<T> flatten(std::array<std::set<T>,N> const& a){
+	std::vector<T> r;
+	for(auto const& x:a){
+		r|=x;
+	}
+	return r;
+}
+
 #endif

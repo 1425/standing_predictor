@@ -22,6 +22,12 @@
  * (and could assume no declines if not listed, or not)
  * */
 
+template<typename T>
+auto car(T const& t){
+	assert(!t.empty());
+	return *begin(t);
+}
+
 using Team=tba::Team_key;
 using Event=tba::Event_key;
 using namespace std;
@@ -42,6 +48,14 @@ std::vector<Team> teams(tba::Elimination_Alliance const& a){
 		return a.picks|a.backup->in;
 	}
 	return a.picks;
+}
+
+auto teams(tba::Award_Recipient const& a){
+	return a.team_key;
+}
+
+std::set<Team> teams(tba::Award const& a){
+	return or_all(MAP(teams,a.recipient_list));
 }
 
 /*template<size_t N>
@@ -477,6 +491,129 @@ std::optional<map<Team,Point>> listed_pick_points(TBA_fetcher &f,Event const& ev
 
 Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval<Rank>> const& ranks){
 //Pick_points pick_points(TBA_fetcher& f,Event const& event,Rank_range const& ranks){
+
+	/* 1) Calculate alliances via tba::event_allinace
+	 * 2) Calculate alliances via district points
+	 * 3) Attempt to reconsile them
+	 * 4) Attempt to fill in the rest via the ranks that are passed in
+	 * */
+
+	using Slot=std::set<Team>;
+	static constexpr auto ALLIANCE_SLOTS=3;
+	using Alliance=std::array<Slot,ALLIANCE_SLOTS>;
+	static constexpr auto ALLIANCES=8;
+	using Full=std::array<Alliance,ALLIANCES>;
+
+	const auto by_alliances=[&]{
+		Full full;
+		auto e=tba::event_alliances(f,event);
+		if(e){
+			for(auto [ai,elim_alliance]:enumerate(*e)){
+				assert(ai<ALLIANCES);
+				for(auto [pi,team]:enumerate(elim_alliance.picks)){
+					if(pi>=ALLIANCE_SLOTS){
+						//backup; no points
+					}else{
+						full[ai][pi]|=team;
+					}
+				}
+			}
+		}
+		return full;
+	}();
+
+	using Pick_location=Int_limited<0,ALLIANCE_SLOTS-1>;
+	using Location=pair<Alliance_number,Pick_location>;
+	auto find_locations=[](Point p){
+		vector<Location> r;
+		for(auto i:range_inclusive(1,8)){
+			if(p==17-i){
+				r|=Location(i,0);
+				r|=Location(i,1);
+			}
+			if(p==i){
+				r|=Location(i,2);
+			}
+		}
+		assert(p==0 || !r.empty());
+		return r;
+	};
+
+	const auto by_pts=[&]{
+		Full full;
+		auto a=listed_pick_points(f,event);
+		if(a){
+			for(auto [team,pts]:*a){
+				auto l=find_locations(pts);
+				for(auto x:l){
+					full[x.first-1][x.second]|=team;
+				}
+			}
+		}
+		return full;
+	}();
+
+	//now reconsile the two sets of data
+	//at any locaton, if only one team appears, then it's that team
+	//at any location if a team appears in both it's that team
+
+	Full combo;
+	for(auto ai:range(ALLIANCES)){
+		auto a1=by_alliances[ai];
+		auto a2=by_pts[ai];
+		auto &a_out=combo[ai];
+		for(auto p:range(ALLIANCE_SLOTS)){
+			auto p1=a1[p];
+			auto p2=a2[p];
+			auto &p_out=a_out[p];
+
+			auto both=p1&p2;
+			if(both.size()==1){
+				p_out=both;
+			}else if(both.size()==0){
+				auto either=p1|p2;
+				p_out=either;
+			}else{
+				assert(0);
+			}
+		}
+	}
+
+	//for each of the slots, if there is a unique team, then assume it's there
+	//and if that team appears elsewhere, remove that option.
+	//this happens in 2010mi.
+
+	std::set<tba::Team_key> unique;
+	for(auto a1:combo){
+		for(auto slot:a1){
+			if(slot.size()==1){
+				unique|=car(slot);
+			}
+		}
+	}
+
+	for(auto& a:combo){
+		for(auto &slot:a){
+			if(slot.size()!=1){
+				slot-=unique;
+			}
+		}
+	}
+
+	//You can have places where placements and pts disagree.  See 2020dc305, where there were only 4 alliances.
+	//Could addd a mode specifically for 4-team alliances
+	//But instead, going to filter extra mentions of teams.
+
+	std::set<tba::Team_key> taken;
+	for(auto [alliance,pick,pts]:positions){
+		auto &here=combo[alliance-1][pick];
+		here-=taken;
+		taken|=here;
+	}
+
+	/*PRINT(combo);
+	nyi
+
 	auto e=tba::event_alliances(f,event);
 	if(!e){
 		auto a=listed_pick_points(f,event);
@@ -485,11 +622,28 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 			return *a;
 		}
 		return Picks_no_data{};
+	}*/
+
+	auto t=teams(combo);
+
+	if(t.size()!=to_set(t).size()){
+		print_lines(count(t));
+	
+		cout<<"By alliances:\n";
+		print_lines(by_alliances);
+		cout<<"\n";
+
+		cout<<"By points:\n";
+		print_lines(by_pts);
+		cout<<"\n";
+
+		print_lines(combo);
 	}
 
-	auto t=teams(e);
+	assert(t.size()==to_set(t).size());
+
 	//PRINT(t);
-	PRINT(ranks);
+	//PRINT(ranks);
 	{
 		auto teams_without_rank_data=t-keys(ranks);
 		if(!teams_without_rank_data.empty()){
@@ -500,9 +654,10 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 	}
 
 	//see if all the spaces are filled in
-	auto complete=[=](){
-		auto m=mapf([](auto x){ return x.picks.size()==3; },*e);
-		return m.size()==8 && all(m);
+	auto complete=[=]()->bool{
+		return 0;//if(
+		nyi/*auto m=mapf([](auto x){ return x.picks.size()==3; },*e);
+		return m.size()==8 && all(m);*/
 	}();
 
 	//we might also know that they are complete if we see playoff matches
@@ -513,21 +668,17 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 
 	if(complete){
 		Picks_complete r;
-		for(auto [i,a]:enumerate_from(1,*e)){
-			auto const& teams=a.picks;
-			auto pts=17-i;
-			for(auto team:take(2,teams)){
-				r[team]=pts;
-			}
-			//assert(teams.size()>=3);
-			if(teams.size()>=3){
-				r[teams[2]]=9-i;
+		for(auto [alliance,pick,points]:positions){
+			auto s=combo[alliance-1][pick];
+			assert(s.size()<=1);
+			if(!s.empty()){
+				r[car(s)]=points;
 			}
 		}
 		//could put the other teams in here as 0
 		return r;
 	}
-	nyi
+	
 	//fill up all the slots
 	//look through the items until find one not filled
 	//also, look to see if there are any captain slots not filled
@@ -536,13 +687,22 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 
 	auto find_team=[&](Position p)->optional<Team>{
 		auto [a,index,pts]=p;
-		auto n=*e;
+		auto n=combo;
 		if(a>n.size()){
 			return std::nullopt;
 		}
-		auto n1=n[a-1].picks;
+		auto n1=n[a-1];
 		if(index<n1.size()){
-			return n1[index];
+			//return n1[index];
+			auto here=n1[index];
+			//print_lines(combo);
+			//cout<<"\n";
+
+			assert(here.size()<2);
+			if(here.empty()){
+				return std::nullopt;
+			}
+			return car(here);
 		}
 		return std::nullopt;
 	};
@@ -663,7 +823,6 @@ Pick_limits pick_limits(TBA_fetcher &f,tba::Event_key const& event,std::map<tba:
 			r.points[k]=v;
 			r.picked[k]=(v!=0);
 		}
-		//do I sperately need to set not picked on the rest?
 		r.unclaimed=0;
 		return r;
 	}
