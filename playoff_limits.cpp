@@ -5,6 +5,7 @@
 #include "tba.h"
 #include "vector_void.h"
 #include "pick_points.h"
+#include "declines.h"
 
 template<typename T>
 bool disjoint(std::vector<std::set<T>> const& a){
@@ -89,9 +90,11 @@ bool playoffs_done(TBA_fetcher& f,tba::Event_key const& event){
 }
 
 std::optional<map<Team,Point>> listed_playoff_points(TBA_fetcher &f,tba::Event_key const& event){
-	(void)f;
-	(void)event;
-	auto d=tba::district_rankings(f,district(f,event));
+	auto dk=district(f,event);
+	if(!dk){
+		return std::nullopt;
+	}
+	auto d=tba::district_rankings(f,*dk);
 	if(!d){
 		return std::nullopt;
 	}
@@ -106,6 +109,29 @@ std::optional<map<Team,Point>> listed_playoff_points(TBA_fetcher &f,tba::Event_k
 		}
 	}
 	return r;
+}
+
+auto event_type(TBA_fetcher &f,tba::Event_key const& event){
+	auto e=tba::event(f,event);
+	return e.event_type;
+}
+
+bool playoffs_expected(TBA_fetcher &f,tba::Event_key const& event){
+	auto e=event_type(f,event);
+	#define X(A,B) if(e==tba::Event_type::A) return B;
+	X(DISTRICT,1)
+	X(CMP_FINALS,1)
+	X(REGIONAL,1)
+	X(CMP_DIVISION,1)
+	X(OFFSEASON,1) //well, sometimes anyway.
+	X(PRESEASON,1)
+	X(FOC,1)
+	X(DISTRICT_CMP,1)
+	X(REMOTE,0)
+	X(DISTRICT_CMP_DIVISION,1)
+	#undef X
+	PRINT(e);
+	nyi
 }
 
 Playoff_limits playoff_limits(TBA_fetcher& f,tba::Event_key const& event,std::map<Team_key,Interval<bool>> const& a){
@@ -131,8 +157,32 @@ Playoff_limits playoff_limits(TBA_fetcher& f,tba::Event_key const& event,std::ma
 			}
 			r.unclaimed_points=0;
 
+			auto k1=keys(r.by_team);
+			auto k2=keys(a);
+
+			for(auto team:k1-k2){
+				//cout<<team<<" "<<r.by_team[team]<<"\n";
+				assert(r.by_team[team]==0);
+			}
+			/*if(keys(r.by_team)!=keys(a)){
+
+				diff(keys(r.by_team),keys(a));
+				nyi
+			}*/
+
+			//cout<<"From listed points\n";
 			return r;
 		}
+		//you will reach here for finished non-district events.
+	}
+
+	if(!playoffs_expected(f,event)){
+		Playoff_limits r;
+		for(auto team:keys(a)){
+			r.by_team[team]=0;
+		}
+		r.unclaimed_points=0;
+		return r;
 	}
 
 	auto s=sum(values(a));
@@ -166,7 +216,8 @@ Playoff_limits playoff_limits(TBA_fetcher& f,tba::Event_key const& event,std::ma
 		}
 	}
 	//r.unclaimed_points=3*(30+20+10*2);
-	r.unclaimed_points=sum(take(a.size(),finish_points));
+	auto pickable_teams=sum(MAP(max,values(a)));
+	r.unclaimed_points=sum(take(pickable_teams,finish_points));
 	return r;
 }
 

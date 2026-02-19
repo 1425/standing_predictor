@@ -298,14 +298,14 @@ std::set<tba::Team_key> teams(std::map<tba::Team_key,T> a){
 }
 
 Rank_status event_limits(TBA_fetcher &f,tba::Event_key const& event){
-	PRINT(event);
+	//PRINT(event);
 	auto ranks=rank_limits(f,event);
 	ranks.check();
 	auto t1=teams(ranks.ranks);
 	auto t2=teams(ranks.points);
 	assert(t1==t2);
 	create_prior(ranks.points,ranks.unclaimed_points);
-	PRINT(entropy(ranks))
+	//PRINT(entropy(ranks))
 
 
 	auto picks=pick_limits(f,event,ranks.ranks);
@@ -317,17 +317,16 @@ Rank_status event_limits(TBA_fetcher &f,tba::Event_key const& event){
 	//p needs to bring both point totals for each of the teams
 	//and also for each team whether they are on an alliance or not or don't know. interval<bool>?
 	//and also how many selection points may be left
-	PRINT(entropy(picks));
+	//PRINT(entropy(picks));
 
 	//playoff_limits(f,in_playoffs);
 	//just needs be team -> interval<Point>
 	auto playoffs=playoff_limits(f,event,picks.picked);
-	assert(playoffs.by_team.size()==ranks.ranks.size());
 	auto t5=teams(playoffs.by_team);
-	assert(t5==t1);
+	assert(subset(t1,t5));
 	//print_r(playoffs);
 	create_prior(playoffs.by_team,playoffs.unclaimed_points);
-	PRINT(entropy(playoffs));
+	//PRINT(entropy(playoffs));
 
 	auto d=award_limits(f,event,t1);
 	auto t6=teams(d.by_team);
@@ -335,7 +334,7 @@ Rank_status event_limits(TBA_fetcher &f,tba::Event_key const& event){
 	//because you can just show up at the end and win rookie all-star at a district championship
 	//and not have played any matches, etc.
 	//and it probably doesn't make sense to force the earlier steps to include those teams
-	assert(subset(t1,t6));
+	assert(subset(t5,t6));
 
 	{
 		auto [by_team,unclaimed]=points_only(d);
@@ -405,16 +404,15 @@ Rank_status district_limits(TBA_fetcher &f,tba::District_key const& district){
 int event_limits_demo(TBA_fetcher &f){
 	//return lock2_demo(f);
 
+	for(auto const& event:events(f)){
+		auto a=event_limits(f,event.key);
+		(void)a;
+	}
 	for(auto district:take(2000,districts(f))){
 		PRINT(district);
 		auto a=district_limits(f,district);
 		//print_r(a);
 		PRINT(entropy(a));
-	}
-	return 0;
-	for(auto const& event:events(f)){
-		auto a=event_limits(f,event.key);
-		(void)a;
 	}
 	return 0;
 }

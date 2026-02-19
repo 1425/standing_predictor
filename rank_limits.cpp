@@ -665,6 +665,13 @@ bool nonempty_alliances(TBA_fetcher &f,tba::Event_key const& event){
 	return !t.empty();
 }
 
+int rank_pts2(int event_size,int rank){
+	if(event_size>=80 || event_size<10){
+		return 0;
+	}
+	return rank_pts(event_size,rank);
+}
+
 Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& event){
 	
 	/*auto g=get(f,event);
@@ -695,7 +702,7 @@ Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& eve
 				//PRINT(team);
 				//PRINT(rank);
 				//PRINT(r.ranks.size());
-				r.points[team]=rank_pts(r.ranks.size(),rank);
+				r.points[team]=rank_pts2(r.ranks.size(),rank);
 			}
 			r.unclaimed_points=0;
 

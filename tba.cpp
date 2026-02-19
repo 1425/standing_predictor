@@ -266,13 +266,20 @@ bool complete(tba::Match const& a){
 	}
 	auto s0=a.alliances.red.score.valid();
 	auto s1=a.alliances.blue.score.valid();
-	assert(s0==s1);
-	if(s0){
+
+	//assert(s0==s1);//not true for 2014txri_sf1m3
+	if(s0 || s1){
 		return 1;
 	}
-	//if you uncomment the next line you get linker problems (!)
-	//print_r(a);
-	nyi
+
+	if(a.videos.size()){
+		//lol! that's a funny way to know that a match is done.
+		//but this really happens.  For example, 2016onsc_qf1m1
+		return 1;
+	}
+
+	//could decide to look at the time for it and make them time out if it was too long ago.
+	return 0;
 }
 
 bool matches_complete(TBA_fetcher &f,tba::Event_key const& event){
@@ -376,12 +383,19 @@ bool awards_done(TBA_fetcher &f,tba::Event_key const& event){
 	return !f1.empty();
 }
 
-tba::District_key district(TBA_fetcher &f,tba::Event_key const& event){
+std::optional<tba::District_key> district(TBA_fetcher &f,tba::Event_key const& event){
 	auto found=filter(
 		[&](auto x){ return contains(events_keys(f,x),event); },
 		districts(f)
 	);
-	assert(found.size()==1);
-	return found[0];
+	if(found.size()==1){
+		return found[0];
+	}
+	if(found.empty()){
+		return std::nullopt;
+	}
+	PRINT(event);
+	PRINT(found);
+	assert(0);
 }
 

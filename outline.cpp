@@ -1130,9 +1130,9 @@ int main1(int argc,char **argv){
 int main(int argc,char **argv){
 	try{
 		return main1(argc,argv);
-	/*}catch(std::string const& s){
+	}catch(std::string const& s){
 		cerr<<"Caught:"<<s<<"\n";
-		return 1;*/
+		return 1;
 	/*}catch(std::invalid_argument const& e){
 		cerr<<"Caught:"<<e<<"\n";
 		return 1;*/

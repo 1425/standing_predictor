@@ -458,7 +458,10 @@ int ranks_from_demo(TBA_fetcher &f){
 
 std::optional<map<Team,Point>> listed_pick_points(TBA_fetcher &f,Event const& event){
 	auto d=district(f,event);
-	auto dr=tba::district_rankings(f,d);
+	if(!d){
+		return std::nullopt;
+	}
+	auto dr=tba::district_rankings(f,*d);
 	if(!dr){
 		return std::nullopt;
 	}
@@ -515,7 +518,10 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 			for(auto team:take(2,teams)){
 				r[team]=pts;
 			}
-			r[teams[2]]=9-i;
+			//assert(teams.size()>=3);
+			if(teams.size()>=3){
+				r[teams[2]]=9-i;
+			}
 		}
 		//could put the other teams in here as 0
 		return r;
@@ -625,7 +631,7 @@ auto teams(Rank_results<Team> const& a){
 Pick_limits pick_limits(TBA_fetcher &f,tba::Event_key const& event,std::map<tba::Team_key,Interval<Rank>> const& ranks){
 	auto p=pick_points(f,event,ranks);
 	if(std::holds_alternative<Picks_no_data>(p)){
-		cout<<"picks: no data\n";
+		//cout<<"picks: no data\n";
 		Pick_limits r;
 		//just going to leave everything blank.
 		//could try to fill this in by looking at what teams play in the finals
@@ -661,7 +667,7 @@ Pick_limits pick_limits(TBA_fetcher &f,tba::Event_key const& event,std::map<tba:
 		return r;
 	}
 	if(std::holds_alternative<Picks_in_progress>(p)){
-		cout<<"picks: in progress\n";
+		//cout<<"picks: in progress\n";
 		auto a=std::get<Picks_in_progress>(p);
 		Pick_limits r;
 		r.points=a.by_team;
