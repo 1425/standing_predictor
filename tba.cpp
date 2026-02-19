@@ -341,3 +341,22 @@ std::vector<tba::District_key> districts(TBA_fetcher &f){
 std::vector<tba::Event> events(TBA_fetcher &f,tba::District_key const& district){
 	return tba::district_events(f,district);
 }
+
+bool playoff(tba::Competition_level a){
+	return a!=tba::Competition_level::qm;
+}
+
+std::vector<tba::Match> playoff_matches(TBA_fetcher &f,tba::Event_key const& event){
+	return filter(
+		[](auto x){ return playoff(x.comp_level); },
+		tba::event_matches(f,event)
+	);
+}
+
+std::vector<tba::Match_Simple> playoff_matches_simple(TBA_fetcher &f,tba::Event_key const& event){
+	return filter(
+		[](auto x){ return playoff(x.comp_level); },
+		tba::event_matches_simple(f,event)
+	);
+}
+

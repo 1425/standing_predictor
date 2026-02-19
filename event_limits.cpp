@@ -267,6 +267,19 @@ auto entropy(Rank_results<tba::Team_key> const& a){
 	return entropy(a.points);//might actually want to look at ranks instead
 }
 
+template<typename T>
+auto entropy(std::vector<T> const& a){
+	return sum(MAP(entropy,a));
+}
+
+auto entropy(std::map<tba::Team_key,Interval<Point>> a){
+	return entropy(values(a));
+}
+
+auto entropy(Pick_limits const& a){
+	return entropy(a.points);
+}
+
 std::set<tba::Team_key> teams(Rank_range<tba::Team_key> a){
 	return keys(a);
 }
@@ -300,6 +313,7 @@ Rank_status event_limits(TBA_fetcher &f,tba::Event_key const& event){
 	//p needs to bring both point totals for each of the teams
 	//and also for each team whether they are on an alliance or not or don't know. interval<bool>?
 	//and also how many selection points may be left
+	PRINT(entropy(picks));
 
 	//playoff_limits(f,in_playoffs);
 	//just needs be team -> interval<Point>

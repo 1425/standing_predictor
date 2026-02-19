@@ -481,6 +481,15 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 		return m.size()==8 && all(m);
 	}();
 
+	//we might also know that they are complete if we see playoff matches
+	//this occurs when there's an event with fewer than eight alliances.  See 2022waspo.
+	{
+		auto p=filter([](auto x){ return ::complete(x); },playoff_matches(f,event));
+		if(p.size()){
+			complete=1;
+		}
+	}
+
 	if(complete){
 		Picks_complete r;
 		for(auto [i,a]:enumerate_from(1,*e)){
@@ -599,6 +608,7 @@ auto teams(Rank_results<Team> const& a){
 Pick_limits pick_limits(TBA_fetcher &f,tba::Event_key const& event,std::map<tba::Team_key,Interval<Rank>> const& ranks){
 	auto p=pick_points(f,event,ranks);
 	if(std::holds_alternative<Picks_no_data>(p)){
+		cout<<"picks: no data\n";
 		Pick_limits r;
 		//just going to leave everything blank.
 		//could try to fill this in by looking at what teams play in the finals
@@ -618,6 +628,7 @@ Pick_limits pick_limits(TBA_fetcher &f,tba::Event_key const& event,std::map<tba:
 	}
 	if(std::holds_alternative<Picks_complete>(p)){
 		auto a=std::get<Picks_complete>(p);
+		cout<<"picks complete\n";
 		//print_r(a);
 		Pick_limits r;
 		for(auto k:keys(ranks)){
@@ -633,6 +644,7 @@ Pick_limits pick_limits(TBA_fetcher &f,tba::Event_key const& event,std::map<tba:
 		return r;
 	}
 	if(std::holds_alternative<Picks_in_progress>(p)){
+		cout<<"picks: in progress\n";
 		auto a=std::get<Picks_in_progress>(p);
 		Pick_limits r;
 		r.points=a.by_team;

@@ -66,24 +66,6 @@ auto key(tba::Event const& a){
 	return a.key;
 }
 
-bool playoff(tba::Competition_level a){
-	return a!=tba::Competition_level::qm;
-}
-
-auto playoff_matches(TBA_fetcher &f,tba::Event_key const& event){
-	return filter(
-		[](auto x){ return playoff(x.comp_level); },
-		tba::event_matches(f,event)
-	);
-}
-
-auto playoff_matches_simple(TBA_fetcher &f,tba::Event_key const& event){
-	return filter(
-		[](auto x){ return playoff(x.comp_level); },
-		tba::event_matches_simple(f,event)
-	);
-}
-
 Playoff_limits playoff_limits(TBA_fetcher&,std::map<Team_key,Interval<bool>> const& a){
 	auto s=sum(values(a));
 	(void)s;//at some point might want to change how this sum works to seperate the halves and do two sums.

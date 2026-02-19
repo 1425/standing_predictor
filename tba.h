@@ -72,6 +72,7 @@ tba::Event_key rand(tba::Event_key const*);
 bool chairmans_expected(tba::Event_type);
 bool chairmans_expected(TBA_fetcher&,tba::Event_key const&);
 
+bool complete(tba::Match const&);
 bool matches_complete(TBA_fetcher &,tba::Event_key const&);
 
 bool won_chairmans(TBA_fetcher &,tba::Year,tba::Team_key const&);
@@ -86,5 +87,8 @@ std::vector<tba::Team> teams(TBA_fetcher&,tba::Year);
 std::vector<tba::Team_key> teams_keys(TBA_fetcher&,tba::Event_key const&);
 std::vector<tba::Team_key> teams_keys(TBA_fetcher&,tba::Event const&);
 std::vector<tba::District_key> districts(TBA_fetcher&);
+
+std::vector<tba::Match> playoff_matches(TBA_fetcher&,tba::Event_key const&);
+std::vector<tba::Match_Simple> playoff_matches_simple(TBA_fetcher&,tba::Event_key const&);
 
 #endif

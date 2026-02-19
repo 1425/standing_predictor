@@ -19,6 +19,7 @@
 #include "map_auto.h"
 #include "declines.h"
 #include "rp.h"
+#include "rank_pts.h"
 
 using namespace std;
 
@@ -656,6 +657,7 @@ std::ostream& operator<<(std::ostream& o,Team_namer const& a){
 }
 
 Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& event){
+	
 	/*auto g=get(f,event);
 	Rank_results r;
 	r.ranks=rank_limits_m(g);
@@ -667,8 +669,41 @@ Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& eve
 	r.unclaimed_points=total_points-min_pts_taken;
 	return r;*/
 
+	auto info=ranking_match_status(f,event);
+
+	if(info.schedule.empty()){
+		auto a=listed_ranks(f,event);
+		//the listed version is better if no matches are left because then you get all the tiebreakers
+		
+		if(a){
+			Rank_results<tba::Team_key> r;
+			for(auto [team,rank]:*a){
+				r.ranks[team]=rank;
+			}
+			for(auto [team,rank]:*a){
+				//PRINT(team);
+				//PRINT(rank);
+				//PRINT(r.ranks.size());
+				r.points[team]=rank_pts(r.ranks.size(),rank);
+			}
+			r.unclaimed_points=0;
+
+			//pick up random teams that aren't actually listed.
+			for(auto team:keys(info.standings)){
+				auto f=r.ranks.find(team);
+				if(f==r.ranks.end()){
+					r.ranks[team]=r.ranks.size()+1;
+					r.points[team]=0;
+				}
+			}
+
+			return r;
+		}
+	}
+
 	Team_namer namer;
-	auto g=namer.convert(ranking_match_status(f,event));
+	auto g=namer.convert(info);
+	print_r(g.standings);
 	Rank_results<Team_alias> r;
 	r.ranks=rank_limits_m(g);
 	auto event_size=g.standings.size();
@@ -677,7 +712,6 @@ Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& eve
 	size_t min_pts_taken=sum(MAP(min,values(r.points)));
 	assert(min_pts_taken<=total_points);
 	r.unclaimed_points=total_points-min_pts_taken;
-	//PRINT(namer);
 	return namer.convert(r);
 }
 
