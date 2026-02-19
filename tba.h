@@ -93,5 +93,7 @@ std::vector<tba::Match> playoff_matches(TBA_fetcher&,tba::Event_key const&);
 std::vector<tba::Match_Simple> playoff_matches_simple(TBA_fetcher&,tba::Event_key const&);
 
 bool playoffs_started(TBA_fetcher&,tba::Event_key const&);
+bool awards_done(TBA_fetcher&,tba::Event_key const&);
+tba::District_key district(TBA_fetcher &,tba::Event_key const&);
 
 #endif

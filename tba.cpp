@@ -368,3 +368,20 @@ bool playoffs_started(TBA_fetcher &f,tba::Event_key const& event){
 	auto p=filter([](auto x){ return complete(x); },playoff_matches(f,event));
 	return !p.empty();
 }
+
+bool awards_done(TBA_fetcher &f,tba::Event_key const& event){
+	auto aw=event_awards(f,event);
+	if(aw.empty()) return 0;
+	auto f1=filter([](auto a){ return a.award_type==tba::Award_type::CHAIRMANS; },aw);
+	return !f1.empty();
+}
+
+tba::District_key district(TBA_fetcher &f,tba::Event_key const& event){
+	auto found=filter(
+		[&](auto x){ return contains(events_keys(f,x),event); },
+		districts(f)
+	);
+	assert(found.size()==1);
+	return found[0];
+}
+

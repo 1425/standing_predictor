@@ -82,17 +82,10 @@ bool playoffs_done(TBA_fetcher& f,tba::Event_key const& event){
 			}
 		}
 	}
-	//playoff_matches(f,event);
+	if(awards_done(f,event)){
+		return 1;
+	}
 	return 0;
-}
-
-tba::District_key district(TBA_fetcher &f,tba::Event_key const& event){
-	auto found=filter(
-		[&](auto x){ return contains(events_keys(f,x),event); },
-		districts(f)
-	);
-	assert(found.size()==1);
-	return found[0];
 }
 
 std::optional<map<Team,Point>> listed_playoff_points(TBA_fetcher &f,tba::Event_key const& event){

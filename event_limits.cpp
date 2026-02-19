@@ -405,7 +405,7 @@ Rank_status district_limits(TBA_fetcher &f,tba::District_key const& district){
 int event_limits_demo(TBA_fetcher &f){
 	//return lock2_demo(f);
 
-	for(auto district:take(20,districts(f))){
+	for(auto district:take(2000,districts(f))){
 		PRINT(district);
 		auto a=district_limits(f,district);
 		//print_r(a);
