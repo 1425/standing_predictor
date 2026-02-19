@@ -133,6 +133,16 @@ class Int_limited{
 	}
 
 	template<long long MIN2,long long MAX2>
+	auto& operator-=(Int_limited<MIN2,MAX2> a){
+		long long v1=data;
+		long long v2=a.get();
+		auto result=v1-v2;
+		assert(result>=MIN && result<=MAX);
+		data=result;
+		return *this;
+	}
+
+	template<long long MIN2,long long MAX2>
 	auto operator+(Int_limited a)const{
 		Int_limited<MIN+MIN2,MAX+MAX2> r;
 		r=(long long)data+(long long)a.data;

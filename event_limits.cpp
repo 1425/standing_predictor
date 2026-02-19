@@ -4,6 +4,7 @@
 #include "playoff_limits.h"
 #include "skill_opr.h"
 #include "declines.h"
+#include "lock2.h"
 
 using namespace std;
 
@@ -262,6 +263,10 @@ double entropy(Rank_status const& a){
 	return sum(MAP(entropy,values(a.by_team)));
 }
 
+auto entropy(Rank_results<tba::Team_key> const& a){
+	return entropy(a.points);//might actually want to look at ranks instead
+}
+
 std::set<tba::Team_key> teams(Rank_range<tba::Team_key> a){
 	return keys(a);
 }
@@ -283,6 +288,8 @@ Rank_status event_limits(TBA_fetcher &f,tba::Event_key const& event){
 	auto t2=teams(ranks.points);
 	assert(t1==t2);
 	create_prior(ranks.points,ranks.unclaimed_points);
+	PRINT(entropy(ranks))
+
 
 	auto picks=pick_limits(f,event,ranks.ranks);
 	auto t3=teams(picks.points);
@@ -354,6 +361,11 @@ Rank_status district_limits(TBA_fetcher &f,tba::District_key const& district){
 	e2=sort_by(e2,[](auto x){ return x.start_date; });
 
 	auto m=mapf([&](auto const& x){ return event_limits(f,x); },e2);
+
+	for(auto [i,x]:enumerate(m)){
+		cout<<i<<"\t"<<entropy(x)<<"\n";
+	}
+
 	map<Team,int> plays;
 	Rank_status r;
 	for(auto here:m){
@@ -366,12 +378,14 @@ Rank_status district_limits(TBA_fetcher &f,tba::District_key const& district){
 		}
 		r.unclaimed+=here.unclaimed;
 	}
-	PRINT(count(values(plays)));
+	//PRINT(count(values(plays)));
 	return r;
 	//return sum(m);
 }
 
 int event_limits_demo(TBA_fetcher &f){
+	return lock2_demo(f);
+
 	for(auto district:take(20,districts(f))){
 		PRINT(district);
 		auto a=district_limits(f,district);
