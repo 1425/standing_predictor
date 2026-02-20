@@ -4,6 +4,7 @@
 #include "pick_points.h"
 #include "tba.h"
 #include "event_status.h"
+#include "print_r.h"
 
 using namespace std;
 using Team=tba::Team_key;
@@ -96,7 +97,144 @@ set<Team> winners_district_points(TBA_fetcher &f,Event const& a){
 	return finish_district_points(f,a,30);
 }
 
-std::set<Team> winners(TBA_fetcher &f,Event const& e){
+std::set<Team> winners(tba::Match const& a){
+	if(a.alliances.red.score>a.alliances.blue.score){
+		return to_set(a.alliances.red.team_keys);
+	}
+	if(a.alliances.red.score<a.alliances.blue.score){
+		return to_set(a.alliances.blue.team_keys);
+	}
+	//tie
+	return set<Team>{};
+}
+
+template<typename T>
+std::optional<T> mode(std::vector<T> a){
+	if(a.empty()){
+		return std::nullopt;
+	}
+
+	auto c=count(a);
+	auto max_count=max(values(c));
+	auto f=filter([&](auto x){ return c[x]==max_count; },to_set(a));
+
+	if(f.size()==1){
+		return car(f);
+	}
+	return std::nullopt;
+}
+
+template<typename T>
+auto mode(std::multiset<T> a){
+	return mode(to_vec(a));
+}
+
+template<typename T>
+auto nonempty(std::vector<std::set<T>> const& a){
+	return filter([](auto x){ return !x.empty(); },a);
+}
+
+template<typename T>
+auto group_sets(std::set<std::set<T>> a){
+	using Item=set<T>;
+	using Group=set<Item>;
+	std::vector<Group> output;
+
+	auto match=[=](Group g,Item i){
+		for(auto x:g){
+			if( !(x&i).empty() ){
+				return 1;
+			}
+		}
+		return 0;
+	};
+
+	for(Item item:a){
+		bool found=0;
+		for(Group &already:output){
+			if(match(already,item)){
+				already|=item;
+				found=1;
+				break;
+			}
+		}
+		if(!found){
+			output|=Group{item};
+		}
+	}
+	return output;
+}
+
+template<typename T>
+auto group_sets(std::vector<std::set<T>> a){
+	return group_sets(to_set(a));
+}
+
+template<typename T>
+std::set<T> flatten(std::set<std::set<T>> a){
+	std::set<T> r;
+	for(auto x:a){
+		r|=x;
+	}
+	return r;
+}
+
+std::set<Team> winners_matches(TBA_fetcher& f,Event const& e){
+	auto p=playoff_matches(f,e);
+
+	//If there are no playoff matches, then the event doesn't have winners.
+	if(p.empty()){
+		return set<Team>();
+	}
+
+	//If there are more matches to play, then there are no winners because it's still in progress;
+	//probably (there may be some 3rd matches in a best of 3 where the first team won the first two)
+	auto found=filter([&](auto x){ return !complete(x); },p);
+	if(!found.empty()){
+		return set<Team>();
+	}
+
+	//choose the set of teams that won the most finals matches
+	auto finals=filter([](auto x){ return x.comp_level==tba::Playoff_level::f; },p);
+	auto m=MAP(winners,finals);
+	m=nonempty(m);//ignore ties
+
+	auto g=group_sets(m);
+
+	if(g.size()>2){
+		return set<Team>();//see 2004on
+	}
+
+	auto fl=MAP(flatten,g);
+	/*if(fl.size()==1){
+		return fl[0];
+	}*/
+
+	multiset<set<Team>> by_alliance;
+	for(auto x:m){
+		for(auto group:fl){
+			if(subset(x,group)){
+				by_alliance|=group;
+			}
+		}
+	}
+	
+	auto m2=mode(by_alliance);
+	if(!m2){
+		return set<Team>();
+	}
+
+	auto r=*m2;
+	if(r.size()>5){
+		//See 2024vabrb
+		//this is obviously nonsense.
+		return set<Team>();
+	}
+
+	return r;
+}
+
+std::set<Team> winners_inner(TBA_fetcher &f,Event const& e){
 	auto a=winners_awards(f,e);
 	auto b=winners_alliance(f,e);
 	auto c=winners_district_points(f,e);
@@ -279,6 +417,41 @@ set<Team> finalists(TBA_fetcher& f,Event const& e){
 	assert(a==b);
 	assert(a==c);
 	return a;
+}
+
+set<Team> winners(TBA_fetcher &f,tba::Event_key const& event){
+	auto a=winners_inner(f,event);
+	auto b=winners_matches(f,event);
+	if(a.empty()){
+		return b;
+	}
+	if(b.empty()){
+		return a;
+	}
+	if(a==b){
+		return a;
+	}
+	if(subset(b,a)){
+		return a;
+	}
+
+	if(subset(a,b)){
+		return b;
+	}
+
+	auto x=a&b;
+	if(a.size()==3 && b.size()==3 && x.empty()){
+		//See 2004va
+		return b;
+	}
+
+	//see 2017scmb; subsitution in finals for 6366 but not otherwise noted.
+	auto both=a|b;
+	if(both.size()<=4){
+		return both;
+	}
+
+	return b;
 }
 
 int winners_demo(TBA_fetcher &f){

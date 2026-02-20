@@ -770,4 +770,9 @@ auto operator|(std::vector<T> a,std::vector<T> b){
 	return a;
 }
 
+auto car(auto const& x){
+	assert(!x.empty());
+	return *std::begin(x);
+}
+
 #endif

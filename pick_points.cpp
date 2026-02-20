@@ -22,12 +22,6 @@
  * (and could assume no declines if not listed, or not)
  * */
 
-template<typename T>
-auto car(T const& t){
-	assert(!t.empty());
-	return *begin(t);
-}
-
 using Team=tba::Team_key;
 using Event=tba::Event_key;
 using namespace std;
