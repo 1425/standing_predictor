@@ -345,8 +345,12 @@ std::vector<tba::Team_key> teams_keys(TBA_fetcher& f,tba::Event const& a){
 }
 
 std::vector<tba::District_key> districts(TBA_fetcher &f){
+	static std::vector<tba::District_key> cache;
+	if(!cache.empty()){
+		return cache;
+	}
 	auto found=flatten(mapf([&](auto year){ return tba::districts(f,year); },years()));
-	return mapf([](auto x){ return x.key; },found);
+	return cache=mapf([](auto x){ return x.key; },found);
 }
 
 std::vector<tba::Event> events(TBA_fetcher &f,tba::District_key const& district){
@@ -354,7 +358,12 @@ std::vector<tba::Event> events(TBA_fetcher &f,tba::District_key const& district)
 }
 
 std::vector<tba::Event_key> events_keys(TBA_fetcher &f,tba::District_key const& district){
-	return tba::district_events_keys(f,district);
+	static map<tba::District_key,std::vector<tba::Event_key>> cache;
+	auto it=cache.find(district);
+	if(it!=cache.end()){
+		return it->second;
+	}
+	return cache[district]=tba::district_events_keys(f,district);
 }
 
 bool playoff(tba::Competition_level a){
@@ -363,7 +372,7 @@ bool playoff(tba::Competition_level a){
 
 std::vector<tba::Match> playoff_matches(TBA_fetcher &f,tba::Event_key const& event){
 	return filter(
-		[](auto x){ return playoff(x.comp_level); },
+		[](auto const& x){ return playoff(x.comp_level); },
 		tba::event_matches(f,event)
 	);
 }
@@ -389,7 +398,7 @@ bool awards_done(TBA_fetcher &f,tba::Event_key const& event){
 
 std::optional<tba::District_key> district(TBA_fetcher &f,tba::Event_key const& event){
 	auto found=filter(
-		[&](auto x){ return contains(events_keys(f,x),event); },
+		[&](auto const& x){ return contains(events_keys(f,x),event); },
 		districts(f)
 	);
 	if(found.size()==1){

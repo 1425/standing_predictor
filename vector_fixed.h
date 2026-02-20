@@ -25,10 +25,14 @@ class vector_fixed{
 	vector_fixed()=default;
 
 	vector_fixed(vector_fixed const& a){
-		for(size_t i=0;i<a.size();i++){
-			new(&data()[i]) T(a[i]);
+		//adding these two extra lines rather than using a.size() directly
+		//to silence a warning on g++ 16 at high optimization levels
+		size_t n=a.size_;
+		assert(n<=N);
+		for(size_t i=0;i<n;i++){
+			new( &(data()[i]) ) T(a[i]);
 		}
-		size_=a.size();
+		size_=n;
 	}
 
 	vector_fixed& operator=(vector_fixed const& a){

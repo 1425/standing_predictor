@@ -79,13 +79,15 @@ set<Team> finish_district_points(TBA_fetcher &f,Event const& a,int target){
 		return set<Team>{};
 	}
 
+	const auto multiplier=event_points_multiplier(f,a);
+
 	set<Team> r;
-	for(auto team_info:*d2){
-		for(auto event:team_info.event_points){
+	for(auto const& team_info:*d2){
+		for(auto const& event:team_info.event_points){
 			if(event.event_key!=a){
 				continue;
 			}
-			if(event.elim_points==event_points_multiplier(f,a)*target){
+			if(event.elim_points==multiplier*target){
 				r|=team_info.team_key;
 			}
 		}
@@ -98,6 +100,17 @@ set<Team> winners_district_points(TBA_fetcher &f,Event const& a){
 }
 
 std::set<Team> winners(tba::Match const& a){
+	if(a.alliances.red.score>a.alliances.blue.score){
+		return to_set(a.alliances.red.team_keys);
+	}
+	if(a.alliances.red.score<a.alliances.blue.score){
+		return to_set(a.alliances.blue.team_keys);
+	}
+	//tie
+	return set<Team>{};
+}
+
+std::set<Team> winners(tba::Match_Simple const& a){
 	if(a.alliances.red.score>a.alliances.blue.score){
 		return to_set(a.alliances.red.team_keys);
 	}
@@ -180,7 +193,7 @@ std::set<T> flatten(std::set<std::set<T>> a){
 }
 
 std::set<Team> winners_matches(TBA_fetcher& f,Event const& e){
-	auto p=playoff_matches(f,e);
+	auto p=playoff_matches(f,e); //needs to not be the simple variant because complete depends on data not in that version.
 
 	//If there are no playoff matches, then the event doesn't have winners.
 	if(p.empty()){
