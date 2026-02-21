@@ -4,6 +4,7 @@
 #include "util.h"
 #include "set.h"
 #include "array.h"
+#include "vector.h"
 
 class vector_void{
 	size_t size_;

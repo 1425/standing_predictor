@@ -74,6 +74,18 @@ auto enumerate(std::array<T,N> const& a){
 }
 
 template<typename T,size_t N>
+std::array<std::pair<size_t,T>,N> enumerate_from(size_t start,std::array<T,N> const& a){
+	using P=std::pair<size_t,T>;
+	std::array<P,N> r;
+	size_t i=0;
+	for(auto const& elem:a){
+		r[i]=P(start+i,elem);
+		i++;
+	}
+	return r;
+}
+
+template<typename T,size_t N>
 std::array<T,N> as_array(std::vector<T> const& a){
 	assert(a.size()==N);
 	return mapf([&](auto x){ return a[x]; },range_st<N>());

@@ -22,6 +22,7 @@ FRC_API_OBJS= \
 	../frc_api/curl.o
 
 OUTLINE_OBJS= \
+	vector.o \
 	winners.o\
 	probability.o\
 	lock2.o\
@@ -97,6 +98,7 @@ META_OBJS= \
 	rank_pts.o\
 	interval.o\
 	district_championship_assignment.o\
+	vector.o\
 
 meta: $(META_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -lgumbo -o $@
@@ -135,6 +137,7 @@ DECLINE_OBJS= \
 	rank_pts.o\
 	interval.o\
 	district_championship_assignment.o\
+	vector.o\
 
 declines: $(DECLINE_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@

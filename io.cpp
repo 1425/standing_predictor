@@ -1,6 +1,7 @@
 #include "io.h"
 #include "util.h"
 #include "../tba/data.h"
+#include "vector.h"
 
 std::vector<std::string> split(std::string const& s){
 	std::vector<std::string> r;

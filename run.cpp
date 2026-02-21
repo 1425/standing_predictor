@@ -5,6 +5,7 @@
 #include "print_r.h"
 #include "vector_void.h"
 #include "array.h"
+#include "vector.h"
 
 using namespace std;
 

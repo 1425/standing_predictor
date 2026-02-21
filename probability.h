@@ -1,6 +1,7 @@
 #ifndef PROBABILITY_H
 #define PROBABILITY_H
 
+#include<cmath>
 #include "flat_map2.h"
 #include "interval.h"
 #include "map_auto.h"

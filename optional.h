@@ -2,6 +2,7 @@
 #define OPTIONAL_H
 
 #include<optional>
+#include "vector.h"
 
 template<typename T>
 std::vector<T>& operator|=(std::vector<T> &a,std::optional<T> const& b){

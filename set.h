@@ -7,6 +7,7 @@
 #include<algorithm>
 #include<map>
 #include "util.h"
+#include "vector.h"
 
 //start stuff using std::set
 
