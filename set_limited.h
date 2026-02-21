@@ -1,6 +1,7 @@
 #ifndef SET_LIMITED_H
 #define SET_LIMITED_H
 
+#include<set>
 #include "vector_fixed.h"
 
 template<typename T,size_t N>

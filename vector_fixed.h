@@ -2,6 +2,7 @@
 #define VECTOR_FIXED_H
 
 #include "int_limited.h"
+#include "vector.h"
 
 template<typename T,size_t N>
 class vector_fixed{

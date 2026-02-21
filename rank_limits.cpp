@@ -20,6 +20,7 @@
 #include "declines.h"
 #include "rp.h"
 #include "rank_pts.h"
+#include "ranking_match_status.h"
 
 using namespace std;
 
@@ -48,154 +49,8 @@ std::set<Team_alias> teams(map_fixed<Team_alias,V> const& a){
 	return keys(a);
 }
 
-template<size_t N>
-set_limited<tba::Team_key,N> teams(set_limited<tba::Team_key,N> const& a){
-	return a;
-}
 
-template<typename Team>
-using Alliance=set_limited<Team,3>;
 
-template<typename Team>
-class Match{
-	using Data=std::array<Alliance<Team>,2>;
-	Data data;
-
-	public:
-
-	Match(Data a):data(std::move(a)){
-		assert( (data[0]&data[1]).empty());
-	}
-
-	auto const& get()const{
-		return data;
-	}
-
-	using const_iterator=Data::const_iterator;
-
-	const_iterator begin()const{
-		return data.begin();
-	}
-
-	const_iterator end()const{
-		return data.end();
-	}
-
-	Alliance<Team> const& operator[](size_t i){
-		assert(i<2);
-		return data[i];
-	}
-
-	auto operator<=>(Match const&)const=default;
-};
-
-template<typename Team>
-std::ostream& operator<<(std::ostream& o,Match<Team> const& a){
-	return o<<a.get();
-}
-
-template<typename Team>
-Match<Team> rand(Match<Team> const*);
-
-template<typename Team,typename T,size_t N>
-auto zip(Match<Team> const& a,std::array<T,N> const& b){
-	return zip(a.get(),b);
-}
-
-template<typename Team>
-auto enumerate_from(size_t i,Match<Team> const& a){
-	return enumerate_from(i,a.get());
-}
-
-template<typename Func,typename Team>
-auto mapf(Func f,Match<Team> const& a){
-	return mapf(f,a.get());
-}
-
-template<typename Team>
-//std::set<Team> teams(Match<Team> const& a){
-set_limited<Team,6> teams(Match<Team> const& a){
-	return to_set(teams(a.get()));
-}
-
-template<typename Team>
-using Schedule=std::vector<Match<Team>>;
-
-template<typename Team>
-using Standings=map_auto<Team,RP>;
-
-template<typename Team>
-auto teams(Standings<Team> const& a){
-	return keys(a);
-}
-
-//year is relavent because it changes the ranking rules.
-#define RANKING_MATCH_STATUS(X)\
-	X(Standings<Team>,standings)\
-	X(Schedule<Team>,schedule)\
-	X(tba::Year,year)
-
-#define REMOVE_FIRST(...) REMOVE_FIRST_SUB(__VA_ARGS__)
-#define REMOVE_FIRST_SUB(X, ...) __VA_ARGS__
-
-template<typename Team>
-struct Ranking_match_status{
-	RANKING_MATCH_STATUS(INST)
-
-	explicit Ranking_match_status(tba::Year a):year(a){}
-
-	Ranking_match_status(Ranking_match_status const&)=default;
-
-	Ranking_match_status(
-		#define X(A,B) ,A B##1
-		REMOVE_FIRST(RANKING_MATCH_STATUS(X))
-		#undef X
-	):
-		#define X(A,B) ,B(std::move(B##1))
-		REMOVE_FIRST(RANKING_MATCH_STATUS(X))
-		#undef X
-	{}
-
-	void fill_standings(TBA_fetcher &f,tba::Event_key event){
-		for(auto const& team:
-			teams(schedule)|teams_keys(f,event)|teams(event_alliances(f,event))
-		){
-			auto f=standings.find(team);
-			if(f==standings.end()){
-				standings[team]=0;
-			}
-		}
-	}
-
-	auto operator<=>(Ranking_match_status const&)const=default;
-};
-
-template<typename Team>
-std::ostream& operator<<(std::ostream& o,Ranking_match_status<Team> const& a){
-	o<<"Ranking_match_status( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	RANKING_MATCH_STATUS(X)
-	#undef X
-	return o<<")";
-}
-
-template<typename Team>
-void print_r(int n,Ranking_match_status<Team> const& a){
-	indent(n);
-	cout<<"Ranking_match_status\n";
-	n++;
-	#define X(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
-	RANKING_MATCH_STATUS(X)
-	#undef X
-}
-
-template<typename Team>
-std::set<Team> teams(Ranking_match_status<Team> const& a){
-	auto t1=teams(a.standings);
-	auto t2=teams(a.schedule);
-	assert( (t2-t1).empty());
-	return t1;
-}
 
 std::set<tba::Team_key> teams(std::set<tba::Team_key> const& a){
 	return a;
@@ -256,62 +111,6 @@ optional<map<tba::Team_key,Rank>> listed_ranks(TBA_fetcher &f,tba::Event_key con
 		return std::nullopt;
 	}
 	return found;
-}
-
-Ranking_match_status<tba::Team_key> ranking_match_status(TBA_fetcher &f,tba::Event_key const& event){
-	//Note that at the moment this doesn't have incomplete events to look at
-	//so it's only half tested.
-
-	/* Also, it seems like there are quite a few matches where it doesn't understand 
-	 * what is going on already - so that would be good to work out.
-	 *
-	 * also, should look at events that have no matches listed that are in the future and fill in that 
-	 * everyone is effectively tied at 0.
-	 * */
-
-	Ranking_match_status<tba::Team_key> r(year(event));
-	for(auto match:tba::event_matches(f,event)){
-		if(match.comp_level!=tba::Competition_level::qm){
-			continue;
-		}
-
-		auto f=[](auto x){
-			auto found=to_set(x.team_keys)-to_set(x.surrogate_team_keys);
-			if(found.size()>3){
-				//this is invalid; skip the match
-				//might want to note that this happened somehow
-				//does actually occur in the data.  Specifically at
-				//2024gaalb
-			}
-			//return Alliance(take(3,found));
-			return Alliance(take<3>(found));
-		};
-		//match.alliances.red.team_keys/surrogate_team_keys
-		auto m1=f(match.alliances.red);
-		auto m2=f(match.alliances.blue);
-		if( (m1&m2).size() ){
-			//invalid match; skipping
-			//might want to note this to caller or something.
-			continue;
-		}
-		Match<tba::Team_key> match1({m1,m2});
-		//r.schedule|=match1;
-
-		auto rp_totals_m=rp(match);
-		if(!rp_totals_m){
-			//cout<<"RP? "<<match.key<<"\n";
-			r.schedule|=match1;
-		}else{
-			auto rp_totals=*rp_totals_m;
-			for(auto [teams,pts]:zip(match1,rp_totals)){
-				for(auto team:teams){
-					r.standings[team]+=pts;
-				}
-			}
-		}
-	}
-	r.fill_standings(f,event);
-	return r;
 }
 
 using Match_result=std::array<RP,2>;
@@ -497,21 +296,6 @@ map_auto<Team,Interval<Rank>> rank_limits_basic(Ranking_match_status<Team> const
 	}();
 
 	return rank_ranges;
-
-	//cout<<"Rank ranges:\n";
-	//print_r(rank_ranges);
-
-	/*const auto point_ranges=map_values(
-		[=](auto x){
-			return apply_monotonic(
-				[=](auto y){ return Point(rank_pts(event_size,y)); },
-				x
-			);
-		},
-		rank_ranges
-	);
-
-	return point_ranges;*/
 }
 
 template<typename Team>
