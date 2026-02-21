@@ -185,4 +185,9 @@ auto get_key(std::map<K,V> const& a,K const& k){
 	return f->second;
 }
 
+template<typename Func,typename K,typename V>
+auto group(Func f,std::map<K,V> const& a){
+	return group(f,to_vec(a));
+}
+
 #endif

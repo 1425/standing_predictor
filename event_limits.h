@@ -8,4 +8,6 @@ Rank_status district_limits(TBA_fetcher&,tba::District_key const&);
 
 int event_limits_demo(TBA_fetcher&);
 
+std::pair<std::map<tba::Team_key,Interval<Point>>,Point> points_only(Rank_status const&);
+
 #endif

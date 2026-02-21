@@ -730,6 +730,11 @@ std::pair<A,B>& operator+=(std::pair<A,B>& a,std::pair<C,D> const& b){
 }
 
 template<typename A,typename B>
+bool both_greater_eq(std::pair<A,B> const& a,std::pair<A,B> const& b){
+	return a.first>=b.first && a.second>=b.second;
+}
+
+template<typename A,typename B>
 bool both_less(std::pair<A,B> const& a,std::pair<A,B> const& b){
 	return a.first<b.first && a.second<b.second;
 }
@@ -773,6 +778,58 @@ auto operator|(std::vector<T> a,std::vector<T> b){
 auto car(auto const& x){
 	assert(!x.empty());
 	return *std::begin(x);
+}
+
+template<typename A,typename B,typename C,typename D>
+auto operator-(std::pair<A,B> const& a,std::pair<C,D> const& b){
+	return std::make_pair(
+		a.first-b.first,
+		a.second-b.second
+	);
+}
+
+template<typename A,typename B,typename C,typename D>
+auto& operator-=(std::pair<A,B>& a,std::pair<C,D> const& b){
+	a.first-=b.first;
+	a.second-=b.second;
+	return a;
+}
+
+int max(short,int);
+int min(int,short);
+
+template<typename A,typename B,typename C,typename D>
+auto elementwise_max(std::pair<A,B> const& a,std::pair<C,D> const& b){
+	return std::make_pair(
+		max(a.first,b.first),
+		max(a.second,b.second)
+	);
+}
+
+template<typename A,typename B,typename C,typename D>
+auto elementwise_min(std::pair<A,B> const& a,std::pair<C,D> const& b){
+	return std::make_pair(
+		min(a.first,b.first),
+		min(a.second,b.second)
+	);
+}
+
+template<typename A,typename B>
+std::pair<A,B> elementwise_max(std::vector<std::pair<A,B>> const& a){
+	return std::make_pair(
+		max(firsts(a)),
+		max(seconds(a))
+	);
+}
+
+short coerce(int a,short const*);
+
+template<typename A,typename B,typename C,typename D>
+std::pair<C,D> coerce(std::pair<A,B> a,std::pair<C,D> const*){
+	return std::make_pair(
+		coerce(a.first,(C*)0),
+		coerce(a.second,(D*)0)
+	);
 }
 
 #endif

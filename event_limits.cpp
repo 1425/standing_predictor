@@ -242,7 +242,7 @@ auto create_prior(std::map<Team,Interval<Point>> by_team,Point unassigned){
 	return make_dist(found);
 }
 
-pair<map<Team,Interval<Point>>,Point> points_only(Rank_status a){
+pair<map<Team,Interval<Point>>,Point> points_only(Rank_status const& a){
 	//map<Team,Interval<Point>> m;
 	//nyi
 	auto m=map_values(
@@ -394,7 +394,7 @@ Rank_status district_limits(TBA_fetcher &f,tba::District_key const& district){
 }
 
 int event_limits_demo(TBA_fetcher &f){
-	//return lock2_demo(f);
+	return lock2_demo(f);
 	return winners_demo(f);
 
 	if(0){

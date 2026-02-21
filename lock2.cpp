@@ -4,27 +4,408 @@
 using namespace std;
 using Team=tba::Team_key;
 
-template<typename Func,typename K,typename V>
-auto group(Func f,std::map<K,V> const& a){
-	return group(f,to_vec(a));
+enum class Floor_result{TOO_HIGH,TOO_LOW,PLAUSIBLE};
+
+std::ostream& operator<<(std::ostream& o,Floor_result a){
+	#define X(A) if(a==Floor_result::A) return o<<""#A;
+	X(TOO_HIGH) X(TOO_LOW) X(PLAUSIBLE)
+	#undef X
+	assert(0);
 }
 
-template<typename A,typename B,typename C,typename D>
-auto operator-(std::pair<A,B> const& a,std::pair<C,D> const& b){
-	return std::make_pair(
-		a.first-b.first,
-		a.second-b.second
+Floor_result find_floor(std::multiset<Interval<Rank_value>> teams,int slots,Rank_value unclaimed,Rank_value threshold){
+	assert(slots>=0);
+	assert(both_greater_eq(unclaimed,Rank_value()));
+	assert(both_greater_eq(threshold,Rank_value()));
+
+	if(unsigned(slots)>teams.size()){
+		return Floor_result::TOO_HIGH;
+	}
+
+	auto compare_existing=[&]()->Floor_result{
+		auto final_pts=MAP(min,teams);
+		std::multiset<int> compare;
+		for(auto team:final_pts){
+			if(team>threshold){
+				compare|=1;
+			}else if(team==threshold){
+				compare|=0;
+			}else{
+				compare|=-1;
+			}
+		}
+		if(compare.count(1)>unsigned(slots)){
+			return Floor_result::TOO_LOW;
+		}
+		slots-=compare.count(1);
+
+		return (compare.count(0)>=unsigned(slots))?Floor_result::PLAUSIBLE:Floor_result::TOO_HIGH;
+	};
+
+	if(unclaimed==Rank_value()){
+		return compare_existing();
+	}
+
+	if(slots==0 && teams.size()){
+		return Floor_result::TOO_LOW;
+	}
+
+	for(auto team:teams){
+		switch(compare(team,Interval<Rank_value>{threshold})){
+			case Interval_compare::EQUAL:
+				return find_floor(teams-team,slots,unclaimed,threshold);
+			case Interval_compare::GREATER:{
+				//assume that the max has the max for both of the elements.
+				return find_floor(
+					teams-team,
+					slots-1,
+					coerce(
+						elementwise_max(Rank_value(),unclaimed-team.width()),
+						(Rank_value*)0
+					),
+					threshold
+				);
+			}
+			case Interval_compare::LESS:
+				return find_floor(
+					teams-team,
+					slots,
+					coerce(
+						elementwise_max(Rank_value(),unclaimed-team.width()),
+						(Rank_value*)0
+					),
+					threshold
+				);
+			case Interval_compare::INDETERMINATE:
+				if(team.min<threshold){
+					//PRINT(team.min);
+					//PRINT(threshold);
+					auto diff=threshold-team.min;
+					//PRINT(diff);
+					if(diff.second<0){
+						diff.second=0;
+					}
+					//PRINT(diff);
+					//PRINT(unclaimed);
+					auto to_move=elementwise_min(diff,unclaimed);
+					//PRINT(to_move);
+					//we get to 0 when there are no more points left, but there are awards.
+					//but the awards aren't required
+					//once we get out of the loop, these teams will end up first in line for 
+					//being assigned to award points.
+					if(to_move!=Rank_value()){
+						assert(to_move>Rank_value());
+						auto t2=teams-team;
+						t2|=Interval<Rank_value>{team.min+to_move,team.max};
+						return find_floor(
+							t2,
+							slots,
+							coerce(
+								unclaimed-to_move,
+								(Rank_value*)0
+							),
+							threshold
+						);
+					}
+				}
+				break;
+			default:
+				assert(0);
+		}
+	}
+
+	if(unclaimed==Rank_value()){
+		return compare_existing();
+	}
+	if(teams.empty()){
+		return Floor_result::PLAUSIBLE;
+	}
+
+	auto max_width=elementwise_max(mapf([](auto x){ return x.width(); },teams));
+
+	auto max_floor=max(mapf([](auto x){ return x.min; },teams));
+	auto with_max_floor=filter([=](auto x){ return x.min==max_floor; },teams);
+
+	auto max_width_here=max(mapf([](auto x){ return x.width(); },with_max_floor));
+	auto with_m2=filter([=](auto x){ return max_width_here==x.width(); },with_max_floor);
+	assert(with_m2.size());
+
+	auto chosen=car(with_m2);
+	
+	return find_floor(
+		teams-chosen,
+		slots-1,
+		coerce(
+			elementwise_max(Rank_value(),unclaimed-max_width),
+			(Rank_value*)0
+		),
+		threshold
 	);
 }
 
-template<typename A,typename B,typename C,typename D>
-auto& operator-=(std::pair<A,B>& a,std::pair<C,D> const& b){
-	a.first-=b.first;
-	a.second-=b.second;
-	return a;
+//returns 0=impossible, 1=possible; could make it also say whether it thinks it is too high or too low.
+Floor_result find_floor(std::multiset<Interval<Point>> teams,int slots,Point unclaimed,Point threshold){
+	//cout<<"find floor("<<teams.size()<<" "<<slots<<" "<<unclaimed<<" "<<threshold<<")\n";
+
+	assert(slots>=0);
+	assert(unclaimed>=0);
+	assert(threshold>=0);
+
+	if(unsigned(slots)>teams.size()){
+		return Floor_result::TOO_HIGH;
+	}
+
+	auto compare_existing=[&]()->Floor_result{
+		auto final_pts=MAP(min,teams);
+		std::multiset<int> compare;
+		for(auto team:final_pts){
+			if(team>threshold){
+				compare|=1;
+			}else if(team==threshold){
+				compare|=0;
+			}else{
+				compare|=-1;
+			}
+		}
+		//PRINT(compare);
+		if(compare.count(1)>unsigned(slots)){
+			//too many teams have to be in
+			return Floor_result::TOO_LOW;
+		}
+		slots-=compare.count(1);
+
+		//then there are enough teams to fill this; this is plausible
+		//if there are not enough teams, then too many teams have to be out.
+		return (compare.count(0)>=unsigned(slots))?Floor_result::PLAUSIBLE:Floor_result::TOO_HIGH;
+	};
+
+	if(unclaimed==0){
+		return compare_existing();
+	}
+
+	if(slots==0 && teams.size()){
+		return Floor_result::TOO_LOW;
+	}
+
+	//for the teams that are already above theshold, load them up with points, then recurse
+	for(auto team:teams){
+		switch(compare(team,Interval<Point>{threshold})){
+			case Interval_compare::EQUAL:
+				//cout<<"eq\n";
+				return find_floor(teams-team,slots,unclaimed,threshold);
+			case Interval_compare::GREATER:
+				//cout<<"greater\n";
+				return find_floor(teams-team,slots-1,max(0,unclaimed-team.width()),threshold);
+			case Interval_compare::LESS:
+				//cout<<"less\n";
+				return find_floor(teams-team,slots,max(0,threshold-team.width()),threshold);
+			case Interval_compare::INDETERMINATE:
+				if(team.min<threshold){
+					Point diff=threshold-team.min;
+					Point to_move=min(diff,unclaimed);
+					assert(to_move>0);
+					auto t2=teams-team;
+					t2|=Interval<Point>{Point(team.min+to_move),team.max};
+					return find_floor(t2,slots,unclaimed-to_move,threshold);
+				}
+				break;
+			default:
+				assert(0);
+		}
+	}
+
+	if(unclaimed==0){
+		return compare_existing();
+	}
+	if(teams.empty()){
+		//there are no teams left whose outcomes might force a move, so this threhold is ok.
+		return Floor_result::PLAUSIBLE;
+	}
+
+	auto max_width=max(mapf([](auto x){ return x.width(); },teams));
+	auto max_floor=max(mapf([](auto x){ return x.min; },teams));
+
+	auto with_max_floor=filter([=](auto x){ return x.min==max_floor; },teams);
+	assert(with_max_floor.size());
+
+	auto max_width_here=max(mapf([=](auto x){ return x.width(); },with_max_floor));
+	auto with_m2=filter([=](auto x){ return max_width_here==x.width(); },with_max_floor);
+	assert(with_m2.size());
+
+	auto chosen=car(with_m2);
+
+	if(max_width!=max_width_here){
+		//Note: If we never hit this state, then the result "plausible" should actually be "known good"
+		//cout<<"approx\n";
+	}
+	return find_floor(teams-chosen,slots-1,max(0,unclaimed-max_width),threshold);
+
+	//for the teams whose max is below the threshold, load them up with points, then recurse
+	//for the teams whose min is lower than the threshold, assign them points to get to the threshold, then recurse
+	//if at any point run out of points, doing those, then compare the distribution there to the number of slots
+
+	//if don't run out of points, start assigning them to teams with the max pts already
+	//but assume that the point capacity for all the teams is equal, and the highest that is left
+	//keep doing this until only 1 slot left
+	
+	//if ran out of points, then compare the distribution to slots/threshold
+	//if did not run out of points, then the threshold is too low.
 }
 
+template<typename T>
+Interval<T> interval(std::vector<T> a){
+	//maybe this should be called limits.
+	assert(!a.empty());
+	return Interval<T>{min(a),max(a)};
+}
 
+vector<int> thresholds(int);
+
+template<typename A,typename B>
+vector<int> thresholds(std::pair<A,B>){
+	return range(300);
+}
+
+auto thresholds(Rank_status){
+	vector<Rank_value> r;
+	for(auto awards:range(20)){
+		for(auto pts:range(300)){
+			r|=Rank_value(awards,pts);
+		}
+	}
+	return r;
+}
+
+/*template<typename T>
+auto consolidate(T a){
+	return a;
+}*/
+
+template<typename T>
+auto consolidate_inner(std::vector<T> a){
+	a=sorted(a);
+	std::vector<std::vector<T>> r;
+	std::vector<T> here;
+	for(auto elem:a){
+		if(here.empty()){
+			here|=elem;
+		}else{
+			if(last(here)+1==elem){
+				here|=elem;
+			}else{
+				r|=here;
+				here.clear();
+				here|=elem;
+			}
+		}
+	}
+	if(here.size()){
+		r|=here;
+	}
+	return MAP(interval,r);
+}
+
+template<typename T>
+auto consolidate(std::vector<T> a){
+	return ::as_string(consolidate_inner(a));
+}
+
+template<typename A,typename B>
+auto consolidate(std::vector<std::pair<A,B>> a){
+	a=sorted(a);
+	auto g=group([](auto x){ return x.first; },a);
+	auto g2=map_values([](auto x){ return consolidate(seconds(x)); },g);
+	return g2;
+}
+
+//Point find_floor(std::pair<std::map<tba::Team_key,Interval<Point>>,Point> status,int slots){
+auto find_floor_loop(auto status,int slots){
+	//might need to iteratively look for the threshold
+	//like start at 0 and go up until it doesn't work anymore
+
+	//how to iteratively make this work:
+	//1) set all the max values to the same number which should be looser so that don't have a dilemma about 
+	//which team to choose
+	//partition the space by teams always above/below the set threshold first
+	//and then some the subproblem
+
+	auto [teams,unclaimed]=status;
+	/*auto max_width=max(mapf([](auto x){ return x.width(); },values(team)));
+	auto wide_teams=filter([](auto x){ return x.second.width()==max_width; },teams);*/
+
+	//bool find_floor(std::multiset<Interval<Point>> teams,int slots,Point unclaimed,Point threshold){
+
+	using D=ELEM(thresholds(status));
+
+	map<Floor_result,vector<D>> found;
+	for(auto threshold:thresholds(status)){
+		auto v=find_floor(to_multiset(values(teams)),slots,unclaimed,threshold);
+		//auto v=find_floor(to_multiset(values(teams)),0,unclaimed,threshold);
+		//cout<<threshold<<": "<<v<<"\n";
+		found[v]|=threshold;
+	}
+
+	for(auto [k,v]:found){
+		cout<<k<<" "<<consolidate(v)<<"\n";
+	}
+
+	assert(found[Floor_result::TOO_LOW].size()>0);
+	assert(found[Floor_result::TOO_HIGH].size()>0);
+
+	auto fl=interval(found[Floor_result::TOO_LOW]);
+	auto fe=interval(found[Floor_result::PLAUSIBLE]);
+	auto fg=interval(found[Floor_result::TOO_HIGH]);
+
+	assert(compare(fl,fe)==Interval_compare::LESS);
+	assert(compare(fe,fg)==Interval_compare::LESS);
+
+	auto f=found[Floor_result::PLAUSIBLE];
+	assert(f.size());
+	return min(f);
+}
+
+auto find_floor(Rank_status const& a,int slots){
+	//go through and see whether or not there are so many unclaimed points that you have to start giving them to teams at the bottom
+	//this might be true at the begining of the season because essentailly all the teams will be at 0 points to start with.
+	//or towards the end when there are fewer teams whose totals can be altered.
+	//a first pass in this direction is just to give as many points as possible to teams that have high current
+	//standings
+	//but if the top of their ranges is not the max then they might not be the right choice
+	//could go for the teams that can take the most points first
+	//and if went that way then can see if get to the points threshold or not
+	//
+	//can try to do the reverse of the locks:
+	//1) Assume that the team of interest will get the maximum number of points
+	//2) See if it's possible to bump them to where that total 
+
+	//in order to be able to tighten the lower bound, you need to be able to prove that there is not an ordering
+	//which has more points
+	/*
+	To that end:
+	1) assign max points to teams that are locked in
+	2) assign pts to the threshold to all teams below it
+	3) if you've used all the points, then you the threshold does not get reached
+	4) if there are more points, assign as many as possible to teams in range, max current standing first
+	5) if used all the points, then done and nothing changes
+	6) start assigning points raising the floor until out of points or teams that can receive them.
+	this is likely to do nothing in most cases
+	but is more likely to do something as the number of slots is set lower
+	 */
+
+	cout<<"Initial floor:"<<min(mapf([](auto x){ return min(x); },values(a.by_team)))<<"\n";
+
+	auto f1=find_floor_loop(points_only(a),slots);
+
+	//Floor_result find_floor(std::multiset<Interval<Rank_value>> teams,int slots,Rank_value unclaimed,Rank_value threshold){
+	auto f2=find_floor_loop(a,slots);
+
+	PRINT(f1);
+	PRINT(f2);
+	/*if(f1!=f2){
+		nyi
+	}*/
+	return f2;
+}
 
 auto lock2(Rank_status const& a,int dcmp_size){
 	std::map<Team,string> r;
@@ -132,6 +513,12 @@ void lock2_demo(TBA_fetcher &f,tba::District_key district){
 		return x[0];
 	}();
 
+	{
+		find_floor(in,d);
+		//PRINT(f);
+		nyi
+	}
+
 	auto out=lock2(in,d);
 	//print_r(out);
 	PRINT(in.unclaimed);
@@ -140,7 +527,8 @@ void lock2_demo(TBA_fetcher &f,tba::District_key district){
 
 int lock2_demo(TBA_fetcher &f){
 	//lock2_demo(f,tba::District_key("2022chs"));
-	lock2_demo(f,tba::District_key("2022pnw"));
+	//lock2_demo(f,tba::District_key("2022pnw"));
+	lock2_demo(f,tba::District_key("2026pnw"));
 
 	return 0;
 }

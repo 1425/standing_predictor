@@ -211,4 +211,25 @@ auto sum(std::array<Int_limited<MIN,MAX>,N> const& a){
 
 Int_limited<0,3> sum(std::tuple<bool,bool,bool> const&);
 
+template<long long MIN1,long long MAX1,long long MIN2,long long MAX2>
+auto max(Int_limited<MIN1,MAX1> a,Int_limited<MIN2,MAX2> b){
+	static constexpr auto MIN3=std::max(MIN1,MIN2);
+	static constexpr auto MAX3=std::max(MAX1,MAX2);
+	auto v=std::max((long long)a,(long long)b);
+	return Int_limited<MIN3,MAX3>(v);
+}
+
+template<long long MIN1,long long MAX1,long long MIN2,long long MAX2>
+auto min(Int_limited<MIN1,MAX1> a,Int_limited<MIN2,MAX2> b){
+	static constexpr auto MIN3=std::min(MIN1,MIN2);
+	static constexpr auto MAX3=std::max(MAX1,MAX2);
+	auto v=std::min((long long)a,(long long)b);
+	return Int_limited<MIN3,MAX3>(v);
+}
+
+template<long long MIN1,long long MAX1,long long MIN2,long long MAX2>
+Int_limited<MIN2,MAX2> coerce(Int_limited<MIN1,MAX1> a,Int_limited<MIN2,MAX2> const*){
+	return a.get();
+}
+
 #endif

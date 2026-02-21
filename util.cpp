@@ -177,3 +177,18 @@ bool suffix(std::string const& whole,std::string const& b){
 	auto sub=whole.substr(whole.size()-b.size(),whole.size());
 	return sub==b;
 }
+
+int max(short a,int b){
+	return std::max(int(a),b);
+}
+
+int min(int a,short b){
+	return std::min(a,int(b));
+}
+
+short coerce(int a,short const*){
+	assert(a>=std::numeric_limits<short>::min());
+	assert(a<=std::numeric_limits<short>::max());
+	return a;
+}
+

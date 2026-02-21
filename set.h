@@ -360,4 +360,30 @@ std::vector<T> flatten(std::array<std::set<T>,N> const& a){
 	return r;
 }
 
+template<typename T>
+std::multiset<T>& operator-=(std::multiset<T>& a,T b){
+	auto f=a.find(b);
+	if(f!=a.end()){
+		a.erase(f);
+	}
+	return a;
+}
+
+template<typename T>
+std::multiset<T> operator-(std::multiset<T> a,T b){
+	a-=b;
+	return a;
+}
+
+template<typename Func,typename T>
+std::multiset<T> filter(Func f,std::multiset<T> a){
+	std::multiset<T> r;
+	for(auto x:a){
+		if(f(x)){
+			r|=x;
+		}
+	}
+	return r;
+}
+
 #endif
