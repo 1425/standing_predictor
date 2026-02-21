@@ -412,3 +412,6 @@ std::optional<tba::District_key> district(TBA_fetcher &f,tba::Event_key const& e
 	assert(0);
 }
 
+bool complete(TBA_fetcher &f,tba::Event_key const& a){
+	return awards_done(f,a) || event_timed_out(f,a);
+}

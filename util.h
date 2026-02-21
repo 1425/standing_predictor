@@ -233,6 +233,8 @@ bool any(auto const& a){
 	return 0;
 }
 
+#define COUNT_IF(A,B) count_if([&](auto x){ return (A)(x); },(B))
+
 template<typename Func,typename T>
 auto count_if(Func f,T const& t){
 	auto f1=filter(f,t);
@@ -240,6 +242,11 @@ auto count_if(Func f,T const& t){
 }
 
 //start std::pair section
+
+template<typename A,typename B>
+auto any(std::pair<A,B> const& a){
+	return a.first || a.second;
+}
 
 template<typename Func,typename A,typename B>
 auto mapf(Func f,std::pair<A,B> const& p){

@@ -249,7 +249,11 @@ auto create_prior(std::map<Team,Interval<Point>> by_team,Point unassigned){
 	return make_dist(found);
 }
 
-pair<map<Team,Interval<Point>>,Point> points_only(Rank_status const& a){
+tuple<
+	map<Team,Interval<Point>>,
+	Point,
+	Event_status
+> points_only(Rank_status const& a){
 	//map<Team,Interval<Point>> m;
 	//nyi
 	auto m=map_values(
@@ -258,7 +262,7 @@ pair<map<Team,Interval<Point>>,Point> points_only(Rank_status const& a){
 		},
 		a.by_team
 	);
-	return make_pair(m,a.unclaimed.second);
+	return make_tuple(m,a.unclaimed.second,a.status);
 }
 
 auto entropy(Rank_results<tba::Team_key> const& a){
@@ -326,18 +330,19 @@ Rank_status event_limits(TBA_fetcher &f,tba::Event_key const& event){
 	//print_r(playoffs);
 	create_prior(playoffs.by_team,playoffs.unclaimed_points);
 	PRINT(entropy(playoffs));
+	PRINT(playoffs.status);
 
 	auto d=award_limits(f,event,t1);
 	auto t6=teams(d.by_team);
 	PRINT(entropy(d));
-
+	PRINT(d.status);
 	//because you can just show up at the end and win rookie all-star at a district championship
 	//and not have played any matches, etc.
 	//and it probably doesn't make sense to force the earlier steps to include those teams
 	assert(subset(t5,t6));
 
 	{
-		auto [by_team,unclaimed]=points_only(d);
+		auto [by_team,unclaimed,status]=points_only(d);
 		create_prior(by_team,unclaimed);
 	}
 
@@ -356,7 +361,7 @@ Rank_status event_limits(TBA_fetcher &f,tba::Event_key const& event){
 	d.unclaimed.second+=playoffs.unclaimed_points;
 
 	{
-		auto [by_team,unclaimed]=points_only(d);
+		auto [by_team,unclaimed,status]=points_only(d);
 		auto c=create_prior(by_team,unclaimed);
 		auto f=force_probability(by_team,c);
 		//print_r(f);

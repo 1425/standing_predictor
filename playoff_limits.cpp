@@ -83,7 +83,7 @@ bool playoffs_done(TBA_fetcher& f,tba::Event_key const& event){
 			}
 		}
 	}
-	if(awards_done(f,event)){
+	if(complete(f,event)){
 		return 1;
 	}
 	return 0;
@@ -171,6 +171,7 @@ Playoff_limits playoff_limits(TBA_fetcher& f,tba::Event_key const& event,std::ma
 			}*/
 
 			//cout<<"From listed points\n";
+			r.status=Event_status::COMPLETE;
 			return r;
 		}
 		//you will reach here for finished non-district events.
@@ -182,6 +183,7 @@ Playoff_limits playoff_limits(TBA_fetcher& f,tba::Event_key const& event,std::ma
 			r.by_team[team]=0;
 		}
 		r.unclaimed_points=0;
+		r.status=Event_status::COMPLETE;//really, this should say something like not applicable.
 		return r;
 	}
 
@@ -218,6 +220,19 @@ Playoff_limits playoff_limits(TBA_fetcher& f,tba::Event_key const& event,std::ma
 	//r.unclaimed_points=3*(30+20+10*2);
 	auto pickable_teams=sum(MAP(max,values(a)));
 	r.unclaimed_points=sum(take(pickable_teams,finish_points));
+
+	//obviously, this ought to at least look whether matches have started being played so that can say if in progress.
+	//and also, could look it if the whole event is finished.
+	r.status=[&](){
+		if(complete(f,event)){
+			return Event_status::COMPLETE;
+		}
+		if(playoffs_started(f,event)){
+			return Event_status::IN_PROGRESS;
+		}
+		return Event_status::FUTURE;
+	}();
+
 	return r;
 }
 

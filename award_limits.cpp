@@ -6,6 +6,14 @@
 #include "tba.h"
 #include "cmp_reason.h"
 
+template<typename A,typename B,typename C,typename D>
+auto min(std::pair<A,B> a,std::pair<C,D> b){
+	if(a<b){
+		return a;
+	}
+	return coerce(b,&a);
+}
+
 double entropy(Interval<Rank_value> const& a){
 	auto f1=Interval{a.min.first,a.max.first};
 	auto f2=Interval{a.min.second,a.max.second};
@@ -201,15 +209,6 @@ Rank_value max_rank_value(int event_size){
 	return make_pair(event_size!=0,max_award_points(event_size));
 }
 
-template<typename A,typename B,typename C,typename D>
-auto min(std::pair<A,B> a,std::pair<C,D> b){
-	using R=std::pair<A,B>;
-	if(a<b){
-		return a;
-	}
-	return R(b);
-}
-
 Rank_status award_limits(TBA_fetcher &f,tba::Event_key event,map<Team,Rank_value> already_given){
 	//1) calculate the total points already awarded
 	//2) calculate total theoretical points at this event
@@ -252,6 +251,17 @@ Rank_status award_limits(TBA_fetcher &f,tba::Event_key event,map<Team,Rank_value
 		},
 		already_given
 	);
+
+	r.status=[&](){
+		if(complete(f,event)){
+			return Event_status::COMPLETE;
+		}
+		auto awarded_so_far=sum(MAP(min,values(r.by_team)));
+		if(any(awarded_so_far)){
+			return Event_status::IN_PROGRESS;
+		}
+		return Event_status::FUTURE;
+	}();
 	return r;
 }
 
@@ -271,6 +281,7 @@ Rank_status award_limits(TBA_fetcher &f,tba::Event_key const& event,std::set<Tea
 		for(auto [k,v]:b.by_team){
 			r.by_team[k]=v;
 		}
+		r.status=Event_status::COMPLETE;
 		return r;
 	}
 	return award_limits(f,event,b.by_team);

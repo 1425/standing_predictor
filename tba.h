@@ -97,4 +97,6 @@ bool playoffs_started(TBA_fetcher&,tba::Event_key const&);
 bool awards_done(TBA_fetcher&,tba::Event_key const&);
 std::optional<tba::District_key> district(TBA_fetcher &,tba::Event_key const&);
 
+bool complete(TBA_fetcher &,tba::Event_key const&);
+
 #endif

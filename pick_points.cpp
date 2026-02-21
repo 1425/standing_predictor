@@ -833,11 +833,31 @@ Pick_limits pick_limits(TBA_fetcher &f,tba::Event_key const& event,std::map<tba:
 	}
 	if(std::holds_alternative<Picks_in_progress>(p)){
 		//cout<<"picks: in progress\n";
+
 		auto a=std::get<Picks_in_progress>(p);
+
+		if(complete(f,event)){
+			Pick_limits r;
+			r.points=map_values([](auto x){ return Interval{min(x)}; },a.by_team);
+
+			for(auto [k,v]:r.points){
+				r.picked[k]=!!v.min;
+			}
+
+			r.unclaimed=0;
+			r.status=Event_status::COMPLETE;
+			return r;
+		}
+
 		Pick_limits r;
 		r.points=a.by_team;
 		r.unclaimed=a.unclaimed;
-		r.status=a.started?Event_status::IN_PROGRESS:Event_status::FUTURE;
+		r.status=[&](){
+			if(a.started){
+				return Event_status::IN_PROGRESS;
+			}
+			return Event_status::FUTURE;
+		}();
 
 		for(auto [k,v]:r.points){
 			if(min(v)>0){

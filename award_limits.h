@@ -22,6 +22,7 @@ using Team_rank_value=std::map<tba::Team_key,Interval<Rank_value>>;
 #define RANK_STATUS(X)\
 	X(Team_rank_value,by_team)\
 	X(Rank_value,unclaimed)\
+	X(Event_status,status)\
 
 struct Rank_status{
 	RANK_STATUS(INST)

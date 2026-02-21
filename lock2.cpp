@@ -274,8 +274,8 @@ Interval<T> interval(std::vector<T> a){
 
 vector<int> thresholds(int);
 
-template<typename A,typename B>
-vector<int> thresholds(std::pair<A,B>){
+template<typename A,typename B,typename C>
+vector<int> thresholds(std::tuple<A,B,C>){
 	return range(300);
 }
 
@@ -342,7 +342,9 @@ auto find_floor_loop(auto status,int slots){
 	//partition the space by teams always above/below the set threshold first
 	//and then some the subproblem
 
-	auto [teams,unclaimed]=status;
+	//auto [teams,unclaimed]=status;
+	auto [teams,unclaimed,status2]=status;
+
 	/*auto max_width=max(mapf([](auto x){ return x.width(); },values(team)));
 	auto wide_teams=filter([](auto x){ return x.second.width()==max_width; },teams);*/
 
