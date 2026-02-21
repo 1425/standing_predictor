@@ -353,7 +353,15 @@ class Team_namer{
 
 	int convert(int)const;
 
-	tba::Year convert(tba::Year a){
+	static bool convert(bool a){
+		return a;
+	}
+
+	static Event_status convert(Event_status a){
+		return a;
+	}
+
+	static tba::Year convert(tba::Year a){
 		return a;
 	}
 
@@ -499,6 +507,30 @@ Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& eve
 				}
 			}
 
+			r.status=[&](){
+				if(
+					nonempty_alliances(f,event) ||
+					playoffs_started(f,event) //could look at whether picks have started yet.
+				){
+					//For events which have gone on to the next step
+					return Event_status::COMPLETE;
+				}
+				if(
+					awards_done(f,event) ||
+					event_timed_out(f,event)
+				){
+					//For events that didn't actually have matches
+					return Event_status::COMPLETE;
+				}
+
+				if(info.started){
+					//If matches have been played by the next step hasn't started yet
+					return Event_status::COMPLETE;
+				}
+
+				//For events that don't have any matches scheduled yet
+				return Event_status::FUTURE;
+			}();
 			return r;
 		}
 
@@ -521,6 +553,9 @@ Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& eve
 			r.points[team]=0;
 		}
 		r.unclaimed_points=0;
+
+		r.status=Event_status::COMPLETE;
+
 		return r;
 	}
 
@@ -534,6 +569,7 @@ Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& eve
 	size_t min_pts_taken=sum(MAP(min,values(r.points)));
 	assert(min_pts_taken<=total_points);
 	r.unclaimed_points=total_points-min_pts_taken;
+	r.status=info.started?Event_status::IN_PROGRESS:Event_status::FUTURE;
 	return namer.convert(r);
 }
 
@@ -626,8 +662,8 @@ void debug(TBA_fetcher &f){
 }
 
 void rank_limits_demo(TBA_fetcher &f){
-	debug(f);
-	return;
+	//debug(f);
+	//return;
 
 
 	//return test_2015(f);
@@ -642,7 +678,11 @@ void rank_limits_demo(TBA_fetcher &f){
 	 	-what are the ranges of rank and of points for each team
 		-how many points are unclaimed
 	 * */
-	//rank_limits(f,tba::Event_key("2025orwil"));
+	{
+		auto r=rank_limits(f,tba::Event_key("2026orwil"));
+		print_r(r);
+		return;
+	}
 	//for(auto event:reversed(take(50,events(f)))){
 	//for(auto event:take(550,reversed(events(f)))){
 

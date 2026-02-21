@@ -1028,9 +1028,9 @@ int main1(int argc,char **argv){
 	}
 
 	if(args.rank_limits_demo){
-		//rank_limits_demo(tba_fetcher);
+		rank_limits_demo(tba_fetcher);
 		//pick_points_demo(tba_fetcher);
-		return event_limits_demo(tba_fetcher);
+		//return event_limits_demo(tba_fetcher);
 		return 0;
 	}
 

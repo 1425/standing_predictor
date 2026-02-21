@@ -93,7 +93,8 @@ auto teams(Standings<Team> const& a){
 #define RANKING_MATCH_STATUS(X)\
 	X(Standings<Team>,standings)\
 	X(Schedule<Team>,schedule)\
-	X(tba::Year,year)
+	X(tba::Year,year)\
+	X(bool,started)\
 
 #define REMOVE_FIRST(...) REMOVE_FIRST_SUB(__VA_ARGS__)
 #define REMOVE_FIRST_SUB(X, ...) __VA_ARGS__

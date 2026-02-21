@@ -21,6 +21,13 @@ using namespace std;
  * first pass, this should just go when adding up a district
  * but could eventually go deeper because I'm pretty sure that they won't give teams the chairmans award
  * at their third event, etc. but should look at that empirically.
+ *
+ * Would be nice if had a display page for all of this
+ * -Per team, what do the limits look like for each stage and overall, limits of rank?
+ *  could
+ *
+ *  -would be good to make a graph of rank entropy as more matches are played
+ *  -also each stage should produce a listing of what it thinks its status is
  * */
 
 using Team=tba::Team_key;
@@ -297,7 +304,7 @@ Rank_status event_limits(TBA_fetcher &f,tba::Event_key const& event){
 	assert(t1==t2);
 	create_prior(ranks.points,ranks.unclaimed_points);
 	PRINT(entropy(ranks))
-
+	PRINT(ranks.status);
 
 	auto picks=pick_limits(f,event,ranks.ranks);
 	auto t3=teams(picks.points);
@@ -394,8 +401,8 @@ Rank_status district_limits(TBA_fetcher &f,tba::District_key const& district){
 }
 
 int event_limits_demo(TBA_fetcher &f){
-	return lock2_demo(f);
-	return winners_demo(f);
+	//return lock2_demo(f);
+	//return winners_demo(f);
 
 	if(0){
 		auto a=event_limits(f,tba::Event_key("2026cahal"));

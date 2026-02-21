@@ -5,6 +5,7 @@
 #include "map_auto.h"
 #include "probability.h"
 #include "print_r.h"
+#include "event_status.h"
 
 class TBA_fetcher;
 
@@ -15,9 +16,10 @@ template<typename Team>
 using Point_range=map_auto<Team,Interval<Point>>;
 
 #define RANK_RESULTS(X)\
-        X(Rank_range<Team>,ranks)\
-        X(Point_range<Team>,points)\
-        X(unsigned,unclaimed_points)
+	X(Rank_range<Team>,ranks)\
+	X(Point_range<Team>,points)\
+	X(unsigned,unclaimed_points)\
+	X(Event_status,status)\
 
 template<typename Team>
 struct Rank_results{

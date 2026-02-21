@@ -1,5 +1,5 @@
 #CXXFLAGS=-std=c++23 -Wall -Wextra -Ofast -fdiagnostics-color=always
-CXXFLAGS=-std=c++23 -Wall -Wextra -Og -g -fdiagnostics-color=always
+CXXFLAGS=-std=c++23 -Wall -Wextra -pedantic -Og -g -fdiagnostics-color=always
 LIBS=-lsqlite3 -lcurl -lsimdjson
 CC=$(CXX)
 
@@ -101,6 +101,9 @@ META_OBJS= \
 	district_championship_assignment.o\
 	vector.o\
 	ranking_match_status.o\
+	event_status.o \
+	status.o \
+	cmp_reason.o \
 
 meta: $(META_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -lgumbo -o $@
@@ -141,6 +144,9 @@ DECLINE_OBJS= \
 	district_championship_assignment.o\
 	vector.o\
 	ranking_match_status.o\
+	event_status.o \
+	status.o \
+	cmp_reason.o \
 
 declines: $(DECLINE_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@

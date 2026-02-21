@@ -12,6 +12,8 @@ Ranking_match_status<tba::Team_key> ranking_match_status(TBA_fetcher &f,tba::Eve
 	 * */
 
 	Ranking_match_status<tba::Team_key> r(year(event));
+	r.started=0;
+
 	for(auto match:tba::event_matches(f,event)){
 		if(match.comp_level!=tba::Competition_level::qm){
 			continue;
@@ -44,6 +46,7 @@ Ranking_match_status<tba::Team_key> ranking_match_status(TBA_fetcher &f,tba::Eve
 			//cout<<"RP? "<<match.key<<"\n";
 			r.schedule|=match1;
 		}else{
+			r.started=1;
 			auto rp_totals=*rp_totals_m;
 			for(auto [teams,pts]:zip(match1,rp_totals)){
 				for(auto team:teams){
