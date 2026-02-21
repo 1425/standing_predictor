@@ -279,7 +279,8 @@ vector<int> thresholds(std::tuple<A,B,C>){
 	return range(300);
 }
 
-auto thresholds(Rank_status){
+template<typename Status>
+auto thresholds(Rank_status<Status>){
 	vector<Rank_value> r;
 	for(auto awards:range(20)){
 		for(auto pts:range(300)){
@@ -379,7 +380,8 @@ auto find_floor_loop(auto status,int slots){
 	return min(f);
 }
 
-auto find_floor(Rank_status const& a,int slots){
+template<typename Status>
+auto find_floor(Rank_status<Status> const& a,int slots){
 	//go through and see whether or not there are so many unclaimed points that you have to start giving them to teams at the bottom
 	//this might be true at the begining of the season because essentailly all the teams will be at 0 points to start with.
 	//or towards the end when there are fewer teams whose totals can be altered.
@@ -422,7 +424,8 @@ auto find_floor(Rank_status const& a,int slots){
 	return f2;
 }
 
-auto lock2(Rank_status const& a,int dcmp_size){
+template<typename Status>
+auto lock2(Rank_status<Status> const& a,int dcmp_size){
 	std::map<Team,string> r;
 	//a.by_team
 	//a.unclaimed

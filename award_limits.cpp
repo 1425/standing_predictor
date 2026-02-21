@@ -21,23 +21,11 @@ double entropy(Interval<Rank_value> const& a){
 	return entropy(f1)+entropy(f2);
 }
 
-double entropy(Rank_status const& a){
-	return sum(MAP(entropy,values(a.by_team)));
-}
-
-#define PRINT_STRUCT_INNER(A,B) o<<""#B<<":"<<a.B<<" ";
-
-#define PRINT_STRUCT(NAME,ITEMS)\
-	std::ostream& operator<<(std::ostream& o,NAME const& a){\
-		o<<""#NAME<<"( ";\
-		ITEMS(PRINT_STRUCT_INNER)\
-		return o<<")";\
-	}
-
 using Team=tba::Team_key;
 using namespace std;
 
-Rank_status& Rank_status::operator+=(Rank_status const& a){
+template<typename Status>
+Rank_status<Status>& Rank_status<Status>::operator+=(Rank_status<Status> const& a){
 	for(auto [k,v]:a.by_team){
 		by_team[k]+=v;
 	}
@@ -47,8 +35,8 @@ Rank_status& Rank_status::operator+=(Rank_status const& a){
 
 //Unless otherwise specified, this works with normal points not after the 3x multiplier from dcmp
 
-PRINT_STRUCT(Rank_status,RANK_STATUS)
-PRINT_R_ITEM(Rank_status,RANK_STATUS)
+template<typename Status>
+PRINT_R_ITEM(Rank_status<Status>,RANK_STATUS)
 
 using Points_by_team=map<Team,Rank_value>;
 
@@ -209,7 +197,7 @@ Rank_value max_rank_value(int event_size){
 	return make_pair(event_size!=0,max_award_points(event_size));
 }
 
-Rank_status award_limits(TBA_fetcher &f,tba::Event_key event,map<Team,Rank_value> already_given){
+Rank_status<Event_status> award_limits(TBA_fetcher &f,tba::Event_key event,map<Team,Rank_value> already_given){
 	//1) calculate the total points already awarded
 	//2) calculate total theoretical points at this event
 	//this gives unclaimed total points 
@@ -221,7 +209,7 @@ Rank_status award_limits(TBA_fetcher &f,tba::Event_key event,map<Team,Rank_value
 
 	auto points_left=max_rank_value(teams.size())-sum(values(already_given));
 
-	Rank_status r;
+	Rank_status<Event_status> r;
 	r.unclaimed=points_left;
 
 	for(auto team:teams){
@@ -270,10 +258,10 @@ auto event_type(TBA_fetcher &f,tba::Event_key event){
 	return x.event_type;
 }
 
-Rank_status award_limits(TBA_fetcher &f,tba::Event_key const& event,std::set<Team> const& teams){
+Rank_status<Event_status> award_limits(TBA_fetcher &f,tba::Event_key const& event,std::set<Team> const& teams){
 	auto b=listed_award_points(f,event);
 	if(b.done){
-		Rank_status r;
+		Rank_status<Event_status> r;
 		r.unclaimed=Rank_value();
 		for(auto team:teams){
 			r.by_team[team]=Rank_value();
@@ -287,7 +275,8 @@ Rank_status award_limits(TBA_fetcher &f,tba::Event_key const& event,std::set<Tea
 	return award_limits(f,event,b.by_team);
 }
 
-void fill_pct(Rank_status const& a){
+template<typename Status>
+void fill_pct(Rank_status<Status> const& a){
 	auto s=sum(values(a.by_team));
 	auto spread=s.max-s.min;
 	//PRINT(a.unclaimed);
