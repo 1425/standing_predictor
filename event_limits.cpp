@@ -316,6 +316,7 @@ Rank_status event_limits(TBA_fetcher &f,tba::Event_key const& event){
 	//and also for each team whether they are on an alliance or not or don't know. interval<bool>?
 	//and also how many selection points may be left
 	PRINT(entropy(picks));
+	PRINT(picks.status);
 
 	//playoff_limits(f,in_playoffs);
 	//just needs be team -> interval<Point>

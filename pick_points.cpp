@@ -86,7 +86,8 @@ using Picks_complete=map<Team,Point>;
 
 #define PICKS_IN_PROGRESS(X)\
 	X(Point_range<tba::Team_key>,by_team)\
-	X(unsigned,unclaimed)
+	X(unsigned,unclaimed)\
+	X(bool,started)
 
 struct Picks_in_progress{
 	PICKS_IN_PROGRESS(INST)
@@ -704,11 +705,13 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 	vector<tuple<Alliance_number,int,Point>> still_left;
 	//map<Team,Interval<Point>> r;
 	Picks_in_progress r;
+	r.started=0;
 
 	for(auto p:positions){
 		auto f=find_team(p);
 		if(f){
 			r.by_team[*f]=get<2>(p);
+			r.started=1;
 		}else{
 			still_left|=p;
 		}
@@ -802,6 +805,13 @@ Pick_limits pick_limits(TBA_fetcher &f,tba::Event_key const& event,std::map<tba:
 		}
 		values|=reversed(range_inclusive(8,1));
 		r.unclaimed=sum(take(ranks.size(),values));
+
+		r.status=[&](){
+			if(playoffs_started(f,event) || awards_done(f,event) || event_timed_out(f,event)){
+				return Event_status::COMPLETE;
+			}
+			return Event_status::FUTURE;
+		}();
 		return r;
 	}
 	if(std::holds_alternative<Picks_complete>(p)){
@@ -818,6 +828,7 @@ Pick_limits pick_limits(TBA_fetcher &f,tba::Event_key const& event,std::map<tba:
 			r.picked[k]=(v!=0);
 		}
 		r.unclaimed=0;
+		r.status=Event_status::COMPLETE;
 		return r;
 	}
 	if(std::holds_alternative<Picks_in_progress>(p)){
@@ -826,6 +837,7 @@ Pick_limits pick_limits(TBA_fetcher &f,tba::Event_key const& event,std::map<tba:
 		Pick_limits r;
 		r.points=a.by_team;
 		r.unclaimed=a.unclaimed;
+		r.status=a.started?Event_status::IN_PROGRESS:Event_status::FUTURE;
 
 		for(auto [k,v]:r.points){
 			if(min(v)>0){

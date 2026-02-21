@@ -833,6 +833,7 @@ struct Args{
 	bool timezone_demo=0;
 	bool lock=0;
 	bool venue_demo=0;
+	bool event_limits_demo=0;
 	Skill_method skill_method=Skill_method::POINTS;
 };
 
@@ -898,6 +899,7 @@ Args parse_args(int argc,char **argv){
 	p.add("--venue_demo",{},
 			"Experimental",r.venue_demo
 	);
+	p.add("--event_limits_demo",{},"Experimental",r.event_limits_demo);
 	p.parse(argc,argv);
 	return r;
 }
@@ -1056,6 +1058,10 @@ int main1(int argc,char **argv){
 
 	if(args.lock){
 		return run_lock(tba_fetcher,args.year,args.district);
+	}
+
+	if(args.event_limits_demo){
+		return event_limits_demo(tba_fetcher);
 	}
 
 	auto d=districts(tba_fetcher,args.year);

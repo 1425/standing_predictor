@@ -10,6 +10,7 @@
 #include "vector_void.h"
 #include "interval.h"
 #include "probability.h"
+#include "event_status.h"
 
 class TBA_fetcher;
 
@@ -84,7 +85,8 @@ using Pts=std::map<tba::Team_key,Interval<Point>>;
 #define PICK_LIMITS(X)\
 	X(Pts,points)\
 	X(Picked,picked)\
-	X(unsigned,unclaimed)
+	X(unsigned,unclaimed)\
+	X(Event_status,status)\
 
 TBA_MAKE_INST(Pick_limits,PICK_LIMITS)
 
