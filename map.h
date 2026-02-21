@@ -5,7 +5,6 @@
 #include<vector>
 #include<algorithm>
 #include<fstream>
-#include "util.h"
 #include "io.h"
 #include "optional.h"
 #include "vector.h"

@@ -1,7 +1,6 @@
 #ifndef VECTOR_VOID_H
 #define VECTOR_VOID_H
 
-#include "util.h"
 #include "set.h"
 #include "array.h"
 #include "vector.h"

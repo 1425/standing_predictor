@@ -1,7 +1,6 @@
 #include "util.h"
 #include<fstream>
 #include<filesystem>
-#include "vector.h"
 
 #ifdef __unix__
 #include<cxxabi.h>

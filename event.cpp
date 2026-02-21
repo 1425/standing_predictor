@@ -1,6 +1,5 @@
 #include "event.h"
 #include<iostream>
-#include "util.h"
 #include "vector.h"
 
 using namespace std;
