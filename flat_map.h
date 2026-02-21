@@ -29,6 +29,16 @@ class flat_map{
 		return std::map<K,V>{data.begin(),data.end()};
 	}*/
 
+	using const_reverse_iterator=Data::const_reverse_iterator;
+
+	auto rbegin()const{
+		return data.rbegin();
+	}
+
+	auto rend()const{
+		return data.rend();
+	}
+
 	using const_iterator=Data::const_iterator;
 
 	auto find(K const& k)const{
@@ -84,6 +94,8 @@ class flat_map{
 	void clear(){
 		data.clear();
 	}
+
+	auto operator<=>(flat_map const&)const=default;
 };
 
 template<typename K,typename V>

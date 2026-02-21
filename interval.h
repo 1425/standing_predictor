@@ -21,15 +21,6 @@ struct Interval{
 		return *this;
 	}
 
-	/*auto size()const{
-		if an integer-like type should give max-min+1
-		if a float-like type should give max-min+std::numeric_limits::lowest()
-	}*/
-
-	bool operator==(T const& a){
-		return min==a && max==a;
-	}
-
 	Interval& operator+=(Interval const& a){
 		min+=a.min;
 		max+=a.max;
@@ -45,9 +36,21 @@ struct Interval{
 		return width+1;
 	}
 
+	bool operator==(T const& a){
+		return min==a && max==a;
+	}
+
 	//This exists so that this type can work with things like std::map
 	//And does not actually give you a logical comparison between two intervals.
 	auto operator<=>(Interval const&)const=default;
+
+	bool operator==(Interval const& a)const{
+		return min==a.min && max==a.max;
+	}
+
+	bool operator!=(Interval const& a)const{
+		return !(*this==a);
+	}
 };
 
 template<typename T>

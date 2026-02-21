@@ -1,5 +1,7 @@
 #include "event_limits.h"
 #include "event.h"
+#include "multiset_flat.h"
+#include "multiset_compare.h"
 
 using namespace std;
 using Team=tba::Team_key;
@@ -13,7 +15,8 @@ std::ostream& operator<<(std::ostream& o,Floor_result a){
 	assert(0);
 }
 
-Floor_result find_floor(std::multiset<Interval<Rank_value>> teams,int slots,Rank_value unclaimed,Rank_value threshold){
+template<template<typename>typename MULTISET>
+Floor_result find_floor(MULTISET<Interval<Rank_value>> teams,int slots,Rank_value unclaimed,Rank_value threshold){
 	assert(slots>=0);
 	assert(both_greater_eq(unclaimed,Rank_value()));
 	assert(both_greater_eq(threshold,Rank_value()));
@@ -24,16 +27,20 @@ Floor_result find_floor(std::multiset<Interval<Rank_value>> teams,int slots,Rank
 
 	auto compare_existing=[&]()->Floor_result{
 		auto final_pts=MAP(min,teams);
-		std::multiset<int> compare;
-		for(auto team:final_pts){
-			if(team>threshold){
-				compare|=1;
-			}else if(team==threshold){
-				compare|=0;
-			}else{
-				compare|=-1;
-			}
-		}
+		auto compare=mapf(
+			[=](auto x){
+				//curiously, std::strong_ordering is not ordered...
+				auto cmp=(x<=>threshold);
+				if(cmp>0){
+					return 1;
+				}else if(cmp==0){
+					return 0;
+				}else{
+					return -1;
+				}
+			},
+			final_pts
+		);
 		if(compare.count(1)>unsigned(slots)){
 			return Floor_result::TOO_LOW;
 		}
@@ -124,9 +131,13 @@ Floor_result find_floor(std::multiset<Interval<Rank_value>> teams,int slots,Rank
 	auto max_width=elementwise_max(mapf([](auto x){ return x.width(); },teams));
 
 	auto max_floor=max(mapf([](auto x){ return x.min; },teams));
+	//PRINT(max_floor);
 	auto with_max_floor=filter([=](auto x){ return x.min==max_floor; },teams);
+	//PRINT(with_max_floor);
+	//PRINT(with_max_floor.size());
 
 	auto max_width_here=max(mapf([](auto x){ return x.width(); },with_max_floor));
+	//PRINT(max_width_here);
 	auto with_m2=filter([=](auto x){ return max_width_here==x.width(); },with_max_floor);
 	assert(with_m2.size());
 
@@ -144,7 +155,9 @@ Floor_result find_floor(std::multiset<Interval<Rank_value>> teams,int slots,Rank
 }
 
 //returns 0=impossible, 1=possible; could make it also say whether it thinks it is too high or too low.
-Floor_result find_floor(std::multiset<Interval<Point>> teams,int slots,Point unclaimed,Point threshold){
+//Floor_result find_floor(std::multiset<Interval<Point>> teams,int slots,Point unclaimed,Point threshold){
+template<template<typename>typename MULTISET>
+Floor_result find_floor(MULTISET<Interval<Point>> teams,int slots,Point unclaimed,Point threshold){
 	//cout<<"find floor("<<teams.size()<<" "<<slots<<" "<<unclaimed<<" "<<threshold<<")\n";
 
 	assert(slots>=0);
@@ -339,7 +352,7 @@ auto find_floor_loop(auto status,int slots){
 
 	map<Floor_result,vector<D>> found;
 	for(auto threshold:thresholds(status)){
-		auto v=find_floor(to_multiset(values(teams)),slots,unclaimed,threshold);
+		auto v=find_floor(to_multiset_flat(values(teams)),slots,unclaimed,threshold);
 		//auto v=find_floor(to_multiset(values(teams)),0,unclaimed,threshold);
 		//cout<<threshold<<": "<<v<<"\n";
 		found[v]|=threshold;
@@ -525,7 +538,33 @@ void lock2_demo(TBA_fetcher &f,tba::District_key district){
 	PRINT(count(values(out)));
 }
 
+int multiset_test(){
+	multiset_compare<int> a;
+	a|=4;
+	a|=5;
+	PRINT(a.a);
+	PRINT(a.b);
+	a=a-4;
+	PRINT(a.a);
+	PRINT(a.b);
+
+	auto v1=to_vec(a.a);
+	auto v2=to_vec(a.b);
+
+	PRINT(v1);
+	PRINT(v2);
+
+	cout<<"from a:\n";
+	print_lines(a.a);
+	cout<<"from b:\n";
+	print_lines(a.b);
+
+	return 0;
+}
+
 int lock2_demo(TBA_fetcher &f){
+	//return multiset_test();
+
 	//lock2_demo(f,tba::District_key("2022chs"));
 	//lock2_demo(f,tba::District_key("2022pnw"));
 	lock2_demo(f,tba::District_key("2026pnw"));

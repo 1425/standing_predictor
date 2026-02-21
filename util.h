@@ -258,6 +258,11 @@ auto first(std::pair<A,B> const& a){
 	return a.first;
 }
 
+template<typename A,typename B>
+auto second(std::pair<A,B> const& a){
+	return a.second;
+}
+
 bool all_equal(std::pair<long int,bool> const&);
 
 template<typename A,typename B>
@@ -336,8 +341,16 @@ auto elementwise_min(std::pair<A,B> const& a,std::pair<C,D> const& b){
 	);
 }
 
-template<typename A,typename B>
+/*template<typename A,typename B>
 std::pair<A,B> elementwise_max(std::vector<std::pair<A,B>> const& a){
+	return std::make_pair(
+		max(firsts(a)),
+		max(seconds(a))
+	);
+}*/
+
+template<template<typename>typename CONTAINER,typename A,typename B>
+std::pair<A,B> elementwise_max(CONTAINER<std::pair<A,B>> const& a){
 	return std::make_pair(
 		max(firsts(a)),
 		max(seconds(a))
