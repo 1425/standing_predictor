@@ -65,6 +65,18 @@ std::variant<A,B> rand(std::variant<A,B> const*){
 	return rand((B*)0);
 }
 
+template<typename A,typename B,typename C,typename D>
+std::variant<A,B,C,D> rand(std::variant<A,B,C,D> const*){
+	switch(rand()%4){
+		case 0: return rand((A*)0);
+		case 1: return rand((B*)0);
+		case 2: return rand((C*)0);
+		case 3: return rand((D*)0);
+		default:
+			assert(0);
+	}
+}
+
 template<typename T,size_t N>
 auto rand(std::array<T,N> const*){
 	return mapf(

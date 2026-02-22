@@ -22,6 +22,7 @@ vector_void sorted(vector_void);
 vector_void take(size_t,vector_void);
 vector_void reversed(vector_void);
 void sum(vector_void);
+void mean(vector_void);
 
 template<typename Func,typename T>
 auto mapf(Func f,std::vector<T> const& v){

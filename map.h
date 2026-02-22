@@ -27,6 +27,8 @@ auto mapf(Func f,std::map<K,V> const& v)->std::vector<decltype(f(*std::begin(v))
 	return r;
 }
 
+#define MAP_VALUES(A,B) map_values([&](auto x){ return (A)(x); },(B))
+
 template<typename Func,typename K,typename V>
 auto map_values(Func f,std::map<K,V> m)->std::map<K,decltype(f(begin(m)->second))>{
 	std::map<K,decltype(f(begin(m)->second))> r;

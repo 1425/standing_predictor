@@ -3,6 +3,7 @@
 
 #include<iostream>
 #include "../tba/data.h"
+#include "rand.h"
 
 template<typename T>
 struct Interval{
@@ -182,6 +183,15 @@ auto sum(std::vector<Interval<T>> const& a){
 		sum(MAP(min,a)),
 		sum(MAP(max,a))
 	};
+}
+
+template<typename T>
+std::vector<T> range(Interval<T> const& a){
+	std::vector<T> r;
+	for(T at=a.min;at<=a.max;++at){
+		r|=at;
+	}
+	return r;
 }
 
 #endif

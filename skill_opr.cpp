@@ -12,8 +12,6 @@ using Team_key=tba::Team_key;
 using District_key=tba::District_key;
 using Event_Simple=tba::Event_Simple;
 
-#define MAP_VALUES(A,B) map_values([&](auto x){ return (A)(x); },B)
-
 using namespace std;
 
 template<typename Func>

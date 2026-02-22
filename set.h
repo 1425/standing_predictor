@@ -386,4 +386,19 @@ std::multiset<T> filter(Func f,std::multiset<T> a){
 	return r;
 }
 
+template<typename Func,typename T>
+auto group(Func f,std::multiset<T> const& a){
+	using K=decltype(f(*begin(a)));
+	std::map<K,std::multiset<T>> r;
+	for(auto const& x:a){
+		r[f(x)]|=x;
+	}
+	return r;
+}
+
+template<typename T>
+auto seconds(std::multiset<T> const& a){
+	return to_multiset(MAP(second,a));
+}
+
 #endif

@@ -22,6 +22,7 @@ FRC_API_OBJS= \
 	../frc_api/curl.o
 
 OUTLINE_OBJS= \
+	event_partial.o\
 	ranking_match_status.o\
 	vector.o \
 	winners.o\

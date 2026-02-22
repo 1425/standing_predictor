@@ -53,11 +53,6 @@ void reserve_if_able(flat_map<K,V> &a,size_t n){
 
 void reserve_if_able(auto&,size_t){}
 
-template<typename Func,typename K,typename V>
-auto map_values(Func f,flat_map2<K,V> const& a){
-	return a.map_values(f);
-}
-
 template<
 	template<typename,typename>typename MAP1,
 	template<typename,typename>typename MAP2,
@@ -76,15 +71,6 @@ auto join_hard(MAP1<K,V1> a,MAP2<K,V2> b){
 	map<K,P> r;
 	for(auto k:keys(a)){
 		r[k]=P(a[k],b[k]);
-	}
-	return r;
-}
-
-template<typename T>
-vector<T> range(Interval<T> const& a){
-	vector<T> r;
-	for(T at=a.min;at<=a.max;++at){
-		r|=at;
 	}
 	return r;
 }

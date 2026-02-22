@@ -50,7 +50,7 @@ simple way:
 #include "timezone.h"
 #include "venue.h"
 #include "event_limits.h"
-//start generic stuff
+#include "event_partial.h"
 
 //start program-specific stuff.
 
@@ -217,6 +217,11 @@ std::tuple<Run_result,Points_used,By_team> run_inner(
 		}
 	}
 
+	/*return make_tuple(
+		run_calc(read_status(f,district)),
+		points_used,
+		by_team
+	);*/
 	return make_tuple(
 		run_calc(Run_input{
 			dcmp_size,
@@ -834,6 +839,7 @@ struct Args{
 	bool lock=0;
 	bool venue_demo=0;
 	bool event_limits_demo=0;
+	bool event_partial_demo=0;
 	Skill_method skill_method=Skill_method::POINTS;
 };
 
@@ -900,6 +906,7 @@ Args parse_args(int argc,char **argv){
 			"Experimental",r.venue_demo
 	);
 	p.add("--event_limits_demo",{},"Experimental",r.event_limits_demo);
+	p.add("--event_partial_demo",{},"Experimental",r.event_partial_demo);
 	p.parse(argc,argv);
 	return r;
 }
@@ -1032,7 +1039,6 @@ int main1(int argc,char **argv){
 	if(args.rank_limits_demo){
 		rank_limits_demo(tba_fetcher);
 		//pick_points_demo(tba_fetcher);
-		//return event_limits_demo(tba_fetcher);
 		return 0;
 	}
 
@@ -1062,6 +1068,10 @@ int main1(int argc,char **argv){
 
 	if(args.event_limits_demo){
 		return event_limits_demo(tba_fetcher);
+	}
+
+	if(args.event_partial_demo){
+		return event_partial_demo(tba_fetcher);
 	}
 
 	auto d=districts(tba_fetcher,args.year);
@@ -1113,9 +1123,9 @@ int main(int argc,char **argv){
 	}catch(std::vector<std::string> const& v){
 		cerr<<"Caught:"<<v<<"\n";
 		return 1;
-	}catch(const char *s){
+	/*}catch(const char *s){
 		cerr<<"Caught:"<<s<<"\n";
-		return 1;
+		return 1;*/
 	}catch(tba::Decode_error const& a){
 		cerr<<"Caught:"<<a<<"\n";
 		return 1;

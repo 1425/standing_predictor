@@ -46,8 +46,17 @@ std::vector<T> nonempty(std::vector<std::optional<T>> const& a){
 template<typename T>
 std::vector<T> operator|(std::vector<T>,std::optional<T>);
 
-template<template<typename,typename> typename MAP,typename K,typename V>
+/*template<template<typename,typename> typename MAP,typename K,typename V>
 std::optional<V> maybe_get(MAP<K,V> const& a,K const& k){
+	auto f=a.find(k);
+	if(f==a.end()){
+		return std::nullopt;
+	}
+	return f->second;
+}*/
+
+template<template<typename,typename> typename MAP,typename K,typename V,typename K2>
+std::optional<V> maybe_get(MAP<K,V> const& a,K2 const& k){
 	auto f=a.find(k);
 	if(f==a.end()){
 		return std::nullopt;

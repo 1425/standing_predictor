@@ -341,6 +341,11 @@ std::ostream& operator<<(std::ostream& o,flat_map2<K,V> const& a){
 	return o<<a.to_map();
 }
 
+template<typename Func,typename K,typename V>
+auto map_values(Func f,flat_map2<K,V> const& a){
+	return a.map_values(f);
+}
+
 template<typename K,typename V>
 std::map<K,V> to_map(flat_map2<K,V> const& a){
 	return a.to_map();
