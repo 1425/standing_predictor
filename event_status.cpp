@@ -48,6 +48,12 @@ int event_points_multiplier(TBA_fetcher &tba_fetcher,tba::Event_key const& event
 		case DISTRICT_CMP_DIVISION:
 		case DISTRICT_CMP:
 			return 3;
+		case REGIONAL:
+		case CMP_DIVISION:
+		case OFFSEASON:
+		case PRESEASON:
+			//no acutal points in this case; could be 0
+			return 1;
 		default:
 			PRINT(e.event_type);
 			assert(0);

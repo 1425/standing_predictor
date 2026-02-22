@@ -7,8 +7,18 @@ template<typename Status>
 std::tuple<
 	std::map<tba::Team_key,Interval<Point>>,
 	Point,
-	Event_status
-> points_only(Rank_status<Status> const&);
+	Status
+> points_only(Rank_status<Status> const& a){
+	//map<Team,Interval<Point>> m;
+	//nyi
+	auto m=map_values(
+		[](auto x){
+			return Interval{x.min.second,x.max.second};
+		},
+		a.by_team
+	);
+	return std::make_tuple(m,a.unclaimed.second,a.status);
+}
 
 #define TOURNAMENT_STATUS(X)\
 	X(FUTURE)\
@@ -49,7 +59,7 @@ std::ostream& operator<<(std::ostream&,District_status const&);
 bool in_progress(District_status);
 
 Rank_status<Tournament_status> event_limits(TBA_fetcher&,tba::Event_key const&);
-Rank_status<Event_status> district_limits(TBA_fetcher&,tba::District_key const&);
+Rank_status<District_status> district_limits(TBA_fetcher&,tba::District_key const&);
 
 int event_limits_demo(TBA_fetcher&);
 

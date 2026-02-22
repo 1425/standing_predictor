@@ -111,7 +111,18 @@ std::ostream& operator<<(std::ostream& o,Picks_no_data){
 	return o<<"Picks_no_data";
 }
 
-using Pick_points=std::variant<Picks_no_data,Picks_in_progress,Picks_complete>;
+struct Picks_known_empty{};
+
+std::ostream& operator<<(std::ostream& o,Picks_known_empty){
+	return o<<"Picks_known_empty";
+}
+
+using Pick_points=std::variant<
+	Picks_no_data,
+	Picks_in_progress,
+	Picks_complete,
+	Picks_known_empty
+>;
 
 #define PICK_STATUS(X)\
 	X(COMPLETE)\
@@ -484,6 +495,37 @@ std::optional<map<Team,Point>> listed_pick_points(TBA_fetcher &f,Event const& ev
 	return r;
 }
 
+bool picks_expected(TBA_fetcher &f,Event const& event){
+	auto e=event_type(f,event);
+	switch(e){
+		case tba::Event_type::DISTRICT:
+		case tba::Event_type::DISTRICT_CMP_DIVISION:
+			return 1;
+		case tba::Event_type::DISTRICT_CMP:{
+			//If there are no divisions in this district. 
+			auto d=district(f,event);
+			assert(d);
+			auto ev=events(f,*d);
+			auto f=count_if([](auto x){ return x.event_type==tba::Event_type::DISTRICT_CMP_DIVISION; },ev);
+			return f==0;
+		}
+		case tba::Event_type::CMP_FINALS:
+			return 0;
+		case tba::Event_type::REGIONAL:
+		case tba::Event_type::CMP_DIVISION:
+		case tba::Event_type::OFFSEASON:
+		case tba::Event_type::PRESEASON:
+			return 1;
+		case tba::Event_type::FOC:
+		case tba::Event_type::REMOTE:
+			return 0;
+		default:
+			PRINT(event);
+			PRINT(e);
+			nyi
+	}
+}
+
 Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval<Rank>> const& ranks){
 //Pick_points pick_points(TBA_fetcher& f,Event const& event,Rank_range const& ranks){
 
@@ -492,6 +534,10 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 	 * 3) Attempt to reconsile them
 	 * 4) Attempt to fill in the rest via the ranks that are passed in
 	 * */
+
+	if(!picks_expected(f,event)){
+		return Picks_known_empty();
+	}
 
 	using Slot=std::set<Team>;
 	static constexpr auto ALLIANCE_SLOTS=3;
@@ -503,7 +549,13 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 		Full full;
 		auto e=tba::event_alliances(f,event);
 		if(e){
-			for(auto [ai,elim_alliance]:enumerate(*e)){
+			auto alliances_to_use=take(ALLIANCES,*e);
+			if(alliances_to_use!=*e){
+				//something wrong with the data
+				//could report this somehow
+				//this is known to occur at 2015bc where they had 19 alliances
+			}
+			for(auto [ai,elim_alliance]:enumerate(alliances_to_use)){
 				assert(ai<ALLIANCES);
 				for(auto [pi,team]:enumerate(elim_alliance.picks)){
 					if(pi>=ALLIANCE_SLOTS){
@@ -519,7 +571,12 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 
 	using Pick_location=Int_limited<0,ALLIANCE_SLOTS-1>;
 	using Location=pair<Alliance_number,Pick_location>;
-	auto find_locations=[](Point p){
+
+	const auto mult=event_points_multiplier(f,event);
+
+	auto find_locations=[=](Point p){
+		p/=mult;
+
 		vector<Location> r;
 		for(auto i:range_inclusive(1,8)){
 			if(p==17-i){
@@ -529,6 +586,13 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 			if(p==i){
 				r|=Location(i,2);
 			}
+		}
+		auto ok=(p==0 || !r.empty());
+		if(!ok){
+			PRINT(event);
+			PRINT(ranks);
+			PRINT(p);
+			PRINT(r);
 		}
 		assert(p==0 || !r.empty());
 		return r;
@@ -639,7 +703,7 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 
 	//PRINT(t);
 	//PRINT(ranks);
-	{
+	if(0){
 		auto teams_without_rank_data=t-keys(ranks);
 		if(!teams_without_rank_data.empty()){
 			print_r(event);
@@ -665,6 +729,12 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 		Picks_complete r;
 		for(auto [alliance,pick,points]:positions){
 			auto s=combo[alliance-1][pick];
+			if(s.size()>1){
+				//print_lines(combo);
+				//PRINT(s);
+				//there is something wrong with the data coming in; just make a guess
+				s=take(1,s);
+			}
 			assert(s.size()<=1);
 			if(!s.empty()){
 				r[car(s)]=points;
@@ -788,6 +858,16 @@ auto teams(Rank_results<Team> const& a){
 
 Pick_limits pick_limits(TBA_fetcher &f,tba::Event_key const& event,std::map<tba::Team_key,Interval<Rank>> const& ranks){
 	auto p=pick_points(f,event,ranks);
+	if(std::holds_alternative<Picks_known_empty>(p)){
+		Pick_limits r;
+		for(auto team:keys(ranks)){
+			r.points[team]=0;
+			r.picked[team]=0;
+		}
+		r.unclaimed=0;
+		r.status=Event_status::COMPLETE;
+		return r;
+	}
 	if(std::holds_alternative<Picks_no_data>(p)){
 		//cout<<"picks: no data\n";
 		Pick_limits r;

@@ -311,7 +311,7 @@ auto mad(std::multiset<T> a){
 
 template<typename T>
 auto take(size_t n,std::set<T> const& a){
-	std::vector<T> r;
+	std::set<T> r;
 	for(auto x:a){
 		if(r.size()>=n){
 			return r;

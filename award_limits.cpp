@@ -253,11 +253,6 @@ Rank_status<Event_status> award_limits(TBA_fetcher &f,tba::Event_key event,map<T
 	return r;
 }
 
-auto event_type(TBA_fetcher &f,tba::Event_key event){
-	auto x=tba::event(f,event);
-	return x.event_type;
-}
-
 Rank_status<Event_status> award_limits(TBA_fetcher &f,tba::Event_key const& event,std::set<Team> const& teams){
 	auto b=listed_award_points(f,event);
 	if(b.done){

@@ -111,11 +111,6 @@ std::optional<map<Team,Point>> listed_playoff_points(TBA_fetcher &f,tba::Event_k
 	return r;
 }
 
-auto event_type(TBA_fetcher &f,tba::Event_key const& event){
-	auto e=tba::event(f,event);
-	return e.event_type;
-}
-
 bool playoffs_expected(TBA_fetcher &f,tba::Event_key const& event){
 	auto e=event_type(f,event);
 	#define X(A,B) if(e==tba::Event_type::A) return B;

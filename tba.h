@@ -98,5 +98,6 @@ bool awards_done(TBA_fetcher&,tba::Event_key const&);
 std::optional<tba::District_key> district(TBA_fetcher &,tba::Event_key const&);
 
 bool complete(TBA_fetcher &,tba::Event_key const&);
+tba::Event_type event_type(TBA_fetcher &f,tba::Event_key const&);
 
 #endif

@@ -39,6 +39,13 @@ std::ostream& operator<<(std::ostream& o,Tournament_status const& a){
 	assert(0);
 }
 
+std::ostream& operator<<(std::ostream& o,District_status const& a){
+	#define X(A) if(a==District_status::A) return o<<""#A;
+	DISTRICT_STATUS(X)
+	#undef X
+	assert(0);
+}
+
 template<typename K,typename V>
 void reserve_if_able(flat_map<K,V> &a,size_t n){
 	a.reserve(n);
@@ -256,23 +263,6 @@ auto create_prior(std::map<Team,Interval<Point>> by_team,Point unassigned){
 	return make_dist(found);
 }
 
-template<typename Status>
-tuple<
-	map<Team,Interval<Point>>,
-	Point,
-	Event_status
-> points_only(Rank_status<Status> const& a){
-	//map<Team,Interval<Point>> m;
-	//nyi
-	auto m=map_values(
-		[](auto x){
-			return Interval{x.min.second,x.max.second};
-		},
-		a.by_team
-	);
-	return make_tuple(m,a.unclaimed.second,a.status);
-}
-
 auto entropy(Rank_results<tba::Team_key> const& a){
 	return entropy(a.points);//might actually want to look at ranks instead
 }
@@ -310,7 +300,7 @@ std::set<tba::Team_key> teams(std::map<tba::Team_key,T> a){
 //Rank_status event_limits(TBA_fetcher &f,tba::Event_key const& event){
 Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const& event){
 	Tournament_status tstatus=Tournament_status::FUTURE;
-	PRINT(event);
+	//PRINT(event);
 	auto ranks=rank_limits(f,event);
 	ranks.check();
 	auto t1=teams(ranks.ranks);
@@ -336,7 +326,8 @@ Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const&
 	auto t3=teams(picks.points);
 	auto t4=teams(picks.picked);
 	assert(t3==t4);
-	assert(t3==t1);
+	assert(subset(t1,t3));
+	t1=t3;
 	create_prior(picks.points,picks.unclaimed);
 	//p needs to bring both point totals for each of the teams
 	//and also for each team whether they are on an alliance or not or don't know. interval<bool>?
@@ -386,6 +377,11 @@ Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const&
 	//because you can just show up at the end and win rookie all-star at a district championship
 	//and not have played any matches, etc.
 	//and it probably doesn't make sense to force the earlier steps to include those teams
+
+	if(!subset(t5,t6)){
+		diff(t5,t6);
+	}
+
 	assert(subset(t5,t6));
 
 	switch(d.status){
@@ -438,7 +434,36 @@ auto event_limits(TBA_fetcher &f,tba::Event const& e){
 	return event_limits(f,e.key);
 }
 
-Rank_status<Event_status> district_limits(TBA_fetcher &f,tba::District_key const& district){
+Tournament_status dcmp_status(TBA_fetcher &f,tba::District_key const& district){
+	auto e=events(f,district);
+	auto e2=filter([](auto x){ return x.event_type!=tba::Event_type::DISTRICT; },e);
+	auto status=mapf(
+		[&](auto x){ return make_pair(x,event_limits(f,x.key).status); },
+		e2
+	);
+
+	if(status.empty()){
+		return Tournament_status::COMPLETE;
+	}
+
+	if(status.size()==1){
+		return status[0].second;
+	}
+
+	auto divisions=filter([](auto x){ return x.first.event_type==tba::Event_type::DISTRICT_CMP_DIVISION; },status);
+
+	if(!divisions.empty()){
+		auto latest_division_status=min(mapf([](auto x){ return x.second; },divisions));
+		if(latest_division_status!=Tournament_status::COMPLETE){
+			return latest_division_status;
+		}
+	}
+
+	auto main_fields=filter([](auto x){ return x.first.event_type==tba::Event_type::DISTRICT_CMP; },status);
+	return min(seconds(main_fields));
+}
+
+Rank_status<District_status> district_limits(TBA_fetcher &f,tba::District_key const& district){
 	auto e=events(f,district);
 
 	//Ignore DCMP points for now.
@@ -453,11 +478,11 @@ Rank_status<Event_status> district_limits(TBA_fetcher &f,tba::District_key const
 		cout<<i<<"\t"<<entropy(x)<<"\n";
 	}*/
 
-	auto status=to_set(mapf([](auto x){ return x.status; },m));
-	PRINT(status);
+	auto local_status=to_set(mapf([](auto x){ return x.status; },m));
+	//PRINT(local_status);
 
 	map<Team,int> plays;
-	Rank_status<Event_status> r;
+	Rank_status<District_status> r;
 	for(auto here:m){
 		for(auto [k,v]:here.by_team){
 			auto&p=plays[k];
@@ -470,14 +495,21 @@ Rank_status<Event_status> district_limits(TBA_fetcher &f,tba::District_key const
 	}
 	//PRINT(count(values(plays)));
 	
-	r.status=[=](){
-		if(status==set<Tournament_status>{Tournament_status::COMPLETE}){
-			return Event_status::COMPLETE;
+	r.status=[&](){
+		if(local_status==set<Tournament_status>{Tournament_status::FUTURE}){
+			return District_status::FUTURE;
 		}
-		if(status==set<Tournament_status>{Tournament_status::FUTURE}){
-			return Event_status::FUTURE;
+		if(local_status!=set<Tournament_status>{Tournament_status::COMPLETE}){
+			return District_status::LOCALS_IN_PROGRESS;
 		}
-		return Event_status::IN_PROGRESS;
+		auto d=dcmp_status(f,district);
+		if(d==Tournament_status::FUTURE){
+			return District_status::LOCALS_COMPLETE;
+		}
+		if(d==Tournament_status::COMPLETE){
+			return District_status::COMPLETE;
+		}
+		return District_status::DCMP_IN_PROGRESS;
 	}();
 
 	return r;
@@ -507,15 +539,22 @@ int event_limits_demo(TBA_fetcher &f){
 		return 0;
 	}
 
+	if(0){
+		auto a=district_limits(f,tba::District_key("2025fim"));
+		PRINT(a);
+		return 0;
+	}
+
 	/*auto d=district_limits(f,tba::District_key("2021fin"));
 	PRINT(entropy(d));
 	return 0;*/
 
 	/*for(auto const& event:events(f)){
+		PRINT(event.key);
 		auto a=event_limits(f,event.key);
 		(void)a;
 	}*/
-	for(auto district:take(2000,districts(f))){
+	for(auto district:districts(f)){
 		PRINT(district);
 		auto a=district_limits(f,district);
 		//print_r(a);
