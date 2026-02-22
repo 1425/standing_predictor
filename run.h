@@ -29,7 +29,7 @@ using Dcmp_dists=std::map<Point,Team_dist>;
 	X(int,worlds_slots)\
 	X(By_team,by_team)\
 	X(bool,dcmp_played)\
-	X(Dcmp_dists,dcmp_distribution1)
+	X(std::vector<Dcmp_dists>,dcmp_distribution1)
 
 struct Run_input{
 	RUN_INPUT_ITEMS(INST)

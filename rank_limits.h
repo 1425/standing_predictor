@@ -5,7 +5,6 @@
 #include "map_auto.h"
 #include "probability.h"
 #include "print_r.h"
-#include "event_status.h"
 
 class TBA_fetcher;
 

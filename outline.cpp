@@ -228,7 +228,7 @@ std::tuple<Run_result,Points_used,By_team> run_inner(
 			worlds_slots(district),
 			by_team,
 			dcmp_played,
-			skills.at_dcmp
+			duplicate(skills.at_dcmp,MAX_DCMPS)
 		}),
 		points_used,
 		by_team
@@ -695,7 +695,9 @@ std::vector<Prediction_status> historical_demo(TBA_fetcher &fetcher,tba::Distric
 		));
 
 		input.dcmp_played=any(mapf([](auto x){ return x.dcmp_points; },values(p1)));
-		input.dcmp_distribution1=skill.at_dcmp;
+
+		input.dcmp_distribution1=duplicate(skill.at_dcmp,MAX_DCMPS);
+
 		//print_r(input);
 		if(0){
 			auto i2=input;

@@ -423,7 +423,6 @@ Run_input read_status(TBA_fetcher &f,tba::District_key const& district){
 	r.worlds_slots=worlds_slots(district);
 	
 	r.dcmp_played=district_limits(f,district).status==District_status::COMPLETE;
-	r.dcmp_distribution1=skill.at_dcmp;
 
 	auto cm=chairmans_winners(f,district);
 
@@ -437,6 +436,14 @@ Run_input read_status(TBA_fetcher &f,tba::District_key const& district){
 
 		t.already_earned=min_key(t.point_dist);
 	}
+
+	auto dcmp_options=to_set(mapf([](auto x){ return x.dcmp_home; },values(r.by_team)));
+
+	for(auto _:dcmp_options){
+		//eventuall,y will want to set each of these to 0 once the event is played.
+		r.dcmp_distribution1|=skill.at_dcmp;
+	}
+
 	return r;
 }
 

@@ -295,6 +295,9 @@ void print_r(int n,Run_result const& a){
 	#undef X
 }
 
+template<typename T>
+void check(std::vector<T> const&);
+
 void check(int){}
 
 void check(Pr p){
@@ -375,6 +378,13 @@ void check(std::map<K,V> const& a){
 		}catch(...){
 			assert(0);
 		}
+	}
+}
+
+template<typename T>
+void check(std::vector<T> const& a){
+	for(auto const& x:a){
+		check(x);
 	}
 }
 
@@ -550,9 +560,9 @@ Run_result run_calc(
 		dcmp_cutoffs|=dcmp_cutoff;
 
 		flat_map2<pair<bool,Point>,unsigned> post_dcmp_points;
-		for(auto i:range_st<MAX_DCMPS>()){
-			auto & final_points_this=final_points[i];//not sure that this should really be mutable.
-			auto const& dcmp_cutoff_this=dcmp_cutoff[i];
+		for(auto dcmp_index:range_st<MAX_DCMPS>()){
+			auto & final_points_this=final_points[dcmp_index];//not sure that this should really be mutable.
+			auto const& dcmp_cutoff_this=dcmp_cutoff[dcmp_index];
 			for(auto [earned,teams]:final_points_this){
 				auto [cm,points]=earned;
 				assert(points>=0);
@@ -567,10 +577,10 @@ Run_result run_calc(
 					if(input.dcmp_played){
 						pts=points;
 					}else{
-						auto const& dists=input.dcmp_distribution1;
+						auto const& dists=input.dcmp_distribution1.at(dcmp_index);
 						auto f=dists.find(points);
 						auto d=[&](){
-							if(f==input.dcmp_distribution1.end()){
+							if(f==input.dcmp_distribution1.at(dcmp_index).end()){
 								/*PRINT(points);
 								PRINT(keys(input.dcmp_distribution1));
 								assert(0);*/
@@ -676,7 +686,7 @@ Run_result run_calc(
 			return when_greater(team_pr,cutoff_pr[dcmp_home]);
 		}();
 
-		auto post_dcmp_dist=convolve(dcmp_entry_dist,input.dcmp_distribution1);
+		auto post_dcmp_dist=convolve(dcmp_entry_dist,input.dcmp_distribution1.at(team_data.dcmp_home));
 		auto post_total=sum(values(post_dcmp_dist));
 		Pr cmp_make=0;
 		Pr cmp_miss=0;

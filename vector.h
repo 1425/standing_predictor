@@ -476,4 +476,13 @@ double sum(std::vector<int> const&);
 double sum(std::vector<double> const& v);
 size_t sum(std::vector<bool> const&);
 
+template<typename T>
+std::vector<T> duplicate(T t,size_t n){
+	std::vector<T> r;
+	for(auto _:range(n)){
+		r|=t;
+	}
+	return r;
+}
+
 #endif
