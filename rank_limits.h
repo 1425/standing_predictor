@@ -15,11 +15,35 @@ using Rank_range=map_auto<Team,Interval<Rank>>;
 template<typename Team>
 using Point_range=map_auto<Team,Interval<Point>>;
 
+struct Qual_status_future{};
+
+std::ostream& operator<<(std::ostream&,Qual_status_future);
+
+struct Qual_status_in_progress{
+	int matches_complete,matches_total;
+};
+
+std::ostream& operator<<(std::ostream&,Qual_status_in_progress const&);
+
+struct Qual_status_complete{};
+
+std::ostream& operator<<(std::ostream&,Qual_status_complete const&);
+
+using Qual_status=std::variant<
+	Qual_status_future,
+	Qual_status_in_progress,
+	Qual_status_complete
+>;
+
+#define QUAL_STATUS(X)\
+	X(FUTURE)\
+	X(COMPLETE)
+
 #define RANK_RESULTS(X)\
 	X(Rank_range<Team>,ranks)\
 	X(Point_range<Team>,points)\
 	X(unsigned,unclaimed_points)\
-	X(Event_status,status)\
+	X(Qual_status,status)\
 
 template<typename Team>
 struct Rank_results{

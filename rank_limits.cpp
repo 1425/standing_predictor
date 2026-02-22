@@ -24,6 +24,20 @@
 
 using namespace std;
 
+std::ostream& operator<<(std::ostream& o,Qual_status_future){
+	return o<<"Qual_status_future";
+}
+
+std::ostream& operator<<(std::ostream& o,Qual_status_in_progress const& a){
+	o<<"Qual_status_in_progress(";
+	o<<a.matches_complete<<"/"<<a.matches_total;
+	return o<<")";
+}
+
+std::ostream& operator<<(std::ostream& o,Qual_status_complete const&){
+	return o<<"Qual_status_complete";
+}
+
 template<typename A,typename B>
 auto teams(std::pair<A,B> const& p){
 	auto t=teams(p.first);
@@ -48,9 +62,6 @@ template<typename V>
 std::set<Team_alias> teams(map_fixed<Team_alias,V> const& a){
 	return keys(a);
 }
-
-
-
 
 std::set<tba::Team_key> teams(std::set<tba::Team_key> const& a){
 	return a;
@@ -351,7 +362,9 @@ class Team_namer{
 		return data[a];
 	}
 
-	int convert(int)const;
+	static int convert(int a){
+		return a;
+	}
 
 	static bool convert(bool a){
 		return a;
@@ -372,6 +385,9 @@ class Team_namer{
 	static unsigned convert(unsigned a){
 		return a;
 	}
+
+	#define SAME(X) static X convert(X a){ return a; }
+	SAME(Qual_status)
 
 	template<long long MIN,long long MAX>
 	Int_limited<MIN,MAX> convert(Int_limited<MIN,MAX> a){
@@ -507,29 +523,29 @@ Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& eve
 				}
 			}
 
-			r.status=[&](){
+			r.status=[&]()->Qual_status{
 				if(
 					nonempty_alliances(f,event) ||
 					playoffs_started(f,event) //could look at whether picks have started yet.
 				){
 					//For events which have gone on to the next step
-					return Event_status::COMPLETE;
+					return Qual_status_complete{};
 				}
 				if(
 					awards_done(f,event) ||
 					event_timed_out(f,event)
 				){
 					//For events that didn't actually have matches
-					return Event_status::COMPLETE;
+					return Qual_status_complete{};
 				}
 
-				if(info.started){
+				if(info.matches_completed){
 					//If matches have been played by the next step hasn't started yet
-					return Event_status::COMPLETE;
+					return Qual_status_complete{};
 				}
 
 				//For events that don't have any matches scheduled yet
-				return Event_status::FUTURE;
+				return Qual_status_future{};
 			}();
 			return r;
 		}
@@ -554,7 +570,7 @@ Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& eve
 		}
 		r.unclaimed_points=0;
 
-		r.status=Event_status::COMPLETE;
+		r.status=Qual_status_complete{};
 
 		return r;
 	}
@@ -569,7 +585,16 @@ Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& eve
 	size_t min_pts_taken=sum(MAP(min,values(r.points)));
 	assert(min_pts_taken<=total_points);
 	r.unclaimed_points=total_points-min_pts_taken;
-	r.status=info.started?Event_status::IN_PROGRESS:Event_status::FUTURE;
+	//r.status=info.matches_completed?Event_status::IN_PROGRESS:Event_status::FUTURE;
+	r.status=[=]()->Qual_status{
+		if(info.matches_completed){
+			return Qual_status_in_progress(
+				info.matches_completed,
+				info.matches_completed+info.schedule.size()
+			);
+		}
+		return Qual_status_future{};
+	}();
 	return namer.convert(r);
 }
 

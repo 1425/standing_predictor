@@ -94,7 +94,7 @@ auto teams(Standings<Team> const& a){
 	X(Standings<Team>,standings)\
 	X(Schedule<Team>,schedule)\
 	X(tba::Year,year)\
-	X(bool,started)\
+	X(int,matches_completed)\
 
 #define REMOVE_FIRST(...) REMOVE_FIRST_SUB(__VA_ARGS__)
 #define REMOVE_FIRST_SUB(X, ...) __VA_ARGS__

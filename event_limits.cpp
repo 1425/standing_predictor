@@ -295,18 +295,18 @@ Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const&
 	create_prior(ranks.points,ranks.unclaimed_points);
 	//PRINT(entropy(ranks))
 	//PRINT(ranks.status);
-	switch(ranks.status){
-		case Event_status::FUTURE:
-			break;
-		case Event_status::IN_PROGRESS:
+	std::visit([&](auto x){
+		using T=std::decay_t<decltype(x)>;
+		if constexpr(std::is_same<T,Qual_status_future>()){
+			//do nothing
+		}else if constexpr(std::is_same<T,Qual_status_in_progress>()){
 			tstatus=Tournament_status::QUAL_MATCHES_IN_PROGRESS;
-			break;
-		case Event_status::COMPLETE:
+		}else if constexpr(std::is_same<T,Qual_status_complete>()){
 			tstatus=Tournament_status::QUAL_MATCHES_COMPLETE;
-			break;
-		default:
+		}else{
 			assert(0);
-	}
+		}
+	},ranks.status);
 
 	auto picks=pick_limits(f,event,ranks.ranks);
 	auto t3=teams(picks.points);
