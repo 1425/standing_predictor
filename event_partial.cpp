@@ -265,6 +265,14 @@ struct District_cmp_complex{
 
 PRINT_STRUCT(District_cmp_complex,DISTRICT_CMP_COMPLEX)
 
+bool complete(TBA_fetcher &f,tba::Event const& a){
+	return complete(f,a.key);
+}
+
+bool complete(TBA_fetcher &f,District_cmp_complex const& a){
+	return complete(f,a.finals);
+}
+
 #define EVENT_CATEGORIES(X)\
 	X(std::vector<Event>,local)\
 	X(std::vector<District_cmp_complex>,dcmp)
@@ -419,10 +427,26 @@ Run_input read_status(TBA_fetcher &f,tba::District_key const& district){
 	assert(d);
 
 	Run_input r;
-	r.dcmp_size=dcmp_size(district);
 	r.worlds_slots=worlds_slots(district);
-	
-	r.dcmp_played=district_limits(f,district).status==District_status::COMPLETE;
+
+	auto cat=categorize_events(f,district);
+
+	for(auto [i,size]:enumerate(dcmp_size(district))){
+		Dcmp_data d;
+		d.size=size;
+		d.played=complete(f,cat.dcmp.at(i));
+		if(!d.played){
+			d.dists=skill.at_dcmp;
+		}else{
+			//whatever number of points you have expect to get 0 more.
+			for(auto i:range(500)){
+				Team_dist n;
+				n[0]=1;
+				d.dists[i]=n;
+			}
+		}
+		r.dcmp|=d;
+	}
 
 	auto cm=chairmans_winners(f,district);
 
@@ -438,11 +462,6 @@ Run_input read_status(TBA_fetcher &f,tba::District_key const& district){
 	}
 
 	auto dcmp_options=to_set(mapf([](auto x){ return x.dcmp_home; },values(r.by_team)));
-
-	for(auto _:dcmp_options){
-		//eventuall,y will want to set each of these to 0 once the event is played.
-		r.dcmp_distribution1|=skill.at_dcmp;
-	}
 
 	return r;
 }

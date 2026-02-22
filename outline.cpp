@@ -224,11 +224,19 @@ std::tuple<Run_result,Points_used,By_team> run_inner(
 	);*/
 	return make_tuple(
 		run_calc(Run_input{
-			dcmp_size,
 			worlds_slots(district),
 			by_team,
-			dcmp_played,
-			duplicate(skills.at_dcmp,MAX_DCMPS)
+			[=](){
+				vector<Dcmp_data> r;
+				for(auto [i,x]:enumerate(dcmp_size)){
+					Dcmp_data d;
+					d.size=x;
+					d.played=dcmp_played;
+					d.dists=skills.at_dcmp;
+					r|=d;
+				}
+				return r;
+			}()
 		}),
 		points_used,
 		by_team
@@ -392,7 +400,7 @@ using District_data=map<tba::Team_key,Team_data>;
 
 Run_input to_run_input_equal(TBA_fetcher &fetcher,tba::District_key district,District_data data){
 	Run_input r;
-	r.dcmp_size=dcmp_size(district);
+	//r.dcmp_size=dcmp_size(district);
 	r.worlds_slots=worlds_slots(district);
 
 	//this is the baseline for how many points at an upcoming district event
@@ -422,11 +430,11 @@ Run_input to_run_input_equal(TBA_fetcher &fetcher,tba::District_key district,Dis
 		data
 	));
 
-	r.dcmp_played=[&]()->bool{
+	/*r.dcmp_played=[&]()->bool{
 		auto e=tba::district_events_simple(fetcher,district);
 		auto m=to_set(mapf([](auto e){ return e.event_type; },e));
 		return m.count(tba::Event_type::DISTRICT_CMP);
-	}();
+	}();*/
 	//r.dcmp_distribution1=;*/
 
 	auto d=tba::district_rankings(fetcher,district);
@@ -665,7 +673,7 @@ std::vector<Prediction_status> historical_demo(TBA_fetcher &fetcher,tba::Distric
 		//cout<<"---------------------\n";
 		//analyze_status(p1);
 		Run_input input;
-		input.dcmp_size=dcmp_size(district);
+		//input.dcmp_size=dcmp_size(district);
 		input.worlds_slots=worlds_slots(district);
 		input.by_team=to_map(mapf(
 			[&](auto p){
@@ -694,16 +702,16 @@ std::vector<Prediction_status> historical_demo(TBA_fetcher &fetcher,tba::Distric
 			p1
 		));
 
-		input.dcmp_played=any(mapf([](auto x){ return x.dcmp_points; },values(p1)));
+		//input.dcmp_played=any(mapf([](auto x){ return x.dcmp_points; },values(p1)));
 
-		input.dcmp_distribution1=duplicate(skill.at_dcmp,MAX_DCMPS);
+		//input.dcmp_distribution1=duplicate(skill.at_dcmp,MAX_DCMPS);
 
 		//print_r(input);
 		if(0){
 			auto i2=input;
 			auto bt=i2.by_team;
 			i2.by_team.clear();
-			i2.dcmp_distribution1.clear();
+			//i2.dcmp_distribution1.clear();
 			print_r(i2);
 			for(auto [k,v]:take(5,bt)){
 				//p.second.point_dist.clear();//because big onscreen.

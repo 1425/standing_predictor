@@ -9,6 +9,10 @@
 
 using namespace std;
 
+std::ostream& operator<<(std::ostream& o,Dcmp_data const& a){
+	return o<<"Dcmp_data("<<a.size<<" "<<a.played<<" "<<a.dists<<")";
+}
+
 std::ostream& operator<<(std::ostream& o,Team_status const& a){
 	o<<"Team_status( ";
 	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
@@ -388,16 +392,20 @@ void check(std::vector<T> const& a){
 	}
 }
 
+void check(Dcmp_data const& a){
+	assert(a.size>=0);
+	check(a.dists);
+}
+
 void check(Run_input const& a){
-	for(auto x:a.dcmp_size){
+	/*for(auto x:a.dcmp_size){
 		assert(x>=0);
-	}
+	}*/
 	assert(a.worlds_slots>=0);
 	string s="by_team";
 	try{
 		check(a.by_team);
 		s="dcmp_distribution1";
-		check(a.dcmp_distribution1);
 	}catch(std::vector<string> const& a){
 		vector<string> r;
 		r|=a;
@@ -407,6 +415,7 @@ void check(Run_input const& a){
 	}catch(...){
 		assert(0);
 	}
+	check(a.dcmp);
 }
 
 template<typename K,typename V>
@@ -486,15 +495,17 @@ Run_result run_calc(
 		return s.count(dcmp_index);
 	};
 
+	const auto dcmp_sizes=mapf([](auto x){ return x.size; },input.dcmp);
+
 	auto teams_left_out=mapf(
 		[=](auto p){
 			auto [i,teams_advancing]=p;
 			auto t=teams_competing(i);
 			return max(0,(int)t-(int)teams_advancing);
 		},
-		enumerate(input.dcmp_size)
+		enumerate(dcmp_sizes)
 	);
-	unsigned cmp_teams_left_out=max(0,(int)sum(input.dcmp_size)-input.worlds_slots);
+	unsigned cmp_teams_left_out=max(0,(int)sum(dcmp_sizes)-input.worlds_slots);
 
 	//monte carlo method for where the cutoff is
 
@@ -560,7 +571,7 @@ Run_result run_calc(
 		dcmp_cutoffs|=dcmp_cutoff;
 
 		flat_map2<pair<bool,Point>,unsigned> post_dcmp_points;
-		for(auto dcmp_index:range_st<MAX_DCMPS>()){
+		for(auto [dcmp_index,dcmp]:enumerate(input.dcmp)){
 			auto & final_points_this=final_points[dcmp_index];//not sure that this should really be mutable.
 			auto const& dcmp_cutoff_this=dcmp_cutoff[dcmp_index];
 			for(auto [earned,teams]:final_points_this){
@@ -574,13 +585,13 @@ Run_result run_calc(
 
 				for(unsigned i=0;i<teams;i++){
 					int pts;
-					if(input.dcmp_played){
+					if(dcmp.played){
 						pts=points;
 					}else{
-						auto const& dists=input.dcmp_distribution1.at(dcmp_index);
+						auto const& dists=dcmp.dists;
 						auto f=dists.find(points);
 						auto d=[&](){
-							if(f==input.dcmp_distribution1.at(dcmp_index).end()){
+							if(f==dcmp.dists.end()){
 								/*PRINT(points);
 								PRINT(keys(input.dcmp_distribution1));
 								assert(0);*/
@@ -686,7 +697,7 @@ Run_result run_calc(
 			return when_greater(team_pr,cutoff_pr[dcmp_home]);
 		}();
 
-		auto post_dcmp_dist=convolve(dcmp_entry_dist,input.dcmp_distribution1.at(team_data.dcmp_home));
+		auto post_dcmp_dist=convolve(dcmp_entry_dist,input.dcmp.at(team_data.dcmp_home).dists);
 		auto post_total=sum(values(post_dcmp_dist));
 		Pr cmp_make=0;
 		Pr cmp_miss=0;
