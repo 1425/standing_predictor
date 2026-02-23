@@ -38,6 +38,7 @@ enum class Tournament_status{
 };
 
 std::ostream& operator<<(std::ostream&,Tournament_status const&);
+Tournament_status rand(Tournament_status const*);
 
 bool in_progress(Tournament_status);
 

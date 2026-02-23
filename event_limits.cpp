@@ -39,6 +39,18 @@ std::ostream& operator<<(std::ostream& o,Tournament_status const& a){
 	assert(0);
 }
 
+auto options(Tournament_status const*){
+	return std::array{
+	#define X(A) Tournament_status::A,
+	TOURNAMENT_STATUS(X)
+	#undef X
+	};
+}
+
+Tournament_status rand(Tournament_status const* x){
+	return choose(options(x));
+}
+
 std::ostream& operator<<(std::ostream& o,District_status const& a){
 	#define X(A) if(a==District_status::A) return o<<""#A;
 	DISTRICT_STATUS(X)

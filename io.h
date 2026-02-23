@@ -262,12 +262,4 @@ std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C,D,E,F> const& a){
 	return o<<")";
 }
 
-namespace tba{
-	class Event_key;
-	struct Event;
-};
-
-std::string link(tba::Event_key const&,std::string const&);
-std::string link(tba::Event const&,std::string const&);
-
 #endif

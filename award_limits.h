@@ -31,6 +31,15 @@ struct Rank_status{
 	Rank_status& operator+=(Rank_status const&);
 };
 
+template<typename T>
+Rank_status<T> rand(Rank_status<T> const*){
+	return Rank_status<T>{
+		rand((Team_rank_value*)0),
+		rand((Rank_value*)0),
+		rand((T*)0)
+	};
+}
+
 //TODO: Move to util.
 #define PRINT_STRUCT_INNER(A,B) o<<""#B<<":"<<a.B<<" ";
 

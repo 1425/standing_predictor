@@ -1,5 +1,4 @@
 #include "io.h"
-#include "../tba/data.h"
 #include "vector.h"
 
 std::vector<std::string> split(std::string const& s){
@@ -84,14 +83,6 @@ std::ostream& operator<<(std::ostream& o,std::chrono::time_zone const * const x)
 		return o<<"NULL";
 	}
 	return o<<*x;
-}
-
-std::string link(tba::Event_key const& event,std::string const& body){
-	return link("https://www.thebluealliance.com/event/"+event.get(),body);
-}
-
-std::string link(tba::Event const& event,std::string const& body){
-	return link(event.key,body);
 }
 
 std::ostream& operator<<(std::ostream& o,std::stringstream const& ss){

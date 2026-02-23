@@ -51,6 +51,7 @@ simple way:
 #include "venue.h"
 #include "event_limits.h"
 #include "event_partial.h"
+#include "toggle.h"
 
 //start program-specific stuff.
 
@@ -1081,6 +1082,7 @@ int main1(int argc,char **argv){
 	}
 
 	if(args.event_partial_demo){
+		return toggle_demo();
 		return event_partial_demo(tba_fetcher);
 	}
 

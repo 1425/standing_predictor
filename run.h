@@ -17,6 +17,7 @@ struct Team_status{
 };
 
 std::ostream& operator<<(std::ostream&,Team_status const&);
+Team_status rand(Team_status const*);
 
 void describe(std::ostream&,Team_status const*);
 
@@ -34,6 +35,7 @@ struct Dcmp_data{
 };
 
 std::ostream& operator<<(std::ostream&,Dcmp_data const&);
+Dcmp_data rand(Dcmp_data const*);
 
 #define RUN_INPUT_ITEMS(X)\
 	X(int,worlds_slots)\
@@ -45,6 +47,7 @@ struct Run_input{
 };
 
 std::ostream& operator<<(std::ostream&,Run_input const&);
+Run_input rand(Run_input const*);
 
 using Cutoff_detail=flat_map2<std::pair<Point,double>,double>;
 using Cutoff_details=std::array<Cutoff_detail,MAX_DCMPS>;
@@ -62,5 +65,6 @@ std::ostream& operator<<(std::ostream&,Run_result const&);
 void print_r(int,Run_result const&);
 
 Run_result run_calc(Run_input);
+Run_result rand(Run_result const*);
 
 #endif

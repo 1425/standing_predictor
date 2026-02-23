@@ -420,3 +420,13 @@ tba::Event_type event_type(TBA_fetcher &f,tba::Event_key const& event){
 	auto x=tba::event(f,event);
 	return x.event_type;
 }
+
+std::string link(tba::Event_key const& event,std::string const& body){
+	return link("https://www.thebluealliance.com/event/"+event.get(),body);
+}
+
+std::string link(tba::Event const& event,std::string const& body){
+	return link(event.key,body);
+}
+
+

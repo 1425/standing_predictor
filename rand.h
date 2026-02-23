@@ -88,4 +88,14 @@ auto rand(std::array<T,N> const*){
 	);
 }
 
+#define ELEMENTWISE_RAND_INNER(A,B) rand((A*)0),
+
+#define ELEMENTWISE_RAND(NAME,ITEMS)\
+	NAME rand(NAME const*){\
+		return NAME{\
+			ITEMS(ELEMENTWISE_RAND_INNER)\
+		};\
+	}\
+
+
 #endif

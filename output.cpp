@@ -37,6 +37,8 @@ std::ostream& operator<<(std::ostream& o,Output_tuple const& a){
 	return o<<")";
 }
 
+ELEMENTWISE_RAND(Output_tuple,OUTPUT_TUPLE)
+
 map<Point,Pr> simplify(map<pair<Point,Pr>,Pr> const& m){
 	map<Point,Pr> r;
 	for(auto [k,v]:m){

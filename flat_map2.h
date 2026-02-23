@@ -3,6 +3,7 @@
 
 #include "flat_map.h"
 #include "io.h"
+#include "rand.h"
 
 template<typename T>
 std::vector<T> sorted(std::initializer_list<T> const& a){
@@ -352,6 +353,11 @@ std::map<K,V> to_map(flat_map2<K,V> const& a){
 }
 
 template<typename K,typename V>
+auto to_flat_map2(std::map<K,V> const& a){
+	return flat_map2<K,V>{a};
+}
+
+template<typename K,typename V>
 auto const& values(flat_map2<K,V> const& a){
 	return a.get_values();
 }
@@ -398,6 +404,15 @@ V get(flat_map2<K,V> const& a,auto const& k){
 	auto f=a.find(k);
 	assert(f!=a.end());
 	return (*f).second;
+}
+
+template<typename K,typename V>
+auto rand(flat_map2<K,V> const*){
+	flat_map2<K,V> r;
+	for(auto _:range(rand()%10)){
+		r[rand((K*)0)]=rand((V*)0);
+	}
+	return r;
 }
 
 #endif

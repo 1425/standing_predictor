@@ -163,4 +163,10 @@ std::array<A,N>& operator+=(std::array<A,N> &a,std::array<B,N> const& b){
 	return a;
 }
 
+template<typename T,size_t N>
+T choose(std::array<T,N> const& a){
+	static_assert(N>0);
+	return a[rand()%N];
+}
+
 #endif

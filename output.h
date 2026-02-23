@@ -14,20 +14,32 @@ using Extended_cutoff=std::pair<Point,Pr>;
 using Cutoff=std::map<Extended_cutoff,Pr>;
 using Cutoff2=flat_map2<Extended_cutoff,Pr>;
 
+using A_Point_3=std::array<Point,3>;
+
+#define OUTPUT_TUPLE(X)\
+	X(tba::Team_key,team)\
+	X(Dcmp_home,dcmp_home)\
+	X(Pr,dcmp_make)\
+	X(A_Point_3,dcmp_interesting)\
+	X(Pr,cmp_make)\
+	X(A_Point_3,cmp_interesting)
+
 struct Output_tuple{
-	tba::Team_key team;
+	/*tba::Team_key team;
 	Dcmp_home dcmp_home;
 
 	Pr dcmp_make;
 	std::array<Point,3> dcmp_interesting;
 
 	Pr cmp_make;
-	std::array<Point,3> cmp_interesting;
+	std::array<Point,3> cmp_interesting;*/
+	OUTPUT_TUPLE(INST)
 
 	auto operator<=>(Output_tuple const&)const=default;
 };
 
 std::ostream& operator<<(std::ostream&,Output_tuple const&);
+Output_tuple rand(Output_tuple const*);
 
 #define TEAM_POINTS_USED(X)\
 	X(std::vector<Point>,event_points_earned)\

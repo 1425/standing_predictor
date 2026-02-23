@@ -6,11 +6,20 @@
 #include "vector_void.h"
 #include "array.h"
 #include "vector.h"
+#include "rand.h"
 
 using namespace std;
 
 std::ostream& operator<<(std::ostream& o,Dcmp_data const& a){
 	return o<<"Dcmp_data("<<a.size<<" "<<a.played<<" "<<a.dists<<")";
+}
+
+Dcmp_data rand(Dcmp_data const*){
+	return Dcmp_data{
+		#define X(A,B) rand((A*)0),
+		DCMP_DATA(X)
+		#undef X
+	};
 }
 
 std::ostream& operator<<(std::ostream& o,Team_status const& a){
@@ -21,12 +30,28 @@ std::ostream& operator<<(std::ostream& o,Team_status const& a){
 	return o<<")";
 }
 
+Team_status rand(Team_status const*){
+	return Team_status{
+		#define X(A,B) rand((A*)0),
+		TEAM_STATUS(X)
+		#undef X
+	};
+}
+
 std::ostream& operator<<(std::ostream& o,Run_input const& a){
 	o<<"Run_input( ";
 	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
 	RUN_INPUT_ITEMS(X)
 	#undef X
 	return o<<")";
+}
+
+Run_input rand(Run_input const*){
+	return Run_input{
+		#define X(A,B) rand((A*)0),
+		RUN_INPUT_ITEMS(X)
+		#undef X
+	};
 }
 
 template<typename T,size_t N,typename B>
@@ -281,6 +306,8 @@ auto find_cutoff(std::array<T,N> const& a,std::vector<B> const& b){
 		range_st<N>()
 	);
 }
+
+ELEMENTWISE_RAND(Run_result,RUN_RESULT_ITEMS)
 
 std::ostream& operator<<(std::ostream& o,Run_result const& a){
 	o<<"Run_result( ";
