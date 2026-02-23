@@ -2,9 +2,9 @@
 #define CMP_REASON_H
 
 #include<map>
-#include<iosfwd>
 #include<set>
 #include<vector>
+#include "io.h"
 
 namespace tba{
 	class Year;
@@ -22,13 +22,7 @@ class TBA_fetcher;
 	X(PRIORITY_WAITLIST)\
 	X(WAITLIST)
 
-enum class Cmp_reason{
-	#define X(A) A,
-	CMP_REASON_ITEMS(X)
-	#undef X
-};
-
-std::ostream& operator<<(std::ostream& o,Cmp_reason);
+ENUM_CLASS(Cmp_reason,CMP_REASON_ITEMS)
 
 std::vector<tba::District_key> district_keys(TBA_fetcher&,tba::Year);
 

@@ -97,9 +97,6 @@ auto teams(Standings<Team> const& a){
 	X(tba::Year,year)\
 	X(int,matches_completed)\
 
-#define REMOVE_FIRST(...) REMOVE_FIRST_SUB(__VA_ARGS__)
-#define REMOVE_FIRST_SUB(X, ...) __VA_ARGS__
-
 template<typename Team>
 struct Ranking_match_status{
 	RANKING_MATCH_STATUS(INST)

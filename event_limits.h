@@ -31,13 +31,7 @@ std::tuple<
 	X(AWARDS_IN_PROGRESS)\
 	X(COMPLETE)\
 
-enum class Tournament_status{
-	#define X(A) A,
-	TOURNAMENT_STATUS(X)
-	#undef X
-};
-
-std::ostream& operator<<(std::ostream&,Tournament_status const&);
+ENUM_CLASS(Tournament_status,TOURNAMENT_STATUS)
 Tournament_status rand(Tournament_status const*);
 
 bool in_progress(Tournament_status);
@@ -49,13 +43,7 @@ bool in_progress(Tournament_status);
 	X(DCMP_IN_PROGRESS)\
 	X(COMPLETE)\
 
-enum class District_status{
-	#define X(A) A,
-	DISTRICT_STATUS(X)
-	#undef X
-};
-
-std::ostream& operator<<(std::ostream&,District_status const&);
+ENUM_CLASS(District_status,DISTRICT_STATUS)
 
 bool in_progress(District_status);
 

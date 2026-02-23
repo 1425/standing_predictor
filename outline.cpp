@@ -382,9 +382,7 @@ map<tba::Team_key,Pr> run(
 	X(Dcmp_home,dcmp_home)
 
 struct Team_data{
-	#define X(A,B) A B;
-	TEAM_DATA_ITEMS(X)
-	#undef X
+	TEAM_DATA_ITEMS(INST)
 
 	auto operator<=>(Team_data const&)const=default;
 };

@@ -14,13 +14,7 @@
 
 using namespace std;
 
-std::ostream& operator<<(std::ostream& o,California_region a){
-	#define X(A) if(a==California_region::A) return o<<""#A;
-	X(NORTH)
-	X(SOUTH)
-	#undef X
-	assert(0);
-}
+ENUM_CLASS_PRINT(California_region,CALIFORNIA_REGION_OPTIONS)
 
 #define ZIP_CODE_DATA(X)\
 	X(Zipcode,zipcode)\

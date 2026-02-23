@@ -272,4 +272,24 @@ std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C,D,E,F> const& a){
 		return o<<")";\
 	}
 
+#define REMOVE_FIRST(...) REMOVE_FIRST_SUB(__VA_ARGS__)
+#define REMOVE_FIRST_SUB(X, ...) __VA_ARGS__
+
+#define ENUM_CLASS_INNER(A) ,A
+
+//could probably also put in options() and rand() here.
+
+#define ENUM_CLASS(NAME,ITEMS)\
+	enum class NAME{REMOVE_FIRST(ITEMS(ENUM_CLASS_INNER))};\
+	std::ostream& operator<<(std::ostream&,NAME const&);
+
+#define ENUM_CLASS_PRINT_INNER(A) if(A==a) return o<<""#A;
+
+#define ENUM_CLASS_PRINT(NAME,ITEMS)\
+	std::ostream& operator<<(std::ostream& o,NAME const& a){\
+		using enum NAME;\
+		ITEMS(ENUM_CLASS_PRINT_INNER)\
+		assert(0);\
+	}
+
 #endif

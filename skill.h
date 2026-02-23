@@ -15,13 +15,7 @@ class TBA_fetcher;
 	X(OPR)\
 	X(NONE)
 
-enum class Skill_method{
-	#define X(A) A,
-	SKILL_METHOD(X)
-	#undef X
-};
-
-std::ostream& operator<<(std::ostream&,Skill_method);
+ENUM_CLASS(Skill_method,SKILL_METHOD)
 
 Skill_method decode(std::span<char*>,Skill_method const*);
 

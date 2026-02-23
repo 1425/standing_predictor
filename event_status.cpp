@@ -8,12 +8,7 @@
 
 using namespace std;
 
-std::ostream& operator<<(std::ostream& o,Event_status a){
-	#define X(A) if(a==Event_status::A) return o<<""#A;
-	EVENT_STATUS_ITEMS(X)
-	#undef X
-	assert(0);
-}
+ENUM_CLASS_PRINT(Event_status,EVENT_STATUS_ITEMS)
 
 static unsigned int playoff_size(TBA_fetcher& tba_fetcher,tba::Event_key event){
 	if(event=="2022waspo"){

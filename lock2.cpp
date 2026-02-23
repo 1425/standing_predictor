@@ -6,14 +6,13 @@
 using namespace std;
 using Team=tba::Team_key;
 
-enum class Floor_result{TOO_HIGH,TOO_LOW,PLAUSIBLE};
+#define FLOOR_RESULT(X)\
+	X(TOO_HIGH)\
+	X(TOO_LOW)\
+	X(PLAUSIBLE)
 
-std::ostream& operator<<(std::ostream& o,Floor_result a){
-	#define X(A) if(a==Floor_result::A) return o<<""#A;
-	X(TOO_HIGH) X(TOO_LOW) X(PLAUSIBLE)
-	#undef X
-	assert(0);
-}
+ENUM_CLASS(Floor_result,FLOOR_RESULT)
+ENUM_CLASS_PRINT(Floor_result,FLOOR_RESULT)
 
 template<template<typename>typename MULTISET>
 Floor_result find_floor(MULTISET<Interval<Rank_value>> teams,int slots,Rank_value unclaimed,Rank_value threshold){

@@ -4,6 +4,7 @@
 #include<iostream>
 #include "../tba/data.h"
 #include "rand.h"
+#include "io.h"
 
 template<typename T>
 struct Interval{
@@ -109,15 +110,9 @@ bool match(Interval<T> const& a,Interval<T> const& b){
 	X(GREATER)\
 	X(INDETERMINATE)
 
-enum class Interval_compare{
-	#define X(A) A,
-	INTERVAL_COMPARE(X)
-	#undef X
-};
+ENUM_CLASS(Interval_compare,INTERVAL_COMPARE)
 
 using enum Interval_compare;
-
-std::ostream& operator<<(std::ostream&,Interval_compare);
 
 template<typename T>
 Interval_compare compare(Interval<T> const& a,Interval<T> const& b){

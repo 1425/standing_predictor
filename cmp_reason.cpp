@@ -12,19 +12,7 @@
 
 using namespace std;
 
-#define CMP_REASON_ITEMS(X)\
-	X(PRE_QUALIFIED)\
-	X(REGIONAL)\
-	X(DISTRICT)\
-	X(PRIORITY_WAITLIST)\
-	X(WAITLIST)
-
-std::ostream& operator<<(std::ostream& o,Cmp_reason a){
-	#define X(A) if(a==Cmp_reason::A) return o<<""#A;
-	CMP_REASON_ITEMS(X)
-	#undef X
-	assert(0);
-}
+ENUM_CLASS_PRINT(Cmp_reason,CMP_REASON_ITEMS)
 
 static std::optional<tba::Team_key> team_winners(tba::Award_Recipient const& a){
 	return a.team_key;

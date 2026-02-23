@@ -5,6 +5,7 @@
 #include<string>
 #include<cstdint>
 #include "int_limited.h"
+#include "io.h"
 
 namespace tba{
 	struct Team;
@@ -14,11 +15,11 @@ class TBA_fetcher;
 struct City;
 struct Zipcode;
 
-enum class California_region{
-	NORTH,SOUTH
-};
+#define CALIFORNIA_REGION_OPTIONS(X)\
+	X(NORTH)\
+	X(SOUTH)\
 
-std::ostream& operator<<(std::ostream& o,California_region);
+ENUM_CLASS(California_region,CALIFORNIA_REGION_OPTIONS)
 
 California_region california_region(Zipcode const&);
 California_region california_region(City const&);

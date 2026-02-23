@@ -32,12 +32,7 @@ using namespace std;
 
 using Team=tba::Team_key;
 
-std::ostream& operator<<(std::ostream& o,Tournament_status const& a){
-	#define X(A) if(a==Tournament_status::A) return o<<""#A;
-	TOURNAMENT_STATUS(X)
-	#undef X
-	assert(0);
-}
+ENUM_CLASS_PRINT(Tournament_status,TOURNAMENT_STATUS)
 
 auto options(Tournament_status const*){
 	return std::array{
@@ -51,12 +46,7 @@ Tournament_status rand(Tournament_status const* x){
 	return choose(options(x));
 }
 
-std::ostream& operator<<(std::ostream& o,District_status const& a){
-	#define X(A) if(a==District_status::A) return o<<""#A;
-	DISTRICT_STATUS(X)
-	#undef X
-	assert(0);
-}
+ENUM_CLASS_PRINT(District_status,DISTRICT_STATUS)
 
 template<typename K,typename V>
 void reserve_if_able(flat_map<K,V> &a,size_t n){
