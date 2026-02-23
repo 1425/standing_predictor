@@ -137,14 +137,7 @@ auto rand(Lock_data const*){
 	};
 }
 
-void print_r(int n,Lock_data const& a){
-	indent(n);
-	cout<<"Lock_data\n";
-	n++;
-	#define X(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
-	LOCK_DATA(X)
-	#undef X
-}
+PRINT_R_ITEM(Lock_data,LOCK_DATA)
 
 //returns a list with each item representing the status of one of the district events.
 vector<Lock_data> read_lock_data(TBA_fetcher &f,tba::District_key const& district){
@@ -352,14 +345,7 @@ struct Lock_result{
 
 PRINT_STRUCT(Lock_result,LOCK_RESULT)
 
-void print_r(int n,Lock_result const& a){
-	indent(n);
-	cout<<"Lock_result\n";
-	n++;
-#define X(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
-	LOCK_RESULT(X)
-#undef X
-}
+PRINT_R_ITEM(Lock_result,LOCK_RESULT)
 
 Lock_result run(Lock_data const& data){
 	//print_r(data);

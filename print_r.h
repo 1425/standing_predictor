@@ -97,12 +97,12 @@ void print_r(T const& t){
 }
 
 
-#define PRINT_R_INNER(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
+#define PRINT_R_INNER(A,B) indent(n); std::cout<<""#B<<"\n"; print_r(n+1,a.B);
 
 #define PRINT_R_ITEM(NAME,ITEMS) \
 	void print_r(int n,NAME const& a){\
 		indent(n);\
-		cout<<""#NAME<<"\n";\
+		std::cout<<""#NAME<<"\n";\
 		n++;\
 		ITEMS(PRINT_R_INNER)\
 	}

@@ -36,56 +36,12 @@ std::string abbreviate(int max_width,std::string const& s){
 	return s.substr(0,max_width-3)+"...";
 }
 
-void print_r(int n,frc_api::Match const& a){
-	indent(n);
-	cout<<"Match\n";
-	n++;
-	#define X(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
-	FRC_API_MATCH(X)
-	#undef X
-}
+PRINT_R_ITEM(frc_api::Match,FRC_API_MATCH)
+PRINT_R_ITEM(frc_api::TeamListings,FRC_API_TEAMLISTINGS)
+PRINT_R_ITEM(frc_api::Event,FRC_API_EVENT)
 
-void print_r(int n,frc_api::TeamListings const& a){
-	indent(n++);
-	cout<<"TeamListings\n";
-	#define X(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
-	FRC_API_TEAMLISTINGS(X)
-	#undef X
-}
-
-void print_r(int n,frc_api::Event const& a){
-	indent(n++);
-	cout<<"Event\n";
-	#define X(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
-	FRC_API_EVENT(X)
-	#undef X
-}
-void print_r(int n,tba::Team const& a){
-	indent(n++);
-	std::cout<<"Team\n";
-	#define X(A,B) indent(n); std::cout<<""#B<<"\n"; print_r(n+1,a.B);
-	TBA_TEAM(X)
-	#undef X
-}
-
-
-void print_r(int n,tba::Match const& a){
-	indent(n++);
-	std::cout<<"Match\n";
-	#define X(A,B) indent(n); std::cout<<""#B<<"\n"; print_r(n+1,a.B);
-	TBA_MATCH(X)
-	#undef X
-}
-
-#define PRINT_R_INNER(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
-
-#define PRINT_R_ITEM(NAME,ITEMS) \
-        void print_r(int n,NAME const& a){\
-                indent(n);\
-                cout<<""#NAME<<"\n";\
-                n++;\
-                ITEMS(PRINT_R_INNER)\
-        }
+PRINT_R_ITEM(tba::Team,TBA_TEAM)
+PRINT_R_ITEM(tba::Match,TBA_MATCH)
 
 PRINT_R_ITEM(tba::Match_Score_Breakdown_2024_Alliance,TBA_MATCH_SCORE_BREAKDOWN_2024_ALLIANCE)
 PRINT_R_ITEM(tba::Match_Score_Breakdown_2023_Alliance,TBA_MATCH_SCORE_BREAKDOWN_2023_ALLIANCE)

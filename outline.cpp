@@ -931,15 +931,6 @@ tba::Date cmp_end(TBA_fetcher& f,Year year){
 	nyi
 }
 
-void print_r(size_t n,tba::Match const& a){
-	indent(n);
-	cout<<"Match\n";
-	n++;
-	#define X(A,B) indent(n); cout<<""#B<<"\n"; print_r(n+1,a.B);
-	TBA_MATCH(X)
-	#undef X
-}
-
 void event_dates(TBA_fetcher &f,tba::Event const& e){
 	//print_r(e);
 	//PRINT(e.start_date)

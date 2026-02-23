@@ -298,15 +298,7 @@ auto find_cutoff(std::array<T,N> const& a,std::vector<B> const& b){
 ELEMENTWISE_RAND(Run_result,RUN_RESULT_ITEMS)
 
 PRINT_STRUCT(Run_result,RUN_RESULT_ITEMS)
-
-void print_r(int n,Run_result const& a){
-	indent(n);
-	cout<<"Run_result\n";
-	n++;
-	#define X(A,B) indent(n); std::cout<<""#B<<"\n"; print_r(n+1,a.B);
-	RUN_RESULT_ITEMS(X)
-	#undef X
-}
+PRINT_R_ITEM(Run_result,RUN_RESULT_ITEMS)
 
 template<typename T>
 void check(std::vector<T> const&);

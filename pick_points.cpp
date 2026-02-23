@@ -26,14 +26,7 @@ using Team=tba::Team_key;
 using Event=tba::Event_key;
 using namespace std;
 
-void print_r(int n,tba::Event const& a){
-	indent(n);
-	cout<<"Event\n";
-	n++;
-#define X(A,B) indent(n); std::cout<<""#B<<"\n"; print_r(n+1,a.B);
-	TBA_EVENT(X)
-#undef X
-}
+PRINT_R_ITEM(tba::Event,TBA_EVENT)
 
 std::vector<Team> teams(tba::Elimination_Alliance const& a){
 	if(a.backup){

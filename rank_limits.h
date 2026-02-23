@@ -68,14 +68,7 @@ std::ostream& operator<<(std::ostream& o,Rank_results<Team> const& a){
 }
 
 template<typename Team>
-void print_r(int n,Rank_results<Team> const& a){
-        indent(n);
-	std::cout<<"Rank_results\n";
-        n++;
-        #define X(A,B) indent(n); std::cout<<""#B<<"\n"; print_r(n+1,a.B);
-        RANK_RESULTS(X)
-        #undef X
-}
+PRINT_R_ITEM(Rank_results<Team>,RANK_RESULTS)
 
 Rank_results<tba::Team_key> rank_limits(TBA_fetcher&,tba::Event_key const&);
 

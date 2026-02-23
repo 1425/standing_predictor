@@ -7,6 +7,7 @@
 #include "tba.h"
 #include "../tba/tba.h"
 #include "pick_points.h"
+#include "print_r.h"
 
 template<size_t N>
 set_limited<tba::Team_key,N> teams(set_limited<tba::Team_key,N> const& a){
@@ -135,14 +136,7 @@ template<typename Team>
 PRINT_STRUCT(Ranking_match_status<Team>,RANKING_MATCH_STATUS)
 
 template<typename Team>
-void print_r(int n,Ranking_match_status<Team> const& a){
-	indent(n);
-	std::cout<<"Ranking_match_status\n";
-	n++;
-	#define X(A,B) indent(n); std::cout<<""#B<<"\n"; print_r(n+1,a.B);
-	RANKING_MATCH_STATUS(X)
-	#undef X
-}
+PRINT_R_ITEM(Ranking_match_status<Team>,RANKING_MATCH_STATUS)
 
 template<typename Team>
 std::set<Team> teams(Ranking_match_status<Team> const& a){
