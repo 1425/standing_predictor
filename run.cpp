@@ -22,13 +22,7 @@ Dcmp_data rand(Dcmp_data const*){
 	};
 }
 
-std::ostream& operator<<(std::ostream& o,Team_status const& a){
-	o<<"Team_status( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	TEAM_STATUS(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Team_status,TEAM_STATUS)
 
 Team_status rand(Team_status const*){
 	return Team_status{
@@ -38,13 +32,7 @@ Team_status rand(Team_status const*){
 	};
 }
 
-std::ostream& operator<<(std::ostream& o,Run_input const& a){
-	o<<"Run_input( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	RUN_INPUT_ITEMS(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Run_input,RUN_INPUT_ITEMS)
 
 Run_input rand(Run_input const*){
 	return Run_input{
@@ -309,13 +297,7 @@ auto find_cutoff(std::array<T,N> const& a,std::vector<B> const& b){
 
 ELEMENTWISE_RAND(Run_result,RUN_RESULT_ITEMS)
 
-std::ostream& operator<<(std::ostream& o,Run_result const& a){
-	o<<"Run_result( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	RUN_RESULT_ITEMS(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Run_result,RUN_RESULT_ITEMS)
 
 void print_r(int n,Run_result const& a){
 	indent(n);

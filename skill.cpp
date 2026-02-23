@@ -17,13 +17,7 @@ using Points=tba::Points;
 
 using namespace std;
 
-std::ostream& operator<<(std::ostream& o,Skill_estimates const& a){
-	o<<"Skill_estimates( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	SKILL_ESTIMATES(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Skill_estimates,SKILL_ESTIMATES)
 
 Skill_estimates skill_null(TBA_fetcher &f,District_key const& district){
 	Skill_estimates r;

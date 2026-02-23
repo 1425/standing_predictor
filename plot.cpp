@@ -8,14 +8,7 @@
 
 using namespace std;
 
-
-std::ostream& operator<<(std::ostream& o,Plot_setup const& a){
-	o<<"Plot_setup( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	PLOT_SETUP(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Plot_setup,PLOT_SETUP)
 
 auto rand(Plot_setup const*){
 	return Plot_setup{

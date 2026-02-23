@@ -1,15 +1,8 @@
 #include "subprocess.h"
 #include "vector_void.h"
+#include "io.h"
 
-std::ostream& operator<<(std::ostream& o,Subprocess_result const& a){
-	o<<"Subprocess_result( ";
-	#define X(A) o<<""#A<<":"<<a.A<<" ";
-	X(status)
-	X(out)
-	X(error)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Subprocess_result,SUBPROCESS_RESULT)
 
 #ifndef __unix__
 
@@ -390,13 +383,7 @@ struct Job_status{
 	std::stringstream from_stdout,from_stderr;*/
 };
 
-std::ostream& operator<<(std::ostream& o,Job_status const& a){
-	o<<"Job_status( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	JOB_STATUS(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Job_status,JOB_STATUS)
 
 void print_short(Job_status const& a){
 	ostream& o=std::cout;

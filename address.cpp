@@ -55,19 +55,16 @@ bool operator==(std::optional<City> const& a,const char *s){
 	return !s;
 }
 
-//struct Country{
-//	std::string s;
-
-	bool Country::operator==(const char *s1)const{
-		if(!s1){
-			return 0;
-		}
-		return s==s1;
+bool Country::operator==(const char *s1)const{
+	if(!s1){
+		return 0;
 	}
+	return s==s1;
+}
 
-	bool Country::operator==(Country const& a)const{
-		return s==a.s;
-	}
+bool Country::operator==(Country const& a)const{
+	return s==a.s;
+}
 
 std::ostream& operator<<(std::ostream& o,Country const& a){
 	return o<<a.s;
@@ -113,13 +110,7 @@ struct Address{
 	ADDRESS(INST)
 };*/
 
-std::ostream& operator<<(std::ostream& o,Address const& a){
-	o<<"Address( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	ADDRESS(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Address,ADDRESS)
 
 static const std::set<std::string> STATE_CODES{
 	"AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",

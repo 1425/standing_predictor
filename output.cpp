@@ -16,26 +16,9 @@
 using namespace std;
 using Team_key=tba::Team_key;
 
-std::ostream& operator<<(std::ostream& o,Team_points_used const& a){
-	o<<"Team_points_used(";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	TEAM_POINTS_USED(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Team_points_used,TEAM_POINTS_USED)
 
-std::ostream& operator<<(std::ostream& o,Output_tuple const& a){
-	o<<"Output_tuple( ";
-	#define X(A) o<<""#A<<":"<<a.A<<" ";
-	X(team)
-	X(dcmp_home)
-	X(dcmp_make)
-	X(dcmp_interesting)
-	X(cmp_make)
-	X(cmp_interesting)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Output_tuple,OUTPUT_TUPLE)
 
 ELEMENTWISE_RAND(Output_tuple,OUTPUT_TUPLE)
 

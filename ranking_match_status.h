@@ -132,13 +132,7 @@ struct Ranking_match_status{
 };
 
 template<typename Team>
-std::ostream& operator<<(std::ostream& o,Ranking_match_status<Team> const& a){
-	o<<"Ranking_match_status( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	RANKING_MATCH_STATUS(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Ranking_match_status<Team>,RANKING_MATCH_STATUS)
 
 template<typename Team>
 void print_r(int n,Ranking_match_status<Team> const& a){

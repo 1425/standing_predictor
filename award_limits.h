@@ -40,16 +40,6 @@ Rank_status<T> rand(Rank_status<T> const*){
 	};
 }
 
-//TODO: Move to util.
-#define PRINT_STRUCT_INNER(A,B) o<<""#B<<":"<<a.B<<" ";
-
-#define PRINT_STRUCT(NAME,ITEMS)\
-        std::ostream& operator<<(std::ostream& o,NAME const& a){\
-                o<<""#NAME<<"( ";\
-                ITEMS(PRINT_STRUCT_INNER)\
-                return o<<")";\
-        }
-
 template<typename Status>
 PRINT_STRUCT(Rank_status<Status>,RANK_STATUS)
 

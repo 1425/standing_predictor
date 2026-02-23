@@ -389,13 +389,7 @@ struct Team_data{
 	auto operator<=>(Team_data const&)const=default;
 };
 
-std::ostream& operator<<(std::ostream& o,Team_data const& a){
-	o<<"Team_data( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	TEAM_DATA_ITEMS(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Team_data,TEAM_DATA_ITEMS)
 
 using District_data=map<tba::Team_key,Team_data>;
 
@@ -630,13 +624,7 @@ struct Prediction_status{
 	PREDICTION_STATUS(INST)
 };
 
-std::ostream& operator<<(std::ostream& o,Prediction_status const& a){
-	o<<"Prediction_status( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	PREDICTION_STATUS(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Prediction_status,PREDICTION_STATUS)
 
 std::vector<Prediction_status> historical_demo(TBA_fetcher &fetcher,tba::District_key const& district){
 	auto p=partial_data(fetcher,district);

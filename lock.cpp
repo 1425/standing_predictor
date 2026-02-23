@@ -56,13 +56,7 @@ struct Team_info{
 	auto operator<=>(Team_info const&)const=default;
 };
 
-std::ostream& operator<<(std::ostream& o,Team_info const& a){
-	o<<"Team_info( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	TEAM_INFO(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Team_info,TEAM_INFO)
 
 auto rand(Team_info const*){
 	return Team_info{
@@ -133,13 +127,7 @@ struct Lock_data{
 	auto operator<=>(Lock_data const&)const=default;
 };
 
-std::ostream& operator<<(std::ostream& o,Lock_data const& a){
-	o<<"Lock_data( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	LOCK_DATA(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Lock_data,LOCK_DATA)
 
 auto rand(Lock_data const*){
 	return Lock_data{
@@ -362,13 +350,7 @@ struct Lock_result{
 	LOCK_RESULT(INST)
 };
 
-std::ostream& operator<<(std::ostream& o,Lock_result const& a){
-	o<<"Lock_result(";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	LOCK_RESULT(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Lock_result,LOCK_RESULT)
 
 void print_r(int n,Lock_result const& a){
 	indent(n);
@@ -568,13 +550,7 @@ struct Event_display{
 	EVENT_DISPLAY(INST)
 };
 
-std::ostream& operator<<(std::ostream& o,Event_display const& a){
-	o<<"Event_display( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	EVENT_DISPLAY(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Event_display,EVENT_DISPLAY)
 
 using Team_district_display=vector_fixed<Point,2>;
 
@@ -590,13 +566,7 @@ struct Team_display{
 	TEAM_DISPLAY(INST)
 };
 
-std::ostream& operator<<(std::ostream& o,Team_display const& a){
-	o<<"Team_display( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	TEAM_DISPLAY(X)
-	#undef X
-	return o;
-}
+PRINT_STRUCT(Team_display,TEAM_DISPLAY)
 
 #define LOCK_DISPLAY(X)\
 	X(std::string,district)\
@@ -611,13 +581,7 @@ struct Lock_display{
 	LOCK_DISPLAY(INST)
 };
 
-std::ostream& operator<<(std::ostream& o,Lock_display const& a){
-	o<<"Lock_display( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	LOCK_DISPLAY(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Lock_display,LOCK_DISPLAY)
 
 PRINT_R_ITEM(Lock_display,LOCK_DISPLAY)
 

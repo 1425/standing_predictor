@@ -52,34 +52,6 @@ std::set<Team> teams(tba::Award const& a){
 	return or_all(MAP(teams,a.recipient_list));
 }
 
-/*template<size_t N>
-set_fixed<tba::Team_key,N> teams(set_fixed<tba::Team_key,N> const& a){
-	return a;
-}
-
-template<size_t N>
-auto teams(std::array<Team,N> a){
-	return a;
-}
-
-template<typename T,size_t N>
-auto teams(std::array<T,N> const& a){
-	return flatten(MAP(teams,a));
-}
-
-template<typename T>
-vector<Team> teams(std::vector<T> a){
-	return flatten(MAP(teams,a));
-}
-
-template<typename T>
-auto teams(std::optional<T> const& a){
-	if(!a){
-		return std::vector<Team>();
-	}
-	return teams(*a);
-}*/
-
 using Picks_complete=map<Team,Point>;
 
 //using Picks_in_progress=map<Team,Interval<Point>>;
@@ -95,13 +67,7 @@ struct Picks_in_progress{
 	auto operator<=>(Picks_in_progress const&)const=default;
 };
 
-std::ostream& operator<<(std::ostream& o,Picks_in_progress const& a){
-	o<<"Picks_in_progress( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	PICKS_IN_PROGRESS(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Picks_in_progress,PICKS_IN_PROGRESS)
 
 PRINT_R_ITEM(Picks_in_progress,PICKS_IN_PROGRESS)
 
@@ -168,13 +134,7 @@ struct From_alliances{
 	FROM_ALLIANCES(INST)
 };
 
-std::ostream& operator<<(std::ostream& o,From_alliances const& a){
-	o<<"From_alliances( ";
-	#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	FROM_ALLIANCES(X)
-	#undef X
-	return o<<")";
-}
+PRINT_STRUCT(From_alliances,FROM_ALLIANCES)
 
 From_alliances ranks_from_alliances(Selection_results const& alliances,int event_size){
 	//going to try the no-declines case first.

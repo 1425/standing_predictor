@@ -33,13 +33,7 @@ using namespace std;
 using Team=tba::Team_key;
 using Team_key=tba::Team_key;
 
-std::ostream& operator<<(std::ostream& o,Playoff_limits const& a){
-	o<<"Playoff_limits( ";
-#define X(A,B) o<<""#B<<":"<<a.B<<" ";
-	PLAYOFF_LIMITS(X)
-#undef X
-	return o<<")";
-}
+PRINT_STRUCT(Playoff_limits,PLAYOFF_LIMITS)
 
 auto alliances(tba::Match const& a){
 	auto f=[](auto x){ return x.team_keys; };

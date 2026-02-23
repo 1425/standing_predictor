@@ -3,10 +3,15 @@
 
 #include<string>
 #include<vector>
+#include "util.h"
+
+#define SUBPROCESS_RESULT(X)\
+	X(int,status)\
+	X(std::string,out)\
+	X(std::string,error)
 
 struct Subprocess_result{
-	int status;
-	std::string out,error;
+	SUBPROCESS_RESULT(INST)
 };
 
 std::ostream& operator<<(std::ostream&,Subprocess_result const&);
