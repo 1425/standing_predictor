@@ -101,6 +101,7 @@ void print_r(T const& t){
 
 #define PRINT_R_ITEM(NAME,ITEMS) \
 	void print_r(int n,NAME const& a){\
+		(void)a;\
 		indent(n);\
 		std::cout<<""#NAME<<"\n";\
 		n++;\

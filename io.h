@@ -265,10 +265,11 @@ std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C,D,E,F> const& a){
 #define PRINT_STRUCT_INNER(A,B) o<<""#B<<":"<<a.B<<" ";
 
 #define PRINT_STRUCT(NAME,ITEMS)\
-        std::ostream& operator<<(std::ostream& o,NAME const& a){\
-                o<<""#NAME<<"( ";\
-                ITEMS(PRINT_STRUCT_INNER)\
-                return o<<")";\
-        }
+	std::ostream& operator<<(std::ostream& o,NAME const& a){\
+		(void)a;\
+		o<<""#NAME<<"( ";\
+		ITEMS(PRINT_STRUCT_INNER)\
+		return o<<")";\
+	}
 
 #endif

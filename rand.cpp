@@ -1,7 +1,20 @@
 #include "rand.h"
+#include "../tba/data.h"
 
 tba::Team_key rand(tba::Team_key const*);
 tba::Event_key rand(tba::Event_key const*);
+
+auto options(tba::Award_type const*){
+	return std::array{
+		#define X(A,B) tba::Award_type::A,
+		TBA_AWARD_TYPES(X)
+		#undef X
+	};
+}
+
+tba::Award_type rand(tba::Award_type const* x){
+	return choose(options(x));
+}
 
 bool rand(bool const*){
 	return rand()%2;
@@ -23,12 +36,22 @@ unsigned rand(unsigned const*){
 	return (unsigned)rand();
 }
 
-double rand(double*){
+size_t rand(size_t const*){
+	return rand();
+}
+
+double rand(double const*){
 	return rand();
 }
 
 std::string rand(std::string const*){
 	return "rand_string";
+}
+
+std::chrono::year_month_day rand(std::chrono::year_month_day const*){
+	std::chrono::year_month_day r{};
+	//obviously could make this more random.
+	return r;
 }
 
 /*template<typename A,typename B>

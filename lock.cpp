@@ -29,6 +29,20 @@
 4) pts available for finished events should be 0.
  * */
 
+#define EMPTY(X)
+
+#define STRUCT_DECLARE(NAME,ITEMS)\
+	struct NAME{\
+		ITEMS(INST)\
+		auto operator<=>(NAME const&)const=default;\
+	};\
+
+#define STRUCT_BASIC(NAME,ITEMS)\
+	STRUCT_DECLARE(NAME,ITEMS)\
+	PRINT_STRUCT(NAME,ITEMS)\
+	ELEMENTWISE_RAND(NAME,ITEMS)\
+	PRINT_R_ITEM(NAME,ITEMS)
+
 using District_key=tba::District_key;
 using Team=tba::Team_key;
 using Event=tba::Event_key;
@@ -50,14 +64,7 @@ using I2=vector_fixed<Point,2>;
 	X(Age_bonus,age_bonus)\
 	X(bool,remaining_district_events)\
 
-struct Team_info{
-	TEAM_INFO(INST)
-
-	auto operator<=>(Team_info const&)const=default;
-};
-
-PRINT_STRUCT(Team_info,TEAM_INFO)
-ELEMENTWISE_RAND(Team_info,TEAM_INFO)
+STRUCT_BASIC(Team_info,TEAM_INFO)
 
 using Info_by_team=map_auto<Team,Team_info>;
 
@@ -65,15 +72,7 @@ using Event_size=Int_limited<0,80>;
 
 using Event_upcoming=Event_size;//# of teams attending
 
-struct Event_finished{};
-
-std::ostream& operator<<(std::ostream& o,Event_finished const&){
-	return o<<"Event_finished";
-}
-
-auto rand(Event_finished const*){
-	return Event_finished();
-}
+STRUCT_BASIC(Event_finished,EMPTY)
 
 //obviously going to be possible to deal with events that are part-way through.
 using Event_info=std::variant<Event_upcoming,Event_finished>;
@@ -114,17 +113,7 @@ using Info_by_event=std::map<Event,Event_info>;
 	X(Info_by_event,by_event)\
 	X(unsigned,dcmp_size)
 
-struct Lock_data{
-	LOCK_DATA(INST)
-
-	auto operator<=>(Lock_data const&)const=default;
-};
-
-PRINT_STRUCT(Lock_data,LOCK_DATA)
-
-ELEMENTWISE_RAND(Lock_data,LOCK_DATA)
-
-PRINT_R_ITEM(Lock_data,LOCK_DATA)
+STRUCT_BASIC(Lock_data,LOCK_DATA)
 
 //returns a list with each item representing the status of one of the district events.
 vector<Lock_data> read_lock_data(TBA_fetcher &f,tba::District_key const& district){
@@ -239,56 +228,50 @@ int event_points(size_t event_size){
 	return rank+selection+award_points+playoff_pts;
 }
 
-struct Status_prequalified{
-	//could put a reason in here
-	//this isn't meaningful until cmp anyway.
-
-	auto operator<=>(Status_prequalified const&)const=default;
-};
+//could put a reason in here
+//this isn't meaningful until cmp anyway.
+STRUCT_DECLARE(Status_prequalified,EMPTY)
+ELEMENTWISE_RAND(Status_prequalified,EMPTY)
 
 std::ostream& operator<<(std::ostream& o,Status_prequalified const&){
 	return o<<"Prequalified";
 }
 
-struct Status_award{
-	tba::Award_type data;
+#define STATUS_AWARD(X) X(tba::Award_type,data)
 
-	auto operator<=>(Status_award const&)const=default;
-};
+STRUCT_DECLARE(Status_award,STATUS_AWARD)
+ELEMENTWISE_RAND(Status_award,STATUS_AWARD)
 
 std::ostream& operator<<(std::ostream& o,Status_award a){
 	return o<<"In via "<<a.data;
 }
 
-struct Status_in{
-	auto operator<=>(Status_in const&)const=default;
-};
+STRUCT_DECLARE(Status_in,EMPTY)
+ELEMENTWISE_RAND(Status_in,EMPTY)
 
 std::ostream& operator<<(std::ostream& o,Status_in){
 	return o<<"in";
 }
 
-struct Status_out{
-	auto operator<=>(Status_out const&)const=default;
-};
+STRUCT_DECLARE(Status_out,EMPTY)
+ELEMENTWISE_RAND(Status_out,EMPTY)
 
 std::ostream& operator<<(std::ostream& o,Status_out){
 	return o<<"out";
 }
 
-struct Status_in_range{
-	std::string data;
+#define STATUS_IN_RANGE(X)\
+	X(std::string,data)\
 
-	auto operator<=>(Status_in_range const&)const=default;
-};
+STRUCT_DECLARE(Status_in_range,STATUS_IN_RANGE)
+ELEMENTWISE_RAND(Status_in_range,STATUS_IN_RANGE)
 
 std::ostream& operator<<(std::ostream& o,Status_in_range const& a){
 	return o<<a.data;
 }
 
-struct Status_out_of_range{
-	auto operator<=>(Status_out_of_range const&)const=default;
-};
+STRUCT_DECLARE(Status_out_of_range,EMPTY)
+ELEMENTWISE_RAND(Status_out_of_range,EMPTY)
 
 std::ostream& operator<<(std::ostream& o,Status_out_of_range){
 	return o<<"Out of range";
@@ -326,13 +309,7 @@ using Points_by_event=map<tba::Event_key,Point>;
 	X(Point,pre_dcmp_points_remaining)\
 	X(Points_by_event,by_event)
 
-struct Lock_result{
-	LOCK_RESULT(INST)
-};
-
-PRINT_STRUCT(Lock_result,LOCK_RESULT)
-
-PRINT_R_ITEM(Lock_result,LOCK_RESULT)
+STRUCT_BASIC(Lock_result,LOCK_RESULT)
 
 Lock_result run(Lock_data const& data){
 	//print_r(data);
@@ -519,11 +496,7 @@ Lock_result run(Lock_data const& data){
 	X(std::string,pts_available)\
 	X(Interval<tba::Date>,date)\
 
-struct Event_display{
-	EVENT_DISPLAY(INST)
-};
-
-PRINT_STRUCT(Event_display,EVENT_DISPLAY)
+STRUCT_BASIC(Event_display,EVENT_DISPLAY)
 
 using Team_district_display=vector_fixed<Point,2>;
 
@@ -535,11 +508,7 @@ using Team_district_display=vector_fixed<Point,2>;
 	X(Point,total_pts)\
 	X(Status,locked)
 
-struct Team_display{
-	TEAM_DISPLAY(INST)
-};
-
-PRINT_STRUCT(Team_display,TEAM_DISPLAY)
+STRUCT_BASIC(Team_display,TEAM_DISPLAY)
 
 #define LOCK_DISPLAY(X)\
 	X(std::string,district)\
@@ -550,13 +519,7 @@ PRINT_STRUCT(Team_display,TEAM_DISPLAY)
 	X(std::vector<Event_display>,event_status)\
 	X(std::vector<Team_display>,team_display)\
 
-struct Lock_display{
-	LOCK_DISPLAY(INST)
-};
-
-PRINT_STRUCT(Lock_display,LOCK_DISPLAY)
-
-PRINT_R_ITEM(Lock_display,LOCK_DISPLAY)
+STRUCT_BASIC(Lock_display,LOCK_DISPLAY)
 
 void page(std::ostream& o,Lock_display const& a){
 	o<<"<html>\n";

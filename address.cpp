@@ -101,15 +101,6 @@ bool operator==(std::optional<State_prov> const& a,const char *b){
 	return *a==b;
 }
 
-/*#define ADDRESS(X)\
-	X(Country,country)\
-	X(std::optional<State_prov>,state)\
-	X(std::optional<City>,city)
-
-struct Address{
-	ADDRESS(INST)
-};*/
-
 PRINT_STRUCT(Address,ADDRESS)
 
 static const std::set<std::string> STATE_CODES{

@@ -7,18 +7,23 @@
 namespace tba{
 	class Team_key;
 	class Event_key;
+	enum class Award_type;
 };
 
 tba::Team_key rand(tba::Team_key const*);
 tba::Event_key rand(tba::Event_key const*);
+tba::Award_type rand(tba::Award_type const*);
 
 bool rand(bool const*);
 short rand(short const*);
 unsigned short rand(unsigned short const*);
 int rand(int const*);
 unsigned rand(unsigned const*);
-double rand(double*);
+double rand(double const*);
+size_t rand(size_t const*);
 std::string rand(std::string const*);
+
+std::chrono::year_month_day rand(std::chrono::year_month_day const*);
 
 template<typename T,size_t N>
 auto rand(std::array<T,N> const*);
@@ -72,6 +77,20 @@ std::variant<A,B,C,D> rand(std::variant<A,B,C,D> const*){
 		case 1: return rand((B*)0);
 		case 2: return rand((C*)0);
 		case 3: return rand((D*)0);
+		default:
+			assert(0);
+	}
+}
+
+template<typename A,typename B,typename C,typename D,typename E,typename F>
+std::variant<A,B,C,D,E,F> rand(std::variant<A,B,C,D,E,F> const*){
+	switch(rand()%4){
+		case 0: return rand((A*)0);
+		case 1: return rand((B*)0);
+		case 2: return rand((C*)0);
+		case 3: return rand((D*)0);
+		case 4: return rand((E*)0);
+		case 5: return rand((F*)0);
 		default:
 			assert(0);
 	}

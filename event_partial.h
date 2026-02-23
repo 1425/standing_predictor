@@ -7,29 +7,16 @@
 
 class TBA_fetcher;
 
-struct Team_event_status_rank{
-	Interval<Point> data;
-};
+#define STRUCT_SINGLE(STRUCT_NAME,DATA_TYPE,DATA_NAME)\
+	struct STRUCT_NAME{\
+		DATA_TYPE DATA_NAME;\
+	};\
+	std::ostream& operator<<(std::ostream&,STRUCT_NAME const&);
 
-std::ostream& operator<<(std::ostream&,Team_event_status_rank const&);
-
-struct Team_event_status_post_rank{
-	Point data;
-};
-
-std::ostream& operator<<(std::ostream&,Team_event_status_post_rank const&);
-
-struct Team_event_status_post_pick{
-	Point data;
-};
-
-std::ostream& operator<<(std::ostream&,Team_event_status_post_pick const&);
-
-struct Team_event_status_post_elims{
-	Point data;
-};
-
-std::ostream& operator<<(std::ostream&,Team_event_status_post_elims const&);
+STRUCT_SINGLE(Team_event_status_rank,Interval<Point>,data)
+STRUCT_SINGLE(Team_event_status_post_rank,Point,data)
+STRUCT_SINGLE(Team_event_status_post_pick,Point,data)
+STRUCT_SINGLE(Team_event_status_post_elims,Point,data)
 
 using Team_event_status=std::variant<
 	Team_event_status_rank,

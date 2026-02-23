@@ -52,14 +52,6 @@ STRING_ITEM(Offseason_name)
 STRING_ITEM(Division_name)
 //STRING_ITEM(District_event_name)
 
-/*struct Regional_name{
-	std::string s;
-};
-
-struct District_championship_name{
-	std::string s;
-};
-*/
 struct District_event_name{
 	std::string district;
 	std::string event;
