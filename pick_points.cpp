@@ -54,14 +54,8 @@ using Picks_complete=map<Team,Point>;
 	X(unsigned,unclaimed)\
 	X(bool,started)
 
-struct Picks_in_progress{
-	PICKS_IN_PROGRESS(INST)
-	
-	auto operator<=>(Picks_in_progress const&)const=default;
-};
-
+STRUCT_DECLARE(Picks_in_progress,PICKS_IN_PROGRESS)
 PRINT_STRUCT(Picks_in_progress,PICKS_IN_PROGRESS)
-
 PRINT_R_ITEM(Picks_in_progress,PICKS_IN_PROGRESS)
 
 struct Picks_no_data{};
@@ -123,10 +117,7 @@ auto teams(Selection_results const& a){
 	X(Rank_range<tba::Team_key>,by_team)\
 	X(std::optional<Interval<Rank>>,not_picked)
 
-struct From_alliances{
-	FROM_ALLIANCES(INST)
-};
-
+STRUCT_DECLARE(From_alliances,FROM_ALLIANCES)
 PRINT_STRUCT(From_alliances,FROM_ALLIANCES)
 
 From_alliances ranks_from_alliances(Selection_results const& alliances,int event_size){

@@ -381,12 +381,7 @@ map<tba::Team_key,Pr> run(
 	X(optional<int>,dcmp_points)\
 	X(Dcmp_home,dcmp_home)
 
-struct Team_data{
-	TEAM_DATA_ITEMS(INST)
-
-	auto operator<=>(Team_data const&)const=default;
-};
-
+STRUCT_DECLARE(Team_data,TEAM_DATA_ITEMS)
 PRINT_STRUCT(Team_data,TEAM_DATA_ITEMS)
 
 using District_data=map<tba::Team_key,Team_data>;
@@ -618,10 +613,7 @@ void analyze_status(std::map<Team,Team_data> const& a){
 	X(Pr,dcmp_pr)\
 	X(Pr,cmp_pr)
 
-struct Prediction_status{
-	PREDICTION_STATUS(INST)
-};
-
+STRUCT_DECLARE(Prediction_status,PREDICTION_STATUS)
 PRINT_STRUCT(Prediction_status,PREDICTION_STATUS)
 
 std::vector<Prediction_status> historical_demo(TBA_fetcher &fetcher,tba::District_key const& district){

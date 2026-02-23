@@ -257,11 +257,9 @@ using Event=tba::Event;
 	X(Event,finals)\
 	X(std::vector<Event>,divisions)\
 
-struct District_cmp_complex{
-	//std::vector<Event> divisions; //may be empty
-	//Event finals; //won't have qual matches and picks if divisions exist
-	DISTRICT_CMP_COMPLEX(INST)
-};
+//std::vector<Event> divisions; //may be empty
+//Event finals; //won't have qual matches and picks if divisions exist
+STRUCT_DECLARE(District_cmp_complex,DISTRICT_CMP_COMPLEX)
 
 PRINT_STRUCT(District_cmp_complex,DISTRICT_CMP_COMPLEX)
 
@@ -277,11 +275,9 @@ bool complete(TBA_fetcher &f,District_cmp_complex const& a){
 	X(std::vector<Event>,local)\
 	X(std::vector<District_cmp_complex>,dcmp)
 
-struct Event_categories{
-	//std::vector<Event> local;//sort by date?
-	//std::vector<District_cmp_complex> dcmp;//sorted by Dcmp_index?
-	EVENT_CATEGORIES(INST)
-};
+//std::vector<Event> local;//sort by date?
+//std::vector<District_cmp_complex> dcmp;//sorted by Dcmp_index?
+STRUCT_DECLARE(Event_categories,EVENT_CATEGORIES)
 
 PRINT_STRUCT(Event_categories,EVENT_CATEGORIES)
 

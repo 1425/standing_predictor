@@ -10,11 +10,7 @@
 	X(std::string,out)\
 	X(std::string,error)
 
-struct Subprocess_result{
-	SUBPROCESS_RESULT(INST)
-};
-
-std::ostream& operator<<(std::ostream&,Subprocess_result const&);
+STRUCT_DECLARE(Subprocess_result,SUBPROCESS_RESULT)
 
 Subprocess_result run(std::string prog,std::vector<std::string> const& args,std::string const& stdin_data);
 

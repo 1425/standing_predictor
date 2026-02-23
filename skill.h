@@ -27,11 +27,7 @@ using Map_point_dist=std::map<Point,Team_dist>;
 	X(Map_point_dist,at_dcmp)\
 	X(Map_point_dist,second_event)
 
-struct Skill_estimates{
-	SKILL_ESTIMATES(INST)
-};
-
-std::ostream& operator<<(std::ostream&,Skill_estimates const&);
+STRUCT_DECLARE(Skill_estimates,SKILL_ESTIMATES)
 
 Skill_estimates calc_skill(TBA_fetcher&,tba::District_key const&);
 Skill_estimates skill_estimates(TBA_fetcher&,tba::District_key const&,Skill_method);

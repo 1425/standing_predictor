@@ -24,21 +24,7 @@ using A_Point_3=std::array<Point,3>;
 	X(Pr,cmp_make)\
 	X(A_Point_3,cmp_interesting)
 
-struct Output_tuple{
-	/*tba::Team_key team;
-	Dcmp_home dcmp_home;
-
-	Pr dcmp_make;
-	std::array<Point,3> dcmp_interesting;
-
-	Pr cmp_make;
-	std::array<Point,3> cmp_interesting;*/
-	OUTPUT_TUPLE(INST)
-
-	auto operator<=>(Output_tuple const&)const=default;
-};
-
-std::ostream& operator<<(std::ostream&,Output_tuple const&);
+STRUCT_DECLARE(Output_tuple,OUTPUT_TUPLE)
 Output_tuple rand(Output_tuple const*);
 
 #define TEAM_POINTS_USED(X)\
@@ -47,11 +33,7 @@ Output_tuple rand(Output_tuple const*);
 	X(int,events_left)\
 	X(Team_dist,pre_dcmp_dist)
 
-struct Team_points_used{
-	TEAM_POINTS_USED(INST)
-};
-
-std::ostream& operator<<(std::ostream&,Team_points_used const&);
+STRUCT_DECLARE(Team_points_used,TEAM_POINTS_USED)
 
 std::string gen_html(
 	std::vector<Output_tuple> const& result,

@@ -15,9 +15,7 @@ using Plot_data=std::vector<Plot_point>;
 	X(Plot_data,data)\
 	X(std::optional<std::string>,title)
 
-struct Plot_setup{
-	PLOT_SETUP(INST)
-};
+STRUCT_DECLARE(Plot_setup,PLOT_SETUP)
 
 //The reason that you might use this version is that these are parallelized.
 //Gives like a 10x speedup.

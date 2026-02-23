@@ -7,6 +7,13 @@
 
 #define INST(A,B) A B;
 
+#define STRUCT_DECLARE(NAME,ITEMS)\
+	struct NAME{\
+		ITEMS(INST)\
+		auto operator<=>(NAME const&)const=default;\
+	};\
+	std::ostream& operator<<(std::ostream&,NAME const&);\
+
 #define MAP(F,X) ::mapf([&](auto a){ return (F)(a); },(X))
 #define FILTER(A,B) filter([&](auto const& x){ return (A)(x); },(B))
 

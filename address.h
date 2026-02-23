@@ -64,13 +64,7 @@ std::ostream& operator<<(std::ostream&,Zipcode const&);
 	X(std::optional<City>,city)
 
 //Not making the address any more granular because it doesn't need to be for anything that is happening right now.
-struct Address{
-	ADDRESS(INST)
-
-	auto operator<=>(Address const&)const=default;
-};
-
-std::ostream& operator<<(std::ostream&,Address const&);
+STRUCT_DECLARE(Address,ADDRESS)
 
 std::optional<Address> address(tba::Event const&);
 std::optional<Address> address(tba::Team const&);

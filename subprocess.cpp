@@ -373,15 +373,8 @@ Subprocess_result run(std::string prog,std::vector<std::string> const& args,std:
 	X(std::stringstream,from_stdout)\
 	X(std::stringstream,from_stderr)
 
-struct Job_status{
-	JOB_STATUS(INST)
-
-	/*std::string to_stdin;
-	int fd_stdin,fd_stdout,fd_stderr;
-
-	std::optional<int> result;//this is only filled in once the job is done.
-	std::stringstream from_stdout,from_stderr;*/
-};
+/*std::optional<int> result;//this is only filled in once the job is done.*/
+STRUCT_DECLARE(Job_status,JOB_STATUS)
 
 PRINT_STRUCT(Job_status,JOB_STATUS)
 

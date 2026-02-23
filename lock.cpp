@@ -31,12 +31,6 @@
 
 #define EMPTY(X)
 
-#define STRUCT_DECLARE(NAME,ITEMS)\
-	struct NAME{\
-		ITEMS(INST)\
-		auto operator<=>(NAME const&)const=default;\
-	};\
-
 #define STRUCT_BASIC(NAME,ITEMS)\
 	STRUCT_DECLARE(NAME,ITEMS)\
 	PRINT_STRUCT(NAME,ITEMS)\
@@ -242,21 +236,21 @@ std::ostream& operator<<(std::ostream& o,Status_prequalified const&){
 STRUCT_DECLARE(Status_award,STATUS_AWARD)
 ELEMENTWISE_RAND(Status_award,STATUS_AWARD)
 
-std::ostream& operator<<(std::ostream& o,Status_award a){
+std::ostream& operator<<(std::ostream& o,Status_award const& a){
 	return o<<"In via "<<a.data;
 }
 
 STRUCT_DECLARE(Status_in,EMPTY)
 ELEMENTWISE_RAND(Status_in,EMPTY)
 
-std::ostream& operator<<(std::ostream& o,Status_in){
+std::ostream& operator<<(std::ostream& o,Status_in const&){
 	return o<<"in";
 }
 
 STRUCT_DECLARE(Status_out,EMPTY)
 ELEMENTWISE_RAND(Status_out,EMPTY)
 
-std::ostream& operator<<(std::ostream& o,Status_out){
+std::ostream& operator<<(std::ostream& o,Status_out const&){
 	return o<<"out";
 }
 
@@ -273,7 +267,7 @@ std::ostream& operator<<(std::ostream& o,Status_in_range const& a){
 STRUCT_DECLARE(Status_out_of_range,EMPTY)
 ELEMENTWISE_RAND(Status_out_of_range,EMPTY)
 
-std::ostream& operator<<(std::ostream& o,Status_out_of_range){
+std::ostream& operator<<(std::ostream& o,Status_out_of_range const&){
 	return o<<"Out of range";
 }
 

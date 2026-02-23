@@ -12,11 +12,7 @@ flat_map<Point,Pr> convolve(std::map<Point,Pr> const&,std::map<Point,Pr> const&)
 	X(Dcmp_home,dcmp_home)\
 	X(Point,already_earned)
 
-struct Team_status{
-	TEAM_STATUS(INST)
-};
-
-std::ostream& operator<<(std::ostream&,Team_status const&);
+STRUCT_DECLARE(Team_status,TEAM_STATUS)
 Team_status rand(Team_status const*);
 
 void describe(std::ostream&,Team_status const*);
@@ -30,11 +26,7 @@ using Dcmp_dists=std::map<Point,Team_dist>;
 	X(bool,played)\
 	X(Dcmp_dists,dists)
 
-struct Dcmp_data{
-	DCMP_DATA(INST)
-};
-
-std::ostream& operator<<(std::ostream&,Dcmp_data const&);
+STRUCT_DECLARE(Dcmp_data,DCMP_DATA)
 Dcmp_data rand(Dcmp_data const*);
 
 #define RUN_INPUT_ITEMS(X)\
@@ -42,11 +34,7 @@ Dcmp_data rand(Dcmp_data const*);
 	X(By_team,by_team)\
 	X(std::vector<Dcmp_data>,dcmp)\
 
-struct Run_input{
-	RUN_INPUT_ITEMS(INST)
-};
-
-std::ostream& operator<<(std::ostream&,Run_input const&);
+STRUCT_DECLARE(Run_input,RUN_INPUT_ITEMS)
 Run_input rand(Run_input const*);
 
 using Cutoff_detail=flat_map2<std::pair<Point,double>,double>;
@@ -57,11 +45,7 @@ using Cutoff_details=std::array<Cutoff_detail,MAX_DCMPS>;
 	X(Cutoff_details,cutoff_pr)\
 	X(Cutoff_detail,cmp_cutoff_pr)\
 
-struct Run_result{
-	RUN_RESULT_ITEMS(INST)
-};
-
-std::ostream& operator<<(std::ostream&,Run_result const&);
+STRUCT_DECLARE(Run_result,RUN_RESULT_ITEMS)
 void print_r(int,Run_result const&);
 
 Run_result run_calc(Run_input);

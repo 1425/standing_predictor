@@ -44,10 +44,8 @@ using Points_by_team=map<Team,Rank_value>;
 	X(Points_by_team,by_team)\
 	X(bool,done)
 
-struct Award_points{
-	//done=chairmans has been given out.
-	AWARD_POINTS(INST)
-};
+//done=chairmans has been given out.
+STRUCT_DECLARE(Award_points,AWARD_POINTS)
 
 PRINT_STRUCT(Award_points,AWARD_POINTS)
 PRINT_R_ITEM(Award_points,AWARD_POINTS)
