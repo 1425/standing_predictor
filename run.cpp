@@ -14,33 +14,15 @@ std::ostream& operator<<(std::ostream& o,Dcmp_data const& a){
 	return o<<"Dcmp_data("<<a.size<<" "<<a.played<<" "<<a.dists<<")";
 }
 
-Dcmp_data rand(Dcmp_data const*){
-	return Dcmp_data{
-		#define X(A,B) rand((A*)0),
-		DCMP_DATA(X)
-		#undef X
-	};
-}
+ELEMENTWISE_RAND(Dcmp_data,DCMP_DATA)
 
 PRINT_STRUCT(Team_status,TEAM_STATUS)
 
-Team_status rand(Team_status const*){
-	return Team_status{
-		#define X(A,B) rand((A*)0),
-		TEAM_STATUS(X)
-		#undef X
-	};
-}
+ELEMENTWISE_RAND(Team_status,TEAM_STATUS)
 
 PRINT_STRUCT(Run_input,RUN_INPUT_ITEMS)
 
-Run_input rand(Run_input const*){
-	return Run_input{
-		#define X(A,B) rand((A*)0),
-		RUN_INPUT_ITEMS(X)
-		#undef X
-	};
-}
+ELEMENTWISE_RAND(Run_input,RUN_INPUT_ITEMS)
 
 template<typename T,size_t N,typename B>
 std::array<T,N>& operator|=(std::array<T,N> &a,std::array<B,N> const& b){

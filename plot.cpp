@@ -10,13 +10,7 @@ using namespace std;
 
 PRINT_STRUCT(Plot_setup,PLOT_SETUP)
 
-auto rand(Plot_setup const*){
-	return Plot_setup{
-		#define X(A,B) rand((A*)0),
-		PLOT_SETUP(X)
-		#undef X
-	};
-}
+ELEMENTWISE_RAND(Plot_setup,PLOT_SETUP)
 
 Job job(Plot_setup const& a){
 	//PRINT(a);

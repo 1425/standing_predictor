@@ -3,6 +3,7 @@
 
 #include "rank_limits.h"
 #include "util.h"
+#include "rand.h"
 
 class TBA_fetcher;
 
@@ -31,14 +32,8 @@ struct Rank_status{
 	Rank_status& operator+=(Rank_status const&);
 };
 
-template<typename T>
-Rank_status<T> rand(Rank_status<T> const*){
-	return Rank_status<T>{
-		rand((Team_rank_value*)0),
-		rand((Rank_value*)0),
-		rand((T*)0)
-	};
-}
+template<typename Status>
+ELEMENTWISE_RAND(Rank_status<Status>,RANK_STATUS)
 
 template<typename Status>
 PRINT_STRUCT(Rank_status<Status>,RANK_STATUS)

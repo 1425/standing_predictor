@@ -57,14 +57,7 @@ struct Team_info{
 };
 
 PRINT_STRUCT(Team_info,TEAM_INFO)
-
-auto rand(Team_info const*){
-	return Team_info{
-		#define X(A,B) rand((A*)0),
-		TEAM_INFO(X)
-		#undef X
-	};
-}
+ELEMENTWISE_RAND(Team_info,TEAM_INFO)
 
 using Info_by_team=map_auto<Team,Team_info>;
 
@@ -129,13 +122,7 @@ struct Lock_data{
 
 PRINT_STRUCT(Lock_data,LOCK_DATA)
 
-auto rand(Lock_data const*){
-	return Lock_data{
-		#define X(A,B) rand((A*)0),
-		LOCK_DATA(X)
-		#undef X
-	};
-}
+ELEMENTWISE_RAND(Lock_data,LOCK_DATA)
 
 PRINT_R_ITEM(Lock_data,LOCK_DATA)
 
