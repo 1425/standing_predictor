@@ -376,7 +376,15 @@ Skill_by_pts calc_skill_inner(TBA_fetcher& f){
 		auto x=to_pr(s3);
 		auto min_seen=min(keys(x));
 		for(auto i:range(min_seen)){
-			x[i]=x[min_seen];
+			auto found=x[min_seen];
+			x[i]=found;
+
+			//Don't do this because the right is evaluated first, which gives a reference
+			//and then the evaluation of the left causes invalidation of that reference.
+			//either because things were added in the middle and moved, or it caused a 
+			//re-allocation of the buffers.
+			//this is true of flat_map2 anyway.
+			//x[i]=x[min_seen];
 		}
 		return x;
 	}();
