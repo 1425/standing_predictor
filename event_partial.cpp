@@ -323,10 +323,15 @@ Run_input read_status(TBA_fetcher &f,tba::District_key const& district){
 
 	const auto event_partial1=event_partial(f);
 
-	map<tba::Event_key,Rank_status<Tournament_status>> event_limits1;
+	/*map<tba::Event_key,Rank_status<Tournament_status>> event_limits1;
 	for(auto event:district_events_keys(f,district)){
 		event_limits1[event]=event_limits(f,event);
-	}
+	}*/
+
+	auto event_limits1=dict(mapf(
+		[&](auto x){ return make_pair(x,event_limits(f,x)); },
+		district_events_keys(f,district)
+	));
 
 	auto team_event_status=[=](tba::Team_key team,tba::Event_points event)->std::variant<Team_dist,Future,std::nullopt_t>{
 		//The options are:

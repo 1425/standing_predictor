@@ -25,7 +25,7 @@ set<tba::Team_key> chairmans_winners(TBA_fetcher& f,tba::District_key const& dis
 		auto k=event.key;
 		auto aw=event_awards(f,k);
 		if(aw.empty()) continue;
-		auto f1=filter([](auto a){ return a.award_type==tba::Award_type::CHAIRMANS; },aw);
+		auto f1=filter([](auto const& a){ return a.award_type==tba::Award_type::CHAIRMANS; },aw);
 		if(f1.empty()){
 			continue;
 		}
@@ -379,20 +379,20 @@ std::vector<tba::Match> playoff_matches(TBA_fetcher &f,tba::Event_key const& eve
 
 std::vector<tba::Match_Simple> playoff_matches_simple(TBA_fetcher &f,tba::Event_key const& event){
 	return filter(
-		[](auto x){ return playoff(x.comp_level); },
+		[](auto const& x){ return playoff(x.comp_level); },
 		tba::event_matches_simple(f,event)
 	);
 }
 
 bool playoffs_started(TBA_fetcher &f,tba::Event_key const& event){
-	auto p=filter([](auto x){ return complete(x); },playoff_matches(f,event));
+	auto p=filter([](auto const& x){ return complete(x); },playoff_matches(f,event));
 	return !p.empty();
 }
 
 bool awards_done(TBA_fetcher &f,tba::Event_key const& event){
 	auto aw=event_awards(f,event);
 	if(aw.empty()) return 0;
-	auto f1=filter([](auto a){ return a.award_type==tba::Award_type::CHAIRMANS; },aw);
+	auto f1=filter([](auto const& a){ return a.award_type==tba::Award_type::CHAIRMANS; },aw);
 	return !f1.empty();
 }
 

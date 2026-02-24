@@ -29,14 +29,14 @@ auto mapf(Func f,std::map<K,V> const& v)->std::vector<decltype(f(*std::begin(v))
 
 #define MAP_VALUES(A,B) map_values([&](auto x){ return (A)(x); },(B))
 
-template<typename Func,typename K,typename V>
-auto map_values(Func f,std::map<K,V> m)->std::map<K,decltype(f(begin(m)->second))>{
+/*template<typename Func,typename K,typename V>
+auto map_values(Func f,std::map<K,V> const& m)->std::map<K,decltype(f(begin(m)->second))>{
 	std::map<K,decltype(f(begin(m)->second))> r;
-	for(auto [k,v]:m){
+	for(auto const& [k,v]:m){
 		r[k]=f(v);
 	}
 	return r;
-}
+}*/
 
 template<typename K,typename V>
 std::map<K,V> to_map(std::vector<std::pair<K,V>> v){

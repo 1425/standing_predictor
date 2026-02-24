@@ -275,6 +275,8 @@ struct Match_positions{
 		using Time=Time_ns;
 		Time start,end;
 		int matches;
+
+		auto operator<=>(Day_info const&)const=default;
 	};
 	std::map<Day,Day_info> days;
 };

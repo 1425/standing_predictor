@@ -89,7 +89,8 @@ MAP<Point,Pr> normalize(MAP<Point,Pr> a){
 	return map_values([=](auto x){ return x/s; },a);
 }
 
-map<Point,Pr> cut_negatives(map<Point,Pr> a){
+//map<Point,Pr> cut_negatives(map<Point,Pr> a){
+auto cut_negatives(map<Point,Pr> a){
 	return map_values([](auto x){ return max(x,0.0); },a);
 }
 
@@ -163,7 +164,8 @@ MAP1& operator+=(MAP1 &a,MAP2<K,V> const& b){
 	return a;
 }
 
-auto force_probability(map<Team,Interval<Point>> by_team,flat_map2<Point,Pr> prior_dist){
+template<template<typename,typename>typename MAP>
+auto force_probability(MAP<Team,Interval<Point>> by_team,flat_map2<Point,Pr> prior_dist){
 	bool verbose=0;
 	flat_map2<Point,Pr> existing;
 	for(auto v:values(by_team)){
@@ -209,7 +211,8 @@ auto force_probability(map<Team,Interval<Point>> by_team,flat_map2<Point,Pr> pri
 		cout<<ratio<<"\n";
 	}
 
-	map<Point,Pr> after_ratio=map_values(
+	//map<Point,Pr> after_ratio=map_values(
+	auto after_ratio=map_values(
 		[](auto x){ return x.first*x.second; },
 		join_hard(prior_dist,ratio)
 	);
@@ -225,7 +228,8 @@ auto force_probability(map<Team,Interval<Point>> by_team,flat_map2<Point,Pr> pri
 }
 
 //map<Point,Pr> create_prior(std::map<Team,Interval<Point>> by_team,Point unassigned){
-auto create_prior(std::map<Team,Interval<Point>> by_team,Point unassigned){
+template<template<typename,typename>typename MAP>
+auto create_prior(MAP<Team,Interval<Point>> by_team,Point unassigned){
 	//this is going to be ugly
 	//and for test pruposes only
 	//just find an example that works, and return that distribution
@@ -283,6 +287,11 @@ std::set<tba::Team_key> teams(Point_range<tba::Team_key> a){
 template<typename T>
 std::set<tba::Team_key> teams(std::map<tba::Team_key,T> a){
 	return keys(a);
+}
+
+template<typename T>
+auto teams(flat_map<tba::Team_key,T> a){
+	return to_set(keys(a));
 }
 
 //Rank_status event_limits(TBA_fetcher &f,tba::Event_key const& event){
@@ -411,11 +420,16 @@ Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const&
 		//print_r(f);
 	}
 
-	Rank_status<Tournament_status> r;
+	/*Rank_status<Tournament_status> r;
 	r.by_team=d.by_team;
 	r.unclaimed=d.unclaimed;
 	r.status=tstatus;
-	return r;
+	return r;*/
+	return Rank_status<Tournament_status>{
+		d.by_team,
+		d.unclaimed,
+		tstatus
+	};
 }
 
 auto event_limits(TBA_fetcher &f,tba::Event const& e){
@@ -426,7 +440,7 @@ Tournament_status dcmp_status(TBA_fetcher &f,tba::District_key const& district){
 	auto e=events(f,district);
 	auto e2=filter([](auto x){ return x.event_type!=tba::Event_type::DISTRICT; },e);
 	auto status=mapf(
-		[&](auto x){ return make_pair(x,event_limits(f,x.key).status); },
+		[&](auto const& x){ return make_pair(x,event_limits(f,x.key).status); },
 		e2
 	);
 
@@ -542,7 +556,7 @@ int event_limits_demo(TBA_fetcher &f){
 		auto a=event_limits(f,event.key);
 		(void)a;
 	}*/
-	for(auto district:districts(f)){
+	for(auto district:take(20,districts(f))){
 		PRINT(district);
 		auto a=district_limits(f,district);
 		//print_r(a);

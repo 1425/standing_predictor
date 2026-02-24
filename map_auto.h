@@ -3,6 +3,7 @@
 
 #include "map_small_int.h"
 #include "map_fixed.h"
+#include "flat_map.h"
 
 template<typename T>
 static constexpr bool small_int(T const*){
@@ -148,7 +149,7 @@ std::set<K> keys(map_auto<K,V> const& a){
 }
 
 template<typename K,typename V>
-auto values(map_auto<K,V> const& a){
+auto values(map_auto<K,V> const& a)->decltype(values(a.get())){
 	return values(a.get());
 }
 
@@ -182,6 +183,15 @@ auto dict_auto(std::vector<std::pair<K,V>> && a){
 
 template<typename K,typename V>
 auto to_map_auto(std::map<K,V> const& a){
+	map_auto<K,V> r;
+	for(auto [k,v]:a){
+		r[k]=v;
+	}
+	return r;
+}
+
+template<typename K,typename V>
+auto to_map_auto(flat_map<K,V> const& a){
 	map_auto<K,V> r;
 	for(auto [k,v]:a){
 		r[k]=v;

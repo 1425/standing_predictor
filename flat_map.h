@@ -19,15 +19,21 @@ class flat_map{
 
 	explicit flat_map(std::map<K,V> const& a):data(a.begin(),a.end()){}
 
+	explicit flat_map(std::vector<std::pair<K,V>>const& a):data(a){
+		sort(data.begin(),data.end());
+		//could check that there are no duplicate keys
+		//for now, will just assume that there are no duplicates
+	}
+
 	explicit flat_map(std::vector<std::pair<K,V>>&& a):data(a){
 		sort(data.begin(),data.end());
 		//could check that there are no duplicate keys
 		//for now, will just assume that there are no duplicates
 	}
 
-	/*operator std::map<K,V>()const{
+	operator std::map<K,V>()const{
 		return std::map<K,V>{data.begin(),data.end()};
-	}*/
+	}
 
 	using const_reverse_iterator=Data::const_reverse_iterator;
 
@@ -83,6 +89,16 @@ class flat_map{
 		return f->second;
 	}
 
+	const_iterator emplace_hint(const_iterator,std::pair<K,V> a){
+		//This is obviously not the best perf way to do this.
+		(*this)[a.first]=a.second;
+		return begin();
+	}
+
+	void reserve(size_t i){
+		data.reserve(i);
+	}
+
 	auto size()const{
 		return data.size();
 	}
@@ -121,8 +137,9 @@ flat_map<K,V> to_flat_map(std::vector<std::pair<K,V>> &&a){
 template<typename Func,typename K,typename V>
 auto mapf(Func f,flat_map<K,V> const& a){
 	using U=decltype(f(*std::begin(a)));
-	std::vector<U> r(a.size());
-	std::transform(a.begin(),a.end(),r.begin(),f);
+	std::vector<U> r;
+	r.reserve(a.size());
+	std::transform(a.begin(),a.end(),std::back_inserter(r),f);
 	return r;
 }
 
@@ -139,11 +156,19 @@ std::vector<K> keys(flat_map<K,V> const& a){
 template<typename Func,typename K,typename V>
 auto map_values(Func f,flat_map<K,V> const& a){
 	using U=decltype(f(a.begin()->second));
-	flat_map<K,U> r;
-	for(auto [k,v]:a){
-		r[k]=f(v);
-	}
-	return r;
+	return flat_map<K,U>{mapf(
+		[&](auto const& x){ return std::make_pair(x.first,f(x.second)); },
+		a
+	)};
+}
+
+template<typename Func,typename K,typename V>
+auto map_values(Func f,std::map<K,V> const& a){
+	using U=decltype(f(a.begin()->second));
+	return flat_map<K,U>{mapf(
+		[&](auto const& x){ return std::make_pair(x.first,f(x.second)); },
+		a
+	)};
 }
 
 #endif

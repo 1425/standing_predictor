@@ -18,28 +18,38 @@ using Rank_value=std::pair<Int_limited<0,255>,Point>;
 
 double entropy(Interval<Rank_value> const&);
 
-using Team_rank_value=std::map<tba::Team_key,Interval<Rank_value>>;
+template<template<typename,typename>typename MAP=std::map>
+using Team_rank_value=MAP<tba::Team_key,Interval<Rank_value>>;
 
 #define RANK_STATUS(X)\
-	X(Team_rank_value,by_team)\
+	X(Team_rank_value<MAP>,by_team)\
 	X(Rank_value,unclaimed)\
 	X(Status,status)\
 
-template<typename Status>
+template<typename Status,template<typename,typename>typename MAP=std::map>
 struct Rank_status{
 	RANK_STATUS(INST)
+
+	template<template<typename,typename>typename MAP2>
+	operator Rank_status<Status,MAP2>()const{
+		return Rank_status<Status,MAP2>{
+			#define X(A,B) B,
+			RANK_STATUS(X)
+			#undef X
+		};
+	}
 
 	Rank_status& operator+=(Rank_status const&);
 };
 
-template<typename Status>
-ELEMENTWISE_RAND(Rank_status<Status>,RANK_STATUS)
+template<typename Status,template<typename,typename> typename MAP>
+ELEMENTWISE_RAND(Rank_status<TBA_SINGLE_ARG(Status,MAP)>,RANK_STATUS)
 
-template<typename Status>
-PRINT_STRUCT(Rank_status<Status>,RANK_STATUS)
+template<typename Status,template<typename,typename> typename MAP>
+PRINT_STRUCT(Rank_status<TBA_SINGLE_ARG(Status,MAP)>,RANK_STATUS)
 
-template<typename Status> 
-double entropy(Rank_status<Status> const& a){
+template<typename Status,template<typename,typename>typename MAP>
+double entropy(Rank_status<Status,MAP> const& a){
 	return sum(MAP(entropy,values(a.by_team)));
 }
 

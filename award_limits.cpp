@@ -24,8 +24,8 @@ double entropy(Interval<Rank_value> const& a){
 using Team=tba::Team_key;
 using namespace std;
 
-template<typename Status>
-Rank_status<Status>& Rank_status<Status>::operator+=(Rank_status<Status> const& a){
+template<typename Status,template<typename,typename>typename MAP>
+Rank_status<Status,MAP>& Rank_status<Status,MAP>::operator+=(Rank_status<Status,MAP> const& a){
 	for(auto [k,v]:a.by_team){
 		by_team[k]+=v;
 	}
@@ -195,7 +195,8 @@ Rank_value max_rank_value(int event_size){
 	return make_pair(event_size!=0,max_award_points(event_size));
 }
 
-Rank_status<Event_status> award_limits(TBA_fetcher &f,tba::Event_key event,map<Team,Rank_value> already_given){
+//Rank_status<Event_status> award_limits(TBA_fetcher &f,tba::Event_key event,map<Team,Rank_value> already_given){
+Rank_status<Event_status,flat_map> award_limits(TBA_fetcher &f,tba::Event_key event,map<Team,Rank_value> already_given){
 	//1) calculate the total points already awarded
 	//2) calculate total theoretical points at this event
 	//this gives unclaimed total points 
@@ -207,7 +208,7 @@ Rank_status<Event_status> award_limits(TBA_fetcher &f,tba::Event_key event,map<T
 
 	auto points_left=max_rank_value(teams.size())-sum(values(already_given));
 
-	Rank_status<Event_status> r;
+	Rank_status<Event_status,flat_map> r;
 	r.unclaimed=points_left;
 
 	for(auto team:teams){

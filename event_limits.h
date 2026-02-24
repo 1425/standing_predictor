@@ -3,14 +3,13 @@
 
 #include "award_limits.h"
 
-template<typename Status>
-std::tuple<
+template<typename Status,template<typename,typename>typename MAP>
+/*std::tuple<
 	std::map<tba::Team_key,Interval<Point>>,
 	Point,
 	Status
-> points_only(Rank_status<Status> const& a){
-	//map<Team,Interval<Point>> m;
-	//nyi
+>*/
+auto points_only(Rank_status<Status,MAP> const& a){
 	auto m=map_values(
 		[](auto x){
 			return Interval{x.min.second,x.max.second};
