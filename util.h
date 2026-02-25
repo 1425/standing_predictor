@@ -203,7 +203,7 @@ template<template<typename...> typename V,typename ...T>
 auto min(V<T...> const& v){
 	assert(!v.empty());
 	using E=std::tuple_element_t<0,std::tuple<T...>>;
-	E r=*begin(v);
+	E r=*std::begin(v);
 	for(auto elem:v){
 		r=std::min(r,elem);
 	}

@@ -119,10 +119,11 @@ bool operator==(std::set<T> const& a,std::vector<T> const& b){
 	return a==to_set(b);
 }
 
+/* Instead see set_flat.h
 template<typename K,typename V>
 std::set<K> keys(std::map<K,V> const& a){
 	return to_set(mapf([](auto x){ return x.first; },a));
-}
+}*/
 
 template<typename Func,typename T>
 std::set<T> filter(Func f,std::set<T> const& a){

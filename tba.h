@@ -103,4 +103,13 @@ tba::Event_type event_type(TBA_fetcher &f,tba::Event_key const&);
 std::string link(tba::Event_key const&,std::string const&);
 std::string link(tba::Event const&,std::string const&);
 
+template<typename T,size_t N>
+set_limited<T,N> to_set(tba::vector_fixed<T,N> const& a){
+	set_limited<T,N> r;
+	for(auto const& x:a){
+		r|=x;
+	}
+	return r;
+}
+
 #endif

@@ -9,6 +9,7 @@
 #include "vector_void.h"
 #include "optional.h"
 #include "../tba/tba.h"
+#include "set_limited.h"
 
 using namespace std;
 

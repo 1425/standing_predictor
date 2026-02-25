@@ -68,8 +68,8 @@ std::chrono::year_month_day operator+(std::chrono::year_month_day a,int b){
 template<typename T>
 auto consolidate(std::vector<T> );
 
-template<typename T>
-auto consolidate(std::set<T> const& a){
+template<template<typename>typename SET,typename T>
+auto consolidate(SET<T> const& a){
 	std::vector<Interval<T>> r;
 	std::optional<T> start;
 	std::optional<T> last;

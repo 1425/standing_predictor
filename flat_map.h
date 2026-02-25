@@ -25,7 +25,7 @@ class flat_map{
 		//for now, will just assume that there are no duplicates
 	}
 
-	explicit flat_map(std::vector<std::pair<K,V>>&& a):data(a){
+	explicit flat_map(std::vector<std::pair<K,V>>&& a):data(std::move(a)){
 		sort(data.begin(),data.end());
 		//could check that there are no duplicate keys
 		//for now, will just assume that there are no duplicates

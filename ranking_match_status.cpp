@@ -1,4 +1,5 @@
 #include "ranking_match_status.h"
+#include "set_limited.h"
 
 Ranking_match_status<tba::Team_key> ranking_match_status(TBA_fetcher &f,tba::Event_key const& event){
 	//Note that at the moment this doesn't have incomplete events to look at

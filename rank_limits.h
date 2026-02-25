@@ -101,7 +101,7 @@ std::optional<std::string> check_rank_limits(MAP<Team,Interval<Rank>> const& a){
 
 	//This counting the teams w/ each outcome range to try to avoid going O(N^3)
 	//on the big "events" that are like all 2021 regional teams
-	auto c=count(v);
+	auto c=to_vec(count(v));
 
 	//second check that for each rank that should exist at this event, there is at least one team that can fill it
 	for(auto rank:range_inclusive<Rank>(1u,v.size())){
@@ -126,6 +126,66 @@ std::optional<std::string> check_rank_limits(MAP<Team,Interval<Rank>> const& a){
 	//third: for any possible range of ranks, check that they number of teams that must exist in there
 	//is possible (could be too many or too few)
 
+	//just look at the 'always' here
+	{
+		auto it=c.begin();
+		for(auto min:range_inclusive<Rank>(1,a.size())){
+			while(it<c.end() && it->first.min<min){
+				++it;
+			}
+
+			auto here=sorted(mapf(
+				[](auto x){ return std::make_pair(x.first.max,x.second); },
+				std::span{it,c.end()}
+			));
+
+			auto here_start=here.begin();
+			auto here_end=here.end();
+
+			int total=0;
+			for(auto max:range_inclusive<Rank>(min,a.size())){
+				const auto size=max-min+1;
+				while(here_start!=here_end && here_start->first<=max){
+					total+=here_start->second;
+					here_start++;
+				}
+				assert(total<=size);
+			}
+		}
+	}
+
+	//just look at possible here
+	{
+		std::sort(c.begin(),c.end(),[](auto a,auto b){ return a.first.max<b.first.max; });
+
+		auto it=c.begin();
+		for(auto min:range_inclusive<Rank>(1,a.size())){
+			while(it!=c.end() && it->first.max<min){
+				++it;
+			}
+
+			//all the items whose maximums are high enough, find their minimums
+			auto here=sorted(mapf(
+				[](auto x){ return std::make_pair(x.first.min,x.second); },
+				std::span{it,c.end()}
+			));
+
+			auto here_start=here.begin();
+			auto here_end=here.end();
+
+			int total=0;
+			for(auto max:range_inclusive<Rank>(min,a.size())){
+				const auto size=max-min+1;
+				while(here_start!=here_end && here_start->first<=max){
+					total+=here_start->second;
+					here_start++;
+				}
+				assert(total>=size);
+			}
+		}
+	}
+
+	#if 0
 	for(auto min:range_inclusive<Rank>(1,a.size())){
 		for(auto max:range_inclusive<Rank>(min,a.size())){
 			size_t size=max-min+1;
@@ -153,6 +213,8 @@ std::optional<std::string> check_rank_limits(MAP<Team,Interval<Rank>> const& a){
 			assert(possible>=size);
 		}
 	}
+	#endif
+
 	return std::nullopt;
 }
 

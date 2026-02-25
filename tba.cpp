@@ -221,7 +221,7 @@ tba::Year year(tba::District_key const& a){
 
 tba::Year year(tba::Event_key const& a){
 	auto s=a.get().substr(0,4);
-	return tba::Year(stoi(s));
+	return tba::Year(stoi(std::string(s)));
 }
 
 tba::Year year(tba::Event const& a){
@@ -422,7 +422,7 @@ tba::Event_type event_type(TBA_fetcher &f,tba::Event_key const& event){
 }
 
 std::string link(tba::Event_key const& event,std::string const& body){
-	return link("https://www.thebluealliance.com/event/"+event.get(),body);
+	return link("https://www.thebluealliance.com/event/"+std::string(event.get()),body);
 }
 
 std::string link(tba::Event const& event,std::string const& body){

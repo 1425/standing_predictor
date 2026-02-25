@@ -276,16 +276,18 @@ auto entropy(Playoff_limits const& a){
 	return entropy(a.by_team);
 }
 
-std::set<tba::Team_key> teams(Rank_range<tba::Team_key> a){
+//std::set<tba::Team_key> teams(Rank_range<tba::Team_key> a){
+set_flat<tba::Team_key> teams(Rank_range<tba::Team_key> a){
 	return keys(a);
 }
 
-std::set<tba::Team_key> teams(Point_range<tba::Team_key> a){
+set_flat<tba::Team_key> teams(Point_range<tba::Team_key> a){
 	return keys(a);
 }
 
 template<typename T>
-std::set<tba::Team_key> teams(std::map<tba::Team_key,T> a){
+//std::set<tba::Team_key> teams(std::map<tba::Team_key,T> a){
+set_flat<tba::Team_key> teams(std::map<tba::Team_key,T> a){
 	return keys(a);
 }
 
@@ -297,7 +299,7 @@ auto teams(flat_map<tba::Team_key,T> a){
 //Rank_status event_limits(TBA_fetcher &f,tba::Event_key const& event){
 Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const& event){
 	Tournament_status tstatus=Tournament_status::FUTURE;
-	PRINT(event);
+	//PRINT(event);
 	auto ranks=rank_limits(f,event);
 	ranks.check();
 	auto t1=teams(ranks.ranks);
@@ -367,7 +369,7 @@ Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const&
 			assert(0);
 	}
 
-	auto d=award_limits(f,event,t1);
+	auto d=award_limits(f,event,to_std_set(t1));
 	auto t6=teams(d.by_team);
 	//PRINT(entropy(d));
 	//PRINT(d.status);

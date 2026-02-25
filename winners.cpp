@@ -5,6 +5,7 @@
 #include "tba.h"
 #include "event_status.h"
 #include "print_r.h"
+#include "set_limited.h"
 
 using namespace std;
 using Team=tba::Team_key;
@@ -99,7 +100,8 @@ set<Team> winners_district_points(TBA_fetcher &f,Event const& a){
 	return finish_district_points(f,a,30);
 }
 
-std::set<Team> winners(tba::Match const& a){
+//std::set<Team> winners(tba::Match const& a){
+auto winners(tba::Match const& a){
 	if(a.alliances.red.score>a.alliances.blue.score){
 		return to_set(a.alliances.red.team_keys);
 	}
@@ -107,10 +109,11 @@ std::set<Team> winners(tba::Match const& a){
 		return to_set(a.alliances.blue.team_keys);
 	}
 	//tie
-	return set<Team>{};
+	return set_limited<Team,4>{};
 }
 
-std::set<Team> winners(tba::Match_Simple const& a){
+//std::set<Team> winners(tba::Match_Simple const& a){
+auto winners(tba::Match_Simple const& a){
 	if(a.alliances.red.score>a.alliances.blue.score){
 		return to_set(a.alliances.red.team_keys);
 	}
@@ -118,7 +121,7 @@ std::set<Team> winners(tba::Match_Simple const& a){
 		return to_set(a.alliances.blue.team_keys);
 	}
 	//tie
-	return set<Team>{};
+	return set_limited<Team,4>{};
 }
 
 template<typename T>
@@ -145,6 +148,11 @@ auto mode(std::multiset<T> a){
 template<typename T>
 auto nonempty(std::vector<std::set<T>> const& a){
 	return filter([](auto x){ return !x.empty(); },a);
+}
+
+template<typename T,size_t N>
+std::vector<set_limited<T,N>> nonempty(std::vector<set_limited<T,N>> const& a){
+	return filter([](auto const& x){ return !x.empty(); },a);
 }
 
 template<typename T>
@@ -181,6 +189,11 @@ auto group_sets(std::set<std::set<T>> a){
 template<typename T>
 auto group_sets(std::vector<std::set<T>> a){
 	return group_sets(to_set(a));
+}
+
+template<typename T,size_t N>
+auto group_sets(std::vector<set_limited<T,N>> a){
+	return group_sets(MAP(to_std_set,a));
 }
 
 template<typename T>

@@ -21,7 +21,7 @@ std::vector<V> seconds(std::map<K,V> const& a){
 template<typename Func,typename K,typename V>
 auto mapf(Func f,std::map<K,V> const& v)->std::vector<decltype(f(*std::begin(v)))>{
 	std::vector<decltype(f(*std::begin(v)))> r;
-	for(auto p:v){
+	for(auto const& p:v){
 		r.push_back(f(p));
 	}
 	return r;

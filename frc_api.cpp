@@ -9,6 +9,7 @@
 #include "map.h"
 #include "vector_void.h"
 #include "optional.h"
+#include "set_flat.h"
 
 //start generic code
 

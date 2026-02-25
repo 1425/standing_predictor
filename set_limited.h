@@ -101,6 +101,13 @@ class set_limited{
 		}
 	}
 
+	template<template<typename>typename SET>
+	set_limited(SET<T> a){
+		for(auto const& x:a){
+			(*this)|=x;
+		}
+	}
+
 	set_limited(std::vector<T>&& a){
 		for(auto &elem:a){
 			(*this)|=std::move(elem);
@@ -211,6 +218,49 @@ class set_limited{
 		auto x=(*this)<=>a;
 		return x==std::strong_ordering::equal;
 	}
+
+	/*This is not const, nor is the argument so that they can be sorted.
+	This only makes sense to do if the sets are large
+	set_limited operator&(set_limited& b){
+		set_limited r;
+
+		//This is O(nlog(n)+mlog(m)
+		std::sort(data().begin(),data().end());
+		std::sort(b.data().begin(),b.data().end());
+
+		auto ai=begin();
+		auto ae=end();
+		auto bi=b.begin();
+		auto be=b.end();
+
+		while(ai!=ae && bi!=be){
+			auto av=*ai;
+			auto bv=*bi;
+			if(av<bv){
+				while(ai!=ae && *ai<bv){
+					++ai;
+				}
+			}else if(av==bv){
+				ai++;
+				bi++;
+			}else{
+				while(bi!=be && *bi<av){
+					++bi;
+				}
+			}
+		}
+	}*/
+
+	set_limited operator&(set_limited const& b)const{
+		//This is O(N*M)
+		set_limited r;
+		for(auto x:*this){
+			if(b.count(x)){
+				r|=x;
+			}
+		}
+		return r;
+	}
 };
 
 template<typename T,size_t N>
@@ -223,17 +273,6 @@ std::ostream& operator<<(std::ostream& o,set_limited<T,N> const& a){
 }
 
 template<typename T,size_t N>
-set_limited<T,N> operator&(set_limited<T,N> const& a,set_limited<T,N> const& b){
-	set_limited<T,N> r;
-	for(auto x:a){
-		if(b.count(x)){
-			r|=x;
-		}
-	}
-	return r;
-}
-
-template<typename T,size_t N>
 bool contains(set_limited<T,N> const& a,T const& b){
 	for(auto elem:a){
 		if(elem==b){
@@ -243,17 +282,15 @@ bool contains(set_limited<T,N> const& a,T const& b){
 	return 0;
 }
 
-#if 0
 template<typename T,size_t N>
-std::set<T> to_set(set_limited<T,N> const& a){
+std::set<T> to_std_set(set_limited<T,N> const& a){
 	return std::set<T>{a.begin(),a.end()};
 }
-#else
+
 template<typename T,size_t N>
 auto to_set(set_limited<T,N> a){
 	return std::move(a);
 }
-#endif
 
 template<typename T,size_t N>
 set_limited<T,N> to_set(vector_fixed<T,N> const& a){
@@ -369,6 +406,22 @@ set_limited<T,N> operator-(set_limited<T,N> a,std::set<T> const& b){
 	return r;
 }
 
+template<typename Func,typename T,size_t N>
+set_limited<T,N> filter(Func f,set_limited<T,N> const& a){
+	set_limited<T,N> r;
+	for(auto const& x:a){
+		if(f(x)){
+			r|=x;
+		}
+	}
+	return r;
+}
+
+template<typename T,size_t N,size_t M>
+set_limited<T,N> operator-(set_limited<T,N> a,set_limited<T,M> const& b){
+	return filter([&](auto const& x){ return !b.count(x); },a);
+}
+
 template<size_t N,typename T>
 auto take(std::set<T> const& a){
 	set_limited<T,N> r;
@@ -379,6 +432,33 @@ auto take(std::set<T> const& a){
 		r|=elem;
 	}
 	return r;
+}
+
+template<size_t N,typename T,size_t M>
+auto take(set_limited<T,M> const& a){
+	set_limited<T,std::min(N,M)> r;
+	for(auto const& elem:a){
+		if(r.size()>=N){
+			return r;
+		}
+		r|=elem;
+	}
+	return r;
+}
+
+template<typename T,size_t N>
+set_limited<T,N> operator&(std::set<T> const& a,set_limited<T,N> const& b){
+	return filter([&](auto const& x){ return a.count(x); },b);
+}
+
+template<typename T,size_t N>
+bool subset(set_limited<T,N> const& a,std::set<T> const& b){
+	for(auto const& x:a){
+		if(!b.count(x)){
+			return 0;
+		}
+	}
+	return 1;
 }
 
 #endif

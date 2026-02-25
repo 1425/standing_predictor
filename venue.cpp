@@ -251,9 +251,16 @@ bool match(std::optional<Address> const& a,std::optional<Address> const& b){
 
 bool match(tba::Event_key const& a,tba::Event_key const& b){
 	//it is known that these strings must be length >4.
-	const char *s1=a.get().c_str()+4;
-	const char *s2=b.get().c_str()+4;
+
+	/*const char *s1=a.get().c_str()+4;
+	const char *s2=b.get().c_str()+4;*/
+
+	//now assuming null termination!
+	const char *s1=a.get().data()+4;
+	const char *s2=b.get().data()+4;
+
 	return strcmp(s1,s2)==0;
+
 	/*auto p1=a.get().substr(4,100);
 	auto p2=b.get().substr(4,100);
 	return p1==p2;*/

@@ -4,6 +4,7 @@
 #include "map_small_int.h"
 #include "map_fixed.h"
 #include "flat_map.h"
+#include "set_flat.h"
 
 template<typename T>
 static constexpr bool small_int(T const*){
@@ -144,7 +145,8 @@ std::ostream& operator<<(std::ostream& o,map_auto<K,V> const& a){
 }
 
 template<typename K,typename V>
-std::set<K> keys(map_auto<K,V> const& a){
+//std::set<K> keys(map_auto<K,V> const& a){
+auto keys(map_auto<K,V> const& a){
 	return keys(a.get());
 }
 
