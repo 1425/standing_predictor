@@ -191,7 +191,7 @@ From_alliances ranks_from_alliances(Selection_results const& alliances,int event
 				auto third_plus=sum(mapf([](auto x){ return skip(2,x).size(); },alliances));
 				auto later_captains=count_if(
 					[](auto x){ return !x.empty(); },
-					skip(alliance_number,alliances)
+					::skip(alliance_number,alliances)
 				);
 				auto later_p1=later_captains+1;
 				//PRINT(alliance_number)

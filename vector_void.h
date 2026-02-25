@@ -23,6 +23,7 @@ vector_void take(size_t,vector_void);
 vector_void reversed(vector_void);
 void sum(vector_void);
 void mean(vector_void);
+void count(vector_void);
 
 template<typename Func,typename T>
 auto mapf(Func f,std::vector<T> const& v){
@@ -40,6 +41,14 @@ auto mapf(Func f,std::vector<T> const& v){
 		}
 		return r;
 	}
+}
+
+template<typename Func,template<typename,size_t> typename Collection,typename T,size_t N>
+auto mapf(Func f,Collection<T,N> const& a){
+	using E=decltype(f(a[0]));
+	std::vector<E> r;
+	std::transform(a.begin(),a.end(),std::back_inserter(r),f);
+	return r;
 }
 
 template<typename T>

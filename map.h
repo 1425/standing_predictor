@@ -78,6 +78,17 @@ auto group(Func f,std::vector<T> const& v){
 	return r;
 }
 
+template<typename Func,template<typename,size_t>typename COLLECTION,typename T,size_t N>
+auto group(Func f,COLLECTION<T,N> const& a){
+	using K=decltype(f(*std::begin(a)));
+	//std::map<K,COLLECTION<T,N>> r;
+	std::map<K,std::vector<T>> r;
+	for(auto const& x:a){
+		r[f(x)]|=x;
+	}
+	return r;
+}
+
 template<typename K,typename V>
 std::map<K,V>& operator+=(std::map<K,V>& a,std::map<K,V> const& b){
 	for(auto [k,v]:b){
@@ -190,6 +201,13 @@ auto get_key(std::map<K,V> const& a,K const& k){
 template<typename Func,typename K,typename V>
 auto group(Func f,std::map<K,V> const& a){
 	return group(f,to_vec(a));
+}
+
+template<typename A,typename B,size_t N>
+std::map<A,B> to_map(std::span<std::pair<A,B>> a){
+	std::map<A,B> r;
+	nyi
+	return r;
 }
 
 #endif

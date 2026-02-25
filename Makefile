@@ -1,4 +1,5 @@
 #CXXFLAGS=-std=c++23 -Wall -Wextra -Ofast -fdiagnostics-color=always -flto=auto
+#CXXFLAGS=-std=c++23 -Wall -Wextra -pedantic -Og -g -fdiagnostics-color=always -fsanitize=undefined,address
 CXXFLAGS=-std=c++23 -Wall -Wextra -pedantic -Og -g -fdiagnostics-color=always
 LIBS=-lsqlite3 -lcurl -lsimdjson
 CC=$(CXX)

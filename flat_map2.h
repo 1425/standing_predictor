@@ -245,7 +245,10 @@ class flat_map2{
 
 	V& operator[](K const& k){
 		auto f=std::lower_bound(keys.begin(),keys.end(),k);
+
 		auto v_it=values.begin()+(f-keys.begin());
+		assert(v_it>=values.begin() && v_it<=values.end());
+
 		if(f==keys.end() || *f!=k){
 			//new key
 			keys.emplace(f,k);

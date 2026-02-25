@@ -34,6 +34,16 @@ std::vector<T>& operator|=(std::vector<T> &a,COLLECTION<T,EXTRA...> && b){
 	return a;
 }
 
+template<typename T,template<typename,size_t>typename Collection,size_t N>
+std::vector<T>& operator|=(std::vector<T>& a,Collection<T,N> const& b){
+	a.insert(
+		a.end(),
+		std::make_move_iterator(b.begin()),
+		std::make_move_iterator(b.end())
+	);
+	return a;
+}
+
 template<typename T>
 auto operator|(std::vector<T> a,std::vector<T> b){
 	a|=b;
@@ -143,6 +153,16 @@ bool contains(std::vector<T> const& a,T const& b){
 
 template<typename T>
 bool subset(std::vector<T> const& a,std::vector<T> const& b){
+	for(auto const& x:a){
+		if(!contains(b,x)){
+			return 0;
+		}
+	}
+	return 1;
+}
+
+template<template<typename,size_t> typename Collection,typename T,size_t N>
+bool subset(Collection<T,N> const& a,std::vector<T> const& b){
 	for(auto const& x:a){
 		if(!contains(b,x)){
 			return 0;
@@ -348,9 +368,39 @@ auto flatten(std::vector<INNER<T,EXTRA...>> && a){
 	return r;
 }
 
+template<template<typename,size_t>typename Collection,typename T,size_t N>
+auto flatten(std::vector<Collection<T,N>> const& a){
+	std::vector<T> r;
+	for(auto const& elem:a){
+		r|=elem;
+	}
+	return r;
+}
+
 template<typename T>
 std::vector<T> take(size_t n,std::vector<T> const& v){
 	return std::vector<T>{v.begin(),v.begin()+std::min(n,v.size())};
+}
+
+template<template<typename,size_t>typename Collection,typename T,size_t N>
+auto take(size_t n,Collection<T,N> const& a){
+	std::vector<T> r;
+	size_t lim=min(n,a.size());
+	for(size_t i=0;i<lim;i++){
+		r|=a[i];
+	}
+	return r;
+}
+
+template<typename Func,template<typename,size_t>typename Collection,typename T,size_t N>
+auto filter(Func f,Collection<T,N> const& a){
+	std::vector<T> r;
+	for(auto const& x:a){
+		if(f(x)){
+			r|=x;
+		}
+	}
+	return r;
 }
 
 template<typename Func,typename T>

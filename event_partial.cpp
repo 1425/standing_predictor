@@ -12,6 +12,57 @@
 
 using namespace std;
 
+template<typename Func,typename T,size_t N>
+auto filter(Func f,tba::vector_fixed<T,N> const& a){
+	tba::vector_fixed<T,N> r;
+	for(auto const& x:a){
+		if(f(x)){
+			r|=x;
+		}
+	}
+	return r;
+}
+
+template<typename Func,typename T,size_t N>
+auto mapf(Func f,tba::vector_fixed<T,N> const& a){
+	using E=decltype(f(a[0]));
+	tba::vector_fixed<E,N> r;
+	for(auto const& x:a){
+		r|=f(x);
+	}
+	return r;
+}
+
+template<typename A,typename B,typename C,size_t N>
+auto group(tba::vector_fixed<std::variant<A,B,C>,N> const& a){
+	std::tuple<
+		tba::vector_fixed<A,N>,
+		tba::vector_fixed<B,N>,
+		tba::vector_fixed<C,N>
+	> r;
+	for(auto const& elem:a){
+		if(std::holds_alternative<A>(elem)){
+			get<0>(r)|=get<A>(elem);
+		}else if(std::holds_alternative<B>(elem)){
+			get<1>(r)|=get<B>(elem);
+		}else if(std::holds_alternative<C>(elem)){
+			get<2>(r)|=get<C>(elem);
+		}else{
+			assert(0);
+		}
+	}
+	return r;
+}
+
+template<typename T,size_t N>
+auto take(size_t n,tba::vector_fixed<T,N> const& a){
+	tba::vector_fixed<T,N> r;
+	for(auto i:range(min(n,a.size()))){
+		r|=a[i];
+	}
+	return r;
+}
+
 template<typename K,typename V>
 K min_key(std::map<K,V>);
 
@@ -208,7 +259,9 @@ Event_partial event_partial(TBA_fetcher &f){
 	};
 }
 
-struct Future{};
+struct Future{
+	auto operator<=>(Future const&)const=default;
+};
 
 std::ostream& operator<<(std::ostream& o,Future){
 	return o<<"Future";

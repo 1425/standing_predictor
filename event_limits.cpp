@@ -297,7 +297,7 @@ auto teams(flat_map<tba::Team_key,T> a){
 //Rank_status event_limits(TBA_fetcher &f,tba::Event_key const& event){
 Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const& event){
 	Tournament_status tstatus=Tournament_status::FUTURE;
-	//PRINT(event);
+	PRINT(event);
 	auto ranks=rank_limits(f,event);
 	ranks.check();
 	auto t1=teams(ranks.ranks);

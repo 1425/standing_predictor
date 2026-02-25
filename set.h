@@ -36,6 +36,14 @@ std::set<T>& operator|=(std::set<T>& a,std::vector<T> const& b){
 	return a;
 }
 
+template<template<typename,size_t> typename Collection,typename T,size_t N>
+std::set<T>& operator|=(std::set<T>& a,Collection<T,N> const& b){
+	for(auto const& elem:b){
+		a|=elem;
+	}
+	return a;
+}
+
 template<typename T>
 std::set<T> operator|(std::set<T> a,std::vector<T> const& b){
 	return a|=b;
