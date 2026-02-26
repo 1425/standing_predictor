@@ -5,6 +5,7 @@
 #include "map_fixed.h"
 #include "flat_map.h"
 #include "set_flat.h"
+#include "flat_map2.h"
 
 template<typename T>
 static constexpr bool small_int(T const*){
@@ -194,6 +195,17 @@ auto to_map_auto(std::map<K,V> const& a){
 
 template<typename K,typename V>
 auto to_map_auto(flat_map<K,V> const& a){
+	map_auto<K,V> r;
+	for(auto [k,v]:a){
+		r[k]=v;
+	}
+	return r;
+}
+
+template<typename K,typename V>
+auto to_map_auto(flat_map2<K,V> const& a){
+	//FIXME: SHOULD LOOK LIKE THIS:
+	//return map_auto<K,V>{a.begin(),a.end()};
 	map_auto<K,V> r;
 	for(auto [k,v]:a){
 		r[k]=v;

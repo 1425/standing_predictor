@@ -52,6 +52,7 @@ simple way:
 #include "event_limits.h"
 #include "event_partial.h"
 #include "toggle.h"
+#include "data_range.h"
 
 //start program-specific stuff.
 
@@ -829,6 +830,7 @@ struct Args{
 	bool venue_demo=0;
 	bool event_limits_demo=0;
 	bool event_partial_demo=0;
+	bool data_range_demo=0;
 	Skill_method skill_method=Skill_method::POINTS;
 };
 
@@ -896,6 +898,7 @@ Args parse_args(int argc,char **argv){
 	);
 	p.add("--event_limits_demo",{},"Experimental",r.event_limits_demo);
 	p.add("--event_partial_demo",{},"Experimental",r.event_partial_demo);
+	p.add("--data_range_demo",{},"Experimental",r.data_range_demo);
 	p.parse(argc,argv);
 	return r;
 }
@@ -1053,6 +1056,10 @@ int main1(int argc,char **argv){
 	if(args.event_partial_demo){
 		return toggle_demo();
 		return event_partial_demo(tba_fetcher);
+	}
+
+	if(args.data_range_demo){
+		return data_range_demo(tba_fetcher);
 	}
 
 	auto d=districts(tba_fetcher,args.year);

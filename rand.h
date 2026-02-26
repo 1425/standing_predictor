@@ -7,7 +7,7 @@
 namespace tba{
 	class Team_key;
 	class Event_key;
-	enum class Award_type;
+	enum class Award_type:char;
 };
 
 tba::Team_key rand(tba::Team_key const*);

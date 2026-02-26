@@ -1,6 +1,7 @@
 #CXXFLAGS=-std=c++23 -Wall -Wextra -Ofast -fdiagnostics-color=always -flto=auto
 #CXXFLAGS=-std=c++23 -Wall -Wextra -pedantic -Og -g -fdiagnostics-color=always -fsanitize=undefined,address
-CXXFLAGS=-std=c++23 -Wall -Wextra -pedantic -Og -g -fdiagnostics-color=always
+CXXFLAGS=-std=c++23 -Wall -Wextra -pedantic -O2 -g -fdiagnostics-color=always
+#CXXFLAGS=-std=c++23 -Os
 LIBS=-lsqlite3 -lcurl -lsimdjson
 CC=$(CXX)
 
@@ -23,6 +24,7 @@ FRC_API_OBJS= \
 	../frc_api/curl.o
 
 OUTLINE_OBJS= \
+	data_range.o\
 	toggle.o\
 	event_partial.o\
 	ranking_match_status.o\

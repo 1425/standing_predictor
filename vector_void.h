@@ -24,6 +24,7 @@ vector_void reversed(vector_void);
 void sum(vector_void);
 void mean(vector_void);
 void count(vector_void);
+void or_all(vector_void);
 
 template<typename Func,typename T>
 auto mapf(Func f,std::vector<T> const& v){

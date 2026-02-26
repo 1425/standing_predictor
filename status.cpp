@@ -590,11 +590,11 @@ void by_event_size(TBA_fetcher &tba_fetcher){
 			auto v=mapf(
 				[](auto x){
 					return make_tuple(
-						x.alliance_points,
-						x.award_points,
-						x.qual_points,
-						x.elim_points,
-						x.total
+						int(x.alliance_points),
+						int(x.award_points),
+						int(x.qual_points),
+						double(x.elim_points),
+						double(x.total)
 					);
 				},
 				values(e->points)

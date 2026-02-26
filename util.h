@@ -379,4 +379,8 @@ std::pair<C,D> coerce(std::pair<A,B> a,std::pair<C,D> const*){
 	);
 }
 
+auto ident(auto a){
+	return std::move(a);
+}
+
 #endif

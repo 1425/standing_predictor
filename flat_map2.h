@@ -193,6 +193,12 @@ class flat_map2{
 	};
 
 	struct const_iterator{
+		using iterator_category=typename KS::const_iterator::iterator_category;
+		using difference_type=typename KS::const_iterator::difference_type;
+		using value_type=std::pair<K,V>;
+		using reference_type=value_type&;
+		using pointer=value_type*;
+
 		using K_it=typename KS::const_iterator;
 		using V_it=typename VS::const_iterator;
 		K_it first;
@@ -203,6 +209,8 @@ class flat_map2{
 			second++;
 			return *this;
 		}
+
+		const_iterator operator++(int);
 
 		const_proxy<K,V> operator*()const{
 			return const_proxy<K,V>{*first,*second};
@@ -328,12 +336,45 @@ class flat_map2{
 		return keys;
 	}
 
+	template<typename Func,typename V2>
+	flat_map2(Func f,flat_map2<K,V2> const& a):
+		keys(a.get_keys()),
+		values(mapf(f,a.get_values()))
+	{}
+
 	template<typename Func>
 	auto map_values(Func f)const{
 		using E=decltype(f(values[0]));
-		flat_map2<K,E> r;
-		r.keys=keys;
-		r.values=mapf(f,values);
+		return flat_map2<K,E>(f,*this);
+	}
+
+	template<typename Func,typename V2>
+	flat_map2(Func f,std::map<K,V2> const& a){
+		keys.reserve(a.size());
+		values.reserve(a.size());
+
+		for(auto const& [k,v]:a){
+			keys|=k;
+			values|=f(v);
+		}
+	}
+
+	operator flat_map<K,V>()const{
+		//return flat_map<K,V>{begin(),end()};
+		flat_map<K,V> r;
+		for(auto [k,v]:*this){
+			r[k]=v;
+		}
+		return r;
+	}
+
+	operator std::map<K,V>()const{
+		//what the impl should be:
+		//return std::map<K,V>{begin(),end()};
+		std::map<K,V> r;
+		for(auto [k,v]:*this){
+			r[k]=v;
+		}
 		return r;
 	}
 
@@ -348,6 +389,12 @@ std::ostream& operator<<(std::ostream& o,flat_map2<K,V> const& a){
 template<typename Func,typename K,typename V>
 auto map_values(Func f,flat_map2<K,V> const& a){
 	return a.map_values(f);
+}
+
+template<typename Func,typename K,typename V>
+auto map_values(Func f,std::map<K,V> const& a){
+	using V2=decltype(f(a.begin()->second));
+	return flat_map2<K,V2>(f,a);
 }
 
 template<typename K,typename V>

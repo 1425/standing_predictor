@@ -558,7 +558,7 @@ int event_limits_demo(TBA_fetcher &f){
 		auto a=event_limits(f,event.key);
 		(void)a;
 	}*/
-	for(auto district:take(20,districts(f))){
+	for(auto district:take(2000,districts(f))){
 		PRINT(district);
 		auto a=district_limits(f,district);
 		//print_r(a);

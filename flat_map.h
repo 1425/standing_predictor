@@ -162,6 +162,7 @@ auto map_values(Func f,flat_map<K,V> const& a){
 	)};
 }
 
+#if 0
 template<typename Func,typename K,typename V>
 auto map_values(Func f,std::map<K,V> const& a){
 	using U=decltype(f(a.begin()->second));
@@ -170,5 +171,6 @@ auto map_values(Func f,std::map<K,V> const& a){
 		a
 	)};
 }
+#endif
 
 #endif

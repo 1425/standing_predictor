@@ -21,6 +21,12 @@ class set_flat{
 		}
 	}
 
+	explicit set_flat(std::vector<T> const& a){
+		for(auto const& x:a){
+			(*this)|=x;
+		}
+	}
+	
 	set_flat& operator=(set_flat const&)=default;
 
 	set_flat& operator=(std::set<T> const& a){
@@ -227,8 +233,8 @@ set_limited<T,N> operator-(set_limited<T,N> a,set_flat<T> const& b){
 }
 
 template<typename Func,typename T>
-set_flat<T> filter(Func,set_flat<T>){
-	nyi
+set_flat<T> filter(Func f,set_flat<T> a){
+	return set_flat<T>{filter(f,a.get())};
 }
 
 template<typename T>

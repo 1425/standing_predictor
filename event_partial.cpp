@@ -220,7 +220,7 @@ Event_partial event_partial(TBA_fetcher &f){
 
 				//TODO: Calc whether won chairmans here.
 				auto target=event.total;
-				found1|=make_pair(event.qual_points,target);
+				found1|=make_pair<Point,Target>(event.qual_points,target);
 				
 				found2|=make_pair(event.qual_points+event.alliance_points,target);
 

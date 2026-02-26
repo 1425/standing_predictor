@@ -8,11 +8,11 @@
 
 using namespace std;
 
-template<typename T>
+/*template<typename T>
 RP rp(T const& a){
 	print_r(a);
 	nyi
-}
+}*/
 
 using Bonus_rp=Int_limited<0,3>;//depends on year
 
@@ -29,7 +29,11 @@ RP rp(tba::Match_Score_Breakdown_2023_Alliance const& a){
 }
 
 RP rp(tba::Match_Score_Breakdown_2022_Alliance const& a){
-	return a.rp;
+	if(a.rp){
+		return *a.rp;
+	}
+	nyi //probably would just be playoffs where they don't exist?
+	return 0;
 }
 
 RP rp(tba::Match_Score_Breakdown_2020_Alliance const& a){
@@ -67,6 +71,14 @@ auto rp(tba::Match_Score_Breakdown_2016_Alliance const& a){
 
 RP rp(tba::Match_Score_Breakdown_2015_Alliance const&){
 	return 0;
+}
+
+RP rp(tba::Match_Score_Breakdown_2026_Alliance const&){
+	nyi
+}
+
+std::array<RP,2> rp(tba::Ignore const&){
+	return std::array<RP,2>{0,0};
 }
 
 #define X(NAME) auto rp(tba::Match_Score_Breakdown_##NAME const& a){\

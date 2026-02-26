@@ -352,11 +352,6 @@ auto map_reduce(Apply apply,Reduce reduce,std::vector<T> const& a){
 	return r;
 }
 
-template<typename T>
-T ident(T a){
-	return a;
-}
-
 class Event_grouping{
 	using T=tuple<tba::Event_key,std::optional<Address>,Event_name>;
 	using Collection=vector<T>;//whether this is set or vector makes no meaningful difference.

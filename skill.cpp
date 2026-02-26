@@ -273,7 +273,7 @@ Skill_by_pts calc_skill_inner(TBA_fetcher& f){
 			for(auto a:*d){
 				auto district_events=take(2,a.event_points);
 				int n=a.rookie_bonus+sum(mapf([](auto x){ return (int)x.total; },district_events));
-				pts[make_pair(year,a.team_key)]=make_pair(n,a.point_total);
+				pts[make_pair(year,a.team_key)]=make_pair<Point,Point>(n,a.point_total);
 
 				if(district_events.size()==2){
 					auto a=district_events[0].total;
