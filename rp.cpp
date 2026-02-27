@@ -25,19 +25,19 @@ RP rp(tba::Match_Score_Breakdown_2024_Alliance const& a){
 }
 
 RP rp(tba::Match_Score_Breakdown_2023_Alliance const& a){
-	return a.rp;
+	return a.rp.get();
 }
 
 RP rp(tba::Match_Score_Breakdown_2022_Alliance const& a){
 	if(a.rp){
-		return *a.rp;
+		return a.rp->get();;
 	}
 	nyi //probably would just be playoffs where they don't exist?
 	return 0;
 }
 
 RP rp(tba::Match_Score_Breakdown_2020_Alliance const& a){
-	return a.rp;
+	return a.rp.get();
 }
 
 auto rp(tba::Match_Score_Breakdown_2017_Alliance const& a){

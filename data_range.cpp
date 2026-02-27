@@ -2,13 +2,9 @@
 #include<set>
 #include "tba.h"
 #include "../tba/tba.h"
+#include "vector_void.h"
 
 using namespace std;
-
-template<typename T>
-struct Counter{
-	std::set<T> data;
-};
 
 vector<string> operator|(vector<string> a,const char *s){
 	assert(s);
@@ -256,12 +252,21 @@ void examine(vector<string> path,vector<int> const& a){
 void examine(vector<string> path,vector<short> const& a){
 	(void)path;
 	(void)a;
-	//path|="short";
-	//auto m1=min(a);
-	//auto m2=max(a);
-	/*if(m1==m2){
-		cout<<path<<" "<<m1<<" "<<m2<<"\n";
-	}*/
+	path|="short";
+
+	auto d=as_doubles(a);
+	auto u=mean(d);
+	auto sigma=std_dev(d);
+	static const auto SIGNIFICANCE=6;
+	auto outlier_low=min(min(a),u-SIGNIFICANCE*sigma);
+	auto outlier_high=max(max(a),u+SIGNIFICANCE*sigma);
+
+	if(min(a)>=0 && outlier_high<255){
+		cout<<path<<" could be u8\n";
+		cout<<"\tseen: ("<<min(a)<<"-"<<max(a)<<")\n";
+		cout<<"\tu:"<<u<<" sigma:"<<sigma<<"\n";
+		cout<<"\toutliers:"<<outlier_low<<" "<<outlier_high<<"\n";
+	}
 }
 
 void examine(vector<string> path,vector<double> const& a){

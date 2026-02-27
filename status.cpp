@@ -88,10 +88,6 @@ std::vector<T> operator|(std::vector<T> a,T2 t){
 	return a;
 }
 
-auto as_doubles(auto a){
-	return MAP(double,a);
-}
-
 //Stuff to deal w/ probability distributions
 
 template<template<typename,typename> typename MAP>

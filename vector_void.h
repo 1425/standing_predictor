@@ -80,4 +80,8 @@ size_t match_degree(std::tuple<A,B,C,D,E,F> const& a,std::tuple<A,B,C,D,E,F> con
 	return sum(mapf([](auto p){ return p.first==p.second; },zip(a,b)));
 }
 
+auto as_doubles(auto x){
+	return MAP(double,x);
+}
+
 #endif
