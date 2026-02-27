@@ -1086,7 +1086,11 @@ int main1(int argc,char **argv){
 		dcmp_pr[district]=run(tba_fetcher,run_inputs);
 
 		if(district=="2022ne"){
-			run_inputs.dcmp_size=std::vector<int>{{16}};
+			run_inputs.dcmp_size=[](){
+				std::vector<int> r;
+				r|=16;
+				return r;
+			}();
 			run_inputs.title="New England Championship Pre-Qualify";
 			run_inputs.extra="_cmp";
 			run_inputs.ignore_chairmans=1;

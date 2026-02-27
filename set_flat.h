@@ -27,6 +27,8 @@ class set_flat{
 		}
 	}
 	
+	set_flat(set_flat const&)=default;
+
 	set_flat& operator=(set_flat const&)=default;
 
 	set_flat& operator=(std::set<T> const& a){
@@ -243,7 +245,12 @@ std::vector<T> operator-(std::vector<T> a,set_flat<T> const& b){
 }
 
 template<typename T>
-set_flat<T> operator&(set_flat<T>,set_flat<T>);
+set_flat<T> operator&(set_flat<T> const& a,set_flat<T> const& b){
+	(void)a;
+	(void)b;
+	//This body just exists because clang thinks it should.
+	nyi
+}
 
 template<typename K,typename V>
 std::map<K,V> remove_keys(std::map<K,V> a,set_flat<K> const& b){

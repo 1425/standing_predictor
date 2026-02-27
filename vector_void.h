@@ -9,6 +9,7 @@ class vector_void{
 	size_t size_;
 
 	public:
+	vector_void();
 	explicit vector_void(size_t);
 
 	size_t size()const;

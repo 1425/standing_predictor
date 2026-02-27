@@ -205,6 +205,7 @@ auto group(Func f,std::map<K,V> const& a){
 
 template<typename A,typename B,size_t N>
 std::map<A,B> to_map(std::span<std::pair<A,B>> a){
+	(void)a;
 	std::map<A,B> r;
 	nyi
 	return r;

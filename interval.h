@@ -35,7 +35,7 @@ struct Interval{
 
 	auto options()const{
 		//this is accurate if T is integer-like, anyway.
-		return width+1;
+		return width()+1;
 	}
 
 	bool operator==(T const& a){

@@ -163,7 +163,7 @@ auto examine(std::vector<std::string> path,std::vector<T> const& data){
 	if(sizeof(T)==1){
 		return;
 	}
-	path|=type_string(*(T*)0);
+	path|=type_string<T>();
 	auto s=to_set(data);
 	cout<<path<<":"<<sizeof(T)<<"\t"<<s.size()<<"\n";
 }
@@ -200,7 +200,7 @@ auto examine(std::vector<string> path,std::vector<tba::Event> const& a){
 
 template<typename T,size_t N>
 void examine(std::vector<std::string> path,std::vector<tba::vector_fixed<T,N>> const& a){
-	path|=type_string(*(T*)0);
+	path|=type_string<T>();
 	auto x=to_set(a);
 	auto s=to_set(mapf([](auto x){ return x.size(); },a));
 	cout<<path<<": "<<x.size()<<" lengths:"<<min(s)<<" "<<max(s)<<"\n";

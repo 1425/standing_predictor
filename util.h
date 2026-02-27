@@ -40,6 +40,11 @@ std::string type_string(T const& x){
 	return demangle(typeid(x).name());
 }
 
+template<typename T>
+std::string type_string(){
+	return demangle(typeid(T).name());
+}
+
 auto square(auto x){
 	return x*x;
 }
