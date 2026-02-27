@@ -175,13 +175,33 @@ void TBA_fetcher_config::add(Argument_parser &f){
 	);
 }
 
+bool contains(string s,char c){
+	for(auto x:s){
+		if(x==c){
+			return 1;
+		}
+	}
+	return 0;
+}
+
 struct TBA_fetcher_log{
 	TBA_fetcher inner;
-	std::vector<tba::URL> data;
+	std::set<tba::URL> data;
 
 	std::pair<tba::HTTP_Date,tba::Data> fetch(tba::URL url){
-		//data|=url;
-		PRINT(url);
+		if(!data.count(url)){
+			data|=url;
+			PRINT(url);
+
+			string p="https://www.thebluealliance.com/api/v3/team/frc";
+			if(prefix(url,p)){
+				auto rest=url.substr(p.size(),1000);
+				if(!contains(rest,'/')){
+					//assert(0);
+				}
+			}
+		}
+
 		return inner.fetch(url);
 	}
 };
