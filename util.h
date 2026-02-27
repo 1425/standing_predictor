@@ -14,6 +14,15 @@
 	};\
 	std::ostream& operator<<(std::ostream&,NAME const&);\
 
+#define STRUCT_SINGLE(STRUCT_NAME,DATA_TYPE,DATA_NAME)\
+	struct STRUCT_NAME{\
+		DATA_TYPE DATA_NAME;\
+		auto operator<=>(STRUCT_NAME const&)const=default;\
+	};\
+	std::ostream& operator<<(std::ostream&,STRUCT_NAME const&);
+
+#define EMPTY(X)
+
 #define MAP(F,X) ::mapf([&](auto a){ return (F)(a); },(X))
 #define FILTER(A,B) filter([&](auto const& x){ return (A)(x); },(B))
 

@@ -31,6 +31,22 @@ using namespace std;
  *  -also each stage should produce a listing of what it thinks its status is
  * */
 
+template<typename Func,typename T>
+auto dict(Func f,std::set<T> a){
+	//I'm sure there is a better name to give this from somewhere in the Haskell prelude.
+	using E=decltype(f(*a.begin()));
+	std::map<T,E> r;
+	for(auto k:a){
+		r[k]=f(k);
+	}
+	return r;
+}
+
+template<typename Func,typename T>
+auto map_preserve(Func f,std::vector<T> const& a){
+	return mapf([&](auto x){ return std::make_pair(x,f(x)); },a);
+}
+
 using Team=tba::Team_key;
 
 ENUM_CLASS_PRINT(Tournament_status,TOURNAMENT_STATUS)
@@ -451,62 +467,43 @@ auto event_limits(TBA_fetcher &f,tba::Event const& e){
 	return event_limits(f,e.key);
 }
 
-Tournament_status dcmp_status(TBA_fetcher &f,tba::District_key const& district){
-	auto e=events(f,district);
-	auto e2=filter([](auto x){ return x.event_type!=tba::Event_type::DISTRICT; },e);
-	auto status=mapf(
-		[&](auto const& x){ return make_pair(x,event_limits(f,x.key).status); },
-		e2
-	);
-
-	if(status.empty()){
-		return Tournament_status::COMPLETE;
-	}
-
-	if(status.size()==1){
-		return status[0].second;
-	}
-
-	auto divisions=filter([](auto x){ return x.first.event_type==tba::Event_type::DISTRICT_CMP_DIVISION; },status);
-
-	if(!divisions.empty()){
-		auto latest_division_status=min(mapf([](auto x){ return x.second; },divisions));
-		if(latest_division_status!=Tournament_status::COMPLETE){
-			return latest_division_status;
+Tournament_status dcmp_status(TBA_fetcher &f,District_cmp_complex const& a){
+	if(!a.divisions.empty()){
+		auto last_division_status=min(mapf([&](auto x){ return event_limits(f,x.key).status; },a.divisions));
+		if(last_division_status!=Tournament_status::COMPLETE){
+			return last_division_status;
 		}
 	}
 
-	auto main_fields=filter([](auto x){ return x.first.event_type==tba::Event_type::DISTRICT_CMP; },status);
-	return min(seconds(main_fields));
+	//might want to think about what the proper thing to say is when the divisions are done
+	//but the matches for the championship field haven't started yet.
+
+	return event_limits(f,a.finals.key).status;
+}
+
+Tournament_status dcmp_status(TBA_fetcher &f,std::vector<District_cmp_complex> const& a){
+	auto m=to_set(mapf([&](auto x){ return dcmp_status(f,x); },a));
+
+	if(m.empty()){
+		//this occurs for 2021chs
+		return Tournament_status::COMPLETE;
+	}
+
+	//could give a more detailed result w/ # of events at each status
+	return min(m);
 }
 
 Rank_status<District_status> district_limits(TBA_fetcher &f,tba::District_key const& district){
-	//auto cat=categorize_events(f,district);
+	auto cat=categorize_events(f,district);
 
-	auto e=events(f,district);
+	auto locals=map_preserve([&](auto x){ return event_limits(f,x); },cat.local);
+	locals=sort_by(locals,[](auto x){ return x.first.start_date; });
 
-	//Ignore DCMP points for now.
-	auto e2=filter([](auto x){ return x.event_type==tba::Event_type::DISTRICT; },e);
-
-	//sort so that can figure out third plays
-	e2=sort_by(e2,[](auto x){ return x.start_date; });
-
-	//auto m=mapf([&](auto const& x){ return event_limits(f,x); },e2);
-	auto m=dict(mapf(
-		[&](auto const& x){ return std::make_pair(x.key,event_limits(f,x)); },
-		e2
-	));
-
-	/*for(auto [i,x]:enumerate(m)){
-		cout<<i<<"\t"<<entropy(x)<<"\n";
-	}*/
-
-	auto local_status=to_set(mapf([](auto x){ return x.status; },values(m)));
-	//PRINT(local_status);
+	auto local_status=to_set(mapf([](auto x){ return x.status; },seconds(locals)));
 
 	map<Team,int> plays;
 	Rank_status<District_status> r;
-	for(auto here:values(m)){
+	for(auto here:seconds(locals)){
 		for(auto [k,v]:here.by_team){
 			auto&p=plays[k];
 			if(p<2){
@@ -523,10 +520,10 @@ Rank_status<District_status> district_limits(TBA_fetcher &f,tba::District_key co
 			return District_status_future();
 		}
 		if(local_status!=set<Tournament_status>{Tournament_status::COMPLETE}){
-			auto k2=map_values([](auto x){ return x.status; },m);
+			auto k2=dict(mapf([](auto const& x){ return make_pair(x.first.key,x.second.status); },locals));
 			return District_status_locals_in_progress(invert(k2));
 		}
-		auto d=dcmp_status(f,district);
+		auto d=dcmp_status(f,cat.dcmp);
 		if(d==Tournament_status::FUTURE){
 			return District_status_locals_complete();
 		}

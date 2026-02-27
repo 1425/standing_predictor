@@ -7,12 +7,6 @@
 
 class TBA_fetcher;
 
-#define STRUCT_SINGLE(STRUCT_NAME,DATA_TYPE,DATA_NAME)\
-	struct STRUCT_NAME{\
-		DATA_TYPE DATA_NAME;\
-	};\
-	std::ostream& operator<<(std::ostream&,STRUCT_NAME const&);
-
 STRUCT_SINGLE(Team_event_status_rank,Interval<Point>,data)
 STRUCT_SINGLE(Team_event_status_post_rank,Point,data)
 STRUCT_SINGLE(Team_event_status_post_pick,Point,data)
