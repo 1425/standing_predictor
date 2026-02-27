@@ -465,4 +465,13 @@ auto rand(flat_map2<K,V> const*){
 	return r;
 }
 
+template<typename K,typename V>
+auto invert(flat_map2<K,V> const& a){
+	std::map<V,std::vector<K>> r;
+	for(auto [k,v]:a){
+		r[v]|=k;
+	}
+	return r;
+}
+
 #endif

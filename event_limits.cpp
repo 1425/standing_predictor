@@ -7,6 +7,7 @@
 #include "lock2.h"
 #include "pick_points.h"
 #include "winners.h"
+#include "event_partial.h"
 
 using namespace std;
 
@@ -46,7 +47,19 @@ Tournament_status rand(Tournament_status const* x){
 	return choose(options(x));
 }
 
-ENUM_CLASS_PRINT(District_status,DISTRICT_STATUS)
+//ENUM_CLASS_PRINT(District_status,DISTRICT_STATUS)
+
+#define X(NAME) std::ostream& operator<<(std::ostream& o,NAME const&){ return o<<""#NAME; }
+X(District_status_dcmp_in_progress)
+X(District_status_locals_complete)
+//X(District_status_locals_in_progress)
+X(District_status_future)
+X(District_status_complete)
+#undef X
+
+std::ostream& operator<<(std::ostream& o,District_status_locals_in_progress const& a){
+	return o<<"District_status_locals_in_progress("<<a.data<<")";
+}
 
 template<typename K,typename V>
 void reserve_if_able(flat_map<K,V> &a,size_t n){
@@ -468,6 +481,8 @@ Tournament_status dcmp_status(TBA_fetcher &f,tba::District_key const& district){
 }
 
 Rank_status<District_status> district_limits(TBA_fetcher &f,tba::District_key const& district){
+	//auto cat=categorize_events(f,district);
+
 	auto e=events(f,district);
 
 	//Ignore DCMP points for now.
@@ -476,18 +491,22 @@ Rank_status<District_status> district_limits(TBA_fetcher &f,tba::District_key co
 	//sort so that can figure out third plays
 	e2=sort_by(e2,[](auto x){ return x.start_date; });
 
-	auto m=mapf([&](auto const& x){ return event_limits(f,x); },e2);
+	//auto m=mapf([&](auto const& x){ return event_limits(f,x); },e2);
+	auto m=dict(mapf(
+		[&](auto const& x){ return std::make_pair(x.key,event_limits(f,x)); },
+		e2
+	));
 
 	/*for(auto [i,x]:enumerate(m)){
 		cout<<i<<"\t"<<entropy(x)<<"\n";
 	}*/
 
-	auto local_status=to_set(mapf([](auto x){ return x.status; },m));
+	auto local_status=to_set(mapf([](auto x){ return x.status; },values(m)));
 	//PRINT(local_status);
 
 	map<Team,int> plays;
 	Rank_status<District_status> r;
-	for(auto here:m){
+	for(auto here:values(m)){
 		for(auto [k,v]:here.by_team){
 			auto&p=plays[k];
 			if(p<2){
@@ -499,21 +518,22 @@ Rank_status<District_status> district_limits(TBA_fetcher &f,tba::District_key co
 	}
 	//PRINT(count(values(plays)));
 	
-	r.status=[&](){
+	r.status=[&]()->District_status{
 		if(local_status==set<Tournament_status>{Tournament_status::FUTURE}){
-			return District_status::FUTURE;
+			return District_status_future();
 		}
 		if(local_status!=set<Tournament_status>{Tournament_status::COMPLETE}){
-			return District_status::LOCALS_IN_PROGRESS;
+			auto k2=map_values([](auto x){ return x.status; },m);
+			return District_status_locals_in_progress(invert(k2));
 		}
 		auto d=dcmp_status(f,district);
 		if(d==Tournament_status::FUTURE){
-			return District_status::LOCALS_COMPLETE;
+			return District_status_locals_complete();
 		}
 		if(d==Tournament_status::COMPLETE){
-			return District_status::COMPLETE;
+			return District_status_complete();
 		}
-		return District_status::DCMP_IN_PROGRESS;
+		return District_status_dcmp_in_progress();
 	}();
 
 	return r;

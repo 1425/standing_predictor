@@ -48,6 +48,24 @@ std::ostream& operator<<(std::ostream&,Event_partial const&);
 Event_partial event_partial(TBA_fetcher&);
 Run_input read_status(TBA_fetcher&,tba::District_key const&);
 
+#define DISTRICT_CMP_COMPLEX(X)\
+	X(tba::Event,finals)\
+	X(std::vector<tba::Event>,divisions)\
+
+//std::vector<Event> divisions; //may be empty
+//Event finals; //won't have qual matches and picks if divisions exist
+STRUCT_DECLARE(District_cmp_complex,DISTRICT_CMP_COMPLEX)
+
+#define EVENT_CATEGORIES(X)\
+	X(std::vector<tba::Event>,local)\
+	X(std::vector<District_cmp_complex>,dcmp)
+
+//std::vector<Event> local;//sort by date?
+//std::vector<District_cmp_complex> dcmp;//sorted by Dcmp_index?
+STRUCT_DECLARE(Event_categories,EVENT_CATEGORIES)
+
+Event_categories categorize_events(TBA_fetcher&,tba::District_key const&);
+
 int event_partial_demo(TBA_fetcher&);
 
 #endif

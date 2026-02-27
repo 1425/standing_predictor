@@ -35,14 +35,46 @@ Tournament_status rand(Tournament_status const*);
 
 bool in_progress(Tournament_status);
 
-#define DISTRICT_STATUS(X)\
-	X(FUTURE)\
-	X(LOCALS_IN_PROGRESS)\
-	X(LOCALS_COMPLETE)\
-	X(DCMP_IN_PROGRESS)\
-	X(COMPLETE)\
+class District_status_future{
+	auto operator<=>(District_status_future const&)const=default;
+};
 
-ENUM_CLASS(District_status,DISTRICT_STATUS)
+std::ostream& operator<<(std::ostream&,District_status_future const&);
+
+struct District_status_locals_in_progress{
+	std::map<Tournament_status,std::vector<tba::Event_key>> data;
+
+	auto operator<=>(District_status_locals_in_progress const&)const=default;
+};
+
+std::ostream& operator<<(std::ostream&,District_status_locals_in_progress const&);
+
+class District_status_locals_complete{
+	auto operator<=>(District_status_locals_complete const&)const=default;
+};
+
+std::ostream& operator<<(std::ostream&,District_status_locals_complete const&);
+
+class District_status_dcmp_in_progress{
+	//set of event status? or map of event_name -> status
+	auto operator<=>(District_status_dcmp_in_progress const&)const=default;
+};
+
+std::ostream& operator<<(std::ostream&,District_status_dcmp_in_progress const&);
+
+class District_status_complete{
+	auto operator<=>(District_status_complete const&)const=default;
+};
+
+std::ostream& operator<<(std::ostream&,District_status_complete const&);
+
+using District_status=std::variant<
+	District_status_future,
+	District_status_locals_in_progress,
+	District_status_locals_complete,
+	District_status_dcmp_in_progress,
+	District_status_complete
+>;
 
 bool in_progress(District_status);
 

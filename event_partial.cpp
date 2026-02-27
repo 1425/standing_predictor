@@ -306,14 +306,6 @@ Point median(Team_dist a){
 
 using Event=tba::Event;
 
-#define DISTRICT_CMP_COMPLEX(X)\
-	X(Event,finals)\
-	X(std::vector<Event>,divisions)\
-
-//std::vector<Event> divisions; //may be empty
-//Event finals; //won't have qual matches and picks if divisions exist
-STRUCT_DECLARE(District_cmp_complex,DISTRICT_CMP_COMPLEX)
-
 PRINT_STRUCT(District_cmp_complex,DISTRICT_CMP_COMPLEX)
 
 bool complete(TBA_fetcher &f,tba::Event const& a){
@@ -323,14 +315,6 @@ bool complete(TBA_fetcher &f,tba::Event const& a){
 bool complete(TBA_fetcher &f,District_cmp_complex const& a){
 	return complete(f,a.finals);
 }
-
-#define EVENT_CATEGORIES(X)\
-	X(std::vector<Event>,local)\
-	X(std::vector<District_cmp_complex>,dcmp)
-
-//std::vector<Event> local;//sort by date?
-//std::vector<District_cmp_complex> dcmp;//sorted by Dcmp_index?
-STRUCT_DECLARE(Event_categories,EVENT_CATEGORIES)
 
 PRINT_STRUCT(Event_categories,EVENT_CATEGORIES)
 

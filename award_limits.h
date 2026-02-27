@@ -40,6 +40,8 @@ struct Rank_status{
 	}
 
 	Rank_status& operator+=(Rank_status const&);
+
+	auto operator<=>(Rank_status const&)const=default;
 };
 
 template<typename Status,template<typename,typename> typename MAP>
