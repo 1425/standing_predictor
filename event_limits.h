@@ -47,8 +47,9 @@ std::ostream& operator<<(std::ostream&,District_status_locals_in_progress const&
 
 STRUCT_DECLARE(District_status_locals_complete,EMPTY)
 
-class District_status_dcmp_in_progress{
-	//set of event status? or map of event_name -> status
+struct District_status_dcmp_in_progress{
+	std::map<Tournament_status,std::vector<tba::Event_key>> data;
+
 	auto operator<=>(District_status_dcmp_in_progress const&)const=default;
 };
 

@@ -66,15 +66,17 @@ Tournament_status rand(Tournament_status const* x){
 //ENUM_CLASS_PRINT(District_status,DISTRICT_STATUS)
 
 #define X(NAME) std::ostream& operator<<(std::ostream& o,NAME const&){ return o<<""#NAME; }
-X(District_status_dcmp_in_progress)
 X(District_status_locals_complete)
-//X(District_status_locals_in_progress)
 X(District_status_future)
 X(District_status_complete)
 #undef X
 
 std::ostream& operator<<(std::ostream& o,District_status_locals_in_progress const& a){
 	return o<<"District_status_locals_in_progress("<<a.data<<")";
+}
+
+std::ostream& operator<<(std::ostream& o,District_status_dcmp_in_progress const& a){
+	return o<<"District_status_dcmp_in_progress("<<a.data<<")";
 }
 
 template<typename K,typename V>
@@ -481,25 +483,46 @@ Tournament_status dcmp_status(TBA_fetcher &f,District_cmp_complex const& a){
 	return event_limits(f,a.finals.key).status;
 }
 
-Tournament_status dcmp_status(TBA_fetcher &f,std::vector<District_cmp_complex> const& a){
-	auto m=to_set(mapf([&](auto x){ return dcmp_status(f,x); },a));
+auto main_key(District_cmp_complex const& a){
+	return a.finals.key;
+}
 
-	if(m.empty()){
+std::variant<
+	District_status_future,
+	District_status_dcmp_in_progress,
+	District_status_complete
+> dcmp_status(TBA_fetcher &f,std::vector<District_cmp_complex> const& a){
+	if(a.empty()){
 		//this occurs for 2021chs
-		return Tournament_status::COMPLETE;
+		return District_status_complete();
 	}
 
-	//could give a more detailed result w/ # of events at each status
-	return min(m);
+	auto m=map_preserve([&](auto x){ return dcmp_status(f,x); },a);
+	auto opts=to_set(seconds(m));
+
+	if(opts==std::set<Tournament_status>{Tournament_status::FUTURE}){
+		return District_status_future();
+	}
+	if(opts==std::set<Tournament_status>{Tournament_status::COMPLETE}){
+		return District_status_complete();
+	}
+
+	return District_status_dcmp_in_progress([&](){
+		std::map<Tournament_status,std::vector<tba::Event_key>> r;
+		for(auto [k,v]:m){
+			r[v]|=main_key(k);
+		}
+		return r;
+	}());
 }
 
 Rank_status<District_status> district_limits(TBA_fetcher &f,tba::District_key const& district){
 	auto cat=categorize_events(f,district);
 
-	auto locals=map_preserve([&](auto x){ return event_limits(f,x); },cat.local);
-	locals=sort_by(locals,[](auto x){ return x.first.start_date; });
+	auto locals=map_preserve([&](auto const& x){ return event_limits(f,x); },cat.local);
+	locals=sort_by(locals,[](auto const& x){ return x.first.start_date; });
 
-	auto local_status=to_set(mapf([](auto x){ return x.status; },seconds(locals)));
+	auto local_status=to_set(mapf([](auto const& x){ return x.status; },seconds(locals)));
 
 	map<Team,int> plays;
 	Rank_status<District_status> r;
@@ -524,13 +547,7 @@ Rank_status<District_status> district_limits(TBA_fetcher &f,tba::District_key co
 			return District_status_locals_in_progress(invert(k2));
 		}
 		auto d=dcmp_status(f,cat.dcmp);
-		if(d==Tournament_status::FUTURE){
-			return District_status_locals_complete();
-		}
-		if(d==Tournament_status::COMPLETE){
-			return District_status_complete();
-		}
-		return District_status_dcmp_in_progress();
+		return std::visit([](auto x){ return District_status(x); },d);
 	}();
 
 	return r;
