@@ -85,7 +85,7 @@ multiset<Point> point_results(TBA_fetcher& fetcher,tba::District_key dk){
 	assert(d);
 	multiset<Point> r;
 	for(auto team_result:*d){
-		for(auto event:take(2,team_result.event_points)){
+		for(auto event: ::take<2>(team_result.event_points)){
 			r|=Point(event.total);
 		}
 	}
@@ -252,7 +252,7 @@ struct TBA_fetcher_refresh{
 		}
 
 		//now go try to refresh the items.
-		cout<<"to refresh("<<to_refresh.size()<<"): "<<take(5,to_refresh)<<"\n";
+		cout<<"to refresh("<<to_refresh.size()<<"): "<<take<5>(to_refresh)<<"\n";
 		for(auto [url,old_data]:to_refresh){
 			//PRINT(url);
 			auto f2=inner.fetcher.fetch(url);

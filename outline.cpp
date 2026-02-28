@@ -53,6 +53,7 @@ simple way:
 #include "event_partial.h"
 #include "toggle.h"
 #include "data_range.h"
+#include "vector_fixed.h"
 
 //start program-specific stuff.
 
@@ -693,7 +694,7 @@ std::vector<Prediction_status> historical_demo(TBA_fetcher &fetcher,tba::Distric
 			i2.by_team.clear();
 			//i2.dcmp_distribution1.clear();
 			print_r(i2);
-			for(auto [k,v]:take(5,bt)){
+			for(auto [k,v]:take<5>(bt)){
 				//p.second.point_dist.clear();//because big onscreen.
 				//cout<<"\t"<<v<<"\n";
 

@@ -453,7 +453,7 @@ void typical_teams(TBA_fetcher &f,Event_grouping const& grouping,tba::Event cons
 	//give the most likely teams
 	{
 		auto top=reversed(sorted(reverse_pairs(odds)));
-		cout<<"\tMost likely: "<<take(5,top)<<"\n";
+		cout<<"\tMost likely: "<<::take<5>(top)<<"\n";
 	}
 
 	//calculate the 5 top teams that are expected but not present
@@ -461,7 +461,7 @@ void typical_teams(TBA_fetcher &f,Event_grouping const& grouping,tba::Event cons
 	{
 		auto not_here=odds-here;
 		auto top=reversed(sorted(reverse_pairs(not_here)));
-		cout<<"\tMissing: "<<take(5,top)<<"\n";
+		cout<<"\tMissing: "<<::take<5>(top)<<"\n";
 	}
 
 	//calculate the 5 top teams that are present but not expected
@@ -471,7 +471,7 @@ void typical_teams(TBA_fetcher &f,Event_grouping const& grouping,tba::Event cons
 		},
 		here
 	));
-	cout<<"\tUnexpected:"<<take(5,odds_here)<<"\n";
+	cout<<"\tUnexpected:"<<::take<5>(odds_here)<<"\n";
 
 }
 
@@ -538,7 +538,7 @@ void typical_teams(TBA_fetcher &f,Year year){
 	)));
 
 	cout<<"Events with most similar composition:\n";
-	print_lines(take(500,similarity));
+	print_lines(::take<500>(similarity));
 }
 
 template<typename T>
@@ -576,7 +576,7 @@ void most_international(TBA_fetcher &f){
 		//events_keys(f,year)
 		keys(events(f))
 	)));
-	print_lines(take(50,m));
+	print_lines(::take<50>(m));
 }
 
 int venue_demo(TBA_fetcher &f){

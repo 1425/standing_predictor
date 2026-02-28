@@ -106,7 +106,7 @@ std::optional<District_key> prev(TBA_fetcher& f,District_key a){
 int pre_dcmp_pts(tba::District_Ranking const& a){
 	return a.rookie_bonus+sum(mapf(
 		[](auto x){ return x.total; },
-		take(2,a.event_points)
+		take<2>(a.event_points)
 	));
 }
 
@@ -135,7 +135,7 @@ std::vector<int> team_points(TBA_fetcher& f,Team_key team,Year year){
 	if(t2.empty()){
 		return {};
 	}
-	auto t3=take(2,t2);
+	auto t3=::take<2>(t2);
 	vector<int> r;
 	for(auto x:t3){
 		auto e=event_district_points(f,x.key);
@@ -182,12 +182,12 @@ Team_dist rookie_pre_dcmp(TBA_fetcher& f){
 			auto r1=*rank;
 			for(auto x:r1){
 				auto team=x.team_key;
-				auto counting_events=take(2,x.event_points);
+				auto counting_events=take<2>(x.event_points);
 				if(counting_events.empty()){
 					//This does actually happen that teams just don't show up
 					//especially with rookies
 				}
-				auto pts_earned=sum(mapf([](auto x){ return x.total; },take(2,x.event_points)));
+				auto pts_earned=sum(mapf([](auto x){ return x.total; },take<2>(x.event_points)));
 				pts[make_pair(year,team)]=pts_earned;
 			}
 		}
@@ -278,7 +278,7 @@ Skill_by_pts calc_skill_inner(TBA_fetcher& f){
 			}
 			assert(d);
 			for(auto a:*d){
-				auto district_events=take(2,a.event_points);
+				auto district_events=take<2>(a.event_points);
 				int n=a.rookie_bonus+sum(mapf([](auto x){ return (int)x.total; },district_events));
 				pts[make_pair(year,a.team_key)]=make_pair<Point,Point>(n,a.point_total);
 

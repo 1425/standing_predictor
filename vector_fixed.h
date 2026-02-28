@@ -1,6 +1,7 @@
 #ifndef VECTOR_FIXED_H
 #define VECTOR_FIXED_H
 
+#include<map>
 #include "int_limited.h"
 #include "vector.h"
 
@@ -177,6 +178,18 @@ class vector_fixed{
 		}
 		return std::strong_ordering::equal;
 	}
+
+	bool operator==(std::vector<T> const& a)const{
+		if(size()!=a.size()){
+			return 0;
+		}
+		for(size_t i=0;i<size();i++){
+			if((*this)[i]!=a[i]){
+				return 0;
+			}
+		}
+		return 1;
+	}
 };
 
 template<typename T,size_t N>
@@ -247,7 +260,34 @@ template<size_t N,typename T>
 auto take(std::vector<T> const& a){
 	vector_fixed<T,N> r;
 	for(size_t i=0;i<N && i<a.size();i++){
-		r|=a;
+		r|=a[i];
+	}
+	return r;
+}
+
+template<size_t N,typename K,typename V>
+auto take(std::map<K,V> const& a){
+	return ::take<N>(to_vec(a));
+}
+
+template<size_t N,typename T,size_t M>
+auto take(vector_fixed<T,M> const& a){
+	vector_fixed<T,std::min(N,M)> r;
+	for(size_t i=0;i<min(N,a.size());i++){
+		r|=a[i];
+	}
+	return r;
+}
+
+template<size_t N,typename T>
+auto take(T const& a){
+	using E=ELEM(a);
+	vector_fixed<E,N> r;
+	for(auto const& x:a){
+		if(r.size()>=N){
+			return r;
+		}
+		r|=x;
 	}
 	return r;
 }
@@ -255,6 +295,16 @@ auto take(std::vector<T> const& a){
 template<typename T,size_t N>
 auto sum(vector_fixed<T,N> const& a){
 	return std::accumulate(a.begin(),a.end(),T());
+}
+
+template<typename T,size_t N>
+auto enumerate_from(size_t n,vector_fixed<T,N> const& a){
+	using P=std::pair<size_t,T>;
+	vector_fixed<P,N> r;
+	for(auto const& x:a){
+		r|=P(n++,x);
+	}
+	return r;
 }
 
 #endif

@@ -636,7 +636,7 @@ int timezone_demo(TBA_fetcher &f){
 			//cout<<take(5,v2)<<"\n";
 			//print_r(2,mapf([&](auto x){ return tba::event(f,x); },take(5,v2)));
 			cout<<"\n";
-			for(auto t:take(5,v2)){
+			for(auto t: ::take<5>(v2)){
 				cout<<"\t\t"<<t<<"\t"<<address(f,t)<<"\n";
 			}
 		}

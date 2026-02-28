@@ -241,7 +241,7 @@ void match_timings(TBA_fetcher &f){
 
 	auto m=mapf([](auto x){ return std::chrono::system_clock::from_time_t(x); },to_set(times));
 
-	print_lines(take(5,m));
+	print_lines(take<5>(m));
 
 	//TODO: For each event, look at each day of competition and look at the earliest and latest matches
 

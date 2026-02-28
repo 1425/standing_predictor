@@ -493,7 +493,7 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 		Full full;
 		auto e=tba::event_alliances(f,event);
 		if(e){
-			auto alliances_to_use=take(ALLIANCES,*e);
+			auto alliances_to_use=::take<ALLIANCES>(*e);
 			if(alliances_to_use!=*e){
 				//something wrong with the data
 				//could report this somehow
@@ -677,7 +677,7 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 				//print_lines(combo);
 				//PRINT(s);
 				//there is something wrong with the data coming in; just make a guess
-				s=take(1,s);
+				s=take<1>(s);
 			}
 			assert(s.size()<=1);
 			if(!s.empty()){

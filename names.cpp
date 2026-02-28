@@ -100,7 +100,7 @@ void common_sponsors(TBA_fetcher &f){
 	auto show=[](string label,auto x){
 		auto c=reversed(sorted(swap_pairs(count(x))));
 		cout<<label<<"\n";
-		for(auto x:take(20,c)){
+		for(auto x:take<20>(c)){
 			cout<<"\t"<<x<<"\n";
 		}
 	};

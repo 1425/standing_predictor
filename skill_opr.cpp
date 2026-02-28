@@ -267,8 +267,8 @@ Skill_estimates calc_skill_opr(TBA_fetcher& f,tba::District_key const& district)
 				auto d=tba::district_rankings(f,key);
 				if(!d) continue;
 				for(auto a:*d){
-					auto district_events=take(2,a.event_points);
-					if(district_events.empty()){
+					auto district_events=::take<2>(a.event_points);
+					if(district_events.size()!=2){
 						continue;
 					}
 					int n=a.rookie_bonus+sum(mapf([](auto x){ return (int)x.total; },district_events));

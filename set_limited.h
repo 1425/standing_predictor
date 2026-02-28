@@ -261,6 +261,10 @@ class set_limited{
 		}
 		return r;
 	}
+
+	operator std::set<T>()const{
+		return std::set<T>{begin(),end()};
+	}
 };
 
 template<typename T,size_t N>
