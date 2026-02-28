@@ -220,11 +220,11 @@ std::tuple<Run_result,Points_used,By_team> run_inner(
 		}
 	}
 
-	/*return make_tuple(
-		run_calc(read_status(f,district)),
+	return make_tuple(
+		run_calc(read_status(f,district,skill_method)),
 		points_used,
 		by_team
-	);*/
+	);
 	return make_tuple(
 		run_calc(Run_input{
 			worlds_slots(district),

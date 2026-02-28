@@ -354,7 +354,7 @@ auto event_type(TBA_fetcher &f,tba::Event_points const& a){
 	return event_type(f,a.event_key);
 }
 
-Run_input read_status(TBA_fetcher &f,tba::District_key const& district){
+Run_input read_status(TBA_fetcher &f,tba::District_key const& district,Skill_method skill_method){
 	//go look at all the event statuses 
 	//and then go through the standings looking at teams with knowledge of the status of the events
 
@@ -413,7 +413,8 @@ Run_input read_status(TBA_fetcher &f,tba::District_key const& district){
 		}
 	};
 
-	Skill_estimates skill=calc_skill(f,district);
+	//Skill_estimates skill=calc_skill(f,district);
+	Skill_estimates skill=skill_estimates(f,district,skill_method);
 
 	auto team_dist_pre_dcmp=[&](auto team_info)->Team_dist{
 		auto found=mapf(
@@ -512,7 +513,7 @@ int event_partial_demo(TBA_fetcher &f){
 	auto e=event_partial(f);
 	//print_r(e);
 
-	read_status(f,tba::District_key("2025pnw"));
+	read_status(f,tba::District_key("2025pnw"),Skill_method::NONE);
 
 	if(0){
 		#define X(A,B) cout<<""#B<<"\n"; for(auto [k,v]:e.B){ cout<<"\t"<<k<<"\t"<<quartiles(v)<<"\n"; }

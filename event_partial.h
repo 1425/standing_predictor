@@ -4,6 +4,7 @@
 #include<map>
 #include "probability.h"
 #include "run.h"
+#include "skill.h"
 
 class TBA_fetcher;
 
@@ -40,7 +41,7 @@ struct Event_partial{
 std::ostream& operator<<(std::ostream&,Event_partial const&);
 
 Event_partial event_partial(TBA_fetcher&);
-Run_input read_status(TBA_fetcher&,tba::District_key const&);
+Run_input read_status(TBA_fetcher&,tba::District_key const&,Skill_method);
 
 #define DISTRICT_CMP_COMPLEX(X)\
 	X(tba::Event,finals)\
