@@ -195,6 +195,13 @@ Team_dist rookie_pre_dcmp(TBA_fetcher& f){
 
 	std::multiset<Point> found;
 	for(auto team:teams(f)){
+		if(!team.rookie_year){
+			//print_r(team);
+			//Not sure why a team wouldn't have their rookie year listed
+			//but some of them don't; see 6333.  Could look this up in a
+			//table for most of them.
+			continue;
+		}
 		assert(team.rookie_year);
 		auto f=pts.find(make_pair(*team.rookie_year,team.key));
 		if(f==pts.end()){

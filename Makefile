@@ -2,7 +2,7 @@
 #CXXFLAGS=-std=c++23 -Wall -Wextra -pedantic -Og -g -fdiagnostics-color=always -fsanitize=undefined,address
 CXXFLAGS=-std=c++23 -Wall -Wextra -pedantic -O2 -g -fdiagnostics-color=always
 #CXXFLAGS=-std=c++23 -Os
-LIBS=-lsqlite3 -lcurl -lsimdjson
+LIBS=-lsqlite3 -lcurl -lsimdjson -ltbb
 CC=$(CXX)
 
 EXE=outline meta declines

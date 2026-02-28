@@ -1,5 +1,6 @@
 #include "data_range.h"
 #include<set>
+#include<execution>
 #include "tba.h"
 #include "../tba/tba.h"
 #include "vector_void.h"
@@ -111,6 +112,8 @@ template<typename T,size_t N>
 void examine(std::vector<std::string> path,vector<tba::vector_fixed<T,N>> const&);
 
 #define KNOWN(X)\
+	X(tba::Match_Score_Breakdown_2026,TBA_MATCH_SCORE_BREAKDOWN_2026)\
+	X(tba::Match_Score_Breakdown_2026_Alliance,TBA_MATCH_SCORE_BREAKDOWN_2026_ALLIANCE)\
 	X(tba::Match_Score_Breakdown_2025,TBA_MATCH_SCORE_BREAKDOWN_2025)\
 	X(tba::Match_Score_Breakdown_2025_Alliance,TBA_MATCH_SCORE_BREAKDOWN_2025_ALLIANCE)\
 	X(tba::Match_Score_Breakdown_2024,TBA_MATCH_SCORE_BREAKDOWN_2024)\
@@ -286,6 +289,14 @@ auto examine(std::vector<T> const& a){
 	return examine({},a);
 }
 
+template<typename Func,typename T>
+auto mapf_par(Func f,std::vector<T> const& a){
+	using E=decltype(f(*a.begin()));
+	std::vector<E> r(a.size());
+	std::transform(std::execution::par_unseq,a.begin(),a.end(),r.begin(),f);
+	return r;
+}
+
 int data_range_demo(TBA_fetcher& f){
 	//the purpose of this is to identify the data ranges of things that are actually returned from the API
 	//this should help refine the types that are used to hold the values.
@@ -300,7 +311,7 @@ int data_range_demo(TBA_fetcher& f){
 
 	//auto e=events(f);
 	//auto e=playoff_matches(f,tba::Event_key("2025orwil"));
-	auto e=flatten(mapf(
+	auto e=flatten(mapf_par(
 		[&](auto x){
 			return tba::event_matches(f,x);
 		},

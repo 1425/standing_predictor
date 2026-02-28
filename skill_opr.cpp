@@ -102,8 +102,12 @@ bool normal_event(Event_Simple const& a){
 		case REGIONAL:
 		case CMP_DIVISION:
 		case DISTRICT:
-		case DISTRICT_CMP:
 		case DISTRICT_CMP_DIVISION:
+			return 1;
+		case DISTRICT_CMP:
+			//sometimes normal, anyway, if there weren't any divisions
+			//so this is approximate.
+			//but you'd have to have the full tba::Event type to know that.
 			return 1;
 		default:
 			PRINT(a.event_type);
@@ -111,8 +115,30 @@ bool normal_event(Event_Simple const& a){
 	}
 }
 
+bool normal_event(tba::Event const& a){
+	using enum tba::Event_type;
+	switch(a.event_type){
+		case CMP_FINALS:
+		case OFFSEASON:
+		case PRESEASON:
+		case FOC:
+		case REMOTE:
+			return 0;
+		case REGIONAL:
+		case CMP_DIVISION:
+		case DISTRICT:
+		case DISTRICT_CMP_DIVISION:
+			return 1;
+		case DISTRICT_CMP:
+			return a.division_keys.empty();
+		default:
+			PRINT(a.event_type);
+			assert(0);
+	}
+}
+
 auto normal_events(TBA_fetcher &f,Year year){
-	auto found=filter(normal_event,events_simple(f,year));
+	auto found=FILTER(normal_event,events(f,year));
 	return mapf([](auto x){ return x.key; },found);
 }
 
@@ -170,6 +196,22 @@ Skill_estimates calc_skill_opr(TBA_fetcher& f,tba::District_key const& district)
 		return r;
 	}();
 
+	#if 0
+	//These look fine, so don't bother calculating
+	const auto by_year=[&](){
+		map<Year,vector<OPR>> r;
+		for(auto [k,v]:oprs){
+			auto [year,team]=k;
+			r[year]|=v;
+		}
+		return r;
+	}();
+
+	for(auto [year,values]:by_year){
+		cout<<year<<"\t"<<quartiles(values)<<"\n";
+	}
+	#endif
+
 	static constexpr auto RANK_GRANULARITY=2000;
 	//technically this could be as big as you want as long as it doesn't overflow and you're OK with 
 	//sitting around and waiting for things.
@@ -214,6 +256,9 @@ Skill_estimates calc_skill_opr(TBA_fetcher& f,tba::District_key const& district)
 		return r;
 	}();
 
+	//This looks fine, so don't bother outputting.
+	//PRINT(deciles(values(opr_ranks)));
+
 	const auto results=[&](){ //pre-dcmp points
 		std::map<pair<Year,Team>,Point> r;
 		for(auto [k,v]:district_years){
@@ -223,6 +268,9 @@ Skill_estimates calc_skill_opr(TBA_fetcher& f,tba::District_key const& district)
 				if(!d) continue;
 				for(auto a:*d){
 					auto district_events=take(2,a.event_points);
+					if(district_events.empty()){
+						continue;
+					}
 					int n=a.rookie_bonus+sum(mapf([](auto x){ return (int)x.total; },district_events));
 					r[make_pair(year,a.team_key)]=n;
 				}
