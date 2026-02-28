@@ -86,7 +86,7 @@ using Pts=std::map<tba::Team_key,Interval<Point>>;
 	X(Pts,points)\
 	X(Picked,picked)\
 	X(unsigned,unclaimed)\
-	X(Event_status,status)\
+	X(std::optional<Event_status>,status)\
 
 TBA_MAKE_INST(Pick_limits,PICK_LIMITS)
 

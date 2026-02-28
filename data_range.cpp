@@ -289,14 +289,6 @@ auto examine(std::vector<T> const& a){
 	return examine({},a);
 }
 
-template<typename Func,typename T>
-auto mapf_par(Func f,std::vector<T> const& a){
-	using E=decltype(f(*a.begin()));
-	std::vector<E> r(a.size());
-	std::transform(std::execution::par_unseq,a.begin(),a.end(),r.begin(),f);
-	return r;
-}
-
 int data_range_demo(TBA_fetcher& f){
 	//the purpose of this is to identify the data ranges of things that are actually returned from the API
 	//this should help refine the types that are used to hold the values.

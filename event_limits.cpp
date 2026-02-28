@@ -364,17 +364,23 @@ Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const&
 	//and also how many selection points may be left
 	//PRINT(entropy(picks));
 	//PRINT(picks.status);
-	switch(picks.status){
-		case Event_status::FUTURE:
-			break;
-		case Event_status::IN_PROGRESS:
-			tstatus=Tournament_status::PICKING_IN_PROGRESS;
-			break;
-		case Event_status::COMPLETE:
-			tstatus=Tournament_status::PICKING_COMPLETE;
-			break;
-		default:
-			assert(0);
+
+	if(picks.status){
+		switch(*picks.status){
+			case Event_status::FUTURE:
+				break;
+			case Event_status::IN_PROGRESS:
+				tstatus=Tournament_status::PICKING_IN_PROGRESS;
+				break;
+			case Event_status::COMPLETE:
+				tstatus=Tournament_status::PICKING_COMPLETE;
+				break;
+			default:
+				assert(0);
+		}
+	}else{
+		//this is an event that is not expected to have picks so don't set it to 
+		//a status that says the picks are happening.
 	}
 
 	//playoff_limits(f,in_playoffs);
@@ -587,11 +593,14 @@ int event_limits_demo(TBA_fetcher &f){
 	PRINT(entropy(d));
 	return 0;*/
 
-	/*for(auto const& event:events(f)){
+	//mapf_par([&](auto x){ return event_limits(f,x.key); },events(f));
+
+	for(auto const& event:reversed(events(f))){
 		PRINT(event.key);
 		auto a=event_limits(f,event.key);
+		cout<<event.key<<" "<<a.status<<"\n";
 		(void)a;
-	}*/
+	}
 	for(auto district:take(2000,districts(f))){
 		PRINT(district);
 		auto a=district_limits(f,district);

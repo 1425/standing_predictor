@@ -865,7 +865,7 @@ Args parse_args(int argc,char **argv){
 	);
 	p.add(
 		"--skill",{"METHOD"},
-		"How to measure skill of individual teams",
+		"How to measure skill of individual teams.  Options:\n\t\tPOINTS (default)\n\t\tOPR\n\t\tNONE",
 		r.skill_method
 	);
 	p.add(

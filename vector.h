@@ -4,6 +4,7 @@
 #include<vector>
 #include<algorithm>
 #include<cassert>
+#include<execution>
 #include "util.h" //for ELEM
 
 template<typename T,typename T2>
@@ -532,6 +533,14 @@ std::vector<T> duplicate(T t,size_t n){
 	for(auto _:range(n)){
 		r|=t;
 	}
+	return r;
+}
+
+template<typename Func,typename T>
+auto mapf_par(Func f,std::vector<T> const& a){
+	using E=decltype(f(*a.begin()));
+	std::vector<E> r(a.size());
+	std::transform(std::execution::par_unseq,a.begin(),a.end(),r.begin(),f);
 	return r;
 }
 

@@ -30,9 +30,9 @@ RP rp(tba::Match_Score_Breakdown_2023_Alliance const& a){
 
 RP rp(tba::Match_Score_Breakdown_2022_Alliance const& a){
 	if(a.rp){
-		return a.rp->get();;
+		return a.rp->get();
 	}
-	nyi //probably would just be playoffs where they don't exist?
+	//This really happens.  See 2022orbb.
 	return 0;
 }
 
@@ -73,8 +73,8 @@ RP rp(tba::Match_Score_Breakdown_2015_Alliance const&){
 	return 0;
 }
 
-RP rp(tba::Match_Score_Breakdown_2026_Alliance const&){
-	nyi
+RP rp(tba::Match_Score_Breakdown_2026_Alliance const& a){
+	return a.rp;
 }
 
 std::array<RP,2> rp(tba::Ignore const&){

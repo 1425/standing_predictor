@@ -689,7 +689,7 @@ Point dcmp_points(TBA_fetcher &f,tba::District_key const& district){
 	return sum(mapf([&](auto const& x){ return event_pts(f,x); },found));
 }
 
-void show_lock_data(TBA_fetcher &f,tba::District_key const& district,Dcmp_home dcmp_home,Lock_data const& in,Lock_result out){
+Lock_display organize_lock_data(TBA_fetcher &f,tba::District_key const& district,Dcmp_home dcmp_home,Lock_data const& in,Lock_result out){
 	Lock_display data;
 	//data.district=parse_event_name(f,display_name(f,district))+" "+as_string((int)dcmp_home);
 	data.district=name(f,district)+" "+as_string((int)dcmp_home);
@@ -750,12 +750,13 @@ void show_lock_data(TBA_fetcher &f,tba::District_key const& district,Dcmp_home d
 		data.team_display|=here;
 	}
 	data.team_display=sort_by(data.team_display,[](auto x){ return -x.total_pts; });
-	
-	//PRINT(data);
-	{
-		ofstream file(string()+"lock_"+::as_string(district)+::as_string((int)dcmp_home)+".html");
-		page(file,data);
-	}
+	return data;
+}
+
+void save_lock_data(TBA_fetcher &f,tba::District_key const& district,Dcmp_home dcmp_home,Lock_data const& in,Lock_result out){
+	auto data=organize_lock_data(f,district,dcmp_home,in,out);
+	ofstream file(string()+"lock_"+::as_string(district)+::as_string((int)dcmp_home)+".html");
+	page(file,data);
 
 }
 
@@ -766,7 +767,7 @@ int run_lock(TBA_fetcher &f,tba::District_key const& district){
 	vector<Lock_data> in=read_lock_data(f,district);
 	for(auto [i,in1]:enumerate(in)){
 		auto out=run(in1);
-		show_lock_data(f,district,i,in1,out);
+		save_lock_data(f,district,i,in1,out);
 	}
 
 	return 0;

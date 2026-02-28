@@ -809,7 +809,7 @@ Pick_limits pick_limits(TBA_fetcher &f,tba::Event_key const& event,std::map<tba:
 			r.picked[team]=0;
 		}
 		r.unclaimed=0;
-		r.status=Event_status::COMPLETE;
+		r.status=std::nullopt;
 		return r;
 	}
 	if(std::holds_alternative<Picks_no_data>(p)){
