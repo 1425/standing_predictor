@@ -38,6 +38,7 @@ std::string tolower(std::string const&);
 bool prefix(std::string const& whole,std::string const& p);
 bool suffix(std::string const& whole,std::string const&);
 std::string strip(std::string const&);
+std::string skip(size_t,std::string const&);
 bool contains(std::vector<std::string> const&,const char *);
 
 std::string as_pct(double);

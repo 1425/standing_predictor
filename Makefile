@@ -24,6 +24,7 @@ FRC_API_OBJS= \
 	../frc_api/curl.o
 
 OUTLINE_OBJS= \
+	cat.o \
 	data_range.o\
 	toggle.o\
 	event_partial.o\

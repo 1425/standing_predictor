@@ -7,6 +7,8 @@
 #include "vector_void.h"
 #include "print_r.h"
 #include "dates.h"
+#include "cat.h"
+#include "declines.h"
 
 using namespace std;
 
@@ -173,6 +175,11 @@ void TBA_fetcher_config::add(Argument_parser &f){
 		"Print which tba pages are used, even if cached",
 		log
 	);
+	f.add(
+		"--tba_refresh",{},
+		"Attempt to fetch pages that are expected to change, even if they are cached.",
+		refresh
+	);
 }
 
 bool contains(string s,char c){
@@ -188,38 +195,92 @@ struct TBA_fetcher_log{
 	TBA_fetcher inner;
 	std::set<tba::URL> data;
 
+	~TBA_fetcher_log(){
+		/*auto s=count(MAP(cat,data));
+		PRINT(s);
+		auto g=group(cat,data);
+		for(auto [k,v]:g){
+			cout<<k<<"\n";
+			print_lines(v);
+		}*/
+	}
+
 	std::pair<tba::HTTP_Date,tba::Data> fetch(tba::URL url){
 		if(!data.count(url)){
 			data|=url;
-			PRINT(url);
+			//PRINT(url);
 
-			string p="https://www.thebluealliance.com/api/v3/team/frc";
+			/*string p="https://www.thebluealliance.com/api/v3/team/frc";
 			if(prefix(url,p)){
 				auto rest=url.substr(p.size(),1000);
 				if(!contains(rest,'/')){
 					//assert(0);
 				}
-			}
+			}*/
 		}
 
 		return inner.fetch(url);
 	}
 };
 
-TBA_fetcher TBA_fetcher_config::get()const{
-	TBA_fetcher r=[&]()->TBA_fetcher{
-		if(local_only){
-			return new Local_fetcher_tba{};
-		}
-		return new tba::Cached_fetcher{get_tba_fetcher(auth_key_path,cache_path)};
-	}();
-	if(log){
-		return new TBA_fetcher_log(std::move(r),{});
-	}
-	return r;
-}
+using URL=tba::URL;
 
-TBA_fetcher get_tba_fetcher(
+struct TBA_fetcher_refresh{
+	tba::Cached_fetcher inner;
+
+	using Result=std::pair<tba::HTTP_Date,tba::Data>;
+
+	std::map<tba::URL,Result> seen;
+
+	~TBA_fetcher_refresh(){
+		std::map<URL,Result> to_refresh;
+		for(auto [url,old_data]:seen){
+			auto c=cat(url);
+			if(!c){
+				cout<<"No categorization for "<<url<<"\n";
+				continue;
+			}
+			if(std::holds_alternative<Static>(*c)){
+				continue;
+			}
+			if(std::holds_alternative<Now>(*c)){
+				to_refresh[url]=old_data;
+				continue;
+			}
+			std::cerr<<"unexpected refresh category";
+			exit(1);
+		}
+
+		//now go try to refresh the items.
+		cout<<"to refresh("<<to_refresh.size()<<"): "<<take(5,to_refresh)<<"\n";
+		for(auto [url,old_data]:to_refresh){
+			//PRINT(url);
+			auto f2=inner.fetcher.fetch(url);
+
+			//diff(f2,old_data);
+			cout<<url<<" "<<(f2.second==old_data.second)<<"\n";
+
+			//this should always error out; for now interested to see how it does.
+			try{
+				inner.cache.update(url,f2);
+			}catch(std::string const& s){
+				cout<<"Caught:"<<s<<"\n";
+			}
+		}
+	}
+
+	Result fetch(tba::URL url){
+		auto f=seen.find(url);
+		if(f!=seen.end()){
+			return f->second;
+		}
+
+		auto r=inner.fetch(url);
+		return seen[url]=r;
+	}
+};
+
+/*TBA_fetcher get_tba_fetcher(
 	bool local_only,
 	string auth_key_path="../tba/auth_key",
 	string cache_path="../tba/cache.db"
@@ -228,6 +289,25 @@ TBA_fetcher get_tba_fetcher(
 		return new Local_fetcher_tba{};
 	}
 	return new tba::Cached_fetcher{get_tba_fetcher(auth_key_path,cache_path)};
+}*/
+
+TBA_fetcher TBA_fetcher_config::get()const{
+
+	TBA_fetcher r=[&]()->TBA_fetcher{
+		if(local_only){
+			return new Local_fetcher_tba{};
+		}
+		auto base=[&](){ return get_tba_fetcher(auth_key_path,cache_path); };
+		if(refresh){
+			return new TBA_fetcher_refresh(base());
+		}
+		return new tba::Cached_fetcher(base());
+	}();
+
+	if(log){
+		r=new TBA_fetcher_log(std::move(r),{});
+	}
+	return r;
 }
 
 std::ostream& operator<<(std::ostream& o,No_data const& a){

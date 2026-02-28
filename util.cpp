@@ -32,6 +32,10 @@ bool prefix(std::string const& whole,std::string const& p){
 	return whole.substr(0,p.size())==p;
 }
 
+std::string skip(size_t n,std::string const& s){
+	return s.substr(n,s.size());
+}
+
 std::string as_pct(double d){
 	std::stringstream ss;
 	ss<<int(d*100)<<'%';

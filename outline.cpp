@@ -1115,9 +1115,9 @@ int main(int argc,char **argv){
 	}catch(std::vector<std::string> const& v){
 		cerr<<"Caught:"<<v<<"\n";
 		return 1;
-	/*}catch(const char *s){
+	}catch(const char *s){
 		cerr<<"Caught:"<<s<<"\n";
-		return 1;*/
+		return 1;
 	}catch(tba::Decode_error const& a){
 		cerr<<"Caught:"<<a<<"\n";
 		return 1;

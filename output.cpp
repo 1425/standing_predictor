@@ -155,6 +155,11 @@ string gen_html(
 
 	auto dcmp_string=[&](tba::Team_key t){
 		auto f=by_team.find(t);
+		if(f==by_team.end()){
+			PRINT(district_short)
+			PRINT(year)
+			PRINT(t)
+		}
 		assert(f!=by_team.end());
 		auto f1=f->second;
 		if(f1.state_prov!="California"){
