@@ -58,17 +58,11 @@ STRUCT_DECLARE(Picks_in_progress,PICKS_IN_PROGRESS)
 PRINT_STRUCT(Picks_in_progress,PICKS_IN_PROGRESS)
 PRINT_R_ITEM(Picks_in_progress,PICKS_IN_PROGRESS)
 
-struct Picks_no_data{};
+STRUCT_DECLARE(Picks_no_data,EMPTY)
+PRINT_STRUCT(Picks_no_data,EMPTY)
 
-std::ostream& operator<<(std::ostream& o,Picks_no_data){
-	return o<<"Picks_no_data";
-}
-
-struct Picks_known_empty{};
-
-std::ostream& operator<<(std::ostream& o,Picks_known_empty){
-	return o<<"Picks_known_empty";
-}
+STRUCT_DECLARE(Picks_known_empty,EMPTY)
+PRINT_STRUCT(Picks_known_empty,EMPTY)
 
 using Pick_points=std::variant<
 	Picks_no_data,
