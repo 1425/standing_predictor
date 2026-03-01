@@ -82,12 +82,12 @@ string color(double d){
 
 string colorize(double d){
 	return tag("td bgcolor=\""+color(d)+"\"",
-		[&](){
+		tag("font color=black",[&](){
 			stringstream ss;
 			ss<<setprecision(3)<<fixed;
 			ss<<d;
 			return ss.str();
-		}()
+		}())
 	);
 }
 
@@ -353,6 +353,9 @@ string gen_html(
 	};
 
 	string style="\n\
+		:root{\n\
+			color-scheme: light dark;\n\
+		}\n\
 		.tooltip{\n\
 		        position:relative;\n\
 		        display: inline-block;\n\
