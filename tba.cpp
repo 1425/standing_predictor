@@ -299,7 +299,7 @@ TBA_fetcher TBA_fetcher_config::get()const{
 		}
 		auto base=[&](){ return get_tba_fetcher(auth_key_path,cache_path); };
 		if(refresh){
-			return new TBA_fetcher_refresh(base());
+			return new TBA_fetcher_refresh(base(),{});
 		}
 		return new tba::Cached_fetcher(base());
 	}();

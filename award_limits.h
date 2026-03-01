@@ -51,6 +51,25 @@ template<typename Status,template<typename,typename> typename MAP>
 PRINT_STRUCT(Rank_status<TBA_SINGLE_ARG(Status,MAP)>,RANK_STATUS)
 
 template<typename Status,template<typename,typename>typename MAP>
+void print_r(int n,Rank_status<Status,MAP> const& a){
+	indent(n);
+	std::cout<<"Rank_status\n";
+	n++;
+
+	indent(n);
+	std::cout<<"by_team\n";
+	print_r(n+1,a.by_team);
+
+	indent(n);
+	std::cout<<"unclaimed\n";
+	print_r(n+1,a.unclaimed);
+
+	indent(n);
+	std::cout<<"status\n";
+	print_r(n+1,a.status);
+}
+
+template<typename Status,template<typename,typename>typename MAP>
 double entropy(Rank_status<Status,MAP> const& a){
 	return sum(MAP(entropy,values(a.by_team)));
 }

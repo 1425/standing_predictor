@@ -8,6 +8,7 @@
 #include "pick_points.h"
 #include "winners.h"
 #include "event_partial.h"
+#include "annotated_complex.h"
 
 using namespace std;
 
@@ -576,6 +577,7 @@ void xx(TBA_fetcher &f){
 int event_limits_demo(TBA_fetcher &f){
 	//return lock2_demo(f);
 	//return winners_demo(f);
+	return annotated_complex_demo(f);
 
 	if(0){
 		auto a=event_limits(f,tba::Event_key("2026cahal"));
