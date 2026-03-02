@@ -3,6 +3,7 @@
 
 #include "../tba/data.h"
 #include "event_partial.h"
+#include "event_limits.h"
 
 namespace tba{
 	struct Event;
@@ -64,7 +65,11 @@ std::ostream& operator<<(std::ostream& o,Event_categories_annotated<A1,A2,A3> co
 }
 
 //to start with probably just want to annotate things with string to get pushed into the HTML.
-Event_categories_annotated<std::string,std::string,std::string> annotated(TBA_fetcher&,tba::District_key const&);
+Event_categories_annotated<
+	Rank_status<Tournament_status>,
+	Tournament_status,
+	Rank_status<District_status>
+> annotated(TBA_fetcher&,tba::District_key const&);
 
 template<typename Func>
 auto mapf_preserve(Func f,tba::Event const& a){

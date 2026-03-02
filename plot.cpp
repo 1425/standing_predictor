@@ -28,6 +28,16 @@ auto base64_encode(std::string const& in){
 	return std::string(v.begin(),v.begin()+enc);
 }
 
+std::string png_tag(std::string const& png_data,std::optional<std::string> const& title){
+	std::stringstream ss;
+	ss<<"<img src=\"data:image/png;base64, "<<base64_encode(png_data)<<"\"";
+	if(title){
+		ss<<" alt=\""<<title<<"\"";
+	}
+	ss<<">\n";
+	return ss.str();
+}
+
 std::string plot(std::vector<std::pair<int,double>> const& data,std::optional<std::string> title){
 	//returns an HTML tag that will show the scatter plot.
 	(void)title;
@@ -48,15 +58,7 @@ std::string plot(std::vector<std::pair<int,double>> const& data,std::optional<st
 		//throw "failed to plot";
 		return "";
 	}
-
-	auto p=base64_encode(r.out);
-	stringstream out;
-	out<<"<img src=\"data:image/png;base64, "<<p<<"\"";
-	if(title){
-		out<<" alt=\""<<title<<"\"";
-	}
-	out<<">\n";
-	return out.str();
+	return png_tag(r.out,title);
 }
 
 std::vector<std::string> plot(std::vector<Plot_setup> const& a){

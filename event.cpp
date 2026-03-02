@@ -19,6 +19,13 @@ std::optional<int> dcmp_size_inner(tba::District_key const& district){
 		{"2018chs",60},
 		{"2020chs",0},
 		{"2021chs",0},
+
+		{"2012mar",54},
+		{"2013mar",52},
+		{"2014mar",58},
+
+		{"2014ne",54},
+		//{"2014pnw",
 	};
 
 	auto f=a.find(district.get());

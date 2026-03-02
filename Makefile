@@ -24,6 +24,7 @@ FRC_API_OBJS= \
 	../frc_api/curl.o
 
 OUTLINE_OBJS= \
+	avatar.o \
 	annotated_complex.o\
 	cat.o \
 	data_range.o\

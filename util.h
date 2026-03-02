@@ -33,13 +33,17 @@
 int max(short,int);
 int min(int,short);
 
+STRUCT_SINGLE(File_not_found,std::string,path)
+
 std::string slurp(std::string const& filename);
+
 std::string tolower(std::string const&);
 bool prefix(std::string const& whole,std::string const& p);
 bool suffix(std::string const& whole,std::string const&);
 std::string strip(std::string const&);
 std::string skip(size_t,std::string const&);
 bool contains(std::vector<std::string> const&,const char *);
+int system(std::string const&);
 
 std::string as_pct(double);
 

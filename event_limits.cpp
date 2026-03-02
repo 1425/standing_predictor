@@ -575,7 +575,7 @@ void xx(TBA_fetcher &f){
 }
 
 int event_limits_demo(TBA_fetcher &f){
-	//return lock2_demo(f);
+	return lock2_demo(f);
 	//return winners_demo(f);
 	return annotated_complex_demo(f);
 

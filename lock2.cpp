@@ -2,6 +2,7 @@
 #include "event.h"
 #include "multiset_flat.h"
 #include "multiset_compare.h"
+#include "tba.h"
 
 using namespace std;
 using Team=tba::Team_key;
@@ -530,7 +531,7 @@ void lock2_demo(TBA_fetcher &f,tba::District_key district){
 		return x[0];
 	}();
 
-	{
+	if(0){
 		find_floor(in,d);
 		//PRINT(f);
 		nyi
@@ -572,6 +573,11 @@ int lock2_demo(TBA_fetcher &f){
 	//lock2_demo(f,tba::District_key("2022chs"));
 	//lock2_demo(f,tba::District_key("2022pnw"));
 	lock2_demo(f,tba::District_key("2026pnw"));
+
+	for(auto district:districts(f)){
+		PRINT(district);
+		lock2_demo(f,district);
+	}
 
 	return 0;
 }

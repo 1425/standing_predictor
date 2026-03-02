@@ -1,5 +1,6 @@
 #include "annotated_complex.h"
 #include "event_limits.h"
+#include "tba.h"
 
 using namespace std;
 
@@ -89,16 +90,6 @@ struct Walker{
 		return District_cmp_complex_annotated{finals,divisions,calc()};
 	}
 
-	template<typename T,typename T2>
-	int operator()(Event_annotated<T>,std::vector<District_cmp_complex_annotated<T,T2>>){
-		nyi
-	}
-
-	template<typename T1,typename T2>
-	Tournament_status dcmp_status(District_cmp_complex_annotated<T1,T2> const& a){
-		return a.extra;
-	}
-
 	template<typename T1,typename T2>
 	std::variant<
 		District_status_future,
@@ -166,38 +157,25 @@ struct Walker{
 			auto d=dcmp_status(dcmp);
 			return std::visit([](auto x){ return District_status(x); },d);
 		}();
-		//mapf([](auto const& x){ return x.extra.
 		return r;
 	}
-
-	/*auto operator()(
-
-	static auto operator()(auto const& a){
-		cout<<type_string(a);
-		nyi
-		return "foo";
-	}
-
-	static auto operator()(auto const& a,auto const& b){
-		(void)a;
-		(void)b;
-		nyi
-		return "foo2";
-	}*/
 };
 
-Event_categories_annotated<std::string,std::string,std::string> annotated(TBA_fetcher &f,tba::District_key const& a){
-	auto m=mapf_preserve(Walker{f},categorize_events(f,a));
-	print_r(m);
-	//each of the strings will contain HTML to display in a table?
-	//nyi
-	//name/status/date/teams/points available?
-	nyi
+Event_categories_annotated<
+	Rank_status<Tournament_status>,
+	Tournament_status,
+	Rank_status<District_status>
+> annotated(TBA_fetcher &f,tba::District_key const& a){
+	return mapf_preserve(Walker{f},categorize_events(f,a));
 }
 
 int annotated_complex_demo(TBA_fetcher& f){
+	for(auto district:districts(f)){
+		annotated(f,district);
+	}
+
 	auto a=annotated(f,tba::District_key("2026pnw"));
-	PRINT(a);
+	print_r(a);
 	return 0;
 }
 

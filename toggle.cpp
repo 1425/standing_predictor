@@ -18,10 +18,6 @@ auto html_head(auto x){
 	return tag("head",x);
 }
 
-int system(std::string const& s){
-	return system(s.c_str());
-}
-
 //start program-specific
 
 class HTML_visitor{

@@ -13,6 +13,7 @@
 #include "print_r.h"
 #include "ca.h"
 #include "set_flat.h"
+#include "avatar.h"
 
 using namespace std;
 using Team_key=tba::Team_key;
@@ -345,9 +346,12 @@ string gen_html(
 		auto x=points_used[a.team];
 		//print_r(x);
 		stringstream ss;
-		ss<<"<span class=\"tooltip\">"<<nickname(a.team);
+		ss<<"<div class=\"tooltip\">";
+
+		ss<<table(tr(td(avatar(a.team))+td(nickname(a.team))))<<"\n";
+
 		ss<<"<span class=\"tooltiptext\">"<<h3("Expected "+::as_string(a.team)+ " pre-dcmp points")+charts[a.team]<<"</span>";
-		ss<<"</span>\n";
+		ss<<"</div>\n";
 		return ss.str();
 		//return nickname(a.team)+as_string(quartiles(x.pre_dcmp_dist))+charts[a.team];
 	};

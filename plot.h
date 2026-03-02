@@ -6,6 +6,8 @@
 #include<optional>
 #include "util.h"
 
+std::string png_tag(std::string const& png_data,std::optional<std::string> const& title);
+
 std::string plot(std::vector<std::pair<int,double>> const&,std::optional<std::string> title=std::nullopt);
 
 using Plot_point=std::pair<int,double>;

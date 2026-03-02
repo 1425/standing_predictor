@@ -10,10 +10,14 @@
 #include "io.h"
 #include "vector_void.h"
 
+std::ostream& operator<<(std::ostream& o,File_not_found const& a){
+	return o<<"File_not_found("<<a.path<<")";
+}
+
 std::string slurp(std::string const& filename){
 	std::ifstream f(filename.c_str());
 	if(!f.good()){
-		throw "File_not_found(filename)";
+		throw File_not_found(filename);
 	}
 	std::stringstream ss;
 	while(f>>ss.rdbuf());
@@ -112,3 +116,6 @@ short coerce(int a,short const*){
 	return a;
 }
 
+int system(std::string const& s){
+	return system(s.c_str());
+}
