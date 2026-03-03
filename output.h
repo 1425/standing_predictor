@@ -34,7 +34,8 @@ STRUCT_DECLARE(Team_points_used,TEAM_POINTS_USED)
 	X(std::string,district_short)\
 	X(std::vector<int>,dcmp_size)\
 	X(std::map<TBA_SINGLE_ARG(tba::Team_key,Team_points_used)>,points_used)\
-	X(bool,plot)
+	X(bool,plot)\
+	X(std::map<TBA_SINGLE_ARG(tba::Team_key,std::string)>,lock)\
 
 struct Gen_html_input{
 	GEN_HTML_INPUT(INST)

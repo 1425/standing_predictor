@@ -346,6 +346,7 @@ map<tba::Team_key,Pr> run(
 		ghi.dcmp_size=inputs.dcmp_size;
 		ghi.points_used=points_used;
 		ghi.plot=inputs.plot;
+		ghi.lock=::lock(f,district);
 		ofstream file(inputs.output_dir+"/"+district.get()+inputs.extra+".html");
 		gen_html(file,ghi,annotated(f,district));
 	}

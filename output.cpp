@@ -121,18 +121,24 @@ std::string as_table(District_cmp_complex_annotated<A,B> const& a){
 	return ss.str();
 }
 
+auto click(std::string target,std::string body){
+	return tag("a href=\"\" onclick=\"toggle_viz('"+target+"');event.preventDefault();\"",body);
+}
+
 std::string as_table(Team_points_used const& a){
 	std::stringstream ss;
 	ss<<"<table border>";
-	#define X(A,B) ss<<tr(td(""#B)+td(as_table(a.B)));
+	#define X(A,B) {\
+		auto name="x"+as_string(rand());\
+		ss<<tr(\
+			td(click(name,""#B))+\
+			tag("td class=hidden id=\""+name+"\"",as_table(a.B))\
+		);\
+	}
 	TEAM_POINTS_USED(X)
 	#undef X
 	ss<<"</table>";
 	return ss.str();
-}
-
-auto click(std::string target,std::string body){
-	return tag("a href=\"\" onclick=\"toggle_viz('"+target+"');event.preventDefault();\"",body);
 }
 
 template<typename A,typename B,typename C>
@@ -290,7 +296,7 @@ void gen_html(
 	auto [
 		year,result,team_info,dcmp_cutoff_pr,cmp_cutoff_pr,
 		title,district_short,dcmp_size,
-		points_used,plot_enable
+		points_used,plot_enable,lock
 	]=in;
 
 	std::map<tba::Team_key,tba::Team> by_team;
@@ -522,6 +528,7 @@ void gen_html(
 		std::stringstream ss;
 		ss<<h3("Expected pre-dcmp points")+charts[a.team];
 		ss<<as_table(x);
+		ss<<"Lock status:"<<lock[a.team]<<"\n";
 		return ss.str();
 	};
 

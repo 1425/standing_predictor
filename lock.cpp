@@ -261,7 +261,7 @@ STRUCT_DECLARE(Status_in_range,STATUS_IN_RANGE)
 ELEMENTWISE_RAND(Status_in_range,STATUS_IN_RANGE)
 
 std::ostream& operator<<(std::ostream& o,Status_in_range const& a){
-	return o<<a.data;
+	return o<<"in range: "<<a.data;
 }
 
 STRUCT_DECLARE(Status_out_of_range,EMPTY)
@@ -437,7 +437,7 @@ Lock_result run(Lock_data const& data){
 							x=100*float(rank_total.second)/left_to_claim.second;
 						}
 						//ss<<rank_total<<" "<<left_to_claim;
-						ss<<"In range: "<<x<<"%";
+						ss<<x<<"%";
 						return Status_in_range{ss.str()};
 					}
 					case OUT_OF_POINTS:
@@ -455,7 +455,7 @@ Lock_result run(Lock_data const& data){
 				if(unclaimed_slots>0){
 					//there are slots available that could theoretically be claimed
 					//without earning any more points.
-					markers[team]=Status_in_range{"0"};
+					markers[team]=Status_in_range{"0%"};
 				}else{
 					//currently in range to miss out
 					if(info.remaining_district_events && left_to_claim.second){
@@ -771,6 +771,17 @@ int run_lock(TBA_fetcher &f,tba::District_key const& district){
 	}
 
 	return 0;
+}
+
+std::map<tba::Team_key,std::string> lock(TBA_fetcher &f,tba::District_key const& district){
+	auto in=read_lock_data(f,district);
+	std::map<tba::Team_key,std::string> r;
+	for(auto [i,in1]:enumerate(in)){
+		for(auto [k,v]:run(in1).by_team){
+			r[k]=as_string(v);
+		}
+	}
+	return r;
 }
 
 int run_lock(TBA_fetcher &f,tba::Year const& year,std::optional<tba::District_key> const& district){

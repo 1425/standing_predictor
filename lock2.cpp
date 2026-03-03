@@ -3,6 +3,7 @@
 #include "multiset_flat.h"
 #include "multiset_compare.h"
 #include "tba.h"
+#include "district_championship_assignment.h"
 
 using namespace std;
 using Team=tba::Team_key;
@@ -427,8 +428,6 @@ auto find_floor(Rank_status<Status> const& a,int slots){
 template<typename Status>
 auto lock2(Rank_status<Status> const& a,int dcmp_size){
 	std::map<Team,string> r;
-	//a.by_team
-	//a.unclaimed
 
 	auto g=reversed(sorted(group(
 		[](auto x){
@@ -514,6 +513,39 @@ auto lock2(Rank_status<Status> const& a,int dcmp_size){
 				}
 				r[team]="in range";
 			}
+		}
+	}
+	return r;
+}
+
+std::map<tba::Team_key,std::string> lock2(TBA_fetcher& f,tba::District_key const& district){
+	auto in_whole=district_limits(f,district);
+	using E=decltype(in_whole);//by_team,unclaimed,status
+	map<tba::Team_key,Dcmp_home> by_team;
+	for(auto [k,v]:in_whole.by_team){
+		by_team[k]=calc_dcmp_home(f,k);
+	}
+	auto homes=to_set(values(by_team));
+
+	auto found=mapf(
+		[=](auto p){
+			auto [home,size]=p;
+			E in_here;
+			for(auto [k,v]:by_team){
+				if(v==home){
+					in_here.by_team[k]=in_whole.by_team.at(k);
+				}
+			}
+			in_here.unclaimed=in_whole.unclaimed;
+			in_here.status=in_whole.status;
+			return lock2(in_here,size);
+		},
+		enumerate(dcmp_size(district))
+	);
+	std::map<tba::Team_key,std::string> r;
+	for(auto const& x:found){
+		for(auto [k,v]:x){
+			r[k]=v;
 		}
 	}
 	return r;
