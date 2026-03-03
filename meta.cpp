@@ -50,10 +50,6 @@ string rm_suffix(string const& sub,string const& whole){
 	return whole.substr(0,whole.size()-sub.size());
 }
 
-string take(size_t n,string const& s){
-	return s.substr(0,n);
-}
-
 template<typename T>
 span<T> skip(size_t n,span<T> s){
 	if(n>=s.size()) return span<T>{};

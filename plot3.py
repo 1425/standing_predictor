@@ -19,8 +19,13 @@ def plot(data,xlabel,ylabel,zlabel):
 
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"},figsize=(8,8))
 
-    X = list(map(lambda x: x[0],data))
-    Y = list(map(lambda x: x[1],data))
+    #X = list(map(lambda x: x[0],data))
+    #Y = list(map(lambda x: x[1],data))
+    xs=list(set(map(lambda x: x[0],data)))
+    ys=list(set(map(lambda x: x[1],data)))
+
+    X=np.array(range(min(xs),max(xs)+1))
+    Y=np.array(range(min(ys),max(ys)+1))
     X, Y = np.meshgrid(X, Y)
 
     def get_z(x,y):
@@ -31,15 +36,37 @@ def plot(data,xlabel,ylabel,zlabel):
             return f[0][2]
         raise 'error'
 
-    vec_f=np.vectorize(get_z)
+    z2={}
+    for x,y,z in data:
+        z2[(x,y)]=z
+
+    #print(z2)
+
+    def get_z2(x,y):
+        try:
+            return z2[(x,y)]
+        except:
+            return 0
+
+    vec_f=np.vectorize(get_z2)
 
     Z=vec_f(X,Y)
 
+    #surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm,
+    #                   linewidth=0, antialiased=False)
     surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm,
-                       linewidth=0, antialiased=False)
+                       linewidth=1, antialiased=True)
 
-    #ax.set_zlim(-1.01, 1.01)
-    ax.zaxis.set_major_locator(LinearLocator(10))
+    ax.set_xlim(0,max(xs))
+    ax.set_ylim(0,max(ys))
+    ax.invert_xaxis()
+    #ax.invert_yaxis()
+    #plt.ylim(bottom=0)
+    #plt.xlim(bottom=0)
+
+
+#ax.set_zlim(-1.01, 1.01)
+    #ax.zaxis.set_major_locator(LinearLocator(10))
     # A StrMethodFormatter is used automatically
     ax.zaxis.set_major_formatter('{x:.02f}')
 
@@ -56,7 +83,9 @@ def plot(data,xlabel,ylabel,zlabel):
 parse_item=float
 
 def parse_line(s):
-    return list(map(parse_item,s.split(',')))
+    #return list(map(parse_item,s.split(',')))
+    sp=s.split(',')
+    return int(sp[0]),int(sp[1]),float(sp[2])
 
 def parse_data(data):
     return list(map(parse_line,data.splitlines()))

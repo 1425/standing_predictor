@@ -40,6 +40,10 @@ std::string skip(size_t n,std::string const& s){
 	return s.substr(n,s.size());
 }
 
+std::string take(size_t n,std::string const& s){
+	return s.substr(0,n);
+}
+
 std::string as_pct(double d){
 	std::stringstream ss;
 	ss<<int(d*100)<<'%';
@@ -61,7 +65,9 @@ std::string demangle(const char *s){
 	int status;
 	char *ret=abi::__cxa_demangle(s,0,0,&status);
 	assert(ret);
-	return std::string(ret);
+	std::string r(ret);
+	free(ret);
+	return r;
 	#else
 	return s;
 	#endif

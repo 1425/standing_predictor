@@ -685,7 +685,12 @@ std::vector<Subprocess_result> run_jobs(std::vector<Job> const& jobs){
 							int r=waitpid(m1.pid,&status,0);
 							//cout<<"waited\n";
 							assert(r!=-1);
-							assert(status==m1.result);
+							/*if(status!=m1.result){
+								PRINT(status);
+								PRINT(m1.result);
+							}*/
+							assert(m1.result);
+							assert(status==((*m1.result)<<8));
 						}
 					}
 					assert(found==1);

@@ -27,7 +27,7 @@ Job job(Plot_setup const& a){
 		for(auto [x,y,z]:g){
 			ss<<x<<","<<y<<","<<z<<"\n";
 		}
-		return Job("./plot3.py",{"--x","Input","--y","Output (Points)","--z","Probability"},ss.str());
+		return Job("./plot3.py",{"--x","Input (Points)","--y","Output (Points)","--z","Probability"},ss.str());
 	}
 	assert(0);
 }

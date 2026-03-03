@@ -35,17 +35,26 @@ auto td_top(auto a){
 
 std::string as_table(tba::Event const&);
 
+template<typename K,typename V>
+std::string as_table(std::map<K,V> const& a);
+
+template<typename K,typename V>
+std::string as_table(flat_map2<K,V> const& a);
+
 template<typename T>
 std::string as_table(T const& t){
 	return ::as_string(t);
 }
+
+template<typename T>
+auto tr_hide(std::string name,T const& contents);
 
 template<typename K,typename V>
 std::string as_table(flat_map2<K,V> const& a){
 	std::stringstream ss;
 	ss<<"<table border>";
 	for(auto const& [k,v]:a){
-		ss<<tr(td(k)+td(v));
+		ss<<tr_hide(as_string(k),v);
 	}
 	ss<<"</table>";
 	return ss.str();
@@ -56,7 +65,7 @@ std::string as_table(std::map<K,V> const& a){
 	std::stringstream ss;
 	ss<<"<table border>";
 	for(auto const& [k,v]:a){
-		ss<<tr(td(k)+td(v));
+		ss<<tr_hide(::as_string(k),v);
 	}
 	ss<<"</table>";
 	return ss.str();
@@ -74,17 +83,6 @@ std::string as_table(std::vector<T> const& a){
 }
 
 template<typename T>
-auto td_hide(std::string name,T const& contents){
-	auto t=as_table(contents);
-	if(t.size()<100){
-		//just make it shown by default
-		//and also the label next to it doesn't need to be a link
-		nyi
-	}
-	return tag("td class=hidden id=\""+name+"\"",contents);
-}
-
-template<typename T>
 auto tr_hide(std::string name,T const& contents){
 	std::string inner=as_table(contents);
 	if(inner.size()<100){
@@ -92,7 +90,7 @@ auto tr_hide(std::string name,T const& contents){
 	}
 	auto name1="x"+as_string(rand());
 	return tr(
-		td(tag("a href=\"\" onclick=\"toggle_viz('"+name1+"');event.preventDefault();\"",name))+
+		td_top(tag("a href=\"\" onclick=\"toggle_viz('"+name1+"');event.preventDefault();\"",name))+
 		tag("td class=hidden id=\""+name1+"\"",inner)
 	);
 }
@@ -164,6 +162,15 @@ std::string as_table(Event_categories_annotated<A,B,C> const& a){
 	ss<<"</table>";
 	return ss.str();
 }
+
+std::string as_table(Skill_estimates const& a){
+	std::stringstream ss;
+	ss<<"<table border>";
+	SKILL_ESTIMATES(TR_HIDE)
+	ss<<"</table>";
+	return ss.str();
+}
+
 
 PRINT_STRUCT(Team_points_used,TEAM_POINTS_USED)
 
@@ -289,6 +296,37 @@ auto td_right(T const& t){
 	return tag("td align=right",t);
 }
 
+std::string show_skill(Skill_estimates const& in){
+	std::stringstream ss;
+	ss<<h2("Skill estimates");
+	ss<<as_table(in);
+
+	auto get_plot_setup=[&](std::string name,auto data_in){
+		std::vector<Plot_point3> data;
+		for(auto [pts_in,v]:data_in){
+			for(auto [pts_out,pr]:v){
+				data|=Plot_point3(pts_in,pts_out,pr);
+			}
+		}
+		return Plot_setup{data,name};
+	};
+
+	auto ps1=get_plot_setup("Second event",in.second_event);
+	auto ps2=get_plot_setup("At DCMP",in.at_dcmp);
+
+	auto out=plot(std::vector{ps1,ps2});
+	/*vector out{
+		plot(std::vector{ps1}),
+		plot(std::vector{ps2})
+	};*/
+
+	assert(out.size()==2);
+	ss<<h3("Probable second event points by first event points")<<out[0]<<"\n";
+	ss<<h3("Probable District Championship points given pre-dcmp points")<<out[1]<<"\n";
+
+	return ss.str();
+}
+
 void gen_html(
 	std::ostream& o,
 	Gen_html_input const& in,
@@ -298,11 +336,22 @@ void gen_html(
 		Rank_status<District_status>
 	> const& limits
 ){
-	auto [
+	const auto year=in.year;
+	const auto result=in.result;
+	const auto team_info=in.team_info;
+	const auto dcmp_cutoff_pr=in.dcmp_cutoff_pr;
+	const auto cmp_cutoff_pr=in.cmp_cutoff_pr;
+	const auto title=in.title;
+	const auto district_short=in.district_short;
+	const auto dcmp_size=in.dcmp_size;
+	auto points_used=in.points_used;
+	const auto plot_enable=in.plot;
+	auto lock=in.lock;
+	/*auto [
 		year,result,team_info,dcmp_cutoff_pr,cmp_cutoff_pr,
 		title,district_short,dcmp_size,
 		points_used,plot_enable,lock
-	]=in;
+	]=in;*/
 
 	std::map<tba::Team_key,tba::Team> by_team;
 	for(auto x:team_info){
@@ -658,7 +707,8 @@ void gen_html(
 				)
 			)+
 			cutoff_table_long+
-			h2("Extra data")+as_table(limits)
+			h2("Extra data")+as_table(limits)+
+			show_skill(in.skill)
 			/*+data_used_table*/
 		)
 	);

@@ -352,6 +352,7 @@ map<tba::Team_key,Pr> run(
 		ghi.points_used=points_used;
 		ghi.plot=inputs.plot;
 		ghi.lock=::lock(f,district);
+		ghi.skill=skill_estimates(f,district,inputs.skill_method);
 		ofstream file(inputs.output_dir+"/"+district.get()+inputs.extra+".html");
 		gen_html(file,ghi,annotated(f,district));
 	}
