@@ -448,7 +448,7 @@ void gen_html(
 		);
 	};
 
-	auto cutoff_table=[=](string s,auto cutoff_pr,std::optional<int> slots){
+	auto cutoff_table=[=](string s,auto cutoff_pr,int slots,std::optional<std::string> note=""){
 		auto simple=simplify(cutoff_pr);
 		auto chart=plot([&](){
 			std::vector<std::pair<int,double>> r;
@@ -466,7 +466,8 @@ void gen_html(
 				[=](){
 					std::stringstream ss;
 					if(slots){
-						ss<<"Slots:"<<slots<<"\n";
+						ss<<"Slots: "<<slots<<"<br>\n";
+						ss<<note;
 					}
 					return ss.str();
 				}()+
@@ -512,7 +513,12 @@ void gen_html(
 		},
 		range(dcmp_names)
 	));
-	auto cutoff_table_cmp=cutoff_table("FRC Championship",in.cmp_cutoff_pr,std::nullopt);
+	auto cutoff_table_cmp=cutoff_table(
+		"FRC Championship",
+		in.cmp_cutoff_pr,
+		in.worlds_slots,
+		"(Excluding by award)"
+	);
 
 	//double total_entropy=sum(::mapf(entropy,seconds(result)));
 	double total_entropy=sum(::mapf([](auto x){ return entropy(x); },mapf([](auto x){ return x.dcmp_make; },in.result)));

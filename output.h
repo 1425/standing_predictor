@@ -36,7 +36,8 @@ STRUCT_DECLARE(Team_points_used,TEAM_POINTS_USED)
 	X(std::map<TBA_SINGLE_ARG(tba::Team_key,Team_points_used)>,points_used)\
 	X(bool,plot)\
 	X(std::map<TBA_SINGLE_ARG(tba::Team_key,std::string)>,lock)\
-	X(Skill_estimates,skill)
+	X(Skill_estimates,skill)\
+	X(int,worlds_slots)
 
 struct Gen_html_input{
 	GEN_HTML_INPUT(INST)
