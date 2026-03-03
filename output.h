@@ -35,17 +35,29 @@ Output_tuple rand(Output_tuple const*);
 
 STRUCT_DECLARE(Team_points_used,TEAM_POINTS_USED)
 
-std::string gen_html(
-	std::vector<Output_tuple> const& result,
-	std::vector<tba::Team> const& team_info,
-	std::array<Cutoff2,MAX_DCMPS> const& dcmp_cutoff_pr,
-	Cutoff const& cmp_cutoff_pr,
-	std::string const& title,
-	std::string const& district_short,
-	tba::Year year,
-	std::vector<int> dcmp_size,
-	std::map<tba::Team_key,Team_points_used> points_used
-);
+#define GEN_HTML_INPUT(X)\
+	X(tba::Year,year)\
+	X(std::vector<Output_tuple>,result)\
+	X(std::vector<tba::Team>,team_info)\
+	X(std::array<TBA_SINGLE_ARG(Cutoff2,MAX_DCMPS)>,dcmp_cutoff_pr)\
+	X(Cutoff,cmp_cutoff_pr)\
+	X(std::string,title)\
+	X(std::string,district_short)\
+	X(std::vector<int>,dcmp_size)\
+	X(std::map<TBA_SINGLE_ARG(tba::Team_key,Team_points_used)>,points_used)\
+	X(bool,plot)
+
+struct Gen_html_input{
+	GEN_HTML_INPUT(INST)
+
+	Gen_html_input(tba::Year year1):
+		year(year1)
+	{}
+
+	auto operator<=>(Gen_html_input const&)const=default;
+};
+
+std::string gen_html(Gen_html_input const&);
 
 int make_spreadsheet(
 	TBA_fetcher &f,

@@ -280,17 +280,6 @@ struct TBA_fetcher_refresh{
 	}
 };
 
-/*TBA_fetcher get_tba_fetcher(
-	bool local_only,
-	string auth_key_path="../tba/auth_key",
-	string cache_path="../tba/cache.db"
-){
-	if(local_only){
-		return new Local_fetcher_tba{};
-	}
-	return new tba::Cached_fetcher{get_tba_fetcher(auth_key_path,cache_path)};
-}*/
-
 TBA_fetcher TBA_fetcher_config::get()const{
 
 	TBA_fetcher r=[&]()->TBA_fetcher{

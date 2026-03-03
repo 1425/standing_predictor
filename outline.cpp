@@ -256,6 +256,7 @@ struct Run_inputs{
 	std::string extra=""; //output
 	bool ignore_chairmans=0;
 	Skill_method skill_method=Skill_method::NONE;
+	bool plot=0;
 };
 
 auto plot(flat_map2<short int,double> a,auto title){
@@ -334,17 +335,17 @@ map<tba::Team_key,Pr> run(
 
 	auto team_info=district_teams(f,district);
 	{
-		auto g=gen_html(
-			results.result,
-			team_info,
-			results.cutoff_pr,
-			to_map(results.cmp_cutoff_pr),
-			inputs.title,
-			inputs.district_short,
-			year,
-			inputs.dcmp_size,
-			points_used
-		);
+		Gen_html_input ghi(year);
+		ghi.result=results.result;
+		ghi.team_info=team_info;
+		ghi.dcmp_cutoff_pr=results.cutoff_pr;
+		ghi.cmp_cutoff_pr=to_map(results.cmp_cutoff_pr);
+		ghi.title=inputs.title;
+		ghi.district_short=inputs.district_short;
+		ghi.dcmp_size=inputs.dcmp_size;
+		ghi.points_used=points_used;
+		ghi.plot=inputs.plot;
+		auto g=gen_html(ghi);
 		ofstream f(inputs.output_dir+"/"+district.get()+inputs.extra+".html");
 		f<<g;
 	}
@@ -832,6 +833,7 @@ struct Args{
 	bool event_limits_demo=0;
 	bool event_partial_demo=0;
 	bool data_range_demo=0;
+	bool plot=1;
 	Skill_method skill_method=Skill_method::POINTS;
 };
 
@@ -900,6 +902,11 @@ Args parse_args(int argc,char **argv){
 	p.add("--event_limits_demo",{},"Experimental",r.event_limits_demo);
 	p.add("--event_partial_demo",{},"Experimental",r.event_partial_demo);
 	p.add("--data_range_demo",{},"Experimental",r.data_range_demo);
+	p.add(
+		"--plot",{"ENABLE"},
+		"Include plots of point distributions in output.  Defauls to true.",
+		r.plot
+	);
 	p.parse(argc,argv);
 	return r;
 }
@@ -1082,7 +1089,7 @@ int main1(int argc,char **argv){
 		run_inputs.title=title;
 		run_inputs.district_short=year_info.abbreviation;
 		run_inputs.skill_method=args.skill_method;
-
+		run_inputs.plot=args.plot;
 		//dcmp_pr[district]=run(tba_fetcher,args.output_dir,district,args.year,dcmp_size(district),title,year_info.abbreviation);
 		dcmp_pr[district]=run(tba_fetcher,run_inputs);
 

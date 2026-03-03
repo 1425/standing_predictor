@@ -119,7 +119,7 @@ tuple<T,T,T> summary(map<T,Pr> const& a){
 	);
 }
 
-auto find_charts(std::map<Team_key,Team_points_used> const& a){
+std::map<tba::Team_key,std::string> find_charts(std::map<Team_key,Team_points_used> const& a){
 	std::vector<Plot_setup> setups;
 	for(auto [k,v]:a){
 		Plot_setup p;
@@ -137,17 +137,13 @@ auto find_charts(std::map<Team_key,Team_points_used> const& a){
 	));
 }
 
-string gen_html(
-	vector<Output_tuple> const& result,
-	vector<tba::Team> const& team_info,
-	std::array<Cutoff2,2> const& dcmp_cutoff_pr,
-	Cutoff const& cmp_cutoff_pr,
-	string const& title,
-	string const& district_short,
-	tba::Year year,
-	std::vector<int> dcmp_size,
-	map<tba::Team_key,Team_points_used> points_used
-){
+string gen_html(Gen_html_input const& in){
+	auto [
+		year,result,team_info,dcmp_cutoff_pr,cmp_cutoff_pr,
+		title,district_short,dcmp_size,
+		points_used,plot_enable
+	]=in;
+
 	std::map<tba::Team_key,tba::Team> by_team;
 	for(auto x:team_info){
 		by_team.insert(make_pair(x.key,x));
@@ -338,8 +334,12 @@ string gen_html(
 		))
 	);
 
-	//std::map<Team_key,std::string> charts; //TODO: Put a bunch of stuff here.
-	auto charts=find_charts(points_used);
+	auto charts=[&]()->std::map<Team_key,std::string>{
+		if(plot_enable){
+			return find_charts(points_used);
+		}
+		return {};
+	}();
 
 	auto fancy=[&](auto a){
 		//nickname(a.team),

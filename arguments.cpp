@@ -45,7 +45,16 @@ bool decode(span<char*> s,bool const*){
 	if(s.empty()){
 		return 1;
 	}
-	nyi
+	if(s.size()==1){
+		string s0=s[0];
+		if(s0=="on" || tolower(s0)=="true" || s0=="1"){
+			return 1;
+		}
+		if(s0=="off" || tolower(s0)=="false" || s0=="0"){
+			return 0;
+		}
+	}
+	throw std::invalid_argument("expected bool");
 }
 
 string decode(span<char*> s,string const*){

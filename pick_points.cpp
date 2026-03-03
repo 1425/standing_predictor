@@ -26,8 +26,6 @@ using Team=tba::Team_key;
 using Event=tba::Event_key;
 using namespace std;
 
-PRINT_R_ITEM(tba::Event,TBA_EVENT)
-
 std::vector<Team> teams(tba::Elimination_Alliance const& a){
 	if(a.backup){
 		//print_r(a);
