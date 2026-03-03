@@ -453,7 +453,12 @@ Run_input read_status(TBA_fetcher &f,tba::District_key const& district,Skill_met
 			team_info.event_points
 		);
 
-		assert(found.size()<=1);
+		/*if(found.size()>1){
+			print_lines(found);
+		}*/
+
+		//Can have 2 because you can earn points in both a division and the final field
+		assert(found.size()<=2);
 
 		//TODO: Need to have a per-team DCMP done?
 		//rather should have a per-dcmp dcmp-done.
