@@ -57,7 +57,7 @@ struct Gen_html_input{
 	auto operator<=>(Gen_html_input const&)const=default;
 };
 
-std::string gen_html(Gen_html_input const&);
+void gen_html(std::ostream&,Gen_html_input const&);
 
 int make_spreadsheet(
 	TBA_fetcher &f,

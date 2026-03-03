@@ -111,7 +111,7 @@ std::ostream& operator<<(std::ostream&,std::invalid_argument const&);
 
 template<typename T>
 void print_lines(T const& t){
-	for(auto elem:t){
+	for(auto const& elem:t){
 		std::cout<<elem<<"\n";
 	}
 }
@@ -119,7 +119,7 @@ void print_lines(T const& t){
 template<typename T,size_t N>
 std::ostream& operator<<(std::ostream& o,std::array<T,N> const& a){
 	o<<"[ ";
-	for(auto elem:a){
+	for(auto const& elem:a){
 		o<<elem<<" ";
 	}
 	return o<<"]";
@@ -143,7 +143,7 @@ std::ostream& operator<<(std::ostream& o,std::set<T> const& a){
 template<typename T>
 std::ostream& operator<<(std::ostream& o,std::multiset<T> const& a){
 	o<<"{ ";
-	for(auto elem:to_set(a)){
+	for(auto const& elem:to_set(a)){
 		o<<elem<<":"<<a.count(elem)<<" ";
 	}
 	o<<"}";
@@ -160,7 +160,7 @@ std::string as_string(T const& t){
 template<typename T>
 std::string join(std::vector<T> const& a){
 	std::stringstream ss;
-	for(auto elem:a){
+	for(auto const& elem:a){
 		ss<<elem;
 	}
 	return ss.str();
@@ -217,9 +217,56 @@ std::string join(std::string const& s,std::vector<T> const& v){
 }
 
 template<typename T>
-std::string tag(std::string const& name,T const& body){
+struct tag{
+	std::string name;
+	T body;
+
+	void out(std::ostream& o)const{
+		//o<<"<"<<name<<">"<<body<<"</"<<split(name).at(0)<<">";
+		o<<"<"<<name<<">"<<body<<"</";
+		for(size_t i=0;i<name.size() && name[i]!=' ';i++){
+			o<<name[i];
+		}
+		o<<">";
+	}
+
+	std::string str()const{
+		std::stringstream ss;
+		out(ss);
+		return ss.str();
+	}
+
+	operator std::string()const{
+		return str();
+	}
+
+	std::string operator+(std::string const& a)const{
+		std::stringstream ss;
+		out(ss);
+		ss<<a;
+		return ss.str();
+	}
+
+	template<typename T2>
+	std::string operator+(tag<T2> const& a)const{
+		std::stringstream ss;
+		out(ss);
+		a.out(ss);
+		return ss.str();
+	}
+};
+
+template<typename T>
+std::ostream& operator<<(std::ostream& o,tag<T> const& a){
+	a.out(o);
+	return o;
+}
+
+template<typename T>
+std::string operator+(std::string const& a,tag<T> const& b){
 	std::stringstream ss;
-	ss<<"<"<<name<<">"<<body<<"</"<<split(name).at(0)<<">";
+	ss<<a;
+	b.out(ss);
 	return ss.str();
 }
 
@@ -232,7 +279,7 @@ auto td(T t){ return tag("td",t); }
 std::string td1(std::string const&);
 
 template<typename T>
-std::string table(T const& body){ return tag("table",body); }
+auto table(T const& body){ return tag("table",body); }
 
 template<typename T>
 auto h1(T const& t){ return tag("h1",t); }

@@ -345,9 +345,8 @@ map<tba::Team_key,Pr> run(
 		ghi.dcmp_size=inputs.dcmp_size;
 		ghi.points_used=points_used;
 		ghi.plot=inputs.plot;
-		auto g=gen_html(ghi);
 		ofstream f(inputs.output_dir+"/"+district.get()+inputs.extra+".html");
-		f<<g;
+		gen_html(f,ghi);
 	}
 
 	bool show_table=1;

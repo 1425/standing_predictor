@@ -81,7 +81,7 @@ string color(double d){
 	return rgb(a,1,a);
 }
 
-string colorize(double d){
+auto colorize(double d){
 	return tag("td align=center bgcolor=\""+color(d)+"\"",
 		tag("font color=black",[&](){
 			stringstream ss;
@@ -142,7 +142,7 @@ auto td_right(T const& t){
 	return tag("td align=right",t);
 }
 
-string gen_html(Gen_html_input const& in){
+void gen_html(std::ostream& o,Gen_html_input const& in){
 	auto [
 		year,result,team_info,dcmp_cutoff_pr,cmp_cutoff_pr,
 		title,district_short,dcmp_size,
@@ -391,7 +391,7 @@ string gen_html(Gen_html_input const& in){
 		}\n";
 
 
-	return tag("html",
+	o<<tag("html",
 		tag("head",
 			tag("title",title)+tag("style",style)
 		)+
