@@ -336,25 +336,8 @@ void gen_html(
 		Rank_status<District_status>
 	> const& limits
 ){
-	const auto year=in.year;
-	const auto result=in.result;
-	const auto team_info=in.team_info;
-	const auto dcmp_cutoff_pr=in.dcmp_cutoff_pr;
-	const auto cmp_cutoff_pr=in.cmp_cutoff_pr;
-	const auto title=in.title;
-	const auto district_short=in.district_short;
-	const auto dcmp_size=in.dcmp_size;
-	auto points_used=in.points_used;
-	const auto plot_enable=in.plot;
-	auto lock=in.lock;
-	/*auto [
-		year,result,team_info,dcmp_cutoff_pr,cmp_cutoff_pr,
-		title,district_short,dcmp_size,
-		points_used,plot_enable,lock
-	]=in;*/
-
 	std::map<tba::Team_key,tba::Team> by_team;
-	for(auto x:team_info){
+	for(auto x:in.team_info){
 		by_team.insert(make_pair(x.key,x));
 		//by_team[x.key]=x;
 	}
@@ -370,8 +353,8 @@ void gen_html(
 	auto dcmp_string=[&](tba::Team_key t){
 		auto f=by_team.find(t);
 		if(f==by_team.end()){
-			PRINT(district_short)
-			PRINT(year)
+			PRINT(in.district_short)
+			PRINT(in.year)
 			PRINT(t)
 		}
 		assert(f!=by_team.end());
@@ -381,7 +364,7 @@ void gen_html(
 		}
 		return as_string(california_region(f1));
 	};
-	auto by_dcmp=group([&](auto const& x){ return dcmp_string(x.team); },result);
+	auto by_dcmp=group([&](auto const& x){ return dcmp_string(x.team); },in.result);
 	//PRINT(by_dcmp);
 	map<tba::Team_key,std::string> team_str;
 	for(auto &p:by_dcmp){
@@ -429,7 +412,7 @@ void gen_html(
 						auto [team,data]=x;
 						return tr(td(as_num(team))+td(data.rookie_bonus)+td(data.event_points_earned)+td(data.events_left));
 					},
-					sorted(to_vec(points_used),[](auto x){ return as_num(x.first); })
+					sorted(to_vec(in.points_used),[](auto x){ return as_num(x.first); })
 				))
 			);
 	}();
@@ -476,7 +459,7 @@ void gen_html(
 	};
 
 	auto dcmp_name=[=](int i)->string{
-		if(district_short=="ca"){
+		if(in.district_short=="ca"){
 			switch(i){
 				case 0:
 					return "NORTH";
@@ -489,16 +472,16 @@ void gen_html(
 		return "";
 	};
 
-	auto dcmp_names=(district_short=="ca")?2:1;
+	auto dcmp_names=(in.district_short=="ca")?2:1;
 
 	//auto cutoff_table1=cutoff_table("District Championship",dcmp_cutoff_pr);
 	auto cutoff_table1=join(mapf(
 		[=](auto i){
-			return cutoff_table("District Championship "+dcmp_name(i),dcmp_cutoff_pr[i]);
+			return cutoff_table("District Championship "+dcmp_name(i),in.dcmp_cutoff_pr[i]);
 		},
 		range(dcmp_names)
 	));
-	auto cutoff_table_cmp=cutoff_table("FRC Championship",cmp_cutoff_pr);
+	auto cutoff_table_cmp=cutoff_table("FRC Championship",in.cmp_cutoff_pr);
 
 	auto cutoff_table_long1=[=](auto data){
 		return h2("Cutoff value - extended")+
@@ -515,12 +498,12 @@ void gen_html(
 	};
 
 	auto cutoff_table_long=join(mapf(
-		[=](auto i){ return cutoff_table_long1(dcmp_cutoff_pr[i]); },
+		[=](auto i){ return cutoff_table_long1(in.dcmp_cutoff_pr[i]); },
 		range(dcmp_names)
 	));
 
 	//double total_entropy=sum(::mapf(entropy,seconds(result)));
-	double total_entropy=sum(::mapf([](auto x){ return entropy(x); },mapf([](auto x){ return x.dcmp_make; },result)));
+	double total_entropy=sum(::mapf([](auto x){ return entropy(x); },mapf([](auto x){ return x.dcmp_make; },in.result)));
 	PRINT(total_entropy);
 
 	static const std::vector<std::pair<std::string,std::string>> columns{
@@ -556,8 +539,8 @@ void gen_html(
 	}();
 
 	auto charts=[&]()->std::map<Team_key,std::string>{
-		if(plot_enable){
-			return find_charts(points_used);
+		if(in.plot){
+			return find_charts(in.points_used);
 		}
 		return {};
 	}();
@@ -578,7 +561,7 @@ void gen_html(
 	};
 
 	auto team_details=[&](auto a)->std::string{
-		auto x=points_used[a.team];
+		auto x=in.points_used.at(a.team);
 		std::stringstream ss;
 		ss<<h3("Expected pre-dcmp points")+charts[a.team];
 
@@ -586,22 +569,22 @@ void gen_html(
 
 		{
 			std::stringstream u;
-			u<<"https://frc-events.firstinspires.org/"<<year<<"/team/"<<team_num;
+			u<<"https://frc-events.firstinspires.org/"<<in.year<<"/team/"<<team_num;
 			ss<<link(u.str(),"FRC Events");
 		}
 		ss<<"<br>";
-		ss<<link("https://thebluealliance.com/team/"+team_num+"/"+::as_string(year),"The Blue Alliance");
+		ss<<link("https://thebluealliance.com/team/"+team_num+"/"+::as_string(in.year),"The Blue Alliance");
 		ss<<"<br>";
 		{
 			std::stringstream u;
-			u<<"https://www.statbotics.io/team/"<<team_num<<"/"<<year;
+			u<<"https://www.statbotics.io/team/"<<team_num<<"/"<<in.year;
 			ss<<link(u.str(),"Statbotics");
 		}
 
 		ss<<h3("Points used");
 		ss<<as_table(x);
 
-		ss<<"<p>"<<"Lock status:"<<lock[a.team]<<"\n";
+		ss<<"<p>"<<"Lock status:"<<in.lock.at(a.team)<<"\n";
 		return ss.str();
 	};
 
@@ -649,21 +632,21 @@ void gen_html(
 
 	o<<tag("html",
 		tag("head",
-			tag("title",title)+
+			tag("title",in.title)+
 			tag("style",style)+
 			tag("script",script)
 		)+
 		tag("body",
-			tag("h1",title)+
-			link("https://frc-events.firstinspires.org/"+::as_string(year)+"/district/"+district_short,"FRC Events")+"<br>"+
-			link("https://www.thebluealliance.com/events/"+district_short+"/"+::as_string(year)+"#rankings","The Blue Alliance")+"<br>"+
+			tag("h1",in.title)+
+			link("https://frc-events.firstinspires.org/"+::as_string(in.year)+"/district/"+in.district_short,"FRC Events")+"<br>"+
+			link("https://www.thebluealliance.com/events/"+in.district_short+"/"+::as_string(in.year)+"#rankings","The Blue Alliance")+"<br>"+
 			//link("http://frclocks.com/index.php?d="+district_short,"FRC Locks")+"(slow)<br>"+
-			link("http://frclocks.com/districts/"+district_short+".html","FRC Locks")+"<br>"+
+			link("http://frclocks.com/districts/"+in.district_short+".html","FRC Locks")+"<br>"+
 			"Slots at district championship:"+[=](){
-				if(dcmp_size.size()==1){
-					return as_string(dcmp_size[0]);
+				if(in.dcmp_size.size()==1){
+					return as_string(in.dcmp_size[0]);
 				}
-				return as_string(dcmp_size);
+				return as_string(in.dcmp_size);
 			}()+
 			cutoff_table1+
 			cutoff_table_cmp+
@@ -679,7 +662,7 @@ void gen_html(
 						[=](auto p){
 							auto [i,a]=p;
 							auto name=get_script_name();
-							auto used=points_used.find(a.team)->second;
+							auto used=in.points_used.find(a.team)->second;
 							return tag("tr class=\"rank\" onclick=\"toggle_viz('"+name+"');event.preventDefault();\"",
 								td(as_string(i)+" "+get_team_str(a.team))+
 								colorize(a.dcmp_make)+
@@ -700,7 +683,7 @@ void gen_html(
 							);
 						},
 						enumerate_from(1,reversed(sorted(
-							result,
+							in.result,
 							[](auto x){ return make_tuple(x.dcmp_make,x.cmp_make,x); }
 						)))
 					)
