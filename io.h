@@ -249,6 +249,9 @@ auto th(T const& t){ return tag("th",t); }
 template<typename T>
 auto title(T const& t){ return tag("title",t); }
 
+template<typename T>
+auto p(T const& t){ return tag("p",t); }
+
 std::string th1(std::string const&);
 
 std::string link(std::string const& url,std::string const& body);

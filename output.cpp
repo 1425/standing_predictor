@@ -82,7 +82,7 @@ string color(double d){
 }
 
 string colorize(double d){
-	return tag("td bgcolor=\""+color(d)+"\"",
+	return tag("td align=center bgcolor=\""+color(d)+"\"",
 		tag("font color=black",[&](){
 			stringstream ss;
 			ss<<setprecision(3)<<fixed;
@@ -135,6 +135,11 @@ std::map<tba::Team_key,std::string> find_charts(std::map<Team_key,Team_points_us
 		},
 		zip(a,plots)
 	));
+}
+
+template<typename T>
+auto td_right(T const& t){
+	return tag("td align=right",t);
 }
 
 string gen_html(Gen_html_input const& in){
@@ -360,6 +365,12 @@ string gen_html(Gen_html_input const& in){
 		:root{\n\
 			color-scheme: light dark;\n\
 		}\n\
+		table{\n\
+			border-spacing: 0px;\n\
+		}\n\
+		tr.rank:hover{\n\
+			background-color: #888888;\n\
+		}\n\
 		.tooltip{\n\
 		        position:relative;\n\
 		        display: inline-block;\n\
@@ -402,7 +413,7 @@ string gen_html(Gen_html_input const& in){
 			}()+
 			cutoff_table1+
 			h2("Team Probabilities")+
-			explain+
+			p(explain)+
 			tag("table border",
 				tr(join(::mapf(
 					[](auto x){ return th1(x.first); },
@@ -413,28 +424,21 @@ string gen_html(Gen_html_input const& in){
 						[=](auto p){
 							auto [i,a]=p;
 							auto used=points_used.find(a.team)->second;
-							return tr(join(
-								vector<string>{}+td(as_string(i)+" "+get_team_str(a.team))+
+							return tag("tr class=\"rank\"",
+								td(as_string(i)+" "+get_team_str(a.team))+
 								colorize(a.dcmp_make)+
-								::mapf(
-									td1,
-									std::vector<std::string>{
-										make_link(a.team),
-										//nickname(a.team),
-										fancy(a),
-										as_string(a.dcmp_interesting[0]),
-										as_string(a.dcmp_interesting[1]),
-										as_string(a.dcmp_interesting[2])
-									}
-								)
-								)+
+								td_right(make_link(a.team))+
+								td(fancy(a))+
+								td_right(a.dcmp_interesting[0])+
+								td_right(a.dcmp_interesting[1])+
+								td_right(a.dcmp_interesting[2])+
 								colorize(a.cmp_make)+
-								td(a.cmp_interesting[0])+
-								td(a.cmp_interesting[1])+
-								td(a.cmp_interesting[2])+
-								td(used.rookie_bonus)+
+								td_right(a.cmp_interesting[0])+
+								td_right(a.cmp_interesting[1])+
+								td_right(a.cmp_interesting[2])+
+								td_right(used.rookie_bonus)+
 								td(join("&nbsp;",used.event_points_earned))+
-								td(used.events_left)
+								td_right(used.events_left)
 							);
 						},
 						enumerate_from(1,reversed(sorted(

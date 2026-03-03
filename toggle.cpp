@@ -10,10 +10,6 @@ using namespace std;
 
 //start generic
 
-auto p(auto a){
-	return tag("p",a);
-}
-
 auto html_head(auto x){
 	return tag("head",x);
 }
