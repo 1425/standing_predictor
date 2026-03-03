@@ -336,11 +336,13 @@ void gen_html(
 		Rank_status<District_status>
 	> const& limits
 ){
-	std::map<tba::Team_key,tba::Team> by_team;
-	for(auto x:in.team_info){
-		by_team.insert(make_pair(x.key,x));
-		//by_team[x.key]=x;
-	}
+	const auto by_team=[&](){
+		std::map<tba::Team_key,tba::Team> r;
+		for(auto x:in.team_info){
+			r.insert(make_pair(x.key,x));
+		}
+		return r;
+	}();
 
 	int script_names_used=0;
 	auto get_script_name=[&](){
@@ -417,6 +419,35 @@ void gen_html(
 			);
 	}();
 
+	auto dcmp_name=[=](int i)->string{
+		if(in.district_short=="ca"){
+			switch(i){
+				case 0:
+					return "NORTH";
+				case 1:
+					return "SOUTH";
+				default:
+					assert(0);
+			}
+		}
+		return "";
+	};
+
+	auto dcmp_names=(in.district_short=="ca")?2:1;
+
+	auto cutoff_table_long1=[=](auto data){
+		return "The cutoff values, along with how likely a team at that value is to miss advancing.  For example: a line that said (50,.25) would correspond to the probability that team above 50 get in, teams below 50 do not, and 75% of teams ending up with exactly 50 would qualify for the district championship."+
+		tag("table border",
+			tr(th("Points")+th("Probability"))+
+			join(mapf(
+				[](auto a){
+					return tr(join(MAP(td,a)));
+				},
+				data
+			))
+		);
+	};
+
 	auto cutoff_table=[=](string s,auto cutoff_pr){
 		auto simple=simplify(cutoff_pr);
 		auto chart=plot([&](){
@@ -428,6 +459,7 @@ void gen_html(
 			return r;
 		}());
 		auto name=get_script_name();
+		auto name2=get_script_name();
 		return h2(s+" cutoff value")+
 		table(tr(
 			td(
@@ -447,32 +479,24 @@ void gen_html(
 			)+
 			td(chart)
 		))+
-			tag("table border class='hidden' id=\""+name+"\"",
-				tr(th("Points")+th("Probability"))+
-				join(mapf(
-					[](auto a){
-						return tr(join(MAP(td,a)));
-					},
-					simple
+			tag("table class='hidden' id=\""+name+"\"",
+				tr(td(
+					tag("table border",
+						tr(th("Points")+th("Probability"))+
+						join(mapf(
+							[](auto a){
+								return tr(join(MAP(td,a)));
+							},
+							simple
+						))
+					)+
+					tag("a href='' onclick=\"toggle_viz('"+name2+"');event.preventDefault();\"","More details")+
+					tag("table class=hidden id=\""+name2+"\"",
+						tr(td(cutoff_table_long1(cutoff_pr)))
+					)
 				))
 			);
 	};
-
-	auto dcmp_name=[=](int i)->string{
-		if(in.district_short=="ca"){
-			switch(i){
-				case 0:
-					return "NORTH";
-				case 1:
-					return "SOUTH";
-				default:
-					assert(0);
-			}
-		}
-		return "";
-	};
-
-	auto dcmp_names=(in.district_short=="ca")?2:1;
 
 	//auto cutoff_table1=cutoff_table("District Championship",dcmp_cutoff_pr);
 	auto cutoff_table1=join(mapf(
@@ -482,25 +506,6 @@ void gen_html(
 		range(dcmp_names)
 	));
 	auto cutoff_table_cmp=cutoff_table("FRC Championship",in.cmp_cutoff_pr);
-
-	auto cutoff_table_long1=[=](auto data){
-		return h2("Cutoff value - extended")+
-		"The cutoff values, along with how likely a team at that value is to miss advancing.  For example: a line that said (50,.25) would correspond to the probability that team above 50 get in, teams below 50 do not, and 75% of teams ending up with exactly 50 would qualify for the district championship."+
-		tag("table border",
-			tr(th("Points")+th("Probability"))+
-			join(mapf(
-				[](auto a){
-					return tr(join(MAP(td,a)));
-				},
-				data
-			))
-		);
-	};
-
-	auto cutoff_table_long=join(mapf(
-		[=](auto i){ return cutoff_table_long1(in.dcmp_cutoff_pr[i]); },
-		range(dcmp_names)
-	));
 
 	//double total_entropy=sum(::mapf(entropy,seconds(result)));
 	double total_entropy=sum(::mapf([](auto x){ return entropy(x); },mapf([](auto x){ return x.dcmp_make; },in.result)));
@@ -689,7 +694,6 @@ void gen_html(
 					)
 				)
 			)+
-			cutoff_table_long+
 			h2("Extra data")+as_table(limits)+
 			show_skill(in.skill)
 			/*+data_used_table*/
