@@ -155,6 +155,14 @@ void gen_html(std::ostream& o,Gen_html_input const& in){
 		//by_team[x.key]=x;
 	}
 
+	int script_names_used=0;
+	auto get_script_name=[&](){
+		std::stringstream ss;
+		ss<<"u"<<script_names_used;
+		script_names_used++;
+		return ss.str();
+	};
+
 	auto dcmp_string=[&](tba::Team_key t){
 		auto f=by_team.find(t);
 		if(f==by_team.end()){
@@ -232,17 +240,9 @@ void gen_html(std::ostream& o,Gen_html_input const& in){
 			}
 			return r;
 		}());
+		auto name=get_script_name();
 		return h2(s+" cutoff value")+
 		table(tr(
-			td(tag("table border",
-				tr(th("Points")+th("Probability"))+
-				join(mapf(
-					[](auto a){
-						return tr(join(MAP(td,a)));
-					},
-					simple
-				))
-			))+
 			td(
 				h3("Summary")+
 				tag("table border",
@@ -255,9 +255,20 @@ void gen_html(std::ostream& o,Gen_html_input const& in){
 							tr(th("95%")+td(std::get<2>(q)))
 						;
 					}()
-				)
-			)+td(chart)
-		));
+				)+
+				p(tag("a href='' onclick=\"toggle_viz('"+name+"');event.preventDefault();\"","Details"))
+			)+
+			td(chart)
+		))+
+			tag("table border class='hidden' id=\""+name+"\"",
+				tr(th("Points")+th("Probability"))+
+				join(mapf(
+					[](auto a){
+						return tr(join(MAP(td,a)));
+					},
+					simple
+				))
+			);
 	};
 
 	auto dcmp_name=[=](int i)->string{
@@ -325,15 +336,20 @@ void gen_html(std::ostream& o,Gen_html_input const& in){
 		{"Remaining events","Number of counting events for which the team is scheduled"}
 	};
 
-	auto explain=tag("table border",
-		tr(th("Column")+th("Description"))+
-		join(mapf(
-			[](auto a){
-				return tr(td(a.first)+td(a.second));
-			},
-			columns
-		))
-	);
+	auto explain=[&](){
+		auto name=get_script_name();
+		//		p(tag("a href='' onclick=\"toggle_viz('"+name+"');event.preventDefault();\"","Details"))
+		return tag("a href=\"#\" onclick=\"toggle_viz('"+name+"');event.preventDefault();\"","Column descriptions")+
+		tag("table border class=\"hidden\" id=\""+name+"\"",
+			tr(th("Column")+th("Description"))+
+			join(mapf(
+				[](auto a){
+					return tr(td(a.first)+td(a.second));
+				},
+				columns
+			))
+		);
+	}();
 
 	auto charts=[&]()->std::map<Team_key,std::string>{
 		if(plot_enable){
@@ -367,6 +383,9 @@ void gen_html(std::ostream& o,Gen_html_input const& in){
 		tr.rank:hover{\n\
 			background-color: #888888;\n\
 		}\n\
+		.hidden{\n\
+			display: none;\n\
+		}\n\
 		.tooltip{\n\
 		        position:relative;\n\
 		        display: inline-block;\n\
@@ -390,10 +409,17 @@ void gen_html(std::ostream& o,Gen_html_input const& in){
 		        visibility: visible;\n\
 		}\n";
 
+	auto script="\n\
+		function toggle_viz(name){\n\
+			var content=document.getElementById(name);\n\
+			content.classList.toggle(\"hidden\");\n\
+		}\n";
 
 	o<<tag("html",
 		tag("head",
-			tag("title",title)+tag("style",style)
+			tag("title",title)+
+			tag("style",style)+
+			tag("script",script)
 		)+
 		tag("body",
 			tag("h1",title)+
@@ -408,6 +434,7 @@ void gen_html(std::ostream& o,Gen_html_input const& in){
 				return as_string(dcmp_size);
 			}()+
 			cutoff_table1+
+			cutoff_table_cmp+
 			h2("Team Probabilities")+
 			p(explain)+
 			tag("table border",
@@ -444,7 +471,8 @@ void gen_html(std::ostream& o,Gen_html_input const& in){
 					)
 				)
 			)+
-			cutoff_table_long+cutoff_table_cmp /*+data_used_table*/
+			cutoff_table_long
+			/*+data_used_table*/
 		)
 	);
 }
