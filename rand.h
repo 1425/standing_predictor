@@ -28,6 +28,9 @@ std::chrono::year_month_day rand(std::chrono::year_month_day const*);
 template<typename T,size_t N>
 auto rand(std::array<T,N> const*);
 
+template<typename A,typename B,typename C>
+auto rand(std::tuple<A,B,C> const*);
+
 template<typename A,typename B>
 auto rand(std::pair<A,B> const*){
 	return std::make_pair(rand((A*)0),rand((B*)0));
@@ -104,6 +107,15 @@ auto rand(std::array<T,N> const*){
 			return rand((T*)0);
 		},
 		range_st<N>()
+	);
+}
+
+template<typename A,typename B,typename C>
+auto rand(std::tuple<A,B,C> const*){
+	return std::make_tuple(
+		rand((A*)0),
+		rand((B*)0),
+		rand((C*)0)
 	);
 }
 

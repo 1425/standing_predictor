@@ -74,7 +74,8 @@ std::tuple<Run_result,Points_used,By_team> run_inner(
 	tba::District_key district,
 	tba::Year year,
 	std::vector<int> dcmp_size,
-	Skill_method skill_method
+	Skill_method skill_method,
+	bool quick
 ){
 	bool dcmp_played=0;
 
@@ -221,12 +222,15 @@ std::tuple<Run_result,Points_used,By_team> run_inner(
 		}
 	}
 
+	Run_input run_input=read_status(f,district,skill_method);
+	run_input.quick=quick;
+
 	return make_tuple(
-		run_calc(read_status(f,district,skill_method)),
+		run_calc(run_input),
 		points_used,
 		by_team
 	);
-	return make_tuple(
+	/*return make_tuple(
 		run_calc(Run_input{
 			worlds_slots(district),
 			by_team,
@@ -244,7 +248,7 @@ std::tuple<Run_result,Points_used,By_team> run_inner(
 		}),
 		points_used,
 		by_team
-	);
+	);*/
 }
 
 struct Run_inputs{
@@ -258,6 +262,7 @@ struct Run_inputs{
 	bool ignore_chairmans=0;
 	Skill_method skill_method=Skill_method::NONE;
 	bool plot=0;
+	bool quick=0;
 };
 
 auto plot(flat_map2<short int,double> a,auto title){
@@ -274,7 +279,7 @@ void team_dists(District_key district,std::map<Team_key,Team_status> const& by_t
 	for(auto [k,v]:by_team){
 		Plot_setup p;
 		p.title=::as_string(k);
-		p.data=mapf([](auto x){ return Plot_point(x.first,x.second); },v.point_dist);
+		p.data=mapf([](auto x){ return Plot_point2(x.first,x.second); },v.point_dist);
 		setups|=p;
 	}
 	auto plots=plot(setups);
@@ -300,7 +305,7 @@ map<tba::Team_key,Pr> run(
 	//this function exists to separate the input & calculation from the output
 	auto district=*inputs.district;
 	auto year=*inputs.year;
-	auto [results,points_used,by_team]=run_inner(f,inputs.ignore_chairmans,district,year,inputs.dcmp_size,inputs.skill_method);
+	auto [results,points_used,by_team]=run_inner(f,inputs.ignore_chairmans,district,year,inputs.dcmp_size,inputs.skill_method,inputs.quick);
 
 	//print_lines(by_team);
 	bool by_team_csv=0;
@@ -835,6 +840,7 @@ struct Args{
 	bool event_partial_demo=0;
 	bool data_range_demo=0;
 	bool plot=1;
+	bool quick=0;
 	Skill_method skill_method=Skill_method::POINTS;
 };
 
@@ -907,6 +913,11 @@ Args parse_args(int argc,char **argv){
 		"--plot",{"ENABLE"},
 		"Include plots of point distributions in output.  Defauls to true.",
 		r.plot
+	);
+	p.add(
+		"--quick",{"ENABLE"},
+		"Do smaller number of iterations",
+		r.quick
 	);
 	p.parse(argc,argv);
 	return r;
@@ -1091,6 +1102,7 @@ int main1(int argc,char **argv){
 		run_inputs.district_short=year_info.abbreviation;
 		run_inputs.skill_method=args.skill_method;
 		run_inputs.plot=args.plot;
+		run_inputs.quick=args.quick;
 		//dcmp_pr[district]=run(tba_fetcher,args.output_dir,district,args.year,dcmp_size(district),title,year_info.abbreviation);
 		dcmp_pr[district]=run(tba_fetcher,run_inputs);
 

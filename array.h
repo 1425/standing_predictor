@@ -7,6 +7,7 @@
 
 template<size_t N>
 struct array_void{
+	static void operator[](size_t);
 };
 
 template<typename T,size_t N>

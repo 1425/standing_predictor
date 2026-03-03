@@ -13,12 +13,23 @@ PRINT_STRUCT(Plot_setup,PLOT_SETUP)
 ELEMENTWISE_RAND(Plot_setup,PLOT_SETUP)
 
 Job job(Plot_setup const& a){
-	//PRINT(a);
-	stringstream ss;
-	for(auto [k,v]:a.data){
-		ss<<k<<","<<v<<"\n";
+	if(std::holds_alternative<std::vector<Plot_point2>>(a.data)){
+		auto const& g=std::get<std::vector<Plot_point2>>(a.data);
+		stringstream ss;
+		for(auto [k,v]:g){
+			ss<<k<<","<<v<<"\n";
+		}
+		return Job("./plot.py",{"--x","Points","--y","Probability"},ss.str());
 	}
-	return Job("./plot.py",{"--x","Points","--y","Probability"},ss.str());
+	if(std::holds_alternative<std::vector<Plot_point3>>(a.data)){
+		auto const& g=std::get<std::vector<Plot_point3>>(a.data);
+		std::stringstream ss;
+		for(auto [x,y,z]:g){
+			ss<<x<<","<<y<<","<<z<<"\n";
+		}
+		return Job("./plot3.py",{"--x","Input","--y","Output (Points)","--z","Probability"},ss.str());
+	}
+	assert(0);
 }
 
 auto base64_encode(std::string const& in){

@@ -36,6 +36,7 @@ Dcmp_data rand(Dcmp_data const*);
 	X(int,worlds_slots)\
 	X(By_team,by_team)\
 	X(std::vector<Dcmp_data>,dcmp)\
+	X(bool,quick)
 
 STRUCT_DECLARE(Run_input,RUN_INPUT_ITEMS)
 Run_input rand(Run_input const*);

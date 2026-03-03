@@ -29,6 +29,12 @@ struct Script_namer{
 	}
 };
 
+auto td_top(auto a){
+	return tag("td valign=top",a);
+}
+
+std::string as_table(tba::Event const&);
+
 template<typename T>
 std::string as_table(T const& t){
 	return ::as_string(t);
@@ -68,18 +74,37 @@ std::string as_table(std::vector<T> const& a){
 }
 
 template<typename T>
+auto td_hide(std::string name,T const& contents){
+	auto t=as_table(contents);
+	if(t.size()<100){
+		//just make it shown by default
+		//and also the label next to it doesn't need to be a link
+		nyi
+	}
+	return tag("td class=hidden id=\""+name+"\"",contents);
+}
+
+template<typename T>
+auto tr_hide(std::string name,T const& contents){
+	std::string inner=as_table(contents);
+	if(inner.size()<100){
+		return tr(td(name)+td(inner));
+	}
+	auto name1="x"+as_string(rand());
+	return tr(
+		td(tag("a href=\"\" onclick=\"toggle_viz('"+name1+"');event.preventDefault();\"",name))+
+		tag("td class=hidden id=\""+name1+"\"",inner)
+	);
+}
+
+#define TR_HIDE(A,B) ss<<tr_hide(""#B,a.B);
+#define TR_HIDE1(A) ss<<tr_hide(""#A,a.A);
+
+template<typename T>
 std::string as_table(Rank_status<T> const& a){
 	std::stringstream ss;
 	ss<<"<table border>";
-	#define X(A,B){\
-		auto name="x"+as_string(rand());\
-		ss<<tr(\
-			td(tag("a href=\"\" onclick=\"toggle_viz('"+name+"');event.preventDefault();\"",""#B))+\
-			tag("td class=hidden id=\""+name+"\"",as_table(a.B))\
-		);\
-	}
-	RANK_STATUS(X)
-	#undef X
+	RANK_STATUS(TR_HIDE)
 	ss<<"</table>";
 	return ss.str();
 }
@@ -89,7 +114,7 @@ std::string as_table(tba::Event const& a){
 	std::stringstream ss;
 	ss<<tag("a href=\"\" onclick=\"toggle_viz('"+name+"');event.preventDefault();\"",a.short_name);
 	ss<<"<table border class=hidden id=\""<<name<<"\">";
-	#define X(A,B) ss<<tr(td(""#B)+td(as_table(a.B)));
+	#define X(A,B) ss<<tr(td_top(""#B)+td(as_table(a.B)));
 	TBA_EVENT(X)
 	#undef X
 	ss<<"</table>";
@@ -100,10 +125,8 @@ template<typename T>
 std::string as_table(Event_annotated<T> const& a){
 	std::stringstream ss;
 	ss<<"<table border>";
-	#define X(B) ss<<tr(td(""#B)+td(as_table(a.B)));
-	X(data)
-	X(extra)
-	#undef X
+	TR_HIDE1(data)
+	TR_HIDE1(extra)
 	ss<<"</table>";
 	return ss.str();
 }
@@ -112,11 +135,9 @@ template<typename A,typename B>
 std::string as_table(District_cmp_complex_annotated<A,B> const& a){
 	std::stringstream ss;
 	ss<<"<table border>";
-	#define X(B) ss<<tr(td(""#B)+td(as_table(a.B)));
-	X(finals)
-	X(divisions)
-	X(extra)
-	#undef X
+	TR_HIDE1(finals)
+	TR_HIDE1(divisions)
+	TR_HIDE1(extra)
 	ss<<"</table>";
 	return ss.str();
 }
@@ -128,15 +149,7 @@ auto click(std::string target,std::string body){
 std::string as_table(Team_points_used const& a){
 	std::stringstream ss;
 	ss<<"<table border>";
-	#define X(A,B) {\
-		auto name="x"+as_string(rand());\
-		ss<<tr(\
-			td(click(name,""#B))+\
-			tag("td class=hidden id=\""+name+"\"",as_table(a.B))\
-		);\
-	}
-	TEAM_POINTS_USED(X)
-	#undef X
+	TEAM_POINTS_USED(TR_HIDE)
 	ss<<"</table>";
 	return ss.str();
 }
@@ -145,17 +158,9 @@ template<typename A,typename B,typename C>
 std::string as_table(Event_categories_annotated<A,B,C> const& a){
 	stringstream ss;
 	ss<<"<table border>";
-	#define X(B) {\
-		auto name="x"+::as_string(rand());\
-		ss<<tr(\
-			td(click(name,""#B))+\
-			tag("td class=hidden id=\""+name+"\"",as_table(a.B))\
-		);\
-	}
-	X(local)
-	X(dcmp)
-	X(extra)
-	#undef X
+	TR_HIDE1(local)
+	TR_HIDE1(dcmp)
+	TR_HIDE1(extra)
 	ss<<"</table>";
 	return ss.str();
 }
@@ -266,7 +271,7 @@ std::map<tba::Team_key,std::string> find_charts(std::map<Team_key,Team_points_us
 	for(auto [k,v]:a){
 		Plot_setup p;
 		p.title=::as_string(k);
-		p.data=mapf([](auto x){ return Plot_point(x.first,x.second); },v.pre_dcmp_dist);
+		p.data=mapf([](auto x){ return Plot_point2(x.first,x.second); },v.pre_dcmp_dist);
 		setups|=p;
 	}
 	auto plots=plot(setups);
@@ -527,8 +532,27 @@ void gen_html(
 		auto x=points_used[a.team];
 		std::stringstream ss;
 		ss<<h3("Expected pre-dcmp points")+charts[a.team];
+
+		const auto team_num=a.team.str().substr(3,20);
+
+		{
+			std::stringstream u;
+			u<<"https://frc-events.firstinspires.org/"<<year<<"/team/"<<team_num;
+			ss<<link(u.str(),"FRC Events");
+		}
+		ss<<"<br>";
+		ss<<link("https://thebluealliance.com/team/"+team_num+"/"+::as_string(year),"The Blue Alliance");
+		ss<<"<br>";
+		{
+			std::stringstream u;
+			u<<"https://www.statbotics.io/team/"<<team_num<<"/"<<year;
+			ss<<link(u.str(),"Statbotics");
+		}
+
+		ss<<h3("Points used");
 		ss<<as_table(x);
-		ss<<"Lock status:"<<lock[a.team]<<"\n";
+
+		ss<<"<p>"<<"Lock status:"<<lock[a.team]<<"\n";
 		return ss.str();
 	};
 
@@ -607,8 +631,8 @@ void gen_html(
 							auto [i,a]=p;
 							auto name=get_script_name();
 							auto used=points_used.find(a.team)->second;
-							return tag("tr class=\"rank\"",
-								tag("td onclick=\"toggle_viz('"+name+"');event.preventDefault();\"",as_string(i)+" "+get_team_str(a.team))+
+							return tag("tr class=\"rank\" onclick=\"toggle_viz('"+name+"');event.preventDefault();\"",
+								td(as_string(i)+" "+get_team_str(a.team))+
 								colorize(a.dcmp_make)+
 								td_right(make_link(a.team))+
 								td(fancy(a))+
