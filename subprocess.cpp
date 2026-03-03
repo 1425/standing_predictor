@@ -331,7 +331,11 @@ Subprocess_result run(std::string prog,std::vector<std::string> const& args,std:
 				int status;
 				int r=waitpid(f,&status,0);
 				assert(r==f);
-				assert(status==found.ssi_status);
+				/*if(status!=found.ssi_status){
+					PRINT(status);
+					PRINT(found.ssi_status);
+				}*/
+				assert(status==(found.ssi_status<<8));
 			}
 
 			return Subprocess_result(found.ssi_status,from_stdout.str(),from_stderr.str());
