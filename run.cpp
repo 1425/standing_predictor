@@ -527,7 +527,7 @@ Run_result run_calc(
 	difference in cutoff probabilities run to run and going up to 20k will
 	get you below 0.5% run to run variation.
 	*/
-	static const auto iterations=2000;
+	static const auto iterations=20*1000;
 
 	using Final_points=flat_map2<pair<bool,Point>,unsigned>;
 	std::array<Final_points,MAX_DCMPS> final_points;
