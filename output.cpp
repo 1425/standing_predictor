@@ -448,7 +448,7 @@ void gen_html(
 		);
 	};
 
-	auto cutoff_table=[=](string s,auto cutoff_pr){
+	auto cutoff_table=[=](string s,auto cutoff_pr,std::optional<int> slots){
 		auto simple=simplify(cutoff_pr);
 		auto chart=plot([&](){
 			std::vector<std::pair<int,double>> r;
@@ -463,6 +463,13 @@ void gen_html(
 		return h2(s+" cutoff value")+
 		table(tr(
 			td(
+				[=](){
+					std::stringstream ss;
+					if(slots){
+						ss<<"Slots:"<<slots<<"\n";
+					}
+					return ss.str();
+				}()+
 				h3("Summary")+
 				tag("table border",
 					tr(th("Probability")+th("Point total"))+
@@ -501,11 +508,11 @@ void gen_html(
 	//auto cutoff_table1=cutoff_table("District Championship",dcmp_cutoff_pr);
 	auto cutoff_table1=join(mapf(
 		[=](auto i){
-			return cutoff_table("District Championship "+dcmp_name(i),in.dcmp_cutoff_pr[i]);
+			return cutoff_table("District Championship "+dcmp_name(i),in.dcmp_cutoff_pr[i],in.dcmp_size[i]);
 		},
 		range(dcmp_names)
 	));
-	auto cutoff_table_cmp=cutoff_table("FRC Championship",in.cmp_cutoff_pr);
+	auto cutoff_table_cmp=cutoff_table("FRC Championship",in.cmp_cutoff_pr,std::nullopt);
 
 	//double total_entropy=sum(::mapf(entropy,seconds(result)));
 	double total_entropy=sum(::mapf([](auto x){ return entropy(x); },mapf([](auto x){ return x.dcmp_make; },in.result)));
@@ -647,12 +654,6 @@ void gen_html(
 			link("https://www.thebluealliance.com/events/"+in.district_short+"/"+::as_string(in.year)+"#rankings","The Blue Alliance")+"<br>"+
 			//link("http://frclocks.com/index.php?d="+district_short,"FRC Locks")+"(slow)<br>"+
 			link("http://frclocks.com/districts/"+in.district_short+".html","FRC Locks")+"<br>"+
-			"Slots at district championship:"+[=](){
-				if(in.dcmp_size.size()==1){
-					return as_string(in.dcmp_size[0]);
-				}
-				return as_string(in.dcmp_size);
-			}()+
 			cutoff_table1+
 			cutoff_table_cmp+
 			h2("Team Probabilities")+
