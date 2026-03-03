@@ -18,6 +18,142 @@
 using namespace std;
 using Team_key=tba::Team_key;
 
+struct Script_namer{
+	size_t i=0;
+
+	string operator()(){
+		std::stringstream ss;
+		ss<<"n"<<i;
+		i++;
+		return ss.str();
+	}
+};
+
+template<typename T>
+std::string as_table(T const& t){
+	return ::as_string(t);
+}
+
+template<typename K,typename V>
+std::string as_table(flat_map2<K,V> const& a){
+	std::stringstream ss;
+	ss<<"<table border>";
+	for(auto const& [k,v]:a){
+		ss<<tr(td(k)+td(v));
+	}
+	ss<<"</table>";
+	return ss.str();
+}
+
+template<typename K,typename V>
+std::string as_table(std::map<K,V> const& a){
+	std::stringstream ss;
+	ss<<"<table border>";
+	for(auto const& [k,v]:a){
+		ss<<tr(td(k)+td(v));
+	}
+	ss<<"</table>";
+	return ss.str();
+}
+
+template<typename T>
+std::string as_table(std::vector<T> const& a){
+	std::stringstream ss;
+	ss<<"<table border>";
+	for(auto const& x:a){
+		ss<<tr(td(as_table(x)));
+	}
+	ss<<"</table>";
+	return ss.str();
+}
+
+template<typename T>
+std::string as_table(Rank_status<T> const& a){
+	std::stringstream ss;
+	ss<<"<table border>";
+	#define X(A,B){\
+		auto name="x"+as_string(rand());\
+		ss<<tr(\
+			td(tag("a href=\"\" onclick=\"toggle_viz('"+name+"');event.preventDefault();\"",""#B))+\
+			tag("td class=hidden id=\""+name+"\"",as_table(a.B))\
+		);\
+	}
+	RANK_STATUS(X)
+	#undef X
+	ss<<"</table>";
+	return ss.str();
+}
+
+std::string as_table(tba::Event const& a){
+	auto name="x"+as_string(rand());
+	std::stringstream ss;
+	ss<<tag("a href=\"\" onclick=\"toggle_viz('"+name+"');event.preventDefault();\"",a.short_name);
+	ss<<"<table border class=hidden id=\""<<name<<"\">";
+	#define X(A,B) ss<<tr(td(""#B)+td(as_table(a.B)));
+	TBA_EVENT(X)
+	#undef X
+	ss<<"</table>";
+	return ss.str();
+}
+
+template<typename T>
+std::string as_table(Event_annotated<T> const& a){
+	std::stringstream ss;
+	ss<<"<table border>";
+	#define X(B) ss<<tr(td(""#B)+td(as_table(a.B)));
+	X(data)
+	X(extra)
+	#undef X
+	ss<<"</table>";
+	return ss.str();
+}
+
+template<typename A,typename B>
+std::string as_table(District_cmp_complex_annotated<A,B> const& a){
+	std::stringstream ss;
+	ss<<"<table border>";
+	#define X(B) ss<<tr(td(""#B)+td(as_table(a.B)));
+	X(finals)
+	X(divisions)
+	X(extra)
+	#undef X
+	ss<<"</table>";
+	return ss.str();
+}
+
+std::string as_table(Team_points_used const& a){
+	std::stringstream ss;
+	ss<<"<table border>";
+	#define X(A,B) ss<<tr(td(""#B)+td(as_table(a.B)));
+	TEAM_POINTS_USED(X)
+	#undef X
+	ss<<"</table>";
+	return ss.str();
+}
+
+auto click(std::string target,std::string body){
+	return tag("a href=\"\" onclick=\"toggle_viz('"+target+"');event.preventDefault();\"",body);
+}
+
+template<typename A,typename B,typename C>
+std::string as_table(Event_categories_annotated<A,B,C> const& a){
+	stringstream ss;
+	ss<<"<table border>";
+	#define X(B) {\
+		auto name="x"+::as_string(rand());\
+		ss<<tr(\
+			td(click(name,""#B))+\
+			tag("td class=hidden id=\""+name+"\"",as_table(a.B))\
+		);\
+	}
+	X(local)
+	X(dcmp)
+	X(extra)
+	#undef X
+	ss<<"</table>";
+	return ss.str();
+}
+
 PRINT_STRUCT(Team_points_used,TEAM_POINTS_USED)
 
 PRINT_STRUCT(Output_tuple,OUTPUT_TUPLE)
@@ -142,7 +278,15 @@ auto td_right(T const& t){
 	return tag("td align=right",t);
 }
 
-void gen_html(std::ostream& o,Gen_html_input const& in){
+void gen_html(
+	std::ostream& o,
+	Gen_html_input const& in,
+	Event_categories_annotated<
+		Rank_status<Tournament_status>,
+		Tournament_status,
+		Rank_status<District_status>
+	> const& limits
+){
 	auto [
 		year,result,team_info,dcmp_cutoff_pr,cmp_cutoff_pr,
 		title,district_short,dcmp_size,
@@ -360,17 +504,25 @@ void gen_html(std::ostream& o,Gen_html_input const& in){
 
 	auto fancy=[&](auto a){
 		//nickname(a.team),
-		auto x=points_used[a.team];
+		//auto x=points_used[a.team];
 		//print_r(x);
 		stringstream ss;
-		ss<<"<div class=\"tooltip\">";
+		//ss<<"<div class=\"tooltip\">";
 
 		ss<<table(tr(td(avatar(a.team))+td(nickname(a.team))))<<"\n";
 
-		ss<<"<span class=\"tooltiptext\">"<<h3("Expected "+::as_string(a.team)+ " pre-dcmp points")+charts[a.team]<<"</span>";
-		ss<<"</div>\n";
+		//ss<<"<span class=\"tooltiptext\">"<<h3("Expected "+::as_string(a.team)+ " pre-dcmp points")+charts[a.team]<<"</span>";
+		//ss<<"</div>\n";
 		return ss.str();
 		//return nickname(a.team)+as_string(quartiles(x.pre_dcmp_dist))+charts[a.team];
+	};
+
+	auto team_details=[&](auto a)->std::string{
+		auto x=points_used[a.team];
+		std::stringstream ss;
+		ss<<h3("Expected pre-dcmp points")+charts[a.team];
+		ss<<as_table(x);
+		return ss.str();
 	};
 
 	string style="\n\
@@ -446,9 +598,10 @@ void gen_html(std::ostream& o,Gen_html_input const& in){
 					::mapf(
 						[=](auto p){
 							auto [i,a]=p;
+							auto name=get_script_name();
 							auto used=points_used.find(a.team)->second;
 							return tag("tr class=\"rank\"",
-								td(as_string(i)+" "+get_team_str(a.team))+
+								tag("td onclick=\"toggle_viz('"+name+"');event.preventDefault();\"",as_string(i)+" "+get_team_str(a.team))+
 								colorize(a.dcmp_make)+
 								td_right(make_link(a.team))+
 								td(fancy(a))+
@@ -462,6 +615,8 @@ void gen_html(std::ostream& o,Gen_html_input const& in){
 								td_right(used.rookie_bonus)+
 								td(join("&nbsp;",used.event_points_earned))+
 								td_right(used.events_left)
+							)+tag("tr class=\"hidden\" id=\""+name+"\"",
+								tag("td colspan=\"100%\"",team_details(a))
 							);
 						},
 						enumerate_from(1,reversed(sorted(
@@ -471,7 +626,8 @@ void gen_html(std::ostream& o,Gen_html_input const& in){
 					)
 				)
 			)+
-			cutoff_table_long
+			cutoff_table_long+
+			h2("Extra data")+as_table(limits)
 			/*+data_used_table*/
 		)
 	);

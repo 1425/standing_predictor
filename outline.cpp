@@ -54,6 +54,7 @@ simple way:
 #include "toggle.h"
 #include "data_range.h"
 #include "vector_fixed.h"
+#include "output.h"
 
 //start program-specific stuff.
 
@@ -345,8 +346,8 @@ map<tba::Team_key,Pr> run(
 		ghi.dcmp_size=inputs.dcmp_size;
 		ghi.points_used=points_used;
 		ghi.plot=inputs.plot;
-		ofstream f(inputs.output_dir+"/"+district.get()+inputs.extra+".html");
-		gen_html(f,ghi);
+		ofstream file(inputs.output_dir+"/"+district.get()+inputs.extra+".html");
+		gen_html(file,ghi,annotated(f,district));
 	}
 
 	bool show_table=1;

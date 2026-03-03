@@ -7,6 +7,7 @@
 #include "array.h"
 #include "vector.h"
 #include "rand.h"
+#include "output.h"
 
 using namespace std;
 

@@ -20,7 +20,6 @@ using Team_event_status=std::variant<
 	Team_event_status_post_elims
 >;
 
-
 using Conditional_distribution=map_auto<Point,Team_dist>;
 
 #define EVENT_PARTIAL(X)\

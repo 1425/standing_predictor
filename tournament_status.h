@@ -1,0 +1,20 @@
+#ifndef TOURNAMENT_STATUS_H
+#define TOURNAMENT_STATUS_H
+
+#define TOURNAMENT_STATUS(X)\
+	X(FUTURE)\
+	X(QUAL_MATCHES_IN_PROGRESS)\
+	X(QUAL_MATCHES_COMPLETE)\
+	X(PICKING_IN_PROGRESS)\
+	X(PICKING_COMPLETE)\
+	X(ELIMINATIONS_IN_PROGRESS)\
+	X(ELIMINATIONS_COMPLETE)\
+	X(AWARDS_IN_PROGRESS)\
+	X(COMPLETE)\
+
+ENUM_CLASS(Tournament_status,TOURNAMENT_STATUS)
+Tournament_status rand(Tournament_status const*);
+
+bool in_progress(Tournament_status);
+
+#endif

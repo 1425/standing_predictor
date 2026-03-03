@@ -6,6 +6,8 @@
 #include "flat_map2.h"
 #include "district_championship_assignment.h"
 #include "probability.h"
+#include "annotated_complex.h"
+#include "output_tuple.h"
 
 class TBA_fetcher;
 
@@ -13,19 +15,6 @@ using Extended_cutoff=std::pair<Point,Pr>;
 
 using Cutoff=std::map<Extended_cutoff,Pr>;
 using Cutoff2=flat_map2<Extended_cutoff,Pr>;
-
-using A_Point_3=std::array<Point,3>;
-
-#define OUTPUT_TUPLE(X)\
-	X(tba::Team_key,team)\
-	X(Dcmp_home,dcmp_home)\
-	X(Pr,dcmp_make)\
-	X(A_Point_3,dcmp_interesting)\
-	X(Pr,cmp_make)\
-	X(A_Point_3,cmp_interesting)
-
-STRUCT_DECLARE(Output_tuple,OUTPUT_TUPLE)
-Output_tuple rand(Output_tuple const*);
 
 #define TEAM_POINTS_USED(X)\
 	X(std::vector<Point>,event_points_earned)\
@@ -57,7 +46,15 @@ struct Gen_html_input{
 	auto operator<=>(Gen_html_input const&)const=default;
 };
 
-void gen_html(std::ostream&,Gen_html_input const&);
+void gen_html(
+	std::ostream&,
+	Gen_html_input const&,
+	Event_categories_annotated<
+	        Rank_status<Tournament_status>,
+	        Tournament_status,
+	        Rank_status<District_status>
+	> const&
+);
 
 int make_spreadsheet(
 	TBA_fetcher &f,

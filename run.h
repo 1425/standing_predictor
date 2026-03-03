@@ -1,7 +1,10 @@
 #ifndef RUN_H
 #define RUN_H
 
-#include "output.h"
+//#include "output.h"
+#include "probability.h"
+#include "district_championship_assignment.h"
+#include "output_tuple.h"
 
 flat_map2<Point,Pr> convolve(flat_map2<Point,Pr> const&,flat_map2<Point,Pr> const&);
 flat_map<Point,Pr> convolve(std::map<Point,Pr> const&,std::map<Point,Pr> const&);

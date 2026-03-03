@@ -9,6 +9,7 @@
 #include "event_limits.h"
 #include "run.h"
 #include "event.h"
+#include "output.h"
 
 using namespace std;
 
@@ -328,6 +329,8 @@ Event_categories categorize_events(TBA_fetcher &f,tba::District_key const& distr
 
 	Event_categories r;
 	r.local=g[tba::Event_type::DISTRICT];
+	std::sort(r.local.begin(),r.local.end(),[](auto const& a,auto const& b){ return a.start_date<b.start_date; });
+
 	r.dcmp=mapf(
 		[](auto x){ return District_cmp_complex(x,{}); },
 		g[tba::Event_type::DISTRICT_CMP]

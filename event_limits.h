@@ -2,13 +2,14 @@
 #define EVENT_LIMITS_H
 
 #include "award_limits.h"
+#include "tournament_status.h"
 
 template<typename Status,template<typename,typename>typename MAP>
 /*std::tuple<
 	std::map<tba::Team_key,Interval<Point>>,
 	Point,
 	Status
->*/
+/>*/
 auto points_only(Rank_status<Status,MAP> const& a){
 	auto m=map_values(
 		[](auto x){
@@ -18,22 +19,6 @@ auto points_only(Rank_status<Status,MAP> const& a){
 	);
 	return std::make_tuple(m,a.unclaimed.second,a.status);
 }
-
-#define TOURNAMENT_STATUS(X)\
-	X(FUTURE)\
-	X(QUAL_MATCHES_IN_PROGRESS)\
-	X(QUAL_MATCHES_COMPLETE)\
-	X(PICKING_IN_PROGRESS)\
-	X(PICKING_COMPLETE)\
-	X(ELIMINATIONS_IN_PROGRESS)\
-	X(ELIMINATIONS_COMPLETE)\
-	X(AWARDS_IN_PROGRESS)\
-	X(COMPLETE)\
-
-ENUM_CLASS(Tournament_status,TOURNAMENT_STATUS)
-Tournament_status rand(Tournament_status const*);
-
-bool in_progress(Tournament_status);
 
 STRUCT_DECLARE(District_status_future,EMPTY)
 
