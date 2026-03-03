@@ -27,7 +27,10 @@ def plot(info,xlabel,ylabel):
 #print('ddd')
     #ax.plot(x2, y2 , 'o-', linewidth=2)
     #ax.bar(x2, y2 , linewidth=2)
-    ax.bar(x2, y2)
+    #ax.bar(x2, y2)
+
+    ax.stem(x2, y2,basefmt=" ")
+    plt.ylim(bottom=0)
 
 #print('foo')
 #ax.set(xlim=(0, 8), xticks=np.arange(1, 8),
