@@ -169,7 +169,7 @@ string gen_html(Gen_html_input const& in){
 		}
 		return as_string(california_region(f1));
 	};
-	auto by_dcmp=group([&](auto x){ return dcmp_string(x.team); },result);
+	auto by_dcmp=group([&](auto const& x){ return dcmp_string(x.team); },result);
 	//PRINT(by_dcmp);
 	map<tba::Team_key,std::string> team_str;
 	for(auto &p:by_dcmp){
@@ -203,12 +203,8 @@ string gen_html(Gen_html_input const& in){
 	};
 
 	auto nickname=[&](auto k){
-		auto f=filter_unique([=](auto a){ return a.key==k; },team_info);
-		auto v=f.nickname;
+		auto v=by_team.at(k).nickname;
 		assert(v);
-		/*if(f.state_prov=="California"){
-			return "("+as_string(california_region(f))+") "+*v;
-		}*/
 		return *v;
 	};
 
