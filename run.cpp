@@ -195,6 +195,25 @@ map<Point,Pr> when_greater(map<Point,Pr> const& a,map<Point,Pr> const& b){
 	return r;
 }
 
+template<long long MIN,long long MAX>
+std::pair<Point,double> find_cutoff(
+	map_fixed<Int_limited<MIN,MAX>,short unsigned> these_points,
+	unsigned eliminating
+){
+	if(eliminating==0){
+		return make_pair(Point(0),1.0);
+	}
+	unsigned total=0;
+	for(auto [points,teams]:these_points){
+		total+=teams;
+		if(total>=eliminating){
+			auto excess=total-eliminating;
+			return make_pair(points,1-double(excess)/teams);
+		}
+	}
+	assert(0);
+}
+
 auto find_cutoff(map<pair<bool,Point>,unsigned> these_points,unsigned eliminating){
 	//if for some reason, there are equal or fewer teams than slots, then return 
 	//that 0 points is the cutoff, and there is no excess.
@@ -233,9 +252,35 @@ auto find_cutoff(flat_map<pair<bool,Point>,unsigned> these_points,unsigned elimi
 	assert(0);
 }
 
-auto find_cutoff(flat_map2<pair<bool,Point>,unsigned> const& these_points,unsigned eliminating){
+template<typename POINT,std::integral Count>
+std::pair<Point,double> find_cutoff(flat_map2<pair<bool,POINT>,Count> const& these_points,unsigned eliminating){
 	//if for some reason, there are equal or fewer teams than slots, then return 
 	//that 0 points is the cutoff, and there is no excess.
+	if(eliminating==0){
+		return make_pair(Point(0),1.0);
+	}
+
+	unsigned total=0;
+
+	for(auto [points,teams]:these_points){
+		total+=teams;
+		if(total>=eliminating){
+			auto excess=total-eliminating;
+			assert(points.first==0);
+			return make_pair(points.second,1-double(excess)/teams);
+		}
+	}
+
+	if(these_points.empty()){
+		return make_pair(Point(0),1.0);
+	}
+	PRINT(these_points);
+	PRINT(eliminating);
+	assert(0);
+}
+
+template<typename POINT,std::integral Count>
+std::pair<Point,double> find_cutoff(map_fixed<pair<bool,POINT>,Count> const& these_points,unsigned eliminating){
 	if(eliminating==0){
 		return make_pair(Point(0),1.0);
 	}
@@ -285,6 +330,9 @@ PRINT_R_ITEM(Run_result,RUN_RESULT_ITEMS)
 
 template<typename T>
 void check(std::vector<T> const&);
+
+template<typename T,size_t N>
+void check(vector_fixed<T,N> const&);
 
 void check(int){}
 
@@ -376,6 +424,13 @@ void check(std::vector<T> const& a){
 	}
 }
 
+template<typename T,size_t N>
+void check(vector_fixed<T,N> const& a){
+	for(auto const& x:a){
+		check(x);
+	}
+}
+
 void check(Dcmp_data const& a){
 	assert(a.size>=0);
 	check(a.dists);
@@ -442,30 +497,44 @@ void check(flat_map2<K,V> const& a){
 	}
 }
 
+template<>
+struct Converter<std::pair<bool,Int_limited<0,255>>>{
+	static constexpr auto MIN=0;
+	static constexpr auto MAX=255+256;
+
+	using T=std::pair<bool,Int_limited<0,255>>;
+	using I=unsigned short;
+
+	static I from(T t){
+		return (t.first?256:0)+t.second;
+	}
+
+	static T to(I i){
+		return T( !!(i&256), i&0xff);
+	}
+};
+
+template<>
+struct Converter<std::pair<bool,Int_limited<0,511>>>{
+	static constexpr auto MIN=0;
+	static constexpr auto MAX=511+512;
+
+	using T=std::pair<bool,Int_limited<0,511>>;
+	using I=unsigned short;
+
+	static I from(T t){
+		return (t.first?512:0)+t.second;
+	}
+
+	static T to(I i){
+		return T( !!(i&512),i&0x1ff);
+	}
+};
+
 Run_result run_calc(
 	Run_input input
 ){
-	try{
-		check(input);
-	}catch(...){
-		print_r(input.by_team[tba::Team_key("frc1294")]);
-		throw;
-	}
-	#if 0
-	//check that this incoming distributions look ok.
-	for(auto [k,v]:input.by_team){
-		auto s=sum(values(v.point_dist));
-		assert(approx_equal(1,s));
-	}
-
-	for(auto [k,v]:input.dcmp_distribution1){
-		auto s=sum(values(v));
-		PRINT(k)
-		PRINT(v);
-		PRINT(s);
-		assert(approx_equal(1,s));
-	}
-	#endif
+	check(input);
 
 	//This function exists to run the calculations of how teams are
 	//expected to do, seperatedly from doing any IO.
@@ -531,7 +600,9 @@ Run_result run_calc(
 	//static const auto iterations=20*1000;
 	const auto iterations=input.quick?2000:(20*1000);
 
-	using Final_points=flat_map2<pair<bool,Point>,unsigned>;
+	using P2=Int_limited<0,255>;//Point
+	//using Final_points=flat_map2<pair<bool,P2>,unsigned short>;
+	using Final_points=map_fixed<pair<bool,P2>,unsigned short>;
 	std::array<Final_points,MAX_DCMPS> final_points;
 
 	/*for(auto [k,v]:input.dcmp_distribution1){
@@ -555,8 +626,11 @@ Run_result run_calc(
 		auto dcmp_cutoff=find_cutoff(final_points,teams_left_out);
 		dcmp_cutoffs|=dcmp_cutoff;
 
-		flat_map2<pair<bool,Point>,unsigned> post_dcmp_points;
-		for(auto [dcmp_index,dcmp]:enumerate(input.dcmp)){
+		//flat_map2<pair<bool,Point>,unsigned> post_dcmp_points;
+		map_fixed<Int_limited<0,511>,unsigned short> post_dcmp_points;
+		//for(auto [dcmp_index,dcmp]:enumerate(input.dcmp)){
+		for(size_t dcmp_index=0;dcmp_index<input.dcmp.size();dcmp_index++){
+			auto const& dcmp=input.dcmp[dcmp_index];
 			auto & final_points_this=final_points[dcmp_index];//not sure that this should really be mutable.
 			auto const& dcmp_cutoff_this=dcmp_cutoff[dcmp_index];
 			for(auto [earned,teams]:final_points_this){
@@ -575,7 +649,7 @@ Run_result run_calc(
 					}else{
 						auto const& dists=dcmp.dists;
 						auto f=dists.find(points);
-						auto d=[&](){
+						auto const& d=[&]()->Team_dist const&{
 							if(f==dcmp.dists.end()){
 								/*PRINT(points);
 								PRINT(keys(input.dcmp_distribution1));
@@ -596,7 +670,7 @@ Run_result run_calc(
 						//pts=points+sample(input.dcmp_distribution1[points]);
 						pts=points+sample(d);
 					}
-					post_dcmp_points[make_pair(0,pts)]++;
+					post_dcmp_points[pts]++;
 				}
 			}
 		}

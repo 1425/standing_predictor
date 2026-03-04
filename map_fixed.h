@@ -72,14 +72,24 @@ class map_fixed{
 	using iterator=const_iterator;
 
 	V& operator[](K const& k){
-		if(!present[k]){
-			present[k]=1;
+		auto i=C::from(k);
+		if(!present[i]){
+			present[i]=1;
+			data[i]=V();
 		}
-		return data[k];
+		return data[i];
+	}
+
+	void clear(){
+		present.reset();
 	}
 
 	size_t size()const{
 		return present.count();
+	}
+
+	bool empty()const{
+		return present.none();
 	}
 };
 

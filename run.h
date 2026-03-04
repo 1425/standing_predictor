@@ -35,7 +35,7 @@ Dcmp_data rand(Dcmp_data const*);
 #define RUN_INPUT_ITEMS(X)\
 	X(int,worlds_slots)\
 	X(By_team,by_team)\
-	X(std::vector<Dcmp_data>,dcmp)\
+	X(vector_fixed<TBA_SINGLE_ARG(Dcmp_data,MAX_DCMPS)>,dcmp)\
 	X(bool,quick)
 
 STRUCT_DECLARE(Run_input,RUN_INPUT_ITEMS)

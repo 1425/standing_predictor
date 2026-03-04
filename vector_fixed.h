@@ -147,6 +147,11 @@ class vector_fixed{
 		return (*this)[Index(i)];
 	}
 
+	constexpr T const& at(Index i)const{
+		assert(i<size());
+		return data()[i];
+	}
+
 	constexpr vector_fixed& operator|=(T const& t){
 		if(size_>=N){
 			throw std::invalid_argument("not enough free space");
