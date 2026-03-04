@@ -59,6 +59,12 @@ class multiset_flat{
 	}
 
 	struct const_iterator{
+		using iterator_category=std::forward_iterator_tag;
+		using difference_type=ssize_t;
+		using value_type=T;
+		using reference_type=T&;
+		using pointer_type=T*;
+
 		Data::const_iterator at,end;
 		unsigned i;
 
@@ -200,6 +206,16 @@ class multiset_flat{
 	bool operator!=(multiset_flat const& a)const{
 		return !(*this==a);
 	}
+
+	template<typename Func>
+	auto group(Func f)const{
+		using E=decltype(f(*begin()));
+		std::map<E,multiset_flat<T>> r;
+		for(auto [k,v]:data){
+			r[f(k)].data[k]+=v;
+		}
+		return r;
+	}
 };
 
 template<typename Func,typename T>
@@ -292,6 +308,20 @@ multiset_flat<B> seconds(multiset_flat<std::pair<A,B>> const& a){
 template<typename A,typename B>
 multiset_flat<A> firsts(multiset_flat<std::pair<A,B>> const& a){
 	return MAP(first,a);
+}
+
+template<typename Func,typename T>
+auto group(Func f,multiset_flat<T> const& a){
+	return a.group(f);
+}
+
+template<typename T>
+std::multiset<T>& operator|=(std::multiset<T>& a,multiset_flat<T> const& b){
+	//a.insert(b.begin(),b.end());
+	for(auto const& x:b){
+		a|=x;
+	}
+	return a;
 }
 
 #endif

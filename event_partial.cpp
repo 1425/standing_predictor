@@ -10,8 +10,22 @@
 #include "run.h"
 #include "event.h"
 #include "output.h"
+#include "multiset_flat.h"
 
 using namespace std;
+
+
+template<typename T>
+auto to_dist(multiset_flat<T> const& a){
+	assert(!a.empty());
+	flat_map2<T,Pr> r;
+	for(auto k:to_set(a)){
+		r[k]=(0.0+a.count(k))/a.size();
+	}
+	check_dist(r);
+	return r;
+}
+
 
 template<typename Func,typename T,size_t N>
 auto filter(Func f,tba::vector_fixed<T,N> const& a){
@@ -103,7 +117,18 @@ PRINT_STRUCT(Event_partial,EVENT_PARTIAL)
 PRINT_R_ITEM(Event_partial,EVENT_PARTIAL)
 
 bool district_local(TBA_fetcher &f,tba::Event_key a){
-	return event(f,a).event_type==tba::Event_type::DISTRICT;
+	//return event(f,a).event_type==tba::Event_type::DISTRICT;
+
+	static std::map<tba::Event_key,bool> cache;
+	{
+		auto f=cache.find(a);
+		if(f!=cache.end()){
+			return f->second;
+		}
+	}
+
+	auto value=(event(f,a).event_type==tba::Event_type::DISTRICT);
+	return cache[a]=value;
 }
 
 void ranks_partial(TBA_fetcher &f){
@@ -205,7 +230,7 @@ Event_partial event_partial(TBA_fetcher &f){
 
 	using Target=Point; //TODO: Put in chairmans odds here, so you'd have Rank_value
 
-	multiset<pair<Point,Target>> found1,found2,found3;
+	multiset_flat<pair<Point,Target>> found1,found2,found3;
 
 	for(auto district:districts(f)){
 		auto d=tba::district_rankings(f,district);
@@ -241,7 +266,7 @@ Event_partial event_partial(TBA_fetcher &f){
 
 		map<Point,flat_map2<Point,Pr>> r;
 		for(auto k:keys(v)){
-			multiset<Point> found;
+			multiset_flat<Point> found;
 			//Note that this will sample the exact value twice.
 			for(int i=0;i<100 && found.size()<MIN_SAMPLE_SIZE;i++){
 				found|=v[k-i];

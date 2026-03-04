@@ -37,12 +37,17 @@ bool approx_equal(double a,double b){
 	return fabs(a-b)<.01;
 }
 
-flat_map<Point,Pr> convolve(flat_map2<Point,Pr> const& a,std::map<Point,flat_map2<Point,double>> const& b){
+//flat_map<Point,Pr> convolve(flat_map2<Point,Pr> const& a,std::map<Point,flat_map2<Point,double>> const& b){
+auto convolve(flat_map2<Point,Pr> const& a,std::map<Point,flat_map2<Point,double>> const& b){
 	//convolution may not be the correct name for this operation.
 	//for each item in the first distribution, take a corresponding distribution out of 'b'
 	//and and add the value from there
 
-	flat_map<Point,Pr> r;
+	//flat_map<Point,Pr> r;
+
+	//curiosly, it does need to be this big.  I thought it might fit in 512, but it does not.
+	map_fixed<Int_limited<0,600>,Pr> r;
+
 	for(auto [k,v]:a){
 		auto find_dist=[&](){
 			auto f=b.find(k);
