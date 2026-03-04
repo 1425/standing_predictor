@@ -445,16 +445,74 @@ Run_input read_status(TBA_fetcher &f,tba::District_key const& district,Skill_met
 	Skill_estimates skill=skill_estimates(f,district,skill_method);
 
 	auto team_dist_pre_dcmp=[&](auto team_info)->Team_dist{
-		auto found=mapf(
+		vector<std::variant<Team_dist,Future,std::nullopt_t>> found;
+		for(auto [event_key,event_data]:event_limits1){
+			auto event_points=filter([=](auto x){ return x.event_key==event_key; },team_info.event_points);
+			assert(event_points.size()==0 || event_points.size()==1);
+
+			auto f=event_data.by_team.find(team_info.team_key);
+			if(f==event_data.by_team.end()){
+				//not found in estimated ranks
+				assert(event_points.empty());
+				continue;
+			}else{
+				//was found in estimated ranks
+				if(event_points.size()==0){
+					switch(event_data.status){
+						case Tournament_status::FUTURE:
+							found|=Future();
+							break;
+						case Tournament_status::COMPLETE:{
+							//assume that since it's not recorded, you're getting 0 points
+							Team_dist r;
+							r[0]=1;
+							return r;
+						}
+						default:
+							PRINT(team_info.team_key);
+							PRINT(event_key);
+							PRINT(event_data.status);
+
+							assert(0);
+					}
+				}else{
+					found|=team_event_status(team_info.team_key,event_points[0]);
+				}
+			}
+		}
+
+		//for events that haven't started yet, you don't get them listed
+		//as opposed to having 0 points so far!
+		//that means this loop doesn't do what it looks like it does.
+		/*auto found=mapf(
 			[&](auto x){ return team_event_status(team_info.team_key,x); },
 			team_info.event_points
-		);
+		);*/
 
 		auto [known,futures,ignore]=group(found);
 		known=take(2,known);
 		auto future=futures.size();
+		cout<<team_info.team_key<<"\t"<<found.size()<<"\t"<<known.size()<<"\t"<<future<<"\t"<<ignore.size()<<"\n";
 		if(known.size()==0){
-			return skill.pre_dcmp[team_info.team_key];
+			switch(future){
+				case 0:{
+					//if you're not playing any events then you get no points.
+					Team_dist r;
+					r[0]=1;
+					return r;
+				}
+				case 1:{
+					//Then give half as many points as would otherwise be expected
+					//although realistically this might be lower.
+					Team_dist r;
+					for(auto [k,v]:skill.pre_dcmp[team_info.team_key]){
+						r[k/2]+=v;
+					}
+					return r;
+				}
+				default:
+					return skill.pre_dcmp[team_info.team_key];
+			}
 		}else if(known.size()==1){
 			if(future==0){
 				return known[0];
