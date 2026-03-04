@@ -2,8 +2,9 @@
 #define ANNOTATED_COMPLEX_H
 
 #include "../tba/data.h"
-#include "event_partial.h"
 #include "event_limits.h"
+#include "print_r.h"
+#include "event_categories.h"
 
 namespace tba{
 	struct Event;
@@ -19,6 +20,13 @@ struct Event_annotated{
 
 	auto operator<=>(Event_annotated const&)const=default;
 };
+
+#define EVENT_ANNOTATED(X)\
+	X(tba::Event,data)\
+	X(T,extra)\
+
+template<typename T>
+PRINT_R_ITEM(Event_annotated<T>,EVENT_ANNOTATED)
 
 template<typename T>
 std::ostream& operator<<(std::ostream& o,Event_annotated<T> const& a){
@@ -65,11 +73,12 @@ std::ostream& operator<<(std::ostream& o,Event_categories_annotated<A1,A2,A3> co
 }
 
 //to start with probably just want to annotate things with string to get pushed into the HTML.
-Event_categories_annotated<
+using Annotated=Event_categories_annotated<
 	Rank_status<Tournament_status>,
 	Tournament_status,
 	Rank_status<District_status>
-> annotated(TBA_fetcher&,tba::District_key const&);
+>;
+Annotated annotated(TBA_fetcher&,tba::District_key const&);
 
 template<typename Func>
 auto mapf_preserve(Func f,tba::Event const& a){

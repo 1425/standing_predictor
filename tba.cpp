@@ -518,4 +518,10 @@ std::string link(tba::Event const& event,std::string const& body){
 	return link(event.key,body);
 }
 
+tba::Event_type event_type(tba::Event const& a){
+	return a.event_type;
+}
 
+tba::Event_type event_type(TBA_fetcher &f,tba::Event_points const& a){
+	return event_type(f,a.event_key);
+}

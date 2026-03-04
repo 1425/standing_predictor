@@ -4,7 +4,7 @@
 
 using namespace std;
 
-template<typename T>
+/*template<typename T>
 void print_r(int n,Event_annotated<T> const& a){
 	indent(n);
 	cout<<"Event_annotated\n";
@@ -17,7 +17,7 @@ void print_r(int n,Event_annotated<T> const& a){
 	indent(n);
 	cout<<"extra\n";
 	print_r(n+1,a.extra);
-}
+}*/
 
 template<typename A,typename B>
 void print_r(int n,District_cmp_complex_annotated<A,B> const& a){

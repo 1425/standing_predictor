@@ -11,6 +11,7 @@
 #include "event.h"
 #include "output.h"
 #include "multiset_flat.h"
+#include "annotated_complex.h"
 
 using namespace std;
 
@@ -332,71 +333,22 @@ Point median(Team_dist a){
 
 using Event=tba::Event;
 
-PRINT_STRUCT(District_cmp_complex,DISTRICT_CMP_COMPLEX)
-
-bool complete(TBA_fetcher &f,tba::Event const& a){
-	return complete(f,a.key);
+bool complete(TBA_fetcher&,Event_annotated<Rank_status<Tournament_status>> const& a){
+	return a.extra.status==Tournament_status::COMPLETE;
 }
 
-bool complete(TBA_fetcher &f,District_cmp_complex const& a){
+template<typename A,typename B>
+bool complete(TBA_fetcher &f,District_cmp_complex_annotated<A,B> const& a){
 	return complete(f,a.finals);
 }
 
-PRINT_STRUCT(Event_categories,EVENT_CATEGORIES)
-
-tba::Event_type event_type(tba::Event const& a){
-	return a.event_type;
-}
-
-Event_categories categorize_events(TBA_fetcher &f,tba::District_key const& district){
-	auto e=events(f,district);
-	auto g=GROUP(event_type,e);
-
-	Event_categories r;
-	r.local=g[tba::Event_type::DISTRICT];
-	std::sort(r.local.begin(),r.local.end(),[](auto const& a,auto const& b){ return a.start_date<b.start_date; });
-
-	r.dcmp=mapf(
-		[](auto x){ return District_cmp_complex(x,{}); },
-		g[tba::Event_type::DISTRICT_CMP]
-	);
-
-	auto find=[&](tba::Event_key a)->District_cmp_complex&{
-		for(auto &d:r.dcmp){
-			if(d.finals.key==a){
-				return d;
-			}
-		}
-		assert(0);
-	};
-
-	for(auto event:g[tba::Event_type::DISTRICT_CMP_DIVISION]){
-		assert(event.parent_event_key);
-		auto &d=find(*event.parent_event_key);
-		d.divisions|=event;
-	}
-	return r;
-}
-
-auto event_type(TBA_fetcher &f,tba::Event_points const& a){
-	return event_type(f,a.event_key);
-}
-
-Run_input read_status(TBA_fetcher &f,tba::District_key const& district,Skill_method skill_method){
+std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::string>> read_status(TBA_fetcher &f,tba::District_key const& district,Skill_method skill_method){
 	//go look at all the event statuses 
 	//and then go through the standings looking at teams with knowledge of the status of the events
 
 	const auto event_partial1=event_partial(f);
 
-	/*map<tba::Event_key,Rank_status<Tournament_status>> event_limits1;
-	for(auto event:district_events_keys(f,district)){
-		event_limits1[event]=event_limits(f,event);
-	}*/
-
-	auto event_limits1=dict(mapf(
-		[&](auto x){ return make_pair(x,event_limits(f,x)); },
-		district_events_keys(f,district)
-	));
+	auto cat=annotated(f,district);
 
 	auto team_event_status=[=](tba::Team_key team,tba::Event_points event)->std::variant<Team_dist,Future,std::nullopt_t>{
 		//The options are:
@@ -405,13 +357,18 @@ Run_input read_status(TBA_fetcher &f,tba::District_key const& district,Skill_met
 		//3) wrong type of event
 		//eventually may want this to tell you if awards won.
 
-		auto f=event_limits1.find(event.event_key);
+		auto f=filter([=](auto x){ return x.data.key==event.event_key; },cat.local);
+		if(f.empty()){
+			return std::nullopt;
+		}
+		assert(f.size()==1);
+		/*auto f=event_limits1.find(event.event_key);
 		if(f==event_limits1.end()){
 			//then this was the dcmp or something
 			return std::nullopt;
-		}
+		}*/
 
-		auto limits=f->second;
+		auto limits=f[0].extra;
 
 		switch(limits.status){
 			case Tournament_status::FUTURE:
@@ -441,13 +398,14 @@ Run_input read_status(TBA_fetcher &f,tba::District_key const& district,Skill_met
 		}
 	};
 
-	//Skill_estimates skill=calc_skill(f,district);
 	Skill_estimates skill=skill_estimates(f,district,skill_method);
+
+	std::map<tba::Team_key,std::string> team_str;
 
 	auto team_dist_pre_dcmp=[&](auto team_info)->Team_dist{
 		vector<std::variant<Team_dist,Future,std::nullopt_t>> found;
-		for(auto [event_key,event_data]:event_limits1){
-			auto event_points=filter([=](auto x){ return x.event_key==event_key; },team_info.event_points);
+		for(auto [event,event_data]:cat.local){
+			auto event_points=filter([=](auto x){ return x.event_key==event.key; },team_info.event_points);
 			assert(event_points.size()==0 || event_points.size()==1);
 
 			auto f=event_data.by_team.find(team_info.team_key);
@@ -470,7 +428,7 @@ Run_input read_status(TBA_fetcher &f,tba::District_key const& district,Skill_met
 						}
 						default:
 							PRINT(team_info.team_key);
-							PRINT(event_key);
+							PRINT(event.key);
 							PRINT(event_data.status);
 
 							assert(0);
@@ -492,7 +450,37 @@ Run_input read_status(TBA_fetcher &f,tba::District_key const& district,Skill_met
 		auto [known,futures,ignore]=group(found);
 		known=take(2,known);
 		auto future=futures.size();
-		cout<<team_info.team_key<<"\t"<<found.size()<<"\t"<<known.size()<<"\t"<<future<<"\t"<<ignore.size()<<"\n";
+		//cout<<team_info.team_key<<"\t"<<found.size()<<"\t"<<known.size()<<"\t"<<future<<"\t"<<ignore.size()<<"\n";
+
+		{
+			std::stringstream ss;
+			ss<<"come back to later";
+			/*ss<<"<table border>";
+			ss<<tr(th("Event")+th("Status")+th("Unclaimed points")+th("This team point range"));
+
+			for(auto [event_key,event_data]:event_limits1){
+				ss<<"<tr>";
+				ss<<td(event_key);
+				ss<<td(event_data.status);
+				ss<<td(event_data.unclaimed);
+
+				auto f=event_data.by_team.find(team_info.team_key);
+				if(f==event_data.by_team.end()){
+					ss<<td("not attending");
+				}else{
+					ss<<td(f->second);
+				}
+				ss<<"</tr>";
+			}
+			ss<<"</table>";
+			//for(auto x:found
+			ss<<"found:"<<found.size();
+			ss<<"known:"<<known.size();
+			ss<<"future:"<<future<<"\n";
+			ss<<"ignore:"<<ignore.size()<<"\n";*/
+			team_str[team_info.team_key]=ss.str();
+		}
+
 		if(known.size()==0){
 			switch(future){
 				case 0:{
@@ -559,8 +547,6 @@ Run_input read_status(TBA_fetcher &f,tba::District_key const& district,Skill_met
 	Run_input r;
 	r.worlds_slots=worlds_slots(district);
 
-	auto cat=categorize_events(f,district);
-
 	for(auto [i,size]:enumerate(dcmp_size(district))){
 		Dcmp_data d;
 		d.size=size;
@@ -593,7 +579,7 @@ Run_input read_status(TBA_fetcher &f,tba::District_key const& district,Skill_met
 
 	auto dcmp_options=to_set(mapf([](auto x){ return x.dcmp_home; },values(r.by_team)));
 
-	return r;
+	return make_tuple(r,skill,cat,team_str);
 }
 
 int event_partial_demo(TBA_fetcher &f){

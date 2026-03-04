@@ -7,7 +7,6 @@
 #include "lock2.h"
 #include "pick_points.h"
 #include "winners.h"
-#include "event_partial.h"
 #include "annotated_complex.h"
 
 using namespace std;

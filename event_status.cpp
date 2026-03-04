@@ -5,7 +5,6 @@
 #include "multiset_flat.h"
 #include "tba.h"
 #include "vector_void.h"
-#include "event_partial.h"
 
 using namespace std;
 

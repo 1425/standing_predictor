@@ -112,4 +112,7 @@ set_limited<T,N> to_set(tba::vector_fixed<T,N> const& a){
 	return r;
 }
 
+tba::Event_type event_type(tba::Event const&);
+tba::Event_type event_type(TBA_fetcher&,tba::Event_points const&);
+
 #endif

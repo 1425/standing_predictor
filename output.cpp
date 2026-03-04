@@ -606,6 +606,12 @@ void gen_html(
 		ss<<as_table(x);
 
 		ss<<"<p>"<<"Lock status:"<<in.lock.at(a.team)<<"\n";
+
+		try{
+			ss<<p(in.extra.at(a.team));
+		}catch(...){
+			ss<<"Failed to read extra data for "<<a.team<<"\n";
+		}
 		return ss.str();
 	};
 

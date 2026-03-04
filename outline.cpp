@@ -68,7 +68,7 @@ using Date=tba::Date;
 
 using Points_used=map<tba::Team_key,Team_points_used>;
 
-std::tuple<Run_result,Points_used,By_team> run_inner(
+std::tuple<Run_result,Points_used,By_team,Skill_estimates,Annotated,std::map<tba::Team_key,std::string>> run_inner(
 	TBA_fetcher &f,
 	bool ignore_chairmans,
 	tba::District_key district,
@@ -184,13 +184,17 @@ std::tuple<Run_result,Points_used,By_team> run_inner(
 		by_team[team.team_key]=Team_status(chairmans.count(team.team_key),std::move(dist),dcmp_home,team.point_total);
 	}
 
-	Run_input run_input=read_status(f,district,skill_method);
+	//Run_input run_input=read_status(f,district,skill_method);
+	auto [run_input,skill,annotated,extra]=read_status(f,district,skill_method);
 	run_input.quick=quick;
 
 	return make_tuple(
 		run_calc(run_input),
 		points_used,
-		by_team
+		by_team,
+		skill,
+		annotated,
+		extra
 	);
 }
 
@@ -215,7 +219,7 @@ map<tba::Team_key,Pr> run(
 	//this function exists to separate the input & calculation from the output
 	const auto district=*inputs.district;
 	const auto year=*inputs.year;
-	auto [results,points_used,by_team]=run_inner(f,inputs.ignore_chairmans,district,year,inputs.skill_method,inputs.quick);
+	auto [results,points_used,by_team,skill,annotated,extra]=run_inner(f,inputs.ignore_chairmans,district,year,inputs.skill_method,inputs.quick);
 
 	auto team_info=district_teams(f,district);
 	{
@@ -230,10 +234,11 @@ map<tba::Team_key,Pr> run(
 		ghi.points_used=points_used;
 		ghi.plot=inputs.plot;
 		ghi.lock=::lock(f,district);
-		ghi.skill=skill_estimates(f,district,inputs.skill_method);
+		ghi.skill=skill;
 		ghi.worlds_slots=worlds_slots(district);
+		ghi.extra=extra;
 		ofstream file(inputs.output_dir+"/"+district.get()+inputs.extra+".html");
-		gen_html(file,ghi,annotated(f,district));
+		gen_html(file,ghi,annotated);
 	}
 
 	return to_map(::mapf(
