@@ -348,7 +348,7 @@ Skill_estimates calc_skill_opr(TBA_fetcher& f,tba::District_key const& district)
 
 	}
 	auto f2=filter([=](auto x){ return opr_ranks.find(make_pair(last_year,x))==opr_ranks.end(); },teams);
-	PRINT(f2);
+	//PRINT(f2);
 
 	for(auto team:district_teams_keys(f,district)){
 		auto p=make_pair(last_year,team);

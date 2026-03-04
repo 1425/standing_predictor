@@ -334,9 +334,11 @@ map<tba::Team_key,Pr> run(
 		team_dists(district,by_team);
 	}
 
-	cout<<"Championship cutoff\n";
-	for(auto x:results.cmp_cutoff_pr){
-		cout<<"\t"<<x<<"\n";
+	if(0){
+		cout<<"Championship cutoff\n";
+		for(auto x:results.cmp_cutoff_pr){
+			cout<<"\t"<<x<<"\n";
+		}
 	}
 
 	auto team_info=district_teams(f,district);
@@ -358,7 +360,7 @@ map<tba::Team_key,Pr> run(
 		gen_html(file,ghi,annotated(f,district));
 	}
 
-	bool show_table=1;
+	bool show_table=0;
 	if(show_table){
 		cout<<"Team #\tP(DCMP)\tPts 5%\tPts 50%\tPts 95%\tNickname\n";
 		cout.precision(3);
@@ -1093,7 +1095,7 @@ int main1(int argc,char **argv){
 		if(args.district && district!=args.district){
 			continue;
 		}
-		PRINT(district);
+		//PRINT(district);
 		auto title=year_info.display_name+" District Championship Predictions "+::as_string(args.year);
 		Run_inputs run_inputs;
 		run_inputs.output_dir=args.output_dir;

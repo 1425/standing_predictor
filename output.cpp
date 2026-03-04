@@ -2,6 +2,7 @@
 #include<cmath>
 #include<iomanip>
 #include<fstream>
+#include<unistd.h>
 #include "../tba/tba.h"
 #include "map.h"
 #include "util.h"
@@ -521,8 +522,10 @@ void gen_html(
 	);
 
 	//double total_entropy=sum(::mapf(entropy,seconds(result)));
-	double total_entropy=sum(::mapf([](auto x){ return entropy(x); },mapf([](auto x){ return x.dcmp_make; },in.result)));
-	PRINT(total_entropy);
+	if(0){
+		double total_entropy=sum(::mapf([](auto x){ return entropy(x); },mapf([](auto x){ return x.dcmp_make; },in.result)));
+		PRINT(total_entropy);
+	}
 
 	static const std::vector<std::pair<std::string,std::string>> columns{
 		{"Rank","Ranking of probability of advancement"},
@@ -769,5 +772,18 @@ int make_spreadsheet(
 	//If neither of those is installed or in the path, this may error out
 	//Assuming that this is found though, it will produce some onscreen output that is not especially informative.
 	//It wouldn't be the worst thing to send that to /dev/null.
-	return system( ("cd "+output_dir+"; soffice --convert-to xlsx "+filename).c_str() );
+	int pid=fork();
+	if(pid==-1){
+		return -1;
+	}
+	if(pid==0){
+		//avoid random on-screen messages by literally closing the pipes to the screen.
+		//also, the parent isn't waiting for this to end and doesn't check to see whether
+		//or not it succeeded.
+		close(1);
+		close(2);
+		int r=system( ("cd "+output_dir+"; soffice --convert-to xlsx "+filename).c_str() );
+		exit(r);
+	}
+	return 0;
 }
