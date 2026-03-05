@@ -25,7 +25,7 @@ using By_team=std::map<tba::Team_key,Team_status>;
 using Dcmp_dists=std::map<Point,Team_dist>;
 
 #define DCMP_DATA(X)\
-	X(int,size)\
+	X(int,slots)\
 	X(bool,played)\
 	X(Dcmp_dists,dists)
 

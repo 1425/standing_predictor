@@ -155,7 +155,7 @@ vector<Lock_data> read_lock_data(TBA_fetcher &f,tba::District_key const& distric
 		}
 	}
 	
-	auto d=dcmp_size(district);
+	auto d=dcmp_slots(district);
 	/*Notes on dealing with California 2026:
 	For now, just going super-conservative and calculating it twice, each 
 	with half the teams but 2x the number of events

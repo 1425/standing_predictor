@@ -209,7 +209,7 @@ struct Run_inputs{
 	std::string output_dir; //output
 	std::optional<tba::District_key> district; //data in
 	std::optional<tba::Year> year; //data in & out
-	std::vector<int> dcmp_size; //how
+	std::vector<int> dcmp_slots; //how
 	string title; //output
 	string district_short; //output
 	std::string extra=""; //output
@@ -237,7 +237,7 @@ map<tba::Team_key,Pr> run(
 		ghi.cmp_cutoff_pr=to_map(results.cmp_cutoff_pr);
 		ghi.title=inputs.title;
 		ghi.district_short=inputs.district_short;
-		ghi.dcmp_size=inputs.dcmp_size;
+		ghi.dcmp_slots=inputs.dcmp_slots;
 		ghi.points_used=points_used;
 		ghi.plot=inputs.plot;
 		ghi.lock=::lock(f,district);
@@ -519,7 +519,7 @@ int main1(int argc,char **argv){
 		run_inputs.output_dir=args.output_dir;
 		run_inputs.district=district;
 		run_inputs.year=args.year;
-		run_inputs.dcmp_size=dcmp_size(district);
+		run_inputs.dcmp_slots=dcmp_slots(district);
 		run_inputs.title=title;
 		run_inputs.district_short=year_info.abbreviation;
 		run_inputs.skill_method=args.skill_method;
@@ -529,7 +529,7 @@ int main1(int argc,char **argv){
 		dcmp_pr[district]=run(tba_fetcher,run_inputs);
 
 		if(district=="2022ne"){
-			run_inputs.dcmp_size=[](){
+			run_inputs.dcmp_slots=[](){
 				std::vector<int> r;
 				r|=16;
 				return r;

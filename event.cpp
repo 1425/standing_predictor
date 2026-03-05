@@ -5,7 +5,7 @@
 
 using namespace std;
 
-std::optional<int> dcmp_size_inner(tba::District_key const& district){
+std::optional<int> dcmp_slots_inner(tba::District_key const& district){
 	std::map<string,int> a{
 		{"2009fim",66},
 		{"2010fim",66},
@@ -132,11 +132,11 @@ std::optional<int> dcmp_size_inner(tba::District_key const& district){
 	return std::nullopt;
 }
 
-std::vector<int> dcmp_size(tba::District_key const& district){
+std::vector<int> dcmp_slots(tba::District_key const& district){
 	if(year(district)==2021){
 		return vector<int>();
 	}
-	auto a=dcmp_size_inner(district);
+	auto a=dcmp_slots_inner(district);
 	if(a){
 		std::vector<int> r;
 		r|=*a;

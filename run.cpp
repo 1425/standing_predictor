@@ -12,7 +12,7 @@
 using namespace std;
 
 std::ostream& operator<<(std::ostream& o,Dcmp_data const& a){
-	return o<<"Dcmp_data("<<a.size<<" "<<a.played<<" "<<a.dists<<")";
+	return o<<"Dcmp_data("<<a.slots<<" "<<a.played<<" "<<a.dists<<")";
 }
 
 ELEMENTWISE_RAND(Dcmp_data,DCMP_DATA)
@@ -440,7 +440,7 @@ void check(vector_fixed<T,N> const& a){
 }
 
 void check(Dcmp_data const& a){
-	assert(a.size>=0);
+	assert(a.slots>=0);
 	check(a.dists);
 }
 
@@ -557,24 +557,25 @@ Run_result run_calc(
 		return s.count(dcmp_index);
 	};
 
-	const auto dcmp_sizes=mapf([](auto x){ return x.size; },input.dcmp);
+	const auto dcmp_slots=mapf([](auto x){ return x.slots; },input.dcmp);
+
+	const auto dcmp_sizes=mapf(
+		[&](auto x){
+			auto [i,slots]=x;
+			return min(teams_competing(i),slots);
+		},
+		enumerate(dcmp_slots)
+	);
 
 	auto teams_left_out=mapf(
 		[=](auto p){
-			auto [i,teams_advancing]=p;
+			auto [i,dcmp_slots]=p;
 			auto t=teams_competing(i);
-			return max(0,(int)t-(int)teams_advancing);
+			return max(0,(int)t-(int)dcmp_slots);
 		},
 		enumerate(dcmp_sizes)
 	);
 	unsigned cmp_teams_left_out=max(0,(int)sum(dcmp_sizes)-input.worlds_slots);
-
-	/*for(auto i:range(MAX_DCMPS)){
-		PRINT(teams_competing(i));
-	}*/
-	//PRINT(dcmp_sizes);
-	//PRINT(teams_left_out);
-	//PRINT(cmp_teams_left_out);
 
 	//monte carlo method for where the cutoff is
 
@@ -663,13 +664,15 @@ Run_result run_calc(
 				//PRINT(teams);
 				//PRINT(dcmp_cutoff_this);
 
-				if(points==dcmp_cutoff_this.first){
-					teams*=(1-dcmp_cutoff_this.second);
+				if(!cm && points<dcmp_cutoff_this.first){
+					//post_dcmp_points[points.get()]+=teams;
+					continue;
 				}
 
-				if(!cm && points<dcmp_cutoff_this.first){
-					post_dcmp_points[points.get()]+=teams;
-					continue;
+				if(points==dcmp_cutoff_this.first){
+					//would be cleaner to have the excess come back as an integer
+					//so that we can't be off by one by rounding.
+					teams*=dcmp_cutoff_this.second;
 				}
 
 				for(unsigned i=0;i<teams;i++){

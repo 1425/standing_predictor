@@ -510,9 +510,13 @@ void gen_html(
 	//auto cutoff_table1=cutoff_table("District Championship",dcmp_cutoff_pr);
 	auto cutoff_table1=join(mapf(
 		[=](auto i){
-			return cutoff_table("District Championship "+dcmp_name(i),in.dcmp_cutoff_pr[i],in.dcmp_size[i]);
+			return cutoff_table(
+				"District Championship "+dcmp_name(i),
+				in.dcmp_cutoff_pr[i],
+				in.dcmp_slots[i]
+			);
 		},
-		range(in.dcmp_size.size())
+		range(in.dcmp_slots.size())
 	));
 	auto cutoff_table_cmp=cutoff_table(
 		"FRC Championship",

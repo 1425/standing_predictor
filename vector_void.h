@@ -28,6 +28,7 @@ void count(vector_void);
 void or_all(vector_void);
 void dict(vector_void);
 void join(vector_void);
+std::vector<std::tuple<int>> enumerate_from(size_t,vector_void);
 
 template<typename Func,typename T>
 auto mapf(Func f,std::vector<T> const& v){

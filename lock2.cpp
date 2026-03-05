@@ -532,7 +532,7 @@ std::map<tba::Team_key,std::string> lock2(TBA_fetcher& f,tba::District_key const
 
 	auto found=mapf(
 		[=](auto p){
-			auto [home,size]=p;
+			auto [home,slots]=p;
 			E in_here;
 			for(auto [k,v]:by_team){
 				if(v==home){
@@ -541,9 +541,9 @@ std::map<tba::Team_key,std::string> lock2(TBA_fetcher& f,tba::District_key const
 			}
 			in_here.unclaimed=in_whole.unclaimed;
 			in_here.status=in_whole.status;
-			return lock2(in_here,size);
+			return lock2(in_here,slots);
 		},
-		enumerate(dcmp_size(district))
+		enumerate(dcmp_slots(district))
 	);
 	std::map<tba::Team_key,std::string> r;
 	for(auto const& x:found){
@@ -561,7 +561,7 @@ void lock2_demo(TBA_fetcher &f,tba::District_key district){
 	PRINT(entropy(in));
 
 	auto d=[=](){
-		auto x=dcmp_size(district);
+		auto x=dcmp_slots(district);
 		assert(x.size()==1);
 		return x[0];
 	}();

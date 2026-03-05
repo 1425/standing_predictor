@@ -550,9 +550,9 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 
 	//print_r(cat);
 
-	for(auto [i,size]:enumerate(dcmp_size(district))){
+	for(auto [i,slots]:enumerate(dcmp_slots(district))){
 		Dcmp_data d;
-		d.size=size;
+		d.slots=slots;
 	
 		/*PRINT(dcmp_size(district));
 		PRINT(i);

@@ -419,7 +419,7 @@ void schedule_demo(TBA_fetcher &f){
 				case tba::Event_type::DISTRICT:
 					return event_teams_keys(f,event.key).size();
 				case tba::Event_type::DISTRICT_CMP:{
-					auto x=dcmp_size(district);
+					auto x=dcmp_slots(district);
 					return x[0];
 				}
 				case tba::Event_type::CMP_FINALS:
