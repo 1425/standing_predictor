@@ -582,7 +582,7 @@ void gen_html(
 	};
 
 	auto team_details=[&](auto a)->std::string{
-		auto x=in.points_used.at(a.team);
+		//auto x=in.points_used.at(a.team);
 		std::stringstream ss;
 		ss<<h3("Expected pre-dcmp points")+charts[a.team];
 		
@@ -757,7 +757,14 @@ void gen_html(
 						[=](auto p){
 							auto [i,a]=p;
 							auto name=get_script_name();
-							auto used=in.points_used.find(a.team)->second;
+							const auto used=[=]()->Team_points_used{
+								//in.points_used.at(a.team);
+								auto f=in.points_used.find(a.team);
+								if(f!=in.points_used.end()){
+									return f->second;
+								}
+								return Team_points_used({},0,-99,{});
+							}();
 							return tag("tr class=\"rank\" onclick=\"toggle_viz('"+name+"');event.preventDefault();\"",
 								td(as_string(i)+" "+get_team_str(a.team))+
 								colorize(a.dcmp_make)+
