@@ -120,6 +120,7 @@ std::vector<int> team_points(TBA_fetcher& f,Team_key team,Year year){
 				case tba::Event_type::CMP_DIVISION:
 				case tba::Event_type::CMP_FINALS:
 				case tba::Event_type::DISTRICT_CMP:
+				case tba::Event_type::DISTRICT_CMP_DIVISION:
 					return 0;
 				case tba::Event_type::REGIONAL:
 				case tba::Event_type::DISTRICT:
