@@ -545,11 +545,20 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 	assert(d);
 
 	Run_input r;
+	r.quick=0;
 	r.worlds_slots=worlds_slots(district);
+
+	//print_r(cat);
 
 	for(auto [i,size]:enumerate(dcmp_size(district))){
 		Dcmp_data d;
 		d.size=size;
+	
+		/*PRINT(dcmp_size(district));
+		PRINT(i);
+		PRINT(size);
+		PRINT(cat.dcmp.size());*/
+
 		d.played=complete(f,cat.dcmp.at(i));
 		if(!d.played){
 			d.dists=skill.at_dcmp;
