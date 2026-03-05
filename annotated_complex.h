@@ -57,7 +57,7 @@ std::ostream& operator<<(std::ostream& o,District_cmp_complex_annotated<A1,A2> c
 template<typename A1,typename A2,typename A3>
 struct Event_categories_annotated{
 	std::vector<Event_annotated<A1>> local;
-	std::vector<District_cmp_complex_annotated<A1,A2>> dcmp;
+	std::vector<District_cmp_complex_annotated<A1,A2>> dcmp,cmp;
 	A3 extra;
 
 	auto operator<=>(Event_categories_annotated const&)const=default;
@@ -98,8 +98,9 @@ template<typename Func>
 auto mapf_preserve(Func f,Event_categories const& in){
 	auto a=mapf(f,in.local);
 	auto b=mapf(f,in.dcmp);
+	auto c=mapf(f,in.cmp);
 	return Event_categories_annotated{
-		a,b,f(a,b)
+		a,b,c,f(a,b,c)
 	};
 }
 

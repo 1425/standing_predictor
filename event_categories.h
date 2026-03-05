@@ -16,9 +16,10 @@ STRUCT_DECLARE(District_cmp_complex,DISTRICT_CMP_COMPLEX)
 
 #define EVENT_CATEGORIES(X)\
 	X(std::vector<tba::Event>,local)\
-	X(std::vector<District_cmp_complex>,dcmp)
+	X(std::vector<District_cmp_complex>,dcmp)\
+	X(std::vector<District_cmp_complex>,cmp)\
 
-//std::vector<Event> local;//sort by date?
+//std::vector<Event> local;//sorted by date
 //std::vector<District_cmp_complex> dcmp;//sorted by Dcmp_index?
 STRUCT_DECLARE(Event_categories,EVENT_CATEGORIES)
 

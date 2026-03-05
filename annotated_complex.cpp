@@ -122,9 +122,11 @@ struct Walker{
 	template<typename T1,typename T2>
 	auto operator()(
 		std::vector<Event_annotated<T1>> const& locals,
-		std::vector<District_cmp_complex_annotated<T1,T2>> const& dcmp
+		std::vector<District_cmp_complex_annotated<T1,T2>> const& dcmp,
+		std::vector<District_cmp_complex_annotated<T1,T2>> const& cmp
 	){
 		(void)dcmp;
+		(void)cmp;
 
 		//this is basically duplicating district_limits()
 		auto local_status=to_set(mapf([](auto x){ return x.extra.status; },locals));

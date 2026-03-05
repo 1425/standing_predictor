@@ -99,6 +99,8 @@ std::optional<tba::District_key> district(TBA_fetcher &,tba::Event_key const&);
 
 bool complete(TBA_fetcher &,tba::Event_key const&);
 tba::Event_type event_type(TBA_fetcher &f,tba::Event_key const&);
+tba::Event_type event_type(tba::Event const&);
+tba::Event_type event_type(TBA_fetcher&,tba::Event_points const&);
 
 std::string link(tba::Event_key const&,std::string const&);
 std::string link(tba::Event const&,std::string const&);
@@ -111,8 +113,5 @@ set_limited<T,N> to_set(tba::vector_fixed<T,N> const& a){
 	}
 	return r;
 }
-
-tba::Event_type event_type(tba::Event const&);
-tba::Event_type event_type(TBA_fetcher&,tba::Event_points const&);
 
 #endif

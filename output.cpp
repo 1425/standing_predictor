@@ -585,7 +585,7 @@ void gen_html(
 		auto x=in.points_used.at(a.team);
 		std::stringstream ss;
 		ss<<h3("Expected pre-dcmp points")+charts[a.team];
-
+		
 		const auto team_num=a.team.str().substr(3,20);
 
 		{
@@ -602,16 +602,90 @@ void gen_html(
 			ss<<link(u.str(),"Statbotics");
 		}
 
-		ss<<h3("Points used");
-		ss<<as_table(x);
+		/*ss<<h3("Points used");
+		ss<<as_table(x);*/
 
-		ss<<"<p>"<<"Lock status:"<<in.lock.at(a.team)<<"\n";
+		//ss<<as_table(a);
 
-		try{
+		//ss<<"<p>"<<"Lock status:"<<in.lock.at(a.team)<<"\n";
+
+		ss<<"<table border>";
+		ss<<tr(
+			th("Qualification")+
+			th("Event type")+
+			th("Event name")+
+			th("Date")+
+			th("Event Status")+
+			th("Unclaimed points")+
+			th("Team point range")+
+			th("Notes")
+		);
+
+		auto show_event=[&](string qual,auto p,auto y,std::optional<std::string> note=std::nullopt){
+			auto [event,event_data]=p;
+			const auto date=[=](){
+				assert(event.start_date);
+				assert(event.end_date);
+				return Interval<tba::Date>{*event.start_date,*event.end_date};
+			}();
+			ss<<"<tr>";
+			ss<<qual;
+			ss<<td(event.event_type);
+			const auto event_name=[=]()->string{
+				if(event.short_name && event.short_name!="{}"){
+					return *event.short_name;
+				}
+				return ::as_string(event.key);
+			}();
+			ss<<td(link(event.key,event_name));
+			ss<<td(date);
+			ss<<td(event_data.status);
+			//ss<<td(event);
+			//ss<<td(event_data);
+			ss<<td(event_data.unclaimed);
+			ss<<td(y);
+			if(note){
+				ss<<td(*note);
+			}
+			ss<<"</tr>";
+		};
+
+		for(auto p:limits.local){
+			auto [event,event_data]=p;
+			auto y=maybe_get(event_data.by_team,a.team);
+			if(!y) continue;
+			show_event(colorize(1),p,y);
+		}
+		auto dcmp=limits.dcmp.at(a.dcmp_home);
+
+		for(auto division:dcmp.divisions){
+			auto m=maybe_get(division.extra.by_team,a.team);
+			if(!m) continue;
+			//only show division when this team is in it
+			show_event(colorize(1),division,m);
+		}
+		show_event(
+			colorize(a.dcmp_make),
+			dcmp.finals,
+			maybe_get(dcmp.finals.extra.by_team,a.team),
+			"Lock status: "+in.lock.at(a.team)
+		);
+
+		for(auto cmp:limits.cmp){
+			for(auto division:cmp.divisions){
+				auto m=maybe_get(division.extra.by_team,a.team);
+				if(!m) continue;
+				show_event(colorize(1),division,m);
+			}
+			show_event(colorize(a.cmp_make),cmp.finals,"");
+		}
+		ss<<"</table>";
+
+		/*try{
 			ss<<p(in.extra.at(a.team));
 		}catch(...){
 			ss<<"Failed to read extra data for "<<a.team<<"\n";
-		}
+		}*/
 		return ss.str();
 	};
 

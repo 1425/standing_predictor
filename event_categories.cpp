@@ -1,6 +1,8 @@
 #include "event_categories.h"
 #include "io.h"
 #include "tba.h"
+#include "../tba/tba.h"
+#include "print_r.h"
 
 PRINT_STRUCT(District_cmp_complex,DISTRICT_CMP_COMPLEX)
 
@@ -15,11 +17,32 @@ bool complete(TBA_fetcher &f,District_cmp_complex const& a){
 
 PRINT_STRUCT(Event_categories,EVENT_CATEGORIES)
 
+std::vector<District_cmp_complex> cmp(TBA_fetcher &f,tba::Year year){
+	auto e=tba::events(f,year);
+	auto found=filter(
+		[](auto x){ return x.event_type==tba::Event_type::CMP_DIVISION || x.event_type==tba::Event_type::CMP_FINALS; },
+		e
+	);
+	//ignoring FOC for now.
+	//divide the divisions by which championship they go to.
+	//then return a [(final field,[division]]
+
+	auto g=group([](auto x){ return x.parent_event_key; },found);
+
+	std::vector<District_cmp_complex> r;
+	for(auto event:g[std::nullopt]){
+		r|=District_cmp_complex(event,g[event.key]);
+	}
+	return r;
+}
+
 Event_categories categorize_events(TBA_fetcher &f,tba::District_key const& district){
+
 	auto e=events(f,district);
 	auto g=GROUP(event_type,e);
 
 	Event_categories r;
+	r.cmp=cmp(f,year(district));
 	r.local=g[tba::Event_type::DISTRICT];
 	std::sort(r.local.begin(),r.local.end(),[](auto const& a,auto const& b){ return a.start_date<b.start_date; });
 
