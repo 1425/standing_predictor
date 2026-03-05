@@ -5,8 +5,8 @@
 
 using namespace std;
 
-static map<tba::Team_key,Dcmp_home> calc_data(TBA_fetcher &f){
-	map<tba::Team_key,Dcmp_home> r;
+static map<tba::Team_key,std::optional<Dcmp_home>> calc_data(TBA_fetcher &f){
+	map<tba::Team_key,std::optional<Dcmp_home>> r;
 	for(auto const& team:teams(f)){
 		r[team.key]=[&]()->Dcmp_home{
 			if(team.state_prov!="California"){
@@ -18,9 +18,13 @@ static map<tba::Team_key,Dcmp_home> calc_data(TBA_fetcher &f){
 	return r;
 }
 
-Dcmp_home calc_dcmp_home(TBA_fetcher &fetcher,tba::Team_key const& team_key){
+std::optional<Dcmp_home> calc_dcmp_home(TBA_fetcher &fetcher,tba::Team_key const& team_key,tba::Year const& year){
+	if(year==2021){
+		return std::nullopt;
+	}
+
 	//Doing it this way to avoid asking API about each individual team.
-	static map<tba::Team_key,Dcmp_home> data=calc_data(fetcher);
+	static map<tba::Team_key,std::optional<Dcmp_home>> data=calc_data(fetcher);
 	return data[team_key];
 
 	/*auto t=team(fetcher,team_key);

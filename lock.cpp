@@ -134,8 +134,10 @@ vector<Lock_data> read_lock_data(TBA_fetcher &f,tba::District_key const& distric
 		//obviously, want to actually look this up later.
 		team_info.remaining_district_events=at_event.size()<2;
 
-		auto dcmp=calc_dcmp_home(f,x.team_key);
-		r1[dcmp].by_team[x.team_key]=team_info;
+		auto dcmp=calc_dcmp_home(f,x.team_key,year(district));
+		if(dcmp){
+			r1[*dcmp].by_team[x.team_key]=team_info;
+		}
 	}
 
 	for(auto event:district_events(f,district)){

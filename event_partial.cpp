@@ -577,11 +577,16 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 
 	for(auto team_info:*d){
 		auto team=team_info.team_key;
+		auto dcmp_home=calc_dcmp_home(f,team,year(district));
+		if(!dcmp_home){
+			//this happens when there is no event. See 2021.
+			continue;
+		}
 		//x.rookie_bonus;
 		Team_status &t=r.by_team[team];
 		t.district_chairmans=cm.count(team);
 		t.point_dist=team_dist(team_info)+team_info.rookie_bonus;
-		t.dcmp_home=calc_dcmp_home(f,team);
+		t.dcmp_home=*dcmp_home;
 
 		t.already_earned=min_key(t.point_dist);
 	}

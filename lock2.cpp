@@ -523,7 +523,10 @@ std::map<tba::Team_key,std::string> lock2(TBA_fetcher& f,tba::District_key const
 	using E=decltype(in_whole);//by_team,unclaimed,status
 	map<tba::Team_key,Dcmp_home> by_team;
 	for(auto [k,v]:in_whole.by_team){
-		by_team[k]=calc_dcmp_home(f,k);
+		auto h=calc_dcmp_home(f,k,year(district));
+		if(h){
+			by_team[k]=*h;
+		}
 	}
 	auto homes=to_set(values(by_team));
 

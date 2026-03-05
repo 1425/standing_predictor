@@ -434,8 +434,6 @@ void gen_html(
 		return "";
 	};
 
-	auto dcmp_names=(in.district_short=="ca")?2:1;
-
 	auto cutoff_table_long1=[=](auto data){
 		return "The cutoff values, along with how likely a team at that value is to miss advancing.  For example: a line that said (50,.25) would correspond to the probability that team above 50 get in, teams below 50 do not, and 75% of teams ending up with exactly 50 would qualify for the district championship."+
 		tag("table border",
@@ -507,12 +505,14 @@ void gen_html(
 			);
 	};
 
+	//auto dcmp_names=(in.district_short=="ca")?2:1;
+
 	//auto cutoff_table1=cutoff_table("District Championship",dcmp_cutoff_pr);
 	auto cutoff_table1=join(mapf(
 		[=](auto i){
 			return cutoff_table("District Championship "+dcmp_name(i),in.dcmp_cutoff_pr[i],in.dcmp_size[i]);
 		},
-		range(dcmp_names)
+		range(in.dcmp_size.size())
 	));
 	auto cutoff_table_cmp=cutoff_table(
 		"FRC Championship",
@@ -812,7 +812,6 @@ std::vector<pair<tba::Event_key,std::string>> championship_event(auto &f,tba::Di
 		},
 		district_events_simple(f,d)
 	);
-	assert(f1.size()>=1);
 	assert(f1.size()<=MAX_DCMPS);
 	return mapf(
 		[](auto x){ return make_pair(x.key,x.name); },
@@ -840,17 +839,15 @@ int make_spreadsheet(
 		for(auto [district,teams]:m){
 			//auto [event_key,event_name]=championship_event(f,district);
 			auto e=championship_event(f,district);
-			auto [event_key,event_name]=e[0];
 			for(auto [team,p]:teams){
-				auto [event_key,event_name]=[&](){
-					if(e.size()==1){
-						return e[0];
-					}
-					auto x=calc_dcmp_home(f,team);
-					assert(x<e.size());
-					return e[x];
-				}();
-				o<<team_number(team)<<","<<event_key<<","<<event_name<<","<<p<<"\n";
+				auto x=calc_dcmp_home(f,team,year(district));
+				if(x){
+					auto [event_key,event_name]=[&](){
+						assert(*x<e.size());
+						return e[*x];
+					}();
+					o<<team_number(team)<<","<<event_key<<","<<event_name<<","<<p<<"\n";
+				}
 			}
 		}
 	}

@@ -180,8 +180,15 @@ std::tuple<Run_result,Points_used,By_team,Skill_estimates,Annotated,std::map<tba
 			events_left,
 			skills.pre_dcmp[team.team_key]
 		);
-		Dcmp_home dcmp_home=calc_dcmp_home(f,team.team_key);
-		by_team[team.team_key]=Team_status(chairmans.count(team.team_key),std::move(dist),dcmp_home,team.point_total);
+		auto dcmp_home=calc_dcmp_home(f,team.team_key,year);
+		if(dcmp_home){
+			by_team[team.team_key]=Team_status(
+				chairmans.count(team.team_key),
+				std::move(dist),
+				*dcmp_home,
+				team.point_total
+			);
+		}
 	}
 
 	//Run_input run_input=read_status(f,district,skill_method);
