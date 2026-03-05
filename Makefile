@@ -46,7 +46,7 @@ OUTLINE_OBJS= \
 	outline.o \
 	output.o \
 	util.o \
-	event.o \
+	slots.o \
 	arguments.o \
 	tba.o \
 	status.o \

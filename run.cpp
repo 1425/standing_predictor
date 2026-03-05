@@ -577,6 +577,12 @@ Run_result run_calc(
 	);
 	unsigned cmp_teams_left_out=max(0,(int)sum(dcmp_sizes)-input.worlds_slots);
 
+	/*PRINT(dcmp_slots);
+	PRINT(dcmp_sizes);
+	PRINT(teams_left_out);
+	PRINT(input.worlds_slots);
+	PRINT(cmp_teams_left_out);*/
+
 	//monte carlo method for where the cutoff is
 
 	std::mt19937_64 rng;

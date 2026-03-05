@@ -8,7 +8,7 @@
 #include "rand.h"
 #include "event_limits.h"
 #include "run.h"
-#include "event.h"
+#include "slots.h"
 #include "output.h"
 #include "multiset_flat.h"
 #include "annotated_complex.h"

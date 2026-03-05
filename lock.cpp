@@ -12,7 +12,7 @@
 #include "int_limited.h"
 #include "set_fixed.h"
 #include "vector_fixed.h"
-#include "event.h"
+#include "slots.h"
 #include "venue.h"
 #include "names.h"
 #include "map_auto.h"

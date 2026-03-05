@@ -320,6 +320,10 @@ Subprocess_result run(std::string prog,std::vector<std::string> const& args,std:
 			auto s=from_signalfd.str();
 			auto found=*(struct signalfd_siginfo*)s.c_str();
 			assert(found.ssi_signo==SIGCHLD);
+			if(found.ssi_pid!=(unsigned)f){
+				PRINT(found);
+				PRINT(f);
+			}
 			assert(found.ssi_pid==(unsigned)f);
 
 			for(auto fd:select_in.read|select_in.except){

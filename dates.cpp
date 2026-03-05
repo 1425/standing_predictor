@@ -9,7 +9,7 @@
 #include "optional.h"
 #include "array.h"
 #include "util.h"
-#include "event.h"
+#include "slots.h"
 #include "timezone.h"
 #include "names.h"
 #include "interval.h"
