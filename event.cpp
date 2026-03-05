@@ -1,6 +1,7 @@
 #include "event.h"
 #include<iostream>
 #include "vector.h"
+#include "tba.h"
 
 using namespace std;
 
@@ -18,7 +19,9 @@ std::optional<int> dcmp_size_inner(tba::District_key const& district){
 		{"2017chs",58},
 		{"2018chs",60},
 		{"2020chs",0},
-		{"2021chs",0},
+
+		//this time didn't exist, not just no teams invited
+		//{"2021chs",0},
 
 		{"2012mar",54},
 		{"2013mar",52},
@@ -117,6 +120,9 @@ std::optional<int> dcmp_size_inner(tba::District_key const& district){
 }
 
 std::vector<int> dcmp_size(tba::District_key const& district){
+	if(year(district)==2021){
+		return vector<int>();
+	}
 	auto a=dcmp_size_inner(district);
 	if(a){
 		std::vector<int> r;
@@ -133,6 +139,10 @@ std::vector<int> dcmp_size(tba::District_key const& district){
 		
 
 int worlds_slots(tba::District_key const& key){
+	if(year(key)==2021){
+		return 0;
+	}
+
 	map<string,int> slots{
 		{"2019chs",21},
 		{"2019fim",87},

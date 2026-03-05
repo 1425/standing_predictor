@@ -61,6 +61,11 @@ class Int_limited{
 		return data;
 	}
 
+	/*template<long long MIN2,long long MAX2>
+	constexpr operator Int_limited<MIN2,MAX2>()const{
+		return data;
+	}*/
+
 	template<long long MIN2,long long MAX2>
 	Int_limited& operator+=(Int_limited<MIN2,MAX2> a){
 		data+=a.get();

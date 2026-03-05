@@ -216,6 +216,10 @@ std::pair<Point,double> find_cutoff(
 			return make_pair(points,1-double(excess)/teams);
 		}
 	}
+	print_r(these_points);
+	print_r(these_points.size());
+	PRINT(sum(values(these_points)));
+	PRINT(eliminating);
 	assert(0);
 }
 
@@ -502,6 +506,7 @@ void check(flat_map2<K,V> const& a){
 	}
 }
 
+//this should probably move somewhere else
 template<>
 struct Converter<std::pair<bool,Int_limited<0,255>>>{
 	static constexpr auto MIN=0;
@@ -564,6 +569,13 @@ Run_result run_calc(
 		enumerate(dcmp_sizes)
 	);
 	unsigned cmp_teams_left_out=max(0,(int)sum(dcmp_sizes)-input.worlds_slots);
+
+	/*for(auto i:range(MAX_DCMPS)){
+		PRINT(teams_competing(i));
+	}*/
+	//PRINT(dcmp_sizes);
+	//PRINT(teams_left_out);
+	//PRINT(cmp_teams_left_out);
 
 	//monte carlo method for where the cutoff is
 
@@ -633,6 +645,12 @@ Run_result run_calc(
 
 		//flat_map2<pair<bool,Point>,unsigned> post_dcmp_points;
 		map_fixed<Int_limited<0,511>,unsigned short> post_dcmp_points;
+
+		/*for(auto x:final_points){
+			PRINT(sum(values(x)));
+		}
+		PRINT(dcmp_cutoff);*/
+
 		//for(auto [dcmp_index,dcmp]:enumerate(input.dcmp)){
 		for(size_t dcmp_index=0;dcmp_index<input.dcmp.size();dcmp_index++){
 			auto const& dcmp=input.dcmp[dcmp_index];
@@ -642,9 +660,17 @@ Run_result run_calc(
 				auto [cm,points]=earned;
 				assert(points>=0);
 
-				if(!cm && points<dcmp_cutoff_this.first) continue;
+				//PRINT(earned);
+				//PRINT(teams);
+				//PRINT(dcmp_cutoff_this);
+
 				if(points==dcmp_cutoff_this.first){
 					teams*=(1-dcmp_cutoff_this.second);
+				}
+
+				if(!cm && points<dcmp_cutoff_this.first){
+					post_dcmp_points[points.get()]+=teams;
+					continue;
 				}
 
 				for(unsigned i=0;i<teams;i++){
@@ -762,6 +788,7 @@ Run_result run_calc(
 		}();
 
 		auto post_dcmp_dist=convolve(dcmp_entry_dist,input.dcmp.at(team_data.dcmp_home).dists);
+
 		auto post_total=sum(values(post_dcmp_dist));
 		Pr cmp_make=0;
 		Pr cmp_miss=0;
