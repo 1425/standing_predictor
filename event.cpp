@@ -29,6 +29,19 @@ std::optional<int> dcmp_size_inner(tba::District_key const& district){
 
 		{"2014ne",54},
 		//{"2014pnw",
+		
+		//These are the as-scheduled sizes
+		{"2020fim",200},
+		{"2020chs",80},
+		{"2020isr",45},
+		{"2020fma",60},
+		{"2020fnc",32},
+		{"2020ont",80},
+		{"2020tx",64},
+		{"2020in",32},
+		{"2020ne",64},
+		{"2020pnw",64},
+		{"2020pch",45}
 	};
 
 	auto f=a.find(district.get());
@@ -155,6 +168,20 @@ int worlds_slots(tba::District_key const& key){
 		{"2019fnc",15},
 		{"2019pnw",31},
 		{"2019pch",17},
+
+		{"2020chs",20-2-2-1},
+		{"2020fim",90-5-1-2},
+		{"2020fma",21-2-2-1},
+		{"2020fnc",14-1-2-1},
+		{"2020in",10-1-1-1},
+		{"2020ont",27-3-1-1},
+		{"2020isr",13-1-1-1},
+		{"2020fit",37-4-2-2},
+		{"2020fnc",14-1-2-1},
+		{"2020pnw",28-3-2-1},
+		{"2020pch",16-2-2-2},
+		{"2020ne",33-4-2-1},
+		{"2020tx",37-4-2-2},
 	};
 	auto f=slots.find(key.get());
 	if(f!=slots.end()){

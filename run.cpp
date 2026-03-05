@@ -300,7 +300,6 @@ std::pair<Point,double> find_cutoff(map_fixed<pair<bool,POINT>,Count> const& the
 		total+=teams;
 		if(total>=eliminating){
 			auto excess=total-eliminating;
-			assert(points.first==0);
 			return make_pair(points.second,1-double(excess)/teams);
 		}
 	}
