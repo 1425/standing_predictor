@@ -258,7 +258,7 @@ map<tba::Team_key,Pr> run(
 
 struct Args{
 	string output_dir=".";
-	tba::Year year{2022};
+	std::optional<tba::Year> year;
 	optional<tba::District_key> district;
 	TBA_fetcher_config tba;
 	bool demo=0,rank_limits_demo=0;
@@ -452,6 +452,13 @@ int identify_time_demo(TBA_fetcher &f){
 	return 0;
 }
 
+std::optional<tba::Year> year(std::optional<tba::District_key> const& a){
+	if(!a){
+		return std::nullopt;
+	}
+	return year(*a);
+}
+
 int main1(int argc,char **argv){
 	auto args=parse_args(argc,argv);
 	std::filesystem::create_directories(args.output_dir);
@@ -488,7 +495,10 @@ int main1(int argc,char **argv){
 	}
 
 	if(args.lock){
-		return run_lock(tba_fetcher,args.year,args.district);
+		if(!args.year){
+			args.year=Year(2022);
+		}
+		return run_lock(tba_fetcher,*args.year,args.district);
 	}
 
 	if(args.event_limits_demo){
@@ -504,7 +514,15 @@ int main1(int argc,char **argv){
 		return data_range_demo(tba_fetcher);
 	}
 
-	auto d=districts(tba_fetcher,args.year);
+	if(!args.year){
+		if(args.district){
+			args.year=year(args.district);
+		}else{
+			args.year=Year(2022);
+		}
+	}
+
+	auto d=districts(tba_fetcher,*args.year);
 
 	map<tba::District_key,map<tba::Team_key,Pr>> dcmp_pr;
 
