@@ -4,6 +4,7 @@
 #include<cassert>
 #include<algorithm>
 #include<chrono>
+#include<variant>
 
 #define INST(A,B) A B;
 
@@ -13,13 +14,15 @@
 		auto operator<=>(NAME const&)const=default;\
 	};\
 	std::ostream& operator<<(std::ostream&,NAME const&);\
+	NAME rand(NAME const*);\
 
 #define STRUCT_SINGLE(STRUCT_NAME,DATA_TYPE,DATA_NAME)\
 	struct STRUCT_NAME{\
 		DATA_TYPE DATA_NAME;\
 		auto operator<=>(STRUCT_NAME const&)const=default;\
 	};\
-	std::ostream& operator<<(std::ostream&,STRUCT_NAME const&);
+	std::ostream& operator<<(std::ostream&,STRUCT_NAME const&);\
+	STRUCT_NAME rand(STRUCT_NAME const*);\
 
 #define EMPTY(X)
 
@@ -402,6 +405,20 @@ std::pair<C,D> coerce(std::pair<A,B> a,std::pair<C,D> const*){
 
 auto ident(auto a){
 	return std::move(a);
+}
+
+template<typename...Ts,typename T>
+bool operator==(std::variant<Ts...> const& a,T const& b){
+	if(!std::holds_alternative<T>(a)){
+		return 0;
+	}
+	auto const& g=std::get<T>(a);
+	return g==b;
+}
+
+template<typename...Ts,typename T>
+bool operator!=(std::variant<Ts...> const& a,T const& b){
+	return !(a==b);
 }
 
 #endif

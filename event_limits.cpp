@@ -49,22 +49,6 @@ auto map_preserve(Func f,std::vector<T> const& a){
 
 using Team=tba::Team_key;
 
-ENUM_CLASS_PRINT(Tournament_status,TOURNAMENT_STATUS)
-
-auto options(Tournament_status const*){
-	return std::array{
-	#define X(A) Tournament_status::A,
-	TOURNAMENT_STATUS(X)
-	#undef X
-	};
-}
-
-Tournament_status rand(Tournament_status const* x){
-	return choose(options(x));
-}
-
-//ENUM_CLASS_PRINT(District_status,DISTRICT_STATUS)
-
 #define X(NAME) std::ostream& operator<<(std::ostream& o,NAME const&){ return o<<""#NAME; }
 X(District_status_locals_complete)
 X(District_status_future)
@@ -329,7 +313,7 @@ auto teams(flat_map<tba::Team_key,T> a){
 
 //Rank_status event_limits(TBA_fetcher &f,tba::Event_key const& event){
 Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const& event){
-	Tournament_status tstatus=Tournament_status::FUTURE;
+	Tournament_status tstatus=Qual_status_future();
 	//PRINT(event);
 	auto ranks=rank_limits(f,event);
 	ranks.check();
@@ -344,9 +328,9 @@ Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const&
 		if constexpr(std::is_same<T,Qual_status_future>()){
 			//do nothing
 		}else if constexpr(std::is_same<T,Qual_status_in_progress>()){
-			tstatus=Tournament_status::QUAL_MATCHES_IN_PROGRESS;
+			tstatus=x;//Tournament_status::QUAL_MATCHES_IN_PROGRESS;
 		}else if constexpr(std::is_same<T,Qual_status_complete>()){
-			tstatus=Tournament_status::QUAL_MATCHES_COMPLETE;
+			tstatus=x;//Tournament_status::QUAL_MATCHES_COMPLETE;
 		}else{
 			assert(0);
 		}
@@ -370,10 +354,10 @@ Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const&
 			case Event_status::FUTURE:
 				break;
 			case Event_status::IN_PROGRESS:
-				tstatus=Tournament_status::PICKING_IN_PROGRESS;
+				tstatus=Tournament_status_picking_in_progress();
 				break;
 			case Event_status::COMPLETE:
-				tstatus=Tournament_status::PICKING_COMPLETE;
+				tstatus=Tournament_status_picking_complete();
 				break;
 			default:
 				assert(0);
@@ -397,10 +381,10 @@ Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const&
 		case Event_status::FUTURE:
 			break;
 		case Event_status::IN_PROGRESS:
-			tstatus=Tournament_status::ELIMINATIONS_IN_PROGRESS;
+			tstatus=Tournament_status_eliminations_in_progress();
 			break;
 		case Event_status::COMPLETE:
-			tstatus=Tournament_status::ELIMINATIONS_COMPLETE;
+			tstatus=Tournament_status_eliminations_complete();
 			break;
 		default:
 			assert(0);
@@ -424,10 +408,10 @@ Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const&
 		case Event_status::FUTURE:
 			break;
 		case Event_status::IN_PROGRESS:
-			tstatus=Tournament_status::AWARDS_IN_PROGRESS;
+			tstatus=Tournament_status_awards_in_progress();
 			break;
 		case Event_status::COMPLETE:
-			tstatus=Tournament_status::COMPLETE;
+			tstatus=Tournament_status_complete();
 			break;
 		default:
 			assert(0);
@@ -478,7 +462,7 @@ auto event_limits(TBA_fetcher &f,tba::Event const& e){
 Tournament_status dcmp_status(TBA_fetcher &f,District_cmp_complex const& a){
 	if(!a.divisions.empty()){
 		auto last_division_status=min(mapf([&](auto x){ return event_limits(f,x.key).status; },a.divisions));
-		if(last_division_status!=Tournament_status::COMPLETE){
+		if(last_division_status!=Tournament_status_complete()){
 			return last_division_status;
 		}
 	}
@@ -506,10 +490,10 @@ std::variant<
 	auto m=map_preserve([&](auto x){ return dcmp_status(f,x); },a);
 	auto opts=to_set(seconds(m));
 
-	if(opts==std::set<Tournament_status>{Tournament_status::FUTURE}){
+	if(opts==std::set<Tournament_status>{Qual_status_future()}){
 		return District_status_future();
 	}
-	if(opts==std::set<Tournament_status>{Tournament_status::COMPLETE}){
+	if(opts==std::set<Tournament_status>{Tournament_status_complete()}){
 		return District_status_complete();
 	}
 
@@ -545,10 +529,10 @@ Rank_status<District_status> district_limits(TBA_fetcher &f,tba::District_key co
 	//PRINT(count(values(plays)));
 	
 	r.status=[&]()->District_status{
-		if(local_status==set<Tournament_status>{Tournament_status::FUTURE}){
+		if(local_status==set<Tournament_status>{Qual_status_future()}){
 			return District_status_future();
 		}
-		if(local_status!=set<Tournament_status>{Tournament_status::COMPLETE}){
+		if(local_status!=set<Tournament_status>{Tournament_status_complete()}){
 			auto k2=dict(mapf([](auto const& x){ return make_pair(x.first.key,x.second.status); },locals));
 			return District_status_locals_in_progress(invert(k2));
 		}

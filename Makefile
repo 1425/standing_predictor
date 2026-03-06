@@ -24,6 +24,7 @@ FRC_API_OBJS= \
 	../frc_api/curl.o
 
 OUTLINE_OBJS= \
+	tournament_status.o\
 	event_categories.o\
 	avatar.o \
 	annotated_complex.o\

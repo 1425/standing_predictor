@@ -24,8 +24,12 @@
 
 using namespace std;
 
-std::ostream& operator<<(std::ostream& o,Qual_status_future){
+std::ostream& operator<<(std::ostream& o,Qual_status_future const&){
 	return o<<"Qual_status_future";
+}
+
+Qual_status_future rand(Qual_status_future const*){
+	return Qual_status_future();
 }
 
 std::ostream& operator<<(std::ostream& o,Qual_status_in_progress const& a){
@@ -34,8 +38,14 @@ std::ostream& operator<<(std::ostream& o,Qual_status_in_progress const& a){
 	return o<<")";
 }
 
+ELEMENTWISE_RAND(Qual_status_in_progress,QUAL_STATUS_IN_PROGRESS)
+
 std::ostream& operator<<(std::ostream& o,Qual_status_complete const&){
 	return o<<"Qual_status_complete";
+}
+
+Qual_status_complete rand(Qual_status_complete const*){
+	return Qual_status_complete();
 }
 
 template<typename A,typename B>

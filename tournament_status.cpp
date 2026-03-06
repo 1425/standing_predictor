@@ -1,0 +1,15 @@
+#include "tournament_status.h"
+
+PRINT_STRUCT(Tournament_status_picking_in_progress,EMPTY)
+PRINT_STRUCT(Tournament_status_picking_complete,EMPTY)
+PRINT_STRUCT(Tournament_status_eliminations_in_progress,EMPTY)
+PRINT_STRUCT(Tournament_status_eliminations_complete,EMPTY)
+PRINT_STRUCT(Tournament_status_awards_in_progress,EMPTY)
+PRINT_STRUCT(Tournament_status_complete,EMPTY)
+
+ELEMENTWISE_RAND(Tournament_status_picking_in_progress,EMPTY)
+ELEMENTWISE_RAND(Tournament_status_picking_complete,EMPTY)
+ELEMENTWISE_RAND(Tournament_status_eliminations_in_progress,EMPTY)
+ELEMENTWISE_RAND(Tournament_status_eliminations_complete,EMPTY)
+ELEMENTWISE_RAND(Tournament_status_awards_in_progress,EMPTY)
+ELEMENTWISE_RAND(Tournament_status_complete,EMPTY)

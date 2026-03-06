@@ -329,14 +329,13 @@ std::string show_skill(Skill_estimates const& in){
 }
 
 std::string color(Tournament_status const& a){
-	switch(a){
-		case Tournament_status::FUTURE:
-			return "#ccccff";
-		case Tournament_status::COMPLETE:
-			return "#ffffff";
-		default:
-			return "#ffffcc";
+	if(a==Qual_status_future()){
+		return "#ccccff";
 	}
+	if(a==Tournament_status_complete()){
+		return "#ffffff";
+	}
+	return "#ffffcc";
 }
 
 std::string colorize(Tournament_status const& a){

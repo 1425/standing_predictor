@@ -80,7 +80,7 @@ struct Walker{
 		auto calc=[&](){
 			if(!divisions.empty()){
 				auto last_division_status=min(mapf([&](auto x){ return x.extra.status; },divisions));
-				if(last_division_status!=Tournament_status::COMPLETE){
+				if(last_division_status!=Tournament_status_complete()){
 					return last_division_status;
 				}
 			}
@@ -102,10 +102,10 @@ struct Walker{
 		}
 		//auto m=map_preserve([&](auto x){return 
 		auto opts=to_set(mapf([](auto const& x){ return x.extra; },a));
-		if(opts==std::set<Tournament_status>{Tournament_status::FUTURE}){
+		if(opts==std::set<Tournament_status>{Qual_status_future()}){
 			return District_status_future();
 		}
-		if(opts==std::set<Tournament_status>{Tournament_status::COMPLETE}){
+		if(opts==std::set<Tournament_status>{Tournament_status_complete()}){
 			return District_status_complete();
 		}
 		return District_status_dcmp_in_progress([&](){
@@ -146,10 +146,10 @@ struct Walker{
 		}
 
 		r.status=[&]()->District_status{
-			if(local_status==set<Tournament_status>{Tournament_status::FUTURE}){
+			if(local_status==set<Tournament_status>{Qual_status_future()}){
 				return District_status_future();
 			}
-			if(local_status!=set<Tournament_status>{Tournament_status::COMPLETE}){
+			if(local_status!=set<Tournament_status>{Tournament_status_complete()}){
 				auto k2=dict(mapf(
 					[](auto const& x){ return make_pair(x.data.key,x.extra.status); },
 					locals

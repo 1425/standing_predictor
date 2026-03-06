@@ -333,7 +333,7 @@ Point median(Team_dist a){
 using Event=tba::Event;
 
 bool complete(TBA_fetcher&,Event_annotated<Rank_status<Tournament_status>> const& a){
-	return a.extra.status==Tournament_status::COMPLETE;
+	return a.extra.status==Tournament_status_complete();
 }
 
 template<typename A,typename B>
@@ -369,32 +369,42 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 
 		auto limits=f[0].extra;
 
-		switch(limits.status){
-			case Tournament_status::FUTURE:
-				return Future();
-			case Tournament_status::QUAL_MATCHES_IN_PROGRESS:
-				return event_partial1[Team_event_status_rank(seconds(limits.by_team[team]))];
-			case Tournament_status::QUAL_MATCHES_COMPLETE:
-			case Tournament_status::PICKING_IN_PROGRESS:
-				return event_partial1[Team_event_status_post_rank(event.qual_points)];
-			case Tournament_status::PICKING_COMPLETE:
-			case Tournament_status::ELIMINATIONS_IN_PROGRESS:
-				return event_partial1[Team_event_status_post_pick(
-					event.qual_points+event.alliance_points
-				)];
-			case Tournament_status::ELIMINATIONS_COMPLETE:
-			case Tournament_status::AWARDS_IN_PROGRESS:
-				return event_partial1[Team_event_status_post_elims(
-					event.qual_points+event.alliance_points+event.elim_points
-				)];
-			case Tournament_status::COMPLETE:{
-				Team_dist r;
-				r[event.total]=1;
-				return r;
-			}
-			default:
-				assert(0);
-		}
+		return std::visit(
+			[&](auto x)->std::variant<Team_dist,Future,std::nullopt_t>{
+				if constexpr(std::is_same<decltype(x),Qual_status_future>()){
+					return Future();
+				}else if constexpr(std::is_same<decltype(x),Qual_status_in_progress>()){
+					return event_partial1[Team_event_status_rank(seconds(limits.by_team[team]))];
+				}else if constexpr(
+					std::is_same<decltype(x),Qual_status_complete>()
+					|| std::is_same<decltype(x),Tournament_status_picking_in_progress>()
+				){
+					return event_partial1[Team_event_status_post_rank(event.qual_points)];
+				}else if constexpr(
+					std::is_same<decltype(x),Tournament_status_picking_complete>()
+					|| std::is_same<decltype(x),Tournament_status_eliminations_in_progress>()
+				){
+					return event_partial1[Team_event_status_post_pick(
+						event.qual_points+event.alliance_points
+					)];
+				}else if constexpr(
+					std::is_same<decltype(x),Tournament_status_eliminations_complete>()
+					|| std::is_same<decltype(x),Tournament_status_awards_in_progress>()
+				){
+					return event_partial1[Team_event_status_post_elims(
+						event.qual_points+event.alliance_points+event.elim_points
+					)];
+				}else if constexpr(std::is_same<decltype(x),Tournament_status_complete>()){
+					Team_dist r;
+					r[event.total]=1;
+					return r;
+				}else{
+					//this should be unreachable.
+					static_assert(0);
+				}
+			},
+			limits.status
+		);
 	};
 
 	Skill_estimates skill=skill_estimates(f,district,skill_method);
@@ -415,22 +425,19 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 			}else{
 				//was found in estimated ranks
 				if(event_points.size()==0){
-					switch(event_data.status){
-						case Tournament_status::FUTURE:
-							found|=Future();
-							break;
-						case Tournament_status::COMPLETE:{
-							//assume that since it's not recorded, you're getting 0 points
-							Team_dist r;
-							r[0]=1;
-							return r;
-						}
-						default:
-							PRINT(team_info.team_key);
-							PRINT(event.key);
-							PRINT(event_data.status);
+					if(event_data.status==Qual_status_future()){
+						found|=Future();
+					}else if(event_data.status==Tournament_status_complete()){
+						//assume that since it's not recorded, you're getting 0 points
+						Team_dist r;
+						r[0]=1;
+						return r;
+					}else{
+						PRINT(team_info.team_key);
+						PRINT(event.key);
+						PRINT(event_data.status);
 
-							assert(0);
+						assert(0);
 					}
 				}else{
 					found|=team_event_status(team_info.team_key,event_points[0]);

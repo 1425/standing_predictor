@@ -87,13 +87,34 @@ std::variant<A,B,C,D> rand(std::variant<A,B,C,D> const*){
 
 template<typename A,typename B,typename C,typename D,typename E,typename F>
 std::variant<A,B,C,D,E,F> rand(std::variant<A,B,C,D,E,F> const*){
-	switch(rand()%4){
+	switch(rand()%6){
 		case 0: return rand((A*)0);
 		case 1: return rand((B*)0);
 		case 2: return rand((C*)0);
 		case 3: return rand((D*)0);
 		case 4: return rand((E*)0);
 		case 5: return rand((F*)0);
+		default:
+			assert(0);
+	}
+}
+
+template<
+	typename A,typename B,typename C,typename D,
+	typename E,typename F,typename G,typename H,
+	typename I
+>
+std::variant<A,B,C,D,E,F,G,H,I> rand(std::variant<A,B,C,D,E,F,G,H,I> const*){
+	switch(rand()%9){
+		case 0: return rand((A*)0);
+		case 1: return rand((B*)0);
+		case 2: return rand((C*)0);
+		case 3: return rand((D*)0);
+		case 4: return rand((E*)0);
+		case 5: return rand((F*)0);
+		case 6: return rand((G*)0);
+		case 7: return rand((H*)0);
+		case 8: return rand((I*)0);
 		default:
 			assert(0);
 	}
