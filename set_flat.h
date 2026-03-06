@@ -111,6 +111,16 @@ class set_flat{
 		return r;
 	}
 
+	template<typename Func>
+	auto group(Func f)const{
+		using K=decltype(f(*begin()));
+		std::map<K,set_flat> r;
+		for(auto const& x:*this){
+			r[f(x)].data|=x;
+		}
+		return r;
+	}
+
 	bool operator!=(std::set<T>)const;
 
 	auto operator<=>(set_flat const&)const=default;
@@ -262,14 +272,7 @@ std::map<K,V> remove_keys(std::map<K,V> a,set_flat<K> const& b){
 
 template<typename Func,typename T>
 auto group(Func f,set_flat<T> const& a){
-	using K=decltype(f(*std::begin(a)));
-	std::map<K,set_flat<T>> r;
-	//if did this inside of set_flat could take advantage of the fact that the next item will always be
-	//at the end and avoid the O(log(n)) time to search.
-	for(auto const& k:a){
-		r[f(k)]|=k;
-	}
-	return r;
+	return a.group(f);
 }
 
 template<typename T>
