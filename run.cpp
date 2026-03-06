@@ -206,7 +206,7 @@ std::pair<Point,double> find_cutoff(
 	unsigned eliminating
 ){
 	if(eliminating==0){
-		return make_pair(Point(0),1.0);
+		return make_pair(Point(-1),0);
 	}
 	unsigned total=0;
 	for(auto [points,teams]:these_points){
@@ -216,6 +216,7 @@ std::pair<Point,double> find_cutoff(
 			return make_pair(points,1-double(excess)/teams);
 		}
 	}
+	//return make_pair(std::numeric_limits<Point>::max(),0);
 	print_r(these_points);
 	print_r(these_points.size());
 	PRINT(sum(values(these_points)));
@@ -227,7 +228,7 @@ auto find_cutoff(map<pair<bool,Point>,unsigned> these_points,unsigned eliminatin
 	//if for some reason, there are equal or fewer teams than slots, then return 
 	//that 0 points is the cutoff, and there is no excess.
 	if(eliminating==0){
-		return make_pair(Point(0),1.0);
+		return make_pair(Point(-1),0.0);
 	}
 
 	unsigned total=0;
@@ -246,7 +247,7 @@ auto find_cutoff(flat_map<pair<bool,Point>,unsigned> these_points,unsigned elimi
 	//if for some reason, there are equal or fewer teams than slots, then return 
 	//that 0 points is the cutoff, and there is no excess.
 	if(eliminating==0){
-		return make_pair(Point(0),1.0);
+		return make_pair(Point(-1),0.0);
 	}
 
 	unsigned total=0;
@@ -266,7 +267,7 @@ std::pair<Point,double> find_cutoff(flat_map2<pair<bool,POINT>,Count> const& the
 	//if for some reason, there are equal or fewer teams than slots, then return 
 	//that 0 points is the cutoff, and there is no excess.
 	if(eliminating==0){
-		return make_pair(Point(0),1.0);
+		return make_pair(Point(-1),0.0);
 	}
 
 	unsigned total=0;
@@ -291,7 +292,7 @@ std::pair<Point,double> find_cutoff(flat_map2<pair<bool,POINT>,Count> const& the
 template<typename POINT,std::integral Count>
 std::pair<Point,double> find_cutoff(map_fixed<pair<bool,POINT>,Count> const& these_points,unsigned eliminating){
 	if(eliminating==0){
-		return make_pair(Point(0),1.0);
+		return make_pair(Point(-1),0.0);
 	}
 
 	unsigned total=0;
@@ -634,6 +635,7 @@ Run_result run_calc(
 	nyi*/
 
 	for(auto iteration:range(iterations)){
+		//cout<<"------start iter--------------\n";
 		(void)iteration;
 		//PRINT(iteration);
 		//final_points.clear();
@@ -655,13 +657,17 @@ Run_result run_calc(
 		/*for(auto x:final_points){
 			PRINT(sum(values(x)));
 		}
-		PRINT(dcmp_cutoff);*/
-
+		PRINT(dcmp_cutoff);
+		PRINT(input.dcmp.size());*/
 		//for(auto [dcmp_index,dcmp]:enumerate(input.dcmp)){
 		for(size_t dcmp_index=0;dcmp_index<input.dcmp.size();dcmp_index++){
+			//cout<<"+++++start dcmp\n";
 			auto const& dcmp=input.dcmp[dcmp_index];
 			auto & final_points_this=final_points[dcmp_index];//not sure that this should really be mutable.
 			auto const& dcmp_cutoff_this=dcmp_cutoff[dcmp_index];
+			//PRINT(sum(values(final_points_this)));
+			//print_r(final_points_this);
+			//PRINT(dcmp_cutoff_this);
 			for(auto [earned,teams]:final_points_this){
 				auto [cm,points]=earned;
 				assert(points>=0);
@@ -676,9 +682,13 @@ Run_result run_calc(
 				}
 
 				if(points==dcmp_cutoff_this.first){
+					//PRINT(points);
+					//PRINT(dcmp_cutoff_this);
 					//would be cleaner to have the excess come back as an integer
 					//so that we can't be off by one by rounding.
-					teams*=dcmp_cutoff_this.second;
+					//PRINT(teams);
+					teams*=(1-dcmp_cutoff_this.second);
+					//PRINT(teams);
 				}
 
 				for(unsigned i=0;i<teams;i++){
@@ -711,6 +721,7 @@ Run_result run_calc(
 					}
 					post_dcmp_points[pts]++;
 				}
+				//PRINT(sum(values(post_dcmp_points)));
 			}
 		}
 
