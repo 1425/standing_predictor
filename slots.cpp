@@ -13,7 +13,6 @@ std::optional<int> dcmp_slots_inner(tba::District_key const& district){
 		{"2012fim",65},
 		{"2013fim",69},
 		{"2014fim",70},
-		{"2015fim",105},
 
 		{"2016chs",58},
 		{"2017chs",58},
@@ -28,8 +27,44 @@ std::optional<int> dcmp_slots_inner(tba::District_key const& district){
 		{"2014mar",58},
 
 		{"2014ne",54},
-		//{"2014pnw",
-		
+		{"2014pnw",64},
+
+		{"2015fim",102},
+		{"2015in",32},
+		{"2015mar",55},
+		{"2015ne",60},
+		{"2015pnw",64},
+
+		{"2016chs",58},
+		{"2016in",32},
+		{"2016fim",102},
+		{"2016mar",60},
+		{"2016nc",32},
+		{"2016ne",64},
+		{"2016pnw",64},
+		{"2016pch",45},
+
+		{"2017chs",58},
+		{"2017in",32},
+		{"2017isr",45},
+		{"2017fim",160},
+		{"2017mar",60},
+		{"2017ne",64},
+		{"2017nc",32},
+		{"2017ont",60},
+		{"2017pnw",64},
+		{"2017pch",45},
+
+		{"2018isr",45},
+		{"2018mar",60},
+		{"2018nc",32},
+		{"2018ont",80},
+		{"2018in",32},
+		{"2018fim",160},
+		{"2018ne",64},
+		{"2018pnw",64},
+		{"2018pch",45},
+
 		//These are the as-scheduled sizes
 		{"2020fim",200},
 		{"2020chs",80},
@@ -157,6 +192,54 @@ int worlds_slots(tba::District_key const& key){
 	}
 
 	map<string,int> slots{
+		//Note: These numbers are taken from:
+		//https://www.chiefdelphi.com/t/frc-blogged-standard-district-points-ranking-system-more-info/131273?page=2
+		//and are not adjusted for how many slots are taken up by awards.
+		{"2014fim",32},
+		{"2014mar",18},
+		{"2014ne",24},
+		{"2014pnw",24},
+
+		//Note: For 2015 the award slots are not subtracted because 
+		//how many there are Chairmans, EI, RAS, listed
+		//could look at this empirically to see how many of these are awarded.
+		{"2015fim",68},
+		{"2015in",10},
+		{"2015mar",25},
+		{"2015ne",35},
+		{"2015pnw",31},
+
+		{"2016chs",25-3-1-2},
+		{"2016in",9-1-1-1},
+		{"2016fim",76-4-1-1},
+		{"2016mar",22-2-1-2},
+		{"2016nc",10-1-1-2},
+		{"2016ne",34-4-1-2},
+		{"2016pnw",30-3-2-1},
+		{"2016pch",12-1-1-2},
+
+		{"2017chs",23-2-2-1},
+		{"2017fim",82-5-1-1},
+		{"2017in",10-1-1-1},
+		{"2017mar",22-2-2-1},
+		{"2017ne",37-4-2-2},
+		{"2017ont",29-3-1-1},
+		{"2017isr",16-1-2-1},
+		{"2017nc",15-1-2-1},
+		{"2017pnw",39-3-2-2},
+		{"2017pch",18-1-2-1},
+
+		{"2018chs",21-2-2-1},
+		{"2018fim",89-5-1-2},
+		{"2018mar",22-2-2-1},
+		{"2018in",9-1-2-1},
+		{"2018ne",37-4-2-2},
+		{"2018ont",29-3-1-1},
+		{"2018isr",15-1-2-1},
+		{"2018nc",14-1-2-1},
+		{"2018pnw",32-3-2-2},
+		{"2018pch",16-2-2-2},
+
 		{"2019chs",21},
 		{"2019fim",87},
 		{"2019isr",11},
