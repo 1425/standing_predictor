@@ -224,6 +224,30 @@ std::pair<Point,double> find_cutoff(
 	assert(0);
 }
 
+template<typename COUNT>
+std::pair<Point,double> find_cutoff(
+	flat_map2<Point,COUNT> these_points,
+	unsigned eliminating
+){
+	if(eliminating==0){
+		return make_pair(Point(-1),0);
+	}
+	unsigned total=0;
+	for(auto [points,teams]:these_points){
+		total+=teams;
+		if(total>=eliminating){
+			auto excess=total-eliminating;
+			return make_pair(points,1-double(excess)/teams);
+		}
+	}
+	//return make_pair(std::numeric_limits<Point>::max(),0);
+	print_r(these_points);
+	print_r(these_points.size());
+	PRINT(sum(values(these_points)));
+	PRINT(eliminating);
+	assert(0);
+}
+
 auto find_cutoff(map<pair<bool,Point>,unsigned> these_points,unsigned eliminating){
 	//if for some reason, there are equal or fewer teams than slots, then return 
 	//that 0 points is the cutoff, and there is no excess.
@@ -652,7 +676,8 @@ Run_result run_calc(
 		dcmp_cutoffs|=dcmp_cutoff;
 
 		//flat_map2<pair<bool,Point>,unsigned> post_dcmp_points;
-		map_fixed<Int_limited<0,511>,unsigned short> post_dcmp_points;
+		flat_map2<Point,unsigned short> post_dcmp_points;
+		//map_fixed<Int_limited<0,511>,unsigned short> post_dcmp_points;
 
 		/*for(auto x:final_points){
 			PRINT(sum(values(x)));
