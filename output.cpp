@@ -353,12 +353,16 @@ void gen_html(
 		return ss.str();
 	};
 
-	auto dcmp_string=[&](tba::Team_key t){
+	auto dcmp_string=[&](tba::Team_key t)->string{
 		auto f=by_team.find(t);
 		if(f==by_team.end()){
 			PRINT(in.district_short)
 			PRINT(in.year)
 			PRINT(t)
+		}
+		if(f==by_team.end()){
+			cout<<"Warning: Could not find home event for "<<t<<"\n";
+			return "";
 		}
 		assert(f!=by_team.end());
 		auto f1=f->second;
@@ -401,7 +405,12 @@ void gen_html(
 	};
 
 	auto nickname=[&](auto k){
-		auto v=by_team.at(k).nickname;
+		auto f=by_team.find(k);
+		if(f==by_team.end()){
+			cout<<"Warning: Unexpected team: "<<k<<"\n";
+			return ::as_string(k);
+		}
+		auto v=f->second.nickname;
 		assert(v);
 		return *v;
 	};
