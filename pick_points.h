@@ -30,6 +30,11 @@ std::set<tba::Team_key> teams(tba::Award const&);
 template<typename T,size_t N>
 class set_limited;
 
+std::array<tba::Team_key,0> teams(short);
+
+template<typename A,typename B>
+std::set<tba::Team_key> teams(std::pair<A,B> const&);
+
 template<size_t N>
 set_limited<tba::Team_key,N> teams(set_limited<tba::Team_key,N> const&);
 
@@ -77,6 +82,11 @@ auto teams(std::optional<T> const& a){
 		return std::vector<tba::Team_key>();
 	}
 	return teams(*a);
+}
+
+template<typename A,typename B>
+std::set<tba::Team_key> teams(std::pair<A,B> const& a){
+	return teams(a.first)|teams(a.second);
 }
 
 using Picked=std::map<tba::Team_key,Interval<bool>>;

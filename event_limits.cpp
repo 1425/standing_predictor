@@ -316,11 +316,11 @@ set_flat<tba::Team_key> teams(Point_range<tba::Team_key> a){
 	return keys(a);
 }
 
-template<typename T>
+/*template<typename T>
 //std::set<tba::Team_key> teams(std::map<tba::Team_key,T> a){
 set_flat<tba::Team_key> teams(std::map<tba::Team_key,T> a){
 	return keys(a);
-}
+}*/
 
 template<typename T>
 auto teams(flat_map<tba::Team_key,T> a){
@@ -560,23 +560,10 @@ Rank_status<District_status> district_limits(TBA_fetcher &f,tba::District_key co
 	//return sum(m);
 }
 
-void xx(TBA_fetcher &f){
-	(void)f;
-	//future
-	//qual matches in progress
-	//qual matches complete
-	//picking in progress
-	//picking complete
-	//elimination matches in progress
-	//elimination matches complete
-	//awards in progress
-	//complete
-}
-
 int event_limits_demo(TBA_fetcher &f){
 	return lock2_demo(f);
 	//return winners_demo(f);
-	return annotated_complex_demo(f);
+	//return annotated_complex_demo(f);
 
 	if(0){
 		auto a=event_limits(f,tba::Event_key("2026cahal"));

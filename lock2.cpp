@@ -560,7 +560,18 @@ void lock2_demo(TBA_fetcher &f,tba::District_key district){
 	PRINT(in);
 	PRINT(entropy(in));
 
-	auto d=[=](){
+	auto g=group([&](auto team){ return calc_dcmp_home(f,team,year(district)); },teams(in));
+
+	/*for(auto [dcmp_home,teams]:g){
+		auto out=lock2(
+	}*/
+
+	for(auto slots:dcmp_slots(district)){
+		auto out=lock2(in,slots);
+		PRINT(count(values(out)));
+	}
+
+	/*auto d=[=](){
 		auto x=dcmp_slots(district);
 		assert(x.size()==1);
 		return x[0];
@@ -575,7 +586,7 @@ void lock2_demo(TBA_fetcher &f,tba::District_key district){
 	auto out=lock2(in,d);
 	//print_r(out);
 	PRINT(in.unclaimed);
-	PRINT(count(values(out)));
+	PRINT(count(values(out)));*/
 }
 
 int multiset_test(){
@@ -605,9 +616,9 @@ int multiset_test(){
 int lock2_demo(TBA_fetcher &f){
 	//return multiset_test();
 
-	//lock2_demo(f,tba::District_key("2022chs"));
+	lock2_demo(f,tba::District_key("2021chs"));
 	//lock2_demo(f,tba::District_key("2022pnw"));
-	lock2_demo(f,tba::District_key("2026pnw"));
+	//lock2_demo(f,tba::District_key("2026pnw"));
 
 	for(auto district:districts(f)){
 		PRINT(district);

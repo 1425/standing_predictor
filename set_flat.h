@@ -264,7 +264,11 @@ template<typename Func,typename T>
 auto group(Func f,set_flat<T> const& a){
 	using K=decltype(f(*std::begin(a)));
 	std::map<K,set_flat<T>> r;
-	nyi
+	//if did this inside of set_flat could take advantage of the fact that the next item will always be
+	//at the end and avoid the O(log(n)) time to search.
+	for(auto const& k:a){
+		r[f(k)]|=k;
+	}
 	return r;
 }
 

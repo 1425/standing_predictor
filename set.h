@@ -410,4 +410,9 @@ auto seconds(std::multiset<T> const& a){
 	return to_multiset(MAP(second,a));
 }
 
+template<typename T>
+auto operator|(std::set<T> a,std::array<T,0>){
+	return std::move(a);
+}
+
 #endif

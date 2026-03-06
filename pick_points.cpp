@@ -22,6 +22,10 @@
  * (and could assume no declines if not listed, or not)
  * */
 
+std::array<tba::Team_key,0> teams(short){
+	return {};
+}
+
 using Team=tba::Team_key;
 using Event=tba::Event_key;
 using namespace std;

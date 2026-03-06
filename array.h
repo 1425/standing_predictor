@@ -170,4 +170,9 @@ T choose(std::array<T,N> const& a){
 	return a[rand()%N];
 }
 
+template<typename T>
+std::array<T,0> operator|(std::array<T,0>,std::array<T,0>){
+	return std::array<T,0>();
+}
+
 #endif
