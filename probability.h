@@ -17,6 +17,8 @@ using Point=short;
 
 using Team_dist=flat_map2<Point,Pr>;
 
+double entropy(Team_dist const&);
+
 template<typename T>
 double entropy(Interval<T> const& a){
 	int n=a.max-a.min+1;

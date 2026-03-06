@@ -26,4 +26,9 @@ flat_map2<Point,Pr> operator+(flat_map2<Point,Pr> const& a,int i){
 	return r;
 }
 
-
+double entropy(Team_dist const& a){
+	return sum(mapf(
+		[](auto x){ return -log2(x); },
+		values(a)
+	));
+}

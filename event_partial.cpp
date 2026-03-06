@@ -15,7 +15,6 @@
 
 using namespace std;
 
-
 template<typename T>
 auto to_dist(multiset_flat<T> const& a){
 	assert(!a.empty());
@@ -586,6 +585,7 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 		Team_status &t=r.by_team[team];
 		t.district_chairmans=cm.count(team);
 		t.point_dist=team_dist(team_info)+team_info.rookie_bonus;
+		skill.pre_dcmp[team]=t.point_dist;
 		t.dcmp_home=*dcmp_home;
 
 		t.already_earned=min_key(t.point_dist);

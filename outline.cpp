@@ -195,6 +195,11 @@ std::tuple<Run_result,Points_used,By_team,Skill_estimates,Annotated,std::map<tba
 	auto [run_input,skill,annotated,extra]=read_status(f,district,skill_method);
 	run_input.quick=quick;
 
+	for(auto [k,v]:skill.pre_dcmp){
+		by_team[k].point_dist=v;
+		points_used[k].pre_dcmp_dist=v;
+	}
+
 	return make_tuple(
 		run_calc(run_input),
 		points_used,

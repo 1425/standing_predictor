@@ -658,20 +658,6 @@ void gen_html(
 		
 		const auto team_num=a.team.str().substr(3,20);
 
-		{
-			std::stringstream u;
-			u<<"https://frc-events.firstinspires.org/"<<in.year<<"/team/"<<team_num;
-			ss<<link(u.str(),"FRC Events");
-		}
-		ss<<"<br>";
-		ss<<link("https://thebluealliance.com/team/"+team_num+"/"+::as_string(in.year),"The Blue Alliance");
-		ss<<"<br>";
-		{
-			std::stringstream u;
-			u<<"https://www.statbotics.io/team/"<<team_num<<"/"<<in.year;
-			ss<<link(u.str(),"Statbotics");
-		}
-
 		/*ss<<h3("Points used");
 		ss<<as_table(x);*/
 
@@ -750,6 +736,21 @@ void gen_html(
 			show_event(colorize(a.cmp_make),cmp.finals,"");
 		}
 		ss<<"</table>";
+
+		ss<<"<br>";
+		{
+			std::stringstream u;
+			u<<"https://frc-events.firstinspires.org/"<<in.year<<"/team/"<<team_num;
+			ss<<link(u.str(),"FRC Events");
+		}
+		ss<<"<br>";
+		ss<<link("https://thebluealliance.com/team/"+team_num+"/"+::as_string(in.year),"The Blue Alliance");
+		ss<<"<br>";
+		{
+			std::stringstream u;
+			u<<"https://www.statbotics.io/team/"<<team_num<<"/"<<in.year;
+			ss<<link(u.str(),"Statbotics");
+		}
 
 		/*try{
 			ss<<p(in.extra.at(a.team));
