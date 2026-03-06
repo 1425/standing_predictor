@@ -9,6 +9,18 @@
 #include "vector_void.h"
 #include "print_r.h"
 
+template<typename T>
+auto median(std::multiset<T> const& a){
+	return median(multiset_flat<T>(to_vec(a)));
+}
+
+template<typename T>
+auto quartiles(std::multiset<T> const& a){
+	auto b=sorted(to_vec(a));
+	assert(!b.empty());
+	return make_tuple(b[b.size()/4],b[b.size()/2],b[b.size()*3/4]);
+}
+
 using Year=tba::Year;
 using District_abbreviation=tba::District_abbreviation;
 using District_key=tba::District_key;
@@ -58,18 +70,6 @@ Skill_estimates skill_estimates(TBA_fetcher &f,District_key const& district,Skil
 	}
 }
 
-template<typename T>
-auto median(std::multiset<T> const& a){
-	return median(multiset_flat<T>(to_vec(a)));
-}
-
-template<typename T>
-auto quartiles(std::multiset<T> const& a){
-	auto b=sorted(to_vec(a));
-	assert(!b.empty());
-	return make_tuple(b[b.size()/4],b[b.size()/2],b[b.size()*3/4]);
-}
-
 Skill_method decode(std::span<char*> a,Skill_method const*){
 	assert(a.size()==1);
 	std::string s(a[0]);
@@ -85,9 +85,8 @@ Skill_method decode(std::span<char*> a,Skill_method const*){
 }
 
 std::optional<District_key> prev(TBA_fetcher& f,District_key a){
-	Year year(stoi(a.get().substr(0,4)));
 	auto abbrev=a.get().substr(4,100);
-	Year year_p=year-1;
+	Year year_p=year(a)-1;
 
 	auto h=tba::history(f,abbrev);
 	auto found=filter([=](auto x){ return x.year==year_p; },h);
@@ -261,6 +260,7 @@ Skill_by_pts calc_skill_inner(TBA_fetcher& f){
 		auto x=tba::dcmp_history(f,d);
 		auto years=to_set(mapf([](auto x){ return x.event.year; },x));
 		years-=Year(2020);//because the dcmp events did not happen in a normal way.
+		years-=Year(2021);//because basically no events happened that year.
 		district_years[d]=years;
 	}
 
@@ -300,6 +300,10 @@ Skill_by_pts calc_skill_inner(TBA_fetcher& f){
 		auto k2=make_pair(year+1,team);
 		auto f=pts.find(k2);
 		if(f==pts.end()){
+			continue;
+		}
+		auto found=f->second.first;
+		if(found==0){
 			continue;
 		}
 		adjacent[v.first]|=f->second.first;
