@@ -14,9 +14,10 @@ def parse_line(s):
 def parse_data(data):
     return list(map(parse_line,data.splitlines()))
 
-def plot(info,xlabel,ylabel):
+def plot(info,xlabel,ylabel,img_format):
     x2=list(map(lambda x: x[0],info))
     y2=list(map(lambda x: x[1],info))
+    #plt.style.use('dark_background')
     fig, ax = plt.subplots(figsize=(8,4))
 #sys.stderr=tmp
 #print ('bbb')
@@ -46,18 +47,19 @@ def plot(info,xlabel,ylabel):
 #plt.show()
     plt.tight_layout()
     #plt.savefig("out.svg")
-    plt.savefig(sys.stdout,format='png')
+    plt.savefig(sys.stdout,format=img_format)
 #print('bar')
 
 def main():
     a=ArgumentParser()
     a.add_argument('--x')
     a.add_argument('--y')
+    a.add_argument('--format',default='png')
     args=a.parse_args()
 
     data=sys.stdin.read()
 
-    plot(parse_data(data),args.x,args.y)
+    plot(parse_data(data),args.x,args.y,args.format)
 
 if __name__=='__main__':
     #print('hello')
