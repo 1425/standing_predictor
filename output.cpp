@@ -328,6 +328,63 @@ std::string show_skill(Skill_estimates const& in){
 	return ss.str();
 }
 
+std::string color(Tournament_status const& a){
+	switch(a){
+		case Tournament_status::FUTURE:
+			return "#ccccff";
+		case Tournament_status::COMPLETE:
+			return "#ffffff";
+		default:
+			return "#ffffcc";
+	}
+}
+
+std::string colorize(Tournament_status const& a){
+	return tag(
+		"td bgcolor=\""+color(a)+"\"",
+		tag("font color=black",a)
+	);
+}
+
+std::string event_status(Annotated const& a){
+	std::stringstream o;
+	o<<h2("Events");
+	o<<"<table border>";
+	o<<tr(th("Type")+th("Name")+th("Date")+th("Status"));
+	auto show_event=[&](auto const& x){
+		auto [event,extra]=x;
+		const auto name=[&]()->string{
+			if(event.short_name && event.short_name!="{}"){
+				return *event.short_name;
+			}
+			return ::as_string(event.key);
+		}();
+
+		o<<tr(
+			td(event.event_type)+
+			td(link(event.key,name))+
+			td([&]()->string{
+				assert(event.start_date);
+				assert(event.end_date);
+				return as_string(Interval<tba::Date>{*event.start_date,*event.end_date});
+			}())+
+			colorize(extra.status)
+		);
+	};
+
+	for(auto event:a.local){
+		show_event(event);
+	}
+	for(auto dcmp:a.dcmp){
+		show_event(dcmp.finals);
+	}
+	for(auto cmp:a.cmp){
+		show_event(cmp.finals);
+	}
+	o<<"</table>";
+	return o.str();
+}
+
 void gen_html(
 	std::ostream& o,
 	Gen_html_input const& in,
@@ -652,7 +709,7 @@ void gen_html(
 			}();
 			ss<<td(link(event.key,event_name));
 			ss<<td(date);
-			ss<<td(event_data.status);
+			ss<<colorize(event_data.status);
 			//ss<<td(event);
 			//ss<<td(event_data);
 			ss<<td(event_data.unclaimed);
@@ -756,6 +813,7 @@ void gen_html(
 			link("https://www.thebluealliance.com/events/"+in.district_short+"/"+::as_string(in.year)+"#rankings","The Blue Alliance")+"<br>"+
 			//link("http://frclocks.com/index.php?d="+district_short,"FRC Locks")+"(slow)<br>"+
 			link("http://frclocks.com/districts/"+in.district_short+".html","FRC Locks")+"<br>"+
+			event_status(limits)+
 			cutoff_table1+
 			cutoff_table_cmp+
 			h2("Team Probabilities")+
