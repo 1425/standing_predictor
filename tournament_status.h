@@ -23,6 +23,8 @@ using Tournament_status=std::variant<
 	Tournament_status_complete
 >;
 
+std::string show(Tournament_status const&);
+
 bool in_progress(Tournament_status);
 
 #endif

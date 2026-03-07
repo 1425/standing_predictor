@@ -341,7 +341,7 @@ std::string color(Tournament_status const& a){
 std::string colorize(Tournament_status const& a){
 	return tag(
 		"td bgcolor=\""+color(a)+"\"",
-		tag("font color=black",a)
+		tag("font color=black",show(a))
 	);
 }
 
