@@ -425,7 +425,18 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 			auto f=event_data.by_team.find(team_info.team_key);
 			if(f==event_data.by_team.end()){
 				//not found in estimated ranks
+
+				if(event_data.status==Qual_status_future()){
+					continue;
+				}
+
+				if(!event_points.empty()){
+					PRINT(team_info.team_key);
+					PRINT(event.key);
+					PRINT(event_data.status);
+				}
 				assert(event_points.empty());
+				
 				continue;
 			}else{
 				//was found in estimated ranks
@@ -438,12 +449,21 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 						r[0]=1;
 						return r;
 					}else{
-						if(std::holds_alternative<Qual_status_in_progress>(event_data.status)){
+						if(
+							std::holds_alternative<Qual_status_in_progress>(event_data.status)
+							||std::holds_alternative<Tournament_status_picking_in_progress>(event_data.status)
+						){
 							//auto g=std::get<Qual_status_in_progress>(event_data.status);
 							//Team_event_status_rank t(g.ranks.at(team_info.team_key));
 							auto x=f->second;
 							Interval in{x.min.second,x.max.second};
 							return event_partial1[Team_event_status_rank(in)];
+						}
+						if(std::holds_alternative<Tournament_status_eliminations_in_progress>(event_data.status)){
+							auto x=f->second.min.second;
+							//this is not exactly right because might include  some points
+							//earned during playoffs.
+							return event_partial1[Team_event_status_post_pick(x)];
 						}
 						//TODO: Figure out how to get here.
 						//because it seems like can occur during an event.

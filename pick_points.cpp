@@ -551,6 +551,10 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 		}
 		return full;
 	}();
+	
+	/*cout<<"by pts:\n";
+	print_lines(enumerate(by_pts));
+	PRINT(by_alliances);*/
 
 	//now reconsile the two sets of data
 	//at any locaton, if only one team appears, then it's that team
@@ -654,9 +658,10 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 
 	//see if all the spaces are filled in
 	auto complete=[=]()->bool{
-		return 0;//if(
-		nyi/*auto m=mapf([](auto x){ return x.picks.size()==3; },*e);
-		return m.size()==8 && all(m);*/
+		return t.size()>=24;//will work for normal event types, anyway.
+		//PRINT(combo);
+		//nyi/*auto m=mapf([](auto x){ return x.picks.size()==3; },*e);
+		//return m.size()==8 && all(m);*/
 	}();
 
 	//we might also know that they are complete if we see playoff matches
@@ -703,7 +708,11 @@ Pick_points pick_points(TBA_fetcher& f,Event const& event,std::map<Team,Interval
 			//print_lines(combo);
 			//cout<<"\n";
 
-			assert(here.size()<2);
+			/*if(here.size()>=2){
+				PRINT(p);
+				PRINT(here);
+			}*/
+			//assert(here.size()<2);
 			if(here.empty()){
 				return std::nullopt;
 			}

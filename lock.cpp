@@ -462,10 +462,10 @@ Lock_result run(Lock_data const& data){
 					//currently in range to miss out
 					if(info.remaining_district_events && left_to_claim.second){
 						if(left_to_claim.second){
-							PRINT(left_to_claim);
-							nyi
+							//PRINT(left_to_claim);
+							//nyi
 						}
-						nyi
+						//nyi
 						//then always to possibility to win
 						//could calculate minimum of what would be needed to get in range
 						//and also could calculate what it would take to get to a lock.

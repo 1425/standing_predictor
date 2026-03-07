@@ -1,5 +1,7 @@
 #include "tba.h"
 #include<fstream>
+#include<queue>
+#include<future>
 #include "../tba/tba.h"
 #include "set.h"
 #include "util.h"
@@ -253,20 +255,39 @@ struct TBA_fetcher_refresh{
 
 		//now go try to refresh the items.
 		cout<<"to refresh("<<to_refresh.size()<<"): "<<take<5>(to_refresh)<<"\n";
-		for(auto [url,old_data]:to_refresh){
+
+		/*for(auto [url,old_data]:to_refresh){
 			//PRINT(url);
 			auto f2=inner.fetcher.fetch(url);
 
 			//diff(f2,old_data);
 			cout<<url<<" "<<(f2.second==old_data.second)<<"\n";
 
-			//this should always error out; for now interested to see how it does.
 			try{
 				inner.cache.update(url,f2);
 			}catch(std::string const& s){
 				cout<<"Caught:"<<s<<"\n";
 			}
+		}*/
+
+		std::queue<std::future<int>> q;
+		for(auto const& x:to_refresh){
+			std::function<int(void)> f=[&]()->int{
+				auto [url,old_data]=x;
+				auto f2=inner.fetcher.fetch(url);
+				bool same=(f2.second==old_data.second);
+				cout<<url<<" "<<same<<"\n";
+				inner.cache.update(url,f2);
+				return same;
+			};
+			q.push(async(f));
 		}
+		std::vector<int> found;
+		while(!q.empty()){
+			found|=q.front().get();
+			q.pop();
+		}
+		PRINT(count(found));
 	}
 
 	Result fetch(tba::URL url){
@@ -460,6 +481,8 @@ bool playoff(tba::Competition_level a){
 }
 
 std::vector<tba::Match> playoff_matches(TBA_fetcher &f,tba::Event_key const& event){
+	//auto m=tba::event_matches(f,event);
+	//PRINT(count(mapf([](auto x){ return x.comp_level; },m)));
 	return filter(
 		[](auto const& x){ return playoff(x.comp_level); },
 		tba::event_matches(f,event)
@@ -474,6 +497,10 @@ std::vector<tba::Match_Simple> playoff_matches_simple(TBA_fetcher &f,tba::Event_
 }
 
 bool playoffs_started(TBA_fetcher &f,tba::Event_key const& event){
+	/*PRINT(event);
+	auto p1=playoff_matches(f,event);
+	PRINT(p1.size());
+	nyi*/
 	auto p=filter([](auto const& x){ return complete(x); },playoff_matches(f,event));
 	return !p.empty();
 }

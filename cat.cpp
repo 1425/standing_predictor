@@ -173,6 +173,15 @@ std::optional<Cat_result> cat(std::string const& url){
 		return Static();
 	}
 
+	if(sp.size()==4 && sp[0]=="team" && sp[2]=="awards"){
+		tba::Year year(stoi(sp[3]));
+		if(year<current_year){
+			return Static();
+		}else{
+			return Now();
+		}
+	}
+
 	#if 0
 	PRINT(sp);
 	nyi
