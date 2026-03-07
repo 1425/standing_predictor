@@ -85,6 +85,14 @@ class map_auto{
 		return f->second;
 	}
 
+	V& at(K const& a){
+		return (*this)[a];
+	}
+
+	V const& at(K const& a)const{
+		return (*this)[a];
+	}
+
 	using const_iterator=typename Data::const_iterator;
 
 	const_iterator begin()const{

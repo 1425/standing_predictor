@@ -81,6 +81,14 @@ outline: $(OUTLINE_OBJS)
 
 META_OBJS= \
 	$(TBA_OBJS) \
+	playoff_limits.o \
+	award_limits.o \
+	lock2.o\
+	cat.o \
+	event_categories.o\
+	event_limits.o\
+	tournament_status.o\
+	avatar.o\
 	meta.o \
 	util.o \
 	tba.o \
@@ -99,7 +107,7 @@ META_OBJS= \
 	plot.o\
 	rand.o\
 	subprocess.o\
-	event.o\
+	slots.o\
 	timezone.o\
 	address.o\
 	print_r.o\
@@ -119,6 +127,14 @@ meta: $(META_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -lgumbo -o $@
 
 DECLINE_OBJS= \
+	playoff_limits.o \
+	award_limits.o \
+	lock2.o\
+	cat.o \
+	event_categories.o\
+	event_limits.o\
+	tournament_status.o\
+	avatar.o\
 	declines.o \
 	frc_api.o \
 	rank_pts.o \
@@ -142,7 +158,7 @@ DECLINE_OBJS= \
 	plot.o\
 	rand.o\
 	subprocess.o\
-	event.o\
+	slots.o\
 	timezone.o\
 	address.o\
 	print_r.o\
