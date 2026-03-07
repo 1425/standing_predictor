@@ -490,6 +490,34 @@ int rank_pts2(int event_size,int rank){
 	return rank_pts(event_size,rank);
 }
 
+auto main_body(Ranking_match_status<tba::Team_key> const& info){
+	Team_namer namer;
+	auto g=namer.convert(info);
+	Rank_results<Team_alias> r;
+	r.ranks=rank_limits_m(g);
+	auto event_size=g.standings.size();
+	r.points=points(r.ranks,event_size);
+	auto total_points=rank_pts(event_size);
+	size_t min_pts_taken=sum(MAP(min,values(r.points)));
+	assert(min_pts_taken<=total_points);
+	r.unclaimed_points=total_points-min_pts_taken;
+	//r.status=info.matches_completed?Event_status::IN_PROGRESS:Event_status::FUTURE;
+	r.status=[=]()->Qual_status{
+		if(info.matches_completed){
+			return Qual_status_in_progress(
+				info.matches_completed,
+				info.matches_completed+info.schedule.size()
+			);
+		}
+		return Qual_status_future{};
+	}();
+	return namer.convert(r);
+}
+
+Rank_results<tba::Team_key> rank_limits_prior(TBA_fetcher& f,tba::Event_key const& event){
+	return main_body(ranking_match_status_prior(f,event));
+}
+
 Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& event){
 	
 	/*auto g=get(f,event);
@@ -585,27 +613,7 @@ Rank_results<tba::Team_key> rank_limits(TBA_fetcher &f,tba::Event_key const& eve
 		return r;
 	}
 
-	Team_namer namer;
-	auto g=namer.convert(info);
-	Rank_results<Team_alias> r;
-	r.ranks=rank_limits_m(g);
-	auto event_size=g.standings.size();
-	r.points=points(r.ranks,event_size);
-	auto total_points=rank_pts(event_size);
-	size_t min_pts_taken=sum(MAP(min,values(r.points)));
-	assert(min_pts_taken<=total_points);
-	r.unclaimed_points=total_points-min_pts_taken;
-	//r.status=info.matches_completed?Event_status::IN_PROGRESS:Event_status::FUTURE;
-	r.status=[=]()->Qual_status{
-		if(info.matches_completed){
-			return Qual_status_in_progress(
-				info.matches_completed,
-				info.matches_completed+info.schedule.size()
-			);
-		}
-		return Qual_status_future{};
-	}();
-	return namer.convert(r);
+	return main_body(info);
 }
 
 template<typename Team,typename T>

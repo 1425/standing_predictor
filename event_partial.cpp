@@ -341,13 +341,18 @@ bool complete(TBA_fetcher &f,District_cmp_complex_annotated<A,B> const& a){
 	return complete(f,a.finals);
 }
 
-std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::string>> read_status(TBA_fetcher &f,tba::District_key const& district,Skill_method skill_method){
+std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::string>> read_status(
+	TBA_fetcher &f,
+	tba::District_key const& district,
+	Skill_method skill_method,
+	std::optional<tba::Date> cutoff_date
+){
 	//go look at all the event statuses 
 	//and then go through the standings looking at teams with knowledge of the status of the events
 
 	const auto event_partial1=event_partial(f);
 
-	auto cat=annotated(f,district);
+	auto cat=annotated(f,district,cutoff_date);
 
 	auto team_event_status=[=](tba::Team_key team,tba::Event_points event)->std::variant<Team_dist,Future,std::nullopt_t>{
 		//The options are:
@@ -433,6 +438,8 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 						r[0]=1;
 						return r;
 					}else{
+						//TODO: Figure out how to get here.
+						//because it seems like can occur during an event.
 						PRINT(team_info.team_key);
 						PRINT(event.key);
 						PRINT(event_data.status);
@@ -520,7 +527,7 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 		assert(0);
 	};
 
-	auto dl=district_limits(f,district);
+	//auto dl=district_limits(f,district);
 
 	auto team_dist=[&](auto team_info)->Team_dist{
 		auto x=team_dist_pre_dcmp(team_info);
@@ -588,7 +595,6 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 			//this happens when there is no event. See 2021.
 			continue;
 		}
-		//x.rookie_bonus;
 		Team_status &t=r.by_team[team];
 		t.district_chairmans=cm.count(team);
 		t.point_dist=team_dist(team_info)+team_info.rookie_bonus;
@@ -611,7 +617,7 @@ int event_partial_demo(TBA_fetcher &f){
 	auto e=event_partial(f);
 	//print_r(e);
 
-	read_status(f,tba::District_key("2025pnw"),Skill_method::NONE);
+	read_status(f,tba::District_key("2025pnw"),Skill_method::NONE,std::nullopt);
 
 	if(0){
 		#define X(A,B) cout<<""#B<<"\n"; for(auto [k,v]:e.B){ cout<<"\t"<<k<<"\t"<<quartiles(v)<<"\n"; }

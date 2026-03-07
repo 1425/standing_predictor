@@ -796,8 +796,20 @@ auto teams(Rank_results<Team> const& a){
 	return t;
 }
 
-Pick_limits pick_limits(TBA_fetcher &f,tba::Event_key const& event,std::map<tba::Team_key,Interval<Rank>> const& ranks){
-	auto p=pick_points(f,event,ranks);
+Pick_limits pick_limits(
+	TBA_fetcher &f,
+	tba::Event_key const& event,
+	std::map<tba::Team_key,Interval<Rank>> const& ranks,
+	bool normal
+){
+	auto p=[&]()->Pick_points{
+		if(normal){
+			return pick_points(f,event,ranks);
+		}else{
+			return Picks_no_data();
+		}
+	}();
+
 	if(std::holds_alternative<Picks_known_empty>(p)){
 		Pick_limits r;
 		for(auto team:keys(ranks)){
@@ -827,6 +839,9 @@ Pick_limits pick_limits(TBA_fetcher &f,tba::Event_key const& event,std::map<tba:
 		r.unclaimed=sum(take(ranks.size(),values));
 
 		r.status=[&](){
+			if(!normal){
+				return Event_status::FUTURE;
+			}
 			if(playoffs_started(f,event) || awards_done(f,event) || event_timed_out(f,event)){
 				return Event_status::COMPLETE;
 			}

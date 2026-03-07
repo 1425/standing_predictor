@@ -124,7 +124,12 @@ bool playoffs_expected(TBA_fetcher &f,tba::Event_key const& event){
 	nyi
 }
 
-Playoff_limits playoff_limits(TBA_fetcher& f,tba::Event_key const& event,std::map<Team_key,Interval<bool>> const& a){
+Playoff_limits playoff_limits(
+	TBA_fetcher& f,
+	tba::Event_key const& event,
+	std::map<Team_key,Interval<bool>> const& a,
+	bool normal
+){
 	//the formula for the number of points actually changes per-year
 	//but before we do that, look at whether the playoffs are complete and 
 	//we can just read out the data from the ranking list.
@@ -133,7 +138,7 @@ Playoff_limits playoff_limits(TBA_fetcher& f,tba::Event_key const& event,std::ma
 	//2) awards that are known to be after matches have started being given out
 	//3) finals matches have been played enough so that we know a winner
 
-	if(playoffs_done(f,event)){
+	if(normal && playoffs_done(f,event)){
 		auto listed=listed_playoff_points(f,event);
 		if(listed){
 			Playoff_limits r;
@@ -214,6 +219,10 @@ Playoff_limits playoff_limits(TBA_fetcher& f,tba::Event_key const& event,std::ma
 	//obviously, this ought to at least look whether matches have started being played so that can say if in progress.
 	//and also, could look it if the whole event is finished.
 	r.status=[&](){
+		if(!normal){
+			return Event_status::FUTURE;
+		}
+
 		if(complete(f,event)){
 			return Event_status::COMPLETE;
 		}

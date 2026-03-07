@@ -64,9 +64,22 @@ auto extras(T const& a){
 
 struct Walker{
 	TBA_fetcher &f;
+	std::optional<tba::Date> cutoff_date;
+
+	bool use_event(tba::Event const& e){
+		if(!cutoff_date){
+			return 1;
+		}
+		//return *e.end_date<tba::Date(std::chrono::year(2025),std::chrono::month(3),std::chrono::day(2));
+		assert(e.end_date);
+		return e.end_date<=cutoff_date;
+	}
 
 	auto operator()(tba::Event const& a){
-		return Event_annotated{a,event_limits(f,a.key)};
+		return Event_annotated{
+			a,
+			event_limits(f,a.key,use_event(a))
+		};
 	}
 
 	auto operator()(std::vector<tba::Event> const& a){
@@ -167,8 +180,12 @@ Event_categories_annotated<
 	Rank_status<Tournament_status>,
 	Tournament_status,
 	Rank_status<District_status>
-> annotated(TBA_fetcher &f,tba::District_key const& a){
-	return mapf_preserve(Walker{f},categorize_events(f,a));
+> annotated(
+	TBA_fetcher &f,
+	tba::District_key const& a,
+	std::optional<tba::Date> cutoff
+){
+	return mapf_preserve(Walker{f,cutoff},categorize_events(f,a));
 }
 
 int annotated_complex_demo(TBA_fetcher& f){

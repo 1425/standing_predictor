@@ -42,7 +42,13 @@ struct Event_partial{
 std::ostream& operator<<(std::ostream&,Event_partial const&);
 
 Event_partial event_partial(TBA_fetcher&);
-std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::string>> read_status(TBA_fetcher&,tba::District_key const&,Skill_method);
+
+std::tuple<
+	Run_input,
+	Skill_estimates,
+	Annotated,
+	std::map<tba::Team_key,std::string>
+> read_status(TBA_fetcher&,tba::District_key const&,Skill_method,std::optional<tba::Date>);
 
 int event_partial_demo(TBA_fetcher&);
 

@@ -1,7 +1,7 @@
 #include "ranking_match_status.h"
 #include "set_limited.h"
 
-Ranking_match_status<tba::Team_key> ranking_match_status(TBA_fetcher &f,tba::Event_key const& event){
+Ranking_match_status<tba::Team_key> ranking_match_status_inner(TBA_fetcher &f,tba::Event_key const& event,bool normal){
 	//Note that at the moment this doesn't have incomplete events to look at
 	//so it's only half tested.
 
@@ -43,7 +43,7 @@ Ranking_match_status<tba::Team_key> ranking_match_status(TBA_fetcher &f,tba::Eve
 		//r.schedule|=match1;
 
 		auto rp_totals_m=rp(match);
-		if(!rp_totals_m){
+		if(!rp_totals_m || !normal){
 			//cout<<"RP? "<<match.key<<"\n";
 			r.schedule|=match1;
 		}else{
@@ -60,4 +60,10 @@ Ranking_match_status<tba::Team_key> ranking_match_status(TBA_fetcher &f,tba::Eve
 	return r;
 }
 
+Ranking_match_status<tba::Team_key> ranking_match_status_prior(TBA_fetcher &f,tba::Event_key const& event){
+	return ranking_match_status_inner(f,event,0);
+}
 
+Ranking_match_status<tba::Team_key> ranking_match_status(TBA_fetcher &f,tba::Event_key const& event){
+	return ranking_match_status_inner(f,event,1);
+}

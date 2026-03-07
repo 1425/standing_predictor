@@ -67,6 +67,7 @@ template<typename Team>
 PRINT_R_ITEM(Rank_results<Team>,RANK_RESULTS)
 
 Rank_results<tba::Team_key> rank_limits(TBA_fetcher&,tba::Event_key const&);
+Rank_results<tba::Team_key> rank_limits_prior(TBA_fetcher&,tba::Event_key const&);
 
 std::optional<std::map<tba::Team_key,Rank>> listed_ranks(TBA_fetcher&,tba::Event_key const&);
 

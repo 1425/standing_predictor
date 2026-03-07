@@ -160,7 +160,13 @@ bool includes_chairmans(std::vector<tba::Award> a){
 	return !t.empty();
 }
 
-Award_points listed_award_points(TBA_fetcher &f,tba::Event_key event){
+Award_points listed_award_points(TBA_fetcher &f,tba::Event_key event,bool normal){
+	if(!normal){
+		Award_points r;
+		r.done=0;
+		return r;
+	}
+
 	auto found=tba::event_awards(f,event);
 	auto m=mapf(
 		[](auto x){
@@ -196,7 +202,12 @@ Rank_value max_rank_value(int event_size){
 }
 
 //Rank_status<Event_status> award_limits(TBA_fetcher &f,tba::Event_key event,map<Team,Rank_value> already_given){
-Rank_status<Event_status,flat_map> award_limits(TBA_fetcher &f,tba::Event_key event,map<Team,Rank_value> already_given){
+Rank_status<Event_status,flat_map> award_limits(
+	TBA_fetcher &f,
+	tba::Event_key event,
+	map<Team,Rank_value> already_given,
+	bool normal
+){
 	//1) calculate the total points already awarded
 	//2) calculate total theoretical points at this event
 	//this gives unclaimed total points 
@@ -240,6 +251,9 @@ Rank_status<Event_status,flat_map> award_limits(TBA_fetcher &f,tba::Event_key ev
 	);
 
 	r.status=[&](){
+		if(!normal){
+			return Event_status::FUTURE;
+		}
 		if(complete(f,event)){
 			return Event_status::COMPLETE;
 		}
@@ -252,8 +266,13 @@ Rank_status<Event_status,flat_map> award_limits(TBA_fetcher &f,tba::Event_key ev
 	return r;
 }
 
-Rank_status<Event_status> award_limits(TBA_fetcher &f,tba::Event_key const& event,std::set<Team> const& teams){
-	auto b=listed_award_points(f,event);
+Rank_status<Event_status> award_limits(
+	TBA_fetcher &f,
+	tba::Event_key const& event,
+	std::set<Team> const& teams,
+	bool normal
+){
+	auto b=listed_award_points(f,event,normal);
 	if(b.done){
 		Rank_status<Event_status> r;
 		r.unclaimed=Rank_value();
@@ -266,7 +285,7 @@ Rank_status<Event_status> award_limits(TBA_fetcher &f,tba::Event_key const& even
 		r.status=Event_status::COMPLETE;
 		return r;
 	}
-	return award_limits(f,event,b.by_team);
+	return award_limits(f,event,b.by_team,normal);
 }
 
 template<typename Status>
@@ -288,7 +307,7 @@ void fill_pct(Rank_status<Status> const& a){
 
 int award_limits_demo(TBA_fetcher &f){
 	for(auto const& event:events(f)){
-		auto a=award_limits(f,event.key,std::set<tba::Team_key>{});
+		auto a=award_limits(f,event.key,std::set<tba::Team_key>{},1);
 		fill_pct(a);
 	}
 	return 0;

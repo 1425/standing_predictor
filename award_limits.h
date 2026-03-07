@@ -86,7 +86,7 @@ set_flat<tba::Team_key> teams(Rank_status<Status,MAP> const& a){
 
 //The set of teams passed in will make it give a rating to each of those even if it doesn't
 //know that they exist for any other reason.
-Rank_status<Event_status> award_limits(TBA_fetcher&,tba::Event_key const&,std::set<tba::Team_key> const&);
+Rank_status<Event_status> award_limits(TBA_fetcher&,tba::Event_key const&,std::set<tba::Team_key> const&,bool normal);
 
 int award_limits_demo(TBA_fetcher&);
 

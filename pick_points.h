@@ -100,6 +100,11 @@ using Pts=std::map<tba::Team_key,Interval<Point>>;
 
 TBA_MAKE_INST(Pick_limits,PICK_LIMITS)
 
-Pick_limits pick_limits(TBA_fetcher&,tba::Event_key const&,std::map<tba::Team_key,Interval<Rank>> const&);
+Pick_limits pick_limits(
+	TBA_fetcher&,
+	tba::Event_key const&,
+	std::map<tba::Team_key,Interval<Rank>> const&,
+	bool normal=1
+);
 
 #endif

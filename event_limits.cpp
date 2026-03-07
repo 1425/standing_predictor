@@ -312,10 +312,15 @@ auto teams(flat_map<tba::Team_key,T> a){
 }
 
 //Rank_status event_limits(TBA_fetcher &f,tba::Event_key const& event){
-Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const& event){
+Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const& event,bool normal){
 	Tournament_status tstatus=Qual_status_future();
 	//PRINT(event);
-	auto ranks=rank_limits(f,event);
+	auto ranks=[&](){
+		if(normal){
+			return rank_limits(f,event);
+		}
+		return rank_limits_prior(f,event);
+	}();
 	ranks.check();
 	auto t1=teams(ranks.ranks);
 	auto t2=teams(ranks.points);
@@ -336,7 +341,7 @@ Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const&
 		}
 	},ranks.status);
 
-	auto picks=pick_limits(f,event,ranks.ranks);
+	auto picks=pick_limits(f,event,ranks.ranks,normal);
 	auto t3=teams(picks.points);
 	auto t4=teams(picks.picked);
 	assert(t3==t4);
@@ -369,7 +374,7 @@ Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const&
 
 	//playoff_limits(f,in_playoffs);
 	//just needs be team -> interval<Point>
-	auto playoffs=playoff_limits(f,event,picks.picked);
+	auto playoffs=playoff_limits(f,event,picks.picked,normal);
 	auto t5=teams(playoffs.by_team);
 	assert(subset(t1,t5));
 	//print_r(playoffs);
@@ -390,7 +395,7 @@ Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const&
 			assert(0);
 	}
 
-	auto d=award_limits(f,event,to_std_set(t1));
+	auto d=award_limits(f,event,to_std_set(t1),normal);
 	auto t6=teams(d.by_team);
 	//PRINT(entropy(d));
 	//PRINT(d.status);

@@ -52,7 +52,8 @@ using District_status=std::variant<
 
 bool in_progress(District_status);
 
-Rank_status<Tournament_status> event_limits(TBA_fetcher&,tba::Event_key const&);
+Rank_status<Tournament_status> event_limits(TBA_fetcher&,tba::Event_key const&,bool normal=1);
+
 Rank_status<District_status> district_limits(TBA_fetcher&,tba::District_key const&);
 
 int event_limits_demo(TBA_fetcher&);

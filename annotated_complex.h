@@ -78,7 +78,12 @@ using Annotated=Event_categories_annotated<
 	Tournament_status,
 	Rank_status<District_status>
 >;
-Annotated annotated(TBA_fetcher&,tba::District_key const&);
+
+Annotated annotated(
+	TBA_fetcher&,
+	tba::District_key const&,
+	std::optional<tba::Date> cutoff=std::nullopt
+);
 
 template<typename Func>
 auto mapf_preserve(Func f,tba::Event const& a){

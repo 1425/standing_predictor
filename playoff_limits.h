@@ -17,7 +17,12 @@ class TBA_fetcher;
 
 TBA_MAKE_INST(Playoff_limits,PLAYOFF_LIMITS)
 
-Playoff_limits playoff_limits(TBA_fetcher&,tba::Event_key const&,std::map<tba::Team_key,Interval<bool>> const&);
+Playoff_limits playoff_limits(
+	TBA_fetcher&,
+	tba::Event_key const&,
+	std::map<tba::Team_key,Interval<bool>> const&,
+	bool normal
+);
 
 int playoff_limits_demo(TBA_fetcher&);
 

@@ -192,7 +192,7 @@ std::tuple<Run_result,Points_used,By_team,Skill_estimates,Annotated,std::map<tba
 	}
 
 	//Run_input run_input=read_status(f,district,skill_method);
-	auto [run_input,skill,annotated,extra]=read_status(f,district,skill_method);
+	auto [run_input,skill,annotated,extra]=read_status(f,district,skill_method,std::nullopt);
 	run_input.quick=quick;
 
 	for(auto [k,v]:skill.pre_dcmp){

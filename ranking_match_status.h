@@ -144,5 +144,6 @@ std::set<Team> teams(Ranking_match_status<Team> const& a){
 }
 
 Ranking_match_status<tba::Team_key> ranking_match_status(TBA_fetcher&,tba::Event_key const&);
+Ranking_match_status<tba::Team_key> ranking_match_status_prior(TBA_fetcher&,tba::Event_key const&);
 
 #endif
