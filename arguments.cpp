@@ -159,7 +159,7 @@ void Argument_parser::parse(int argc,char **argv){
 			);
 			cerr<<"\nAvailable arguments:\n";
 			for(auto const& elem:m){
-				cout<<"\t"<<elem<<"\n";
+				cerr<<"\t"<<elem<<"\n";
 			}
 			exit(1);
 		}
