@@ -55,6 +55,7 @@ simple way:
 #include "data_range.h"
 #include "vector_fixed.h"
 #include "output.h"
+#include "index.h"
 
 //start program-specific stuff.
 
@@ -278,6 +279,7 @@ struct Args{
 	bool plot=1;
 	bool quick=0;
 	Skill_method skill_method=Skill_method::POINTS;
+	bool index=0;
 };
 
 Args parse_args(int argc,char **argv){
@@ -350,6 +352,7 @@ Args parse_args(int argc,char **argv){
 		"Do smaller number of iterations",
 		r.quick
 	);
+	p.add("--index",{},"Experimental",r.index);
 	p.parse(argc,argv);
 	return r;
 }
@@ -517,6 +520,10 @@ int main1(int argc,char **argv){
 
 	if(args.data_range_demo){
 		return data_range_demo(tba_fetcher);
+	}
+
+	if(args.index){
+		return index(tba_fetcher);
 	}
 
 	if(!args.year){

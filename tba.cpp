@@ -256,7 +256,7 @@ struct TBA_fetcher_refresh{
 		//now go try to refresh the items.
 		cout<<"to refresh("<<to_refresh.size()<<"): "<<take<5>(to_refresh)<<"\n";
 
-		/*for(auto [url,old_data]:to_refresh){
+		for(auto [url,old_data]:to_refresh){
 			//PRINT(url);
 			auto f2=inner.fetcher.fetch(url);
 
@@ -268,9 +268,9 @@ struct TBA_fetcher_refresh{
 			}catch(std::string const& s){
 				cout<<"Caught:"<<s<<"\n";
 			}
-		}*/
+		}
 
-		std::queue<std::future<int>> q;
+		/*std::queue<std::future<int>> q;
 		for(auto const& x:to_refresh){
 			std::function<int(void)> f=[&]()->int{
 				auto [url,old_data]=x;
@@ -287,7 +287,7 @@ struct TBA_fetcher_refresh{
 			found|=q.front().get();
 			q.pop();
 		}
-		PRINT(count(found));
+		PRINT(count(found));*/
 	}
 
 	Result fetch(tba::URL url){
@@ -552,3 +552,4 @@ tba::Event_type event_type(tba::Event const& a){
 tba::Event_type event_type(TBA_fetcher &f,tba::Event_points const& a){
 	return event_type(f,a.event_key);
 }
+
