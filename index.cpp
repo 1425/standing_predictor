@@ -5,6 +5,7 @@
 #include "tba.h"
 #include "names.h"
 #include "subprocess.h"
+#include "outline.h"
 
 using namespace std;
 
@@ -42,11 +43,12 @@ class chdir_tmp{
 
 static const std::string OUTPUT_BASE="../standing_predictor_output/";
 
-std::filesystem::path next_dir(){
+std::pair<std::filesystem::path,std::string> next_dir(){
 	for(auto i:range(1,1000)){
-		std::filesystem::path path=OUTPUT_BASE+as_string(i)+"/";
+		std::string part=as_string(i);
+		std::filesystem::path path=OUTPUT_BASE+part+"/";
 		if(!std::filesystem::exists(path)){
-			return path;
+			return make_pair(path,part);
 		}
 	}
 	throw "Out of paths";
@@ -93,6 +95,10 @@ int index_page(TBA_fetcher& f){
 		}
 		found|=Dir(entry.path().filename(),found_here);
 	}
+	std::sort(
+		found.begin(),found.end(),
+		[](auto const& a,auto const& b){ return stoi(a.first)<stoi(b.first); }
+	);
 
 	//TODO: Make the destination of this controllable.
 	ofstream o("index.html");
@@ -119,20 +125,39 @@ int index_page(TBA_fetcher& f){
 	return 0;
 }
 
+void setenv_throw(const char *name,const char *value,int overwrite){
+	int r=setenv(name,value,overwrite);
+	if(r){
+		throw "setenv failed";
+	}
+}
+
 int index(TBA_fetcher &fetcher){
 	//run once with no plotting --quick and --tba_refresh
 	//run once with new output dir
 	//run index
 	//index(f);
 	//do a git commit with the message of the date
-	auto new_dir=next_dir();
+	auto [new_dir,new_dir_part]=next_dir();
 	auto start_time=std::chrono::system_clock::now();
 
 	//ought to just make this a function call instead.
-	run_throw("./outline",{"--quick","1","--plot","0","--tba_refresh"});
+	//run_throw("./outline",{"--quick","1","--plot","0","--tba_refresh"});
+	if(1){
+		Args args;
+		args.quick=1;
+		args.plot=0;
+		//args.tba.refresh=1;
+		run_outer(fetcher,args);
+	}
 
 	//ought to just make this a function call instead.
-	run_throw("./outline",{"--out",new_dir});
+	//run_throw("./outline",{"--out",new_dir});
+	{
+		Args args;
+		args.output_dir=new_dir.c_str();
+		run_outer(fetcher,args);
+	}
 
 	//create index here
 	//auto fetcher=TBA_fetcher_config{}.get();
@@ -140,12 +165,17 @@ int index(TBA_fetcher &fetcher){
 
 	chdir_tmp chdir_lock(OUTPUT_BASE);
 
-	run_throw("git",{"add",new_dir.filename()});
+	static constexpr auto GIT_PATH="/usr/bin/git";
+
+	run_throw(GIT_PATH,{"add",new_dir_part});
 
 	auto end_time=std::chrono::system_clock::now();
-	cout<<"Elapsed time:"<<(end_time-start_time);
+	cout<<"Elapsed time:"<<(end_time-start_time)<<"\n";
 
-	run_throw("git",{"commit","-a","-m","Auto update "+as_string(start_time)});
+	setenv_throw("GIT_AUTHOR_NAME","standing_predictor",0);
+	setenv_throw("GIT_AUTHOR_EMAIL","noreply@example.com",0);
+
+	run_throw(GIT_PATH,{"commit","-a","-m","Auto update "+as_string(start_time)});
 	//run_throw("git",{"push"});
 
 	return 0;

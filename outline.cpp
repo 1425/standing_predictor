@@ -262,26 +262,6 @@ map<tba::Team_key,Pr> run(
 	));
 }
 
-struct Args{
-	string output_dir=".";
-	std::optional<tba::Year> year;
-	optional<tba::District_key> district;
-	TBA_fetcher_config tba;
-	bool demo=0,rank_limits_demo=0;
-	bool award_limits_demo=0;
-	bool playoff_limits_demo=0;
-	bool timezone_demo=0;
-	bool lock=0;
-	bool venue_demo=0;
-	bool event_limits_demo=0;
-	bool event_partial_demo=0;
-	bool data_range_demo=0;
-	bool plot=1;
-	bool quick=0;
-	Skill_method skill_method=Skill_method::POINTS;
-	bool index=0;
-};
-
 Args parse_args(int argc,char **argv){
 	Args r;
 	Argument_parser p{"Calculates odds of FRC teams advancing to their district championships and the championship event."};
@@ -468,6 +448,16 @@ std::optional<tba::Year> year(std::optional<tba::District_key> const& a){
 }
 
 void run_outer(TBA_fetcher& tba_fetcher,Args args){
+	if(!args.year){
+		if(args.district){
+			args.year=year(args.district);
+		}else{
+			args.year=current_season(tba_fetcher);
+		}
+	}
+
+	std::filesystem::create_directories(args.output_dir);
+
 	auto d=districts(tba_fetcher,*args.year);
 
 	map<tba::District_key,map<tba::Team_key,Pr>> dcmp_pr;
@@ -511,7 +501,6 @@ void run_outer(TBA_fetcher& tba_fetcher,Args args){
 
 int main1(int argc,char **argv){
 	auto args=parse_args(argc,argv);
-	std::filesystem::create_directories(args.output_dir);
 	auto tba_fetcher=args.tba.get();
 
 	//return identify_time_demo(tba_fetcher);
@@ -566,14 +555,6 @@ int main1(int argc,char **argv){
 
 	if(args.index){
 		return index(tba_fetcher);
-	}
-
-	if(!args.year){
-		if(args.district){
-			args.year=year(args.district);
-		}else{
-			args.year=current_season(tba_fetcher);
-		}
 	}
 
 	run_outer(tba_fetcher,args);

@@ -202,6 +202,12 @@ std::mutex signalfd_lock;
 
 Subprocess_result run(std::string prog,std::vector<std::string> const& args,std::string const& stdin_data){
 	{
+		auto r=run_jobs({Job{prog,args,stdin_data}});
+		assert(r.size()==1);
+		return r[0];
+	}
+
+	{
 		auto r=signal(SIGPIPE,SIG_IGN);
 		if(r==SIG_ERR){
 			perror("signal");
@@ -229,7 +235,7 @@ Subprocess_result run(std::string prog,std::vector<std::string> const& args,std:
 
 	std::lock_guard<std::mutex> lock(signalfd_lock);
 
-	int signalfd_fd=signalfd(-1,&mask,0);
+	int signalfd_fd=signalfd(-1,&mask,SFD_CLOEXEC);
 	if(signalfd_fd==-1){
 		perror("signalfd");
 		exit(1);
@@ -328,10 +334,11 @@ Subprocess_result run(std::string prog,std::vector<std::string> const& args,std:
 			auto found=*(struct signalfd_siginfo*)s.c_str();
 			assert(found.ssi_signo==SIGCHLD);
 			if(found.ssi_pid!=(unsigned)f){
+				cout<<"Unexpected child pid\n";
 				PRINT(found);
 				PRINT(f);
 			}
-			assert(found.ssi_pid==(unsigned)f);
+			//assert(found.ssi_pid==(unsigned)f);
 
 			for(auto fd:select_in.read|select_in.except){
 				close_or_die(fd);
@@ -462,7 +469,7 @@ Job_status start_job(Job const& job){
 		}
 		new_args|=nullptr;
 		char * const *a=(char * const*)&(new_args[0]);
-		int r=execve(job.cmd.c_str(),a,NULL);
+		int r=execve(job.cmd.c_str(),a,environ);
 		perror("execve");
 		cerr<<"Error: execve: "<<r<<"\n";
 		exit(1);
@@ -704,7 +711,10 @@ std::vector<Subprocess_result> run_jobs(std::vector<Job> const& jobs){
 							assert(status==((*m1.result)<<8));
 						}
 					}
-					assert(found==1);
+					
+					//found can be 0 when finding some child that was not started
+					//directly in this function.
+					assert(found<=1);
 
 					if(active_jobs()){
 						int status;

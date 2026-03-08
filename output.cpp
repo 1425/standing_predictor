@@ -3,6 +3,7 @@
 #include<iomanip>
 #include<fstream>
 #include<unistd.h>
+#include<sys/wait.h>
 #include "../tba/tba.h"
 #include "map.h"
 #include "util.h"
@@ -933,12 +934,16 @@ int make_spreadsheet(
 	}
 	if(pid==0){
 		//avoid random on-screen messages by literally closing the pipes to the screen.
-		//also, the parent isn't waiting for this to end and doesn't check to see whether
-		//or not it succeeded.
 		close(1);
 		close(2);
 		int r=system( ("cd "+output_dir+"; soffice --convert-to xlsx "+filename).c_str() );
 		exit(r);
+	}
+	{
+		int status;
+		pid_t p=waitpid(pid,&status,0);
+		assert(p==pid);
+		//Note that we're not looking at status; if it failed there's nothing we can do to fix it.
 	}
 	return 0;
 }
