@@ -460,7 +460,10 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 							Interval in{x.min.second,x.max.second};
 							return event_partial1[Team_event_status_rank(in)];
 						}
-						if(std::holds_alternative<Tournament_status_eliminations_in_progress>(event_data.status)){
+						if(
+							std::holds_alternative<Tournament_status_picking_complete>(event_data.status)
+							|| std::holds_alternative<Tournament_status_eliminations_in_progress>(event_data.status)
+						){
 							auto x=f->second.min.second;
 							//this is not exactly right because might include  some points
 							//earned during playoffs.

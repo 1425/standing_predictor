@@ -132,7 +132,7 @@ int index(TBA_fetcher &fetcher){
 	run_throw("./outline",{"--quick","1","--plot","0","--tba_refresh"});
 
 	//ought to just make this a function call instead.
-	run_throw("./outline",{"--dir",new_dir});
+	run_throw("./outline",{"--out",new_dir});
 
 	//create index here
 	//auto fetcher=TBA_fetcher_config{}.get();
