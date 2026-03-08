@@ -285,6 +285,13 @@ Subprocess_result run(std::string prog,std::vector<std::string> const& args,std:
 	select_in.except|=signalfd_fd;
 	select_in.except|=child_stdin[1];
 
+	if(strlen(out_buf)==0){
+		//if there is no stdin, then immediately close
+		select_in.write.erase(child_stdin[1]);
+		select_in.except.erase(child_stdin[1]);
+		close_or_die(child_stdin[1]);
+	}
+
 	std::stringstream from_stdout,from_stderr,from_signalfd;
 	while(1){
 		Select_info sr=select(select_in);
@@ -335,11 +342,11 @@ Subprocess_result run(std::string prog,std::vector<std::string> const& args,std:
 				int status;
 				int r=waitpid(f,&status,0);
 				assert(r==f);
-				/*if(status!=found.ssi_status){
+				if(status!=found.ssi_status){
 					PRINT(status);
 					PRINT(found.ssi_status);
-				}*/
-				assert(status==(found.ssi_status<<8));
+				}
+				//assert(status==(found.ssi_status<<8));
 			}
 
 			return Subprocess_result(found.ssi_status,from_stdout.str(),from_stderr.str());

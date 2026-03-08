@@ -451,6 +451,7 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 					}else{
 						if(
 							std::holds_alternative<Qual_status_in_progress>(event_data.status)
+							||std::holds_alternative<Qual_status_complete>(event_data.status)
 							||std::holds_alternative<Tournament_status_picking_in_progress>(event_data.status)
 						){
 							//auto g=std::get<Qual_status_in_progress>(event_data.status);

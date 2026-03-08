@@ -203,12 +203,32 @@ void diff(std::set<T> const& a,set_flat<T> const& b){
 }
 
 template<typename T>
+void diff(set_flat<T> const& a,set_flat<T> const& b){
+	auto a_only=a-b;
+	auto b_only=b-a;
+	if(a_only.size()){
+		PRINT(a_only);
+	}
+	if(b_only.size()){
+		PRINT(b_only);
+	}
+}
+
+template<typename T>
 bool operator==(std::set<T> const& a,set_flat<T> const& b){
 	return b==a;
 }
 
 template<typename T>
 set_flat<T> operator|(set_flat<T> a,std::vector<T> const& b){
+	for(auto const& x:b){
+		a|=x;
+	}
+	return a;
+}
+
+template<typename T>
+std::set<T> operator|(std::set<T> a,set_flat<T> const& b){
 	for(auto const& x:b){
 		a|=x;
 	}

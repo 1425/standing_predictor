@@ -395,7 +395,7 @@ Rank_status<Tournament_status> event_limits(TBA_fetcher &f,tba::Event_key const&
 			assert(0);
 	}
 
-	auto d=award_limits(f,event,to_std_set(t1),normal);
+	auto d=award_limits(f,event,to_std_set(t5),normal);
 	auto t6=teams(d.by_team);
 	//PRINT(entropy(d));
 	//PRINT(d.status);

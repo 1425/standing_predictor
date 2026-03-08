@@ -214,8 +214,7 @@ Rank_status<Event_status,flat_map> award_limits(
 	//then calculate limits per team
 	//max is 10+5 (chairmans+safety)
 
-	const auto teams=teams_keys(f,event);
-	//PRINT(teams.size());
+	const auto teams=to_set(teams_keys(f,event))|keys(already_given);
 
 	auto points_left=max_rank_value(teams.size())-sum(values(already_given));
 
@@ -284,6 +283,12 @@ Rank_status<Event_status> award_limits(
 		}
 		r.status=Event_status::COMPLETE;
 		return r;
+	}
+	for(auto team:teams){
+		auto f=b.by_team.find(team);
+		if(f==b.by_team.end()){
+			b.by_team[team]=Rank_value();
+		}
 	}
 	return award_limits(f,event,b.by_team,normal);
 }

@@ -467,6 +467,48 @@ std::optional<tba::Year> year(std::optional<tba::District_key> const& a){
 	return year(*a);
 }
 
+void run_outer(TBA_fetcher& tba_fetcher,Args args){
+	auto d=districts(tba_fetcher,*args.year);
+
+	map<tba::District_key,map<tba::Team_key,Pr>> dcmp_pr;
+
+	for(auto year_info:d){
+		auto district=year_info.key;
+		if(args.district && district!=args.district){
+			continue;
+		}
+		//PRINT(district);
+		auto title=year_info.display_name+" District Championship Predictions "+::as_string(args.year);
+		Run_inputs run_inputs;
+		run_inputs.output_dir=args.output_dir;
+		run_inputs.district=district;
+		run_inputs.year=args.year;
+		run_inputs.dcmp_slots=dcmp_slots(district);
+		run_inputs.title=title;
+		run_inputs.district_short=year_info.abbreviation;
+		run_inputs.skill_method=args.skill_method;
+		run_inputs.plot=args.plot;
+		run_inputs.quick=args.quick;
+		//dcmp_pr[district]=run(tba_fetcher,args.output_dir,district,args.year,dcmp_size(district),title,year_info.abbreviation);
+		dcmp_pr[district]=run(tba_fetcher,run_inputs);
+
+		if(district=="2022ne"){
+			run_inputs.dcmp_slots=[](){
+				std::vector<int> r;
+				r|=16;
+				return r;
+			}();
+			run_inputs.title="New England Championship Pre-Qualify";
+			run_inputs.extra="_cmp";
+			run_inputs.ignore_chairmans=1;
+			run(tba_fetcher,run_inputs);
+		}
+	}
+
+	make_spreadsheet(tba_fetcher,dcmp_pr,args.output_dir);
+}
+
+
 int main1(int argc,char **argv){
 	auto args=parse_args(argc,argv);
 	std::filesystem::create_directories(args.output_dir);
@@ -534,45 +576,7 @@ int main1(int argc,char **argv){
 		}
 	}
 
-	auto d=districts(tba_fetcher,*args.year);
-
-	map<tba::District_key,map<tba::Team_key,Pr>> dcmp_pr;
-
-	for(auto year_info:d){
-		auto district=year_info.key;
-		if(args.district && district!=args.district){
-			continue;
-		}
-		//PRINT(district);
-		auto title=year_info.display_name+" District Championship Predictions "+::as_string(args.year);
-		Run_inputs run_inputs;
-		run_inputs.output_dir=args.output_dir;
-		run_inputs.district=district;
-		run_inputs.year=args.year;
-		run_inputs.dcmp_slots=dcmp_slots(district);
-		run_inputs.title=title;
-		run_inputs.district_short=year_info.abbreviation;
-		run_inputs.skill_method=args.skill_method;
-		run_inputs.plot=args.plot;
-		run_inputs.quick=args.quick;
-		//dcmp_pr[district]=run(tba_fetcher,args.output_dir,district,args.year,dcmp_size(district),title,year_info.abbreviation);
-		dcmp_pr[district]=run(tba_fetcher,run_inputs);
-
-		if(district=="2022ne"){
-			run_inputs.dcmp_slots=[](){
-				std::vector<int> r;
-				r|=16;
-				return r;
-			}();
-			run_inputs.title="New England Championship Pre-Qualify";
-			run_inputs.extra="_cmp";
-			run_inputs.ignore_chairmans=1;
-			run(tba_fetcher,run_inputs);
-		}
-	}
-
-	make_spreadsheet(tba_fetcher,dcmp_pr,args.output_dir);
-
+	run_outer(tba_fetcher,args);
 	return 0;
 }
 

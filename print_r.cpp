@@ -16,7 +16,11 @@ int terminal_width(){
 		PRINT(found);
 		cout.flush();
 	}
-	assert(found>0 && found<1000);
+	bool width_ok=(found>0 && found<1000);
+	if(!width_ok){
+		cout<<"Invalid terminal width: "<<found<<"\n";
+	}
+	assert(width_ok);
 	return found;
 	#else
 	return 80;
