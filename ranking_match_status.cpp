@@ -47,7 +47,7 @@ Ranking_match_status<tba::Team_key> ranking_match_status_inner(TBA_fetcher &f,tb
 			//cout<<"RP? "<<match.key<<"\n";
 			r.schedule|=match1;
 		}else{
-			r.matches_completed=1;
+			r.matches_completed++;
 			auto rp_totals=*rp_totals_m;
 			for(auto [teams,pts]:zip(match1,rp_totals)){
 				for(auto team:teams){

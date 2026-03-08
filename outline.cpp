@@ -530,7 +530,7 @@ int main1(int argc,char **argv){
 		if(args.district){
 			args.year=year(args.district);
 		}else{
-			args.year=Year(2022);
+			args.year=current_season(tba_fetcher);
 		}
 	}
 

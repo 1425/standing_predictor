@@ -501,23 +501,16 @@ auto main_body(Ranking_match_status<tba::Team_key> const& info){
 	size_t min_pts_taken=sum(MAP(min,values(r.points)));
 	assert(min_pts_taken<=total_points);
 	r.unclaimed_points=total_points-min_pts_taken;
-	//r.status=info.matches_completed?Event_status::IN_PROGRESS:Event_status::FUTURE;
 	r.status=[=]()->Qual_status{
 		if(info.matches_completed){
 			return Qual_status_in_progress(
 				info.matches_completed,
-				info.matches_completed+info.schedule.size(),
-				{}
+				info.matches_completed+info.schedule.size()
 			);
 		}
 		return Qual_status_future{};
 	}();
-	auto r2=namer.convert(r);
-	if(std::holds_alternative<Qual_status_in_progress>(r2.status)){
-		auto &g=std::get<Qual_status_in_progress>(r2.status);
-		g.ranks=r2.ranks;
-	}
-	return r2;
+	return namer.convert(r);
 }
 
 Rank_results<tba::Team_key> rank_limits_prior(TBA_fetcher& f,tba::Event_key const& event){

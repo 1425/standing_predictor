@@ -165,8 +165,7 @@ struct Skill_by_pts{
 };
 
 std::vector<Year> previous_years(TBA_fetcher &f){
-	auto s=tba::status(f);
-	return range(Year(1992),Year(s.current_season));
+	return range(Year(1992),current_season(f));
 }
 
 Team_dist rookie_pre_dcmp(TBA_fetcher& f){

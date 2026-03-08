@@ -553,3 +553,6 @@ tba::Event_type event_type(TBA_fetcher &f,tba::Event_points const& a){
 	return event_type(f,a.event_key);
 }
 
+tba::Year current_season(TBA_fetcher& f){
+	return tba::status(f).current_season;
+}

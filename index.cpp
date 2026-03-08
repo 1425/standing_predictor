@@ -12,14 +12,8 @@ auto link(std::filesystem::directory_entry const& ref,std::string const& body){
 }
 
 int index(TBA_fetcher& f){
-	(void)f;
 	//Should eventually get back a page with references like:
 	//https://htmlpreview.github.io/?https://raw.githubusercontent.com/1425/standing_predictor_output/refs/heads/main/1/2026ca.html
-	//
-	//look at ../standing_predictor_output/*/*.html
-	//and create a table with
-	//number [(district name), linked]
-	//directory_iterator{
 
 	//This is maybe not the cleanest way to do this
 	//as we are not ever restoring the current directory after the end of this function.
@@ -44,7 +38,6 @@ int index(TBA_fetcher& f){
 		}
 		vector<Entry> found_here;
 		for(auto const& e2:std::filesystem::directory_iterator{entry}){
-			PRINT(e2);
 			auto x=tba::District_key::parse(e2.path().filename().stem());
 			if(x){
 				found_here|=make_pair(name(f,*x),e2.path());

@@ -114,4 +114,6 @@ set_limited<T,N> to_set(tba::vector_fixed<T,N> const& a){
 	return r;
 }
 
+tba::Year current_season(TBA_fetcher&);
+
 #endif

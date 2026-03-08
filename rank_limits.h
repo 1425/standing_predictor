@@ -19,7 +19,6 @@ STRUCT_DECLARE(Qual_status_future,EMPTY)
 #define QUAL_STATUS_IN_PROGRESS(X)\
 	X(Int_limited<TBA_SINGLE_ARG(0,255)>,matches_complete)\
 	X(Int_limited<TBA_SINGLE_ARG(0,255)>,matches_total)\
-	X(Rank_range<tba::Team_key>,ranks)
 
 STRUCT_DECLARE(Qual_status_in_progress,QUAL_STATUS_IN_PROGRESS)
 
@@ -30,10 +29,6 @@ using Qual_status=std::variant<
 	Qual_status_in_progress,
 	Qual_status_complete
 >;
-
-#define QUAL_STATUS(X)\
-	X(FUTURE)\
-	X(COMPLETE)
 
 #define RANK_RESULTS(X)\
 	X(Rank_range<Team>,ranks)\
