@@ -276,10 +276,15 @@ std::vector<T> operator-(std::vector<T> a,set_flat<T> const& b){
 
 template<typename T>
 set_flat<T> operator&(set_flat<T> const& a,set_flat<T> const& b){
-	(void)a;
-	(void)b;
-	//This body just exists because clang thinks it should.
-	nyi
+	set_flat<T> r;
+	//obviously not the most efficient way to do this
+	//this is O(N*log(N)); could be linear
+	for(auto const& x:a){
+		if(b.count(x)){
+			r|=x;
+		}
+	}
+	return r;
 }
 
 template<typename K,typename V>
@@ -347,6 +352,12 @@ bool subset(set_flat<T> const& a,set_flat<T> const& b){
 template<typename T>
 auto to_std_set(set_flat<T> const& a){
 	return std::set<T>{a.begin(),a.end()};
+}
+
+template<typename Func,typename T>
+auto mapf(Func f,set_flat<T> a){
+	//obviously not efficient
+	return mapf(f,to_vec(a));
 }
 
 #endif

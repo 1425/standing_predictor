@@ -189,4 +189,10 @@ std::vector<T> range(Interval<T> const& a){
 	return r;
 }
 
+template<typename T>
+Interval<T> limits(std::vector<T> const& a){
+	assert(!a.empty());
+	return Interval<T>{min(a),max(a)};
+}
+
 #endif

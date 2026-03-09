@@ -178,5 +178,15 @@ DECLINE_OBJS= \
 declines: $(DECLINE_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@
 
+DIFF_OBJS=\
+	$(TBA_OBJS)\
+	io.o\
+	diff.o\
+	vector.o\
+	util.o\
+
+diff: $(DIFF_OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@
+
 clean:
 	rm -f $(EXE) $(OUTLINE_OBJS) $(META_OBJS) $(DECLINE_OBJS)

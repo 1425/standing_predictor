@@ -150,12 +150,12 @@ std::optional<int> dcmp_slots_inner(tba::District_key const& district){
 	if(district=="2025pch") return 45;
 
 	//if(district=="2026ca") return 60;
-	if(district=="2026fch") return 60;
+	if(district=="2026fch") return 54;
 	if(district=="2026fim") return 160;
 	if(district=="2026fit") return 90;
 	if(district=="2026fin") return 38;
-	if(district=="2026isr") return 45;
-	if(district=="2026fma") return 60;
+	if(district=="2026isr") return 42;
+	if(district=="2026fma") return 66;
 	if(district=="2026fnc") return 50;
 	if(district=="2026ont") return 100;
 	if(district=="2026fsc") return 32;
