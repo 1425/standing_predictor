@@ -332,7 +332,7 @@ Args parse_args(int argc,char **argv){
 		"Do smaller number of iterations",
 		r.quick
 	);
-	p.add("--index",{},"Experimental",r.index);
+	p.add("--index",{"UPDATE"},"Experimental",r.index);
 	p.parse(argc,argv);
 	return r;
 }
@@ -554,7 +554,7 @@ int main1(int argc,char **argv){
 	}
 
 	if(args.index){
-		return index(tba_fetcher);
+		return index(tba_fetcher,*args.index);
 	}
 
 	run_outer(tba_fetcher,args);

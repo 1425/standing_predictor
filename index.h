@@ -3,6 +3,6 @@
 
 class TBA_fetcher;
 
-int index(TBA_fetcher&);
+int index(TBA_fetcher&,bool update);
 
 #endif

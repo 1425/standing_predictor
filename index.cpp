@@ -132,7 +132,7 @@ void setenv_throw(const char *name,const char *value,int overwrite){
 	}
 }
 
-int index(TBA_fetcher &fetcher){
+int index(TBA_fetcher &fetcher,bool update){
 	//run once with no plotting --quick and --tba_refresh
 	//run once with new output dir
 	//run index
@@ -143,12 +143,13 @@ int index(TBA_fetcher &fetcher){
 
 	//ought to just make this a function call instead.
 	//run_throw("./outline",{"--quick","1","--plot","0","--tba_refresh"});
-	if(1){
+	if(update){
 		Args args;
 		args.quick=1;
 		args.plot=0;
-		//args.tba.refresh=1;
-		run_outer(fetcher,args);
+		args.tba.refresh=1;
+		auto f2=args.tba.get();
+		run_outer(f2,args);
 	}
 
 	//ought to just make this a function call instead.
@@ -175,7 +176,7 @@ int index(TBA_fetcher &fetcher){
 	setenv_throw("GIT_AUTHOR_NAME","standing_predictor",0);
 	setenv_throw("GIT_AUTHOR_EMAIL","noreply@example.com",0);
 
-	run_throw(GIT_PATH,{"commit","-a","-m","Auto update "+as_string(start_time)});
+	run_throw(GIT_PATH,{"commit","-a","-m","Auto update "+new_dir_part+" "+as_string(start_time)});
 	//run_throw("git",{"push"});
 
 	return 0;

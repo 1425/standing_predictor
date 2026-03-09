@@ -21,7 +21,7 @@ struct Args{
 	bool plot=1;
 	bool quick=0;
 	Skill_method skill_method=Skill_method::POINTS;
-	bool index=0;
+	std::optional<bool> index;
 };
 
 void run_outer(TBA_fetcher&,Args);
