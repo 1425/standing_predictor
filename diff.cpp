@@ -1,4 +1,5 @@
 #include<fstream>
+#include<cmath>
 #include "../tba/data.h"
 #include "io.h"
 #include "vector.h"
@@ -87,9 +88,9 @@ auto as_map(std::string path){
 }
 
 int main(){
-	auto f1="../standing_predictor_output/1/results.csv";
+	auto f1="../standing_predictor_output/3/results.csv";
 	auto x1=as_map(f1);
-	auto x2=as_map("../standing_predictor_output/3/results.csv");
+	auto x2=as_map("../standing_predictor_output/4/results.csv");
 	
 	auto k1=keys(x1);
 	auto k2=keys(x2);
@@ -103,6 +104,7 @@ int main(){
 		},
 		k1&k2
 	));
+	m=sort_by(m,[](auto x){ return fabs(std::get<0>(x)); });
 	print_lines(m);
 
 	auto diffs=mapf([](auto x){ return std::get<0>(x); },m);
