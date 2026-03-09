@@ -237,14 +237,16 @@ string color(double d){
 	return rgb(a,1,a);
 }
 
+std::string round3(double d){
+	std::stringstream ss;
+	ss<<setprecision(3)<<fixed;
+	ss<<d;
+	return ss.str();
+}
+
 auto colorize(double d){
 	return tag("td align=center bgcolor=\""+color(d)+"\"",
-		tag("font color=black",[&](){
-			stringstream ss;
-			ss<<setprecision(3)<<fixed;
-			ss<<d;
-			return ss.str();
-		}())
+		tag("font color=black",round3(d))
 	);
 }
 
@@ -437,7 +439,7 @@ void gen_html(
 			l.begin(),
 			l.end(),
 			[](auto a,auto b){
-				auto t=[](auto x){ return make_tuple(x.dcmp_make,x.cmp_make,x); };
+				auto t=[](auto x){ return make_tuple(round3(x.dcmp_make),round3(x.cmp_make),x); };
 				return t(a)<t(b);
 			}
 		);
@@ -858,7 +860,7 @@ void gen_html(
 						},
 						enumerate_from(1,reversed(sorted(
 							in.result,
-							[](auto x){ return make_tuple(x.dcmp_make,x.cmp_make,x); }
+							[](auto x){ return make_tuple(round3(x.dcmp_make),round3(x.cmp_make),x); }
 						)))
 					)
 				)
