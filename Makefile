@@ -108,28 +108,19 @@ meta: $(META_OBJS)
 
 DECLINE_OBJS= \
 	probability.o \
-	award_limits.o \
 	cat.o \
-	event_categories.o\
-	tournament_status.o\
-	avatar.o\
 	declines.o \
 	frc_api.o \
 	rank_pts.o \
 	arguments.o \
-	print_r.o \
 	tba.o \
 	util.o \
 	io.o \
 	$(TBA_OBJS) \
 	$(FRC_API_OBJS)\
 	dates.o\
-	skill_opr.o\
-	skill.o\
 	names.o\
-	print_r.o\
 	$(FRC_API_OBJS) \
-	ca.o\
 	zipcodes.o\
 	plot.o\
 	rand.o\
@@ -138,14 +129,10 @@ DECLINE_OBJS= \
 	timezone.o\
 	address.o\
 	print_r.o\
-	pick_points.o\
-	rank_limits.o\
 	rp.o\
 	rank_pts.o\
 	interval.o\
-	district_championship_assignment.o\
 	vector.o\
-	ranking_match_status.o\
 	event_status.o \
 	status.o \
 	cmp_reason.o \
