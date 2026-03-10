@@ -348,6 +348,14 @@ std::pair<A,B> operator*(std::pair<A,B> a,C c){
 	return a;
 }
 
+template<typename A,typename B,typename C>
+auto operator/(std::pair<A,B> const& a,C c){
+	return std::make_pair(
+		a.first/c,
+		a.second/c
+	);
+}
+
 template<typename A,typename B,typename C,typename D>
 auto operator-(std::pair<A,B> const& a,std::pair<C,D> const& b){
 	return std::make_pair(

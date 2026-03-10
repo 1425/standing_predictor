@@ -161,7 +161,7 @@ std::ostream& operator<<(std::ostream& o,std::filesystem::directory_iterator a){
 using Team=tba::Team_key;
 using Pr=double;
 
-map<Team,Pr> parse_page(std::filesystem::directory_entry const& path){
+map<Team,std::pair<Pr,std::optional<Pr>>> parse_page(std::filesystem::directory_entry const& path){
 	std::ifstream f(path.path());
 	std::stringstream buffer;
 	buffer<<f.rdbuf();
@@ -237,7 +237,7 @@ map<Team,Pr> parse_page(std::filesystem::directory_entry const& path){
 		return (GumboNode*)(c.data)[0];
 	};
 
-	auto parse_team_row=[=](GumboNode *a)->pair<Team,double>{
+	auto parse_team_row=[=](GumboNode *a)->pair<Team,pair<double,std::optional<double>>>{
 		assert(a);
 		auto v=a->v.element.children;
 		//rank,p,team,name,...
@@ -254,7 +254,7 @@ map<Team,Pr> parse_page(std::filesystem::directory_entry const& path){
 			//cout<<*tn<<"\n";
 			return tn->v.text.text;
 		};
-		return make_pair(
+		return make_tuple(
 			[=](){
 				//nyi
 				auto td=traverse_inner(a,GUMBO_TAG_TD,2);
@@ -266,7 +266,16 @@ map<Team,Pr> parse_page(std::filesystem::directory_entry const& path){
 				//PRINT(t);
 				return Team{"frc"+as_string(stoi(t))};
 			}(),
-			stof(f(1))
+			make_pair(
+				stof(f(1)),
+				[&]()->std::optional<double>{
+					if(v.length>7){
+						return stof(f(7));
+					}else{
+						return std::nullopt;
+					}
+				}()
+			)
 		);
 	};
 
@@ -358,14 +367,42 @@ optional<map<Team,Season_result>> season_results(tba::District_key const& distri
 	return std::nullopt;
 }
 
-double compare(map<Team,bool> a,map<Team,double> b){
+template<typename T>
+std::optional<T> square(std::optional<T> a){
+	if(a){
+		return square(*a);
+	}
+	return std::nullopt;
+}
+
+template<typename A,typename B>
+auto elementwise_square(std::pair<A,B> a){
+	return MAP(square,a);
+}
+
+auto mean(std::vector<std::pair<double,std::optional<double>>> const& a){
+	return make_pair(
+		mean(firsts(a)),
+		[=]()->std::optional<double>{
+			auto n=nonempty(seconds(a));
+			if(n.empty()){
+				return std::nullopt;
+			}
+			return mean(n);
+		}()
+	);
+}
+
+std::pair<double,std::optional<double>> compare(map<Team,Season_result> a,map<Team,pair<double,optional<double>>> b){
+//double compare(map<Team,bool> a,map<Team,double> b){
 	//a=actual
 	//b=predicted
 	{
 		//make teams that do not appear in the predictions implicitly a 0% chance.
 		auto a_only=keys(a)-keys(b);
 		for(auto k:a_only){
-			b[k]=0;
+			(void)k;;
+			b[k]=make_pair(0,std::optional<double>());
 		}
 	}
 
@@ -375,7 +412,7 @@ double compare(map<Team,bool> a,map<Team,double> b){
 		//appear in any.
 		auto b_only=keys(b)-keys(a);
 		for(auto k:b_only){
-			a[k]=0;
+			a[k]=Season_result::MISS_DCMP;
 		}
 	}
 
@@ -399,8 +436,29 @@ double compare(map<Team,bool> a,map<Team,double> b){
 	assert(ak==bk);
 	return mean(mapf(
 		[&](auto team){
-			auto x=a[team]-b[team];
-			return x*x;
+			auto a1=a[team];
+			auto b1=b[team];
+			auto error=[=](){
+				switch(a1){
+					case Season_result::MISS_DCMP:
+						return b1;
+					case Season_result::DCMP:
+						return make_pair(1-b1.first,b1.second);
+					case Season_result::CMP:
+						return pair<double,optional<double>>(
+							1-b1.first,
+							[=]()->optional<double>{
+								if(b1.second){
+									return 1-*b1.second;
+								}
+								return std::nullopt;
+							}()
+						);
+					default:
+						assert(0);
+				}
+			}();
+			return elementwise_square(error);
 		},
 		ak
 	));
@@ -453,7 +511,8 @@ int main1(int argc,char **argv){
 			auto a=::mapf(
 				[=](auto x){
 					return compare(
-						map_values([](auto x){ return x!=Season_result::MISS_DCMP; },*s),
+						//map_values([](auto x){ return x!=Season_result::MISS_DCMP; },*s),
+						*s,
 						x
 					);
 				},
