@@ -84,7 +84,6 @@ META_OBJS= \
 	$(TBA_OBJS) \
 	probability.o\
 	cat.o \
-	event_categories.o\
 	meta.o \
 	util.o \
 	tba.o \
@@ -95,13 +94,9 @@ META_OBJS= \
 	print_r.o\
 	$(FRC_API_OBJS) \
 	zipcodes.o\
-	plot.o\
-	rand.o\
-	subprocess.o\
 	slots.o\
 	timezone.o\
 	address.o\
-	print_r.o\
 	interval.o\
 	vector.o\
 	event_status.o \
