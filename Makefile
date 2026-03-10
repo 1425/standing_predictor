@@ -83,7 +83,6 @@ outline: $(OUTLINE_OBJS)
 META_OBJS= \
 	$(TBA_OBJS) \
 	probability.o\
-	award_limits.o \
 	cat.o \
 	event_categories.o\
 	meta.o \
@@ -103,8 +102,6 @@ META_OBJS= \
 	timezone.o\
 	address.o\
 	print_r.o\
-	rp.o\
-	rank_pts.o\
 	interval.o\
 	vector.o\
 	event_status.o \
