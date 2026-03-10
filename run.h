@@ -6,9 +6,6 @@
 #include "district_championship_assignment.h"
 #include "output_tuple.h"
 
-flat_map2<Point,Pr> convolve(flat_map2<Point,Pr> const&,flat_map2<Point,Pr> const&);
-flat_map<Point,Pr> convolve(std::map<Point,Pr> const&,std::map<Point,Pr> const&);
-
 #define TEAM_STATUS(X)\
 	X(bool,district_chairmans)\
 	X(Team_dist,point_dist)\

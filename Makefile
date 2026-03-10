@@ -82,12 +82,10 @@ outline: $(OUTLINE_OBJS)
 
 META_OBJS= \
 	$(TBA_OBJS) \
-	playoff_limits.o \
+	probability.o\
 	award_limits.o \
-	lock2.o\
 	cat.o \
 	event_categories.o\
-	event_limits.o\
 	tournament_status.o\
 	avatar.o\
 	meta.o \
@@ -96,13 +94,9 @@ META_OBJS= \
 	arguments.o \
 	io.o \
 	dates.o\
-	skill_opr.o\
-	skill.o\
 	names.o\
-	run.o\
 	print_r.o\
 	$(FRC_API_OBJS) \
-	output.o\
 	ca.o\
 	zipcodes.o\
 	plot.o\
@@ -128,6 +122,7 @@ meta: $(META_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -lgumbo -o $@
 
 DECLINE_OBJS= \
+	probability.o \
 	playoff_limits.o \
 	award_limits.o \
 	lock2.o\

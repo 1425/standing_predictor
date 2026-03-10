@@ -34,4 +34,9 @@ std::map<Point,Pr> operator+(std::map<Point,Pr>,int);
 flat_map<Point,Pr> operator+(flat_map<Point,Pr> const&,int);
 flat_map2<Point,Pr> operator+(flat_map2<Point,Pr> const&,int);
 
+flat_map2<Point,Pr> convolve(flat_map2<Point,Pr> const&,flat_map2<Point,Pr> const&);
+flat_map<Point,Pr> convolve(std::map<Point,Pr> const&,std::map<Point,Pr> const&);
+
+map_fixed<Int_limited<0,600>,Pr> convolve(flat_map2<Point,Pr> const&,std::map<Point,flat_map2<Point,double>> const&);
+
 #endif
