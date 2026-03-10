@@ -108,12 +108,9 @@ meta: $(META_OBJS)
 
 DECLINE_OBJS= \
 	probability.o \
-	playoff_limits.o \
 	award_limits.o \
-	lock2.o\
 	cat.o \
 	event_categories.o\
-	event_limits.o\
 	tournament_status.o\
 	avatar.o\
 	declines.o \
@@ -130,10 +127,8 @@ DECLINE_OBJS= \
 	skill_opr.o\
 	skill.o\
 	names.o\
-	run.o\
 	print_r.o\
 	$(FRC_API_OBJS) \
-	output.o\
 	ca.o\
 	zipcodes.o\
 	plot.o\
