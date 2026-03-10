@@ -656,7 +656,33 @@ void gen_html(
 	auto team_details=[&](auto a)->std::string{
 		//auto x=in.points_used.at(a.team);
 		std::stringstream ss;
-		ss<<h3("Expected pre-dcmp points")+charts[a.team];
+		ss<<h3("Expected pre-dcmp points");
+		ss<<"<table>";
+		ss<<"<tr>";
+		ss<<"<td>";
+		//ss<<"Dist quartiles: "<<quartiles(in.points_used.at(a.team).pre_dcmp_dist);
+		
+		auto c=[=](double target){
+			double total=0;
+			for(auto [k,v]:in.points_used.at(a.team).pre_dcmp_dist){
+				total+=v;
+				if(total>=target){
+					return td(k);
+				}
+			}
+			assert(0);
+		};
+		ss<<h3("Summary");
+		ss<<tag("table border",
+			tr(th("Probability")+th("Point total"))+
+			tr(th("5%")+c(.05))+
+			tr(th("Median")+c(.5))+
+			tr(th("95%")+c(.95))
+		);
+		ss<<"</td>";
+		ss<<td(charts[a.team]);
+		ss<<"</tr>";
+		ss<<"</table>";
 		
 		const auto team_num=a.team.str().substr(3,20);
 
