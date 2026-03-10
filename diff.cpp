@@ -59,7 +59,7 @@ std::vector<Line> parse_file(std::string path){
 }
 
 void histogram(std::vector<double> a){
-	static const int BOXES=10;
+	static const int BOXES=100;
 	auto lim=limits(a);
 	auto box=[&](auto x){
 		auto v=(x-lim.min)/lim.width();
@@ -68,7 +68,25 @@ void histogram(std::vector<double> a){
 	auto c=count(mapf(box,a));
 	auto labels=range(lim.min,lim.max,lim.width()/BOXES);
 	auto z=zip(labels,values(c));
-	print_lines(z);
+	//print_lines(z);
+	for(auto [a,b]:z){
+		cout<<a<<","<<b<<"\n";
+	}
+}
+
+using Team=tba::Team_key;
+
+void result_table(std::vector<std::pair<Team,double>> v){
+	static const int BOXES=20;
+	const int box_size=v.size()/BOXES+1;
+	//std::sort(v.begin(),v.end(),[](auto a,auto b){ return a.second<b.second; },v);
+	v=sort_by(v,[](auto x){ return x.second; });
+	while(!v.empty()){
+		auto here=take(box_size,v);
+		v=skip(box_size,v);
+
+		cout<<limits(seconds(here))<<"\t"<<here.size()<<"\t"<<take(5,firsts(here))<<"\n";
+	}
 }
 
 void examine_file(){
@@ -82,7 +100,6 @@ void examine_file(){
 	PRINT(quartiles(prs));
 	PRINT(deciles(prs));
 	histogram(prs);
-
 }
 
 auto as_map(std::string path){
@@ -129,13 +146,15 @@ auto parse_line2(std::string const& path){
 }
 
 int main1(){
-	auto f1="../standing_predictor_output/3/results.csv";
+	auto f1="../standing_predictor_output/0/results.csv";
 	auto x1=as_map(f1);
 	auto x2=as_map("../standing_predictor_output/4/results.csv");
 	
 	auto k1=keys(x1);
 	auto k2=keys(x2);
-	assert(k1==k2);
+
+	diff(k1,k2);
+	//assert(k1==k2);
 
 	auto m=sorted(mapf(
 		[=](auto t){
@@ -150,10 +169,21 @@ int main1(){
 
 	auto diffs=mapf([](auto x){ return std::get<0>(x); },m);
 	histogram(diffs);
+
+	result_table(mapf([](auto x){ return make_pair(get<1>(x),get<0>(x)); },m));
+
+	{
+		ofstream f("diff.csv");
+		for(auto [diff,team,v1,v2]:m){
+			f<<team<<","<<v1<<","<<v2<<"\n";
+		}
+	}
+
 	return 0;
 }
 
 int main(){
-	auto p=parse_line2("results.csv");
-	print_lines(p);
+	/*auto p=parse_line2("results.csv");
+	print_lines(p);*/
+	return main1();
 }

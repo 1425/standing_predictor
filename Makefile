@@ -5,7 +5,7 @@ CXXFLAGS=-std=c++23 -Wall -Wextra -pedantic -Og -g -fdiagnostics-color=always
 LIBS=-lsqlite3 -lcurl -lsimdjson -ltbb
 CC=$(CXX)
 
-EXE=outline meta declines
+EXE=outline meta declines diff
 
 all: $(EXE)
 
