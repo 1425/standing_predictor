@@ -1,5 +1,6 @@
 #include<fstream>
 #include<cmath>
+#include<boost/tokenizer.hpp>
 #include "../tba/data.h"
 #include "io.h"
 #include "vector.h"
@@ -8,6 +9,7 @@
 #include "optional.h"
 #include "map.h"
 #include "set_flat.h"
+#include "probability.h"
 
 using namespace std;
 
@@ -87,7 +89,46 @@ auto as_map(std::string path){
 	return dict(mapf([](auto x){ return make_pair(x.team,x.pr); },parse_file(path)));
 }
 
-int main(){
+#define LINE2(X)\
+	X(tba::Team_key,team)\
+	X(tba::Event_key,event)\
+	X(std::string,event_name)\
+	X(Pr,dcmp)\
+	X(Pr,cmp)\
+
+STRUCT_DECLARE(Line2,LINE2)
+
+PRINT_STRUCT(Line2,LINE2)
+
+auto parse_line2(std::string const& path){
+	ifstream file(path);
+	string line;
+	std::vector<Line2> r;
+
+	{
+		string header;
+		getline(file,header);
+	}
+
+	while(getline(file,line)){
+		boost::tokenizer<boost::escaped_list_separator<char>> tk(line);
+		std::vector<std::string> fields;
+		for (auto i = tk.begin(); i != tk.end(); ++i) {
+			fields.push_back(*i);
+		}
+
+		r|=Line2{
+			tba::Team_key(stoi(fields[0])),
+			tba::Event_key(fields[1]),
+			fields[2],
+			stod(fields[3]),
+			stod(fields[4])
+		};
+	}
+	return r;
+}
+
+int main1(){
 	auto f1="../standing_predictor_output/3/results.csv";
 	auto x1=as_map(f1);
 	auto x2=as_map("../standing_predictor_output/4/results.csv");
@@ -109,4 +150,10 @@ int main(){
 
 	auto diffs=mapf([](auto x){ return std::get<0>(x); },m);
 	histogram(diffs);
+	return 0;
+}
+
+int main(){
+	auto p=parse_line2("results.csv");
+	print_lines(p);
 }
