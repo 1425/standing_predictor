@@ -107,7 +107,6 @@ meta: $(META_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -lgumbo -o $@
 
 DECLINE_OBJS= \
-	probability.o \
 	cat.o \
 	declines.o \
 	frc_api.o \
@@ -121,21 +120,12 @@ DECLINE_OBJS= \
 	dates.o\
 	names.o\
 	$(FRC_API_OBJS) \
-	zipcodes.o\
-	plot.o\
-	rand.o\
-	subprocess.o\
 	slots.o\
 	timezone.o\
 	address.o\
 	print_r.o\
-	rp.o\
-	rank_pts.o\
 	interval.o\
 	vector.o\
-	event_status.o \
-	status.o \
-	cmp_reason.o \
 
 declines: $(DECLINE_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@
