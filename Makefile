@@ -86,8 +86,6 @@ META_OBJS= \
 	award_limits.o \
 	cat.o \
 	event_categories.o\
-	tournament_status.o\
-	avatar.o\
 	meta.o \
 	util.o \
 	tba.o \
@@ -97,7 +95,6 @@ META_OBJS= \
 	names.o\
 	print_r.o\
 	$(FRC_API_OBJS) \
-	ca.o\
 	zipcodes.o\
 	plot.o\
 	rand.o\
@@ -106,14 +103,10 @@ META_OBJS= \
 	timezone.o\
 	address.o\
 	print_r.o\
-	pick_points.o\
-	rank_limits.o\
 	rp.o\
 	rank_pts.o\
 	interval.o\
-	district_championship_assignment.o\
 	vector.o\
-	ranking_match_status.o\
 	event_status.o \
 	status.o \
 	cmp_reason.o \
