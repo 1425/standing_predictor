@@ -148,6 +148,14 @@ std::ostream& operator<<(std::ostream& o,GumboInternalNode const& a){
 	}
 }
 
+std::ostream& operator<<(std::ostream& o,std::filesystem::directory_iterator a){
+	o<<"f::di( ";
+	for(auto x:a){
+		o<<x<<" ";
+	}
+	return o<<")";
+}
+
 //start program-specific code
 
 using Team=tba::Team_key;
@@ -416,12 +424,12 @@ int main1(int argc,char **argv){
 	){
 		for(auto x:
 			filter(
-				[](auto x){ return suffix(".html",x.path()); },
+				[](auto x){ return x.path().extension()==".html"; },
 				std::filesystem::directory_iterator(subdir)
 			)
 		){
 			assert(x.is_regular_file());
-			auto base=rm_suffix(".html",x.path().filename());
+			auto base=x.path().filename().stem();
 			try{
 				auto k=tba::District_key(base);
 				m[k]|=x;
