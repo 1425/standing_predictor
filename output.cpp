@@ -899,7 +899,7 @@ int team_number(tba::Team_key const& a){
 
 int make_spreadsheet(
 	TBA_fetcher &f,
-	map<tba::District_key,map<tba::Team_key,Pr>> const& m,
+	map<tba::District_key,map<tba::Team_key,std::pair<Pr,Pr>>> const& m,
 	string const& output_dir
 ){
 	//write a csv with all the data, then use LibreOffice to convert it to an Excel spreadsheet
@@ -909,7 +909,7 @@ int make_spreadsheet(
 	string filename="results.csv";
 	{
 		ofstream o(output_dir+"/"+filename);
-		o<<"Team #,CMP,Event,P(DCMP)\n";
+		o<<"Team #,CMP,Event,P(DCMP),P(CMP)\n";
 		for(auto [district,teams]:m){
 			//auto [event_key,event_name]=championship_event(f,district);
 			auto e=championship_event(f,district);
@@ -920,7 +920,8 @@ int make_spreadsheet(
 						assert(*x<e.size());
 						return e[*x];
 					}();
-					o<<team_number(team)<<","<<event_key<<","<<event_name<<","<<p<<"\n";
+					o<<team_number(team)<<","<<event_key<<",\""<<event_name<<"\",";
+					o<<p.first<<","<<p.second<<"\n";
 				}
 			}
 		}

@@ -225,7 +225,7 @@ struct Run_inputs{
 	bool quick=0;
 };
 
-map<tba::Team_key,Pr> run(
+map<tba::Team_key,std::pair<Pr,Pr>> run(
 	TBA_fetcher& f,
 	Run_inputs inputs
 ){
@@ -256,7 +256,7 @@ map<tba::Team_key,Pr> run(
 
 	return to_map(::mapf(
 		[](auto x){
-			return make_pair(x.team,x.dcmp_make);
+			return make_pair(x.team,make_pair(x.dcmp_make,x.cmp_make));
 		},
 		results.result
 	));
@@ -460,7 +460,7 @@ void run_outer(TBA_fetcher& tba_fetcher,Args args){
 
 	auto d=districts(tba_fetcher,*args.year);
 
-	map<tba::District_key,map<tba::Team_key,Pr>> dcmp_pr;
+	map<tba::District_key,map<tba::Team_key,std::pair<Pr,Pr>>> district_team_p;
 
 	for(auto year_info:d){
 		auto district=year_info.key;
@@ -479,8 +479,7 @@ void run_outer(TBA_fetcher& tba_fetcher,Args args){
 		run_inputs.skill_method=args.skill_method;
 		run_inputs.plot=args.plot;
 		run_inputs.quick=args.quick;
-		//dcmp_pr[district]=run(tba_fetcher,args.output_dir,district,args.year,dcmp_size(district),title,year_info.abbreviation);
-		dcmp_pr[district]=run(tba_fetcher,run_inputs);
+		district_team_p[district]=run(tba_fetcher,run_inputs);
 
 		if(district=="2022ne"){
 			run_inputs.dcmp_slots=[](){
@@ -495,7 +494,7 @@ void run_outer(TBA_fetcher& tba_fetcher,Args args){
 		}
 	}
 
-	make_spreadsheet(tba_fetcher,dcmp_pr,args.output_dir);
+	make_spreadsheet(tba_fetcher,district_team_p,args.output_dir);
 }
 
 

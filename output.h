@@ -63,7 +63,7 @@ void gen_html(
 
 int make_spreadsheet(
 	TBA_fetcher &f,
-	std::map<tba::District_key,std::map<tba::Team_key,Pr>> const&,
+	std::map<tba::District_key,std::map<tba::Team_key,std::pair<Pr,Pr>>> const&,
 	std::string const& output_dir
 );
 
