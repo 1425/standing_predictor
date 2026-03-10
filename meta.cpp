@@ -101,6 +101,7 @@ std::ostream& operator<<(std::ostream& o,GumboTag a){
 	X(BR)
 	X(A)
 	X(TBODY)
+	X(FONT)
 	#undef X
 	return o<<"(other tag)";
 }
@@ -139,7 +140,7 @@ std::ostream& operator<<(std::ostream& o,GumboInternalNode const& a){
 		case GUMBO_NODE_COMMENT:
 			nyi
 		case GUMBO_NODE_WHITESPACE:
-			nyi
+			return o<<"(whitespace)";
 		case GUMBO_NODE_TEMPLATE:
 			nyi
 		default:
@@ -160,6 +161,143 @@ std::ostream& operator<<(std::ostream& o,std::filesystem::directory_iterator a){
 
 using Team=tba::Team_key;
 using Pr=double;
+using Team_estimate=std::pair<Pr,std::optional<Pr>>;
+
+map<Team,Team_estimate> parse2026(GumboOutput *start){
+	assert(start);
+	auto at=start->root;
+	assert(at);
+
+	auto traverse_inner=[&](auto &at,auto name,int skip=0){
+		assert(at);
+		assert(at->type==GUMBO_NODE_ELEMENT);
+		auto &from=at->v.element.children;
+		for(auto i:range(from.length)){
+			assert(from.data[i]);
+			auto& here=*(GumboNode*)from.data[i];
+			if(here.type==GUMBO_NODE_ELEMENT){
+				auto x=here.v.element;
+				if(x.tag==name){
+					if(skip){
+						skip--;
+					}else{
+						return &here;
+					}
+				}
+			}
+		}
+		cout<<"Failed to find "<<name<<"\n";
+		exit(1);
+	};
+
+	auto traverse=[&](auto name,int skip=0){
+		at=traverse_inner(at,name,skip);
+	};
+
+	traverse(GUMBO_TAG_BODY);
+
+	auto at1=at;
+	traverse(GUMBO_TAG_H2,3);
+	string found=as_string( (*(GumboNode*)at->v.element.children.data[0]).v.text );
+	int to_skip;
+	if(found=="FRC Championship cutoff value"){
+		//correct for CA
+		to_skip=7;
+	}else{
+		//for all other districts
+		to_skip=5;
+	}
+	at=at1;
+	traverse(GUMBO_TAG_TABLE,to_skip);
+	traverse(GUMBO_TAG_TBODY);
+	//traverse(GUMBO_TAG_TR);
+	//traverse(GUMBO_TAG_TD);
+	//traverse(GUMBO_TAG_TABLE);
+	//traverse(GUMBO_TAG_TBODY);
+
+	auto parse_row=[&](GumboNode *a)->std::optional<std::tuple<tba::Team_key,Pr,std::optional<Pr>>>{
+		assert(a);
+		//PRINT(*a);
+		auto v=a->v.element.children;
+		//PRINT(v.length);
+		if(v.length==1){
+			return std::nullopt;
+		}
+		assert(v.length==14);
+		auto f=[=](int x){
+			auto n=(GumboNode*)(v.data)[x];
+			assert(n);
+			//PRINT(n->type);
+			assert(n->type==GUMBO_NODE_ELEMENT);
+			auto c=n->v.element.children;
+			assert(c.length==1);
+			auto tn=(GumboNode*)(c.data)[0];
+			assert(tn);
+			assert(tn->type==GUMBO_NODE_TEXT);
+			return tn->v.text.text;
+		};
+		(void)f;
+		/*
+		[2]=team
+		[1]=P(DCMP)
+		[7]=P(CMP)
+		*/
+		auto get_colored=[&](int x){
+			auto n=(GumboNode*)(v.data)[x];
+			assert(n);
+			n=traverse_inner(n,GUMBO_TAG_FONT);
+			assert(n->type==GUMBO_NODE_ELEMENT);
+			auto c=n->v.element.children;
+			assert(c.length==1);
+			auto tn=(GumboNode*)(c.data)[0];
+			assert(tn);
+			assert(tn->type==GUMBO_NODE_TEXT);
+			auto str=tn->v.text.text;
+			return atof(str);
+		};
+		return make_tuple(
+			[=]()->tba::Team_key{
+				int x=2;
+				auto n=(GumboNode*)(v.data)[x];
+				assert(n);
+				n=traverse_inner(n,GUMBO_TAG_A);
+				assert(n->type==GUMBO_NODE_ELEMENT);
+				auto c=n->v.element.children;
+				assert(c.length==1);
+				auto tn=(GumboNode*)(c.data)[0];
+				assert(tn);
+				assert(tn->type==GUMBO_NODE_TEXT);
+				auto str=tn->v.text.text;
+				return tba::Team_key(atoi(str));
+			}(),
+			get_colored(1),
+			make_optional(get_colored(7))
+		);
+		//return make_pair(stoi(f(0)),stod(f(1)));
+	};
+
+
+	auto v=nonempty(mapf(
+		parse_row,
+		skip(1,span<GumboNode*>{
+			(GumboNode**)(at->v.element.children.data),
+			at->v.element.children.length
+		})
+	));
+
+	return dict(mapf(
+		[](auto x){
+			return make_pair(
+				std::get<0>(x),
+				make_pair(
+					std::get<1>(x),
+					std::get<2>(x)
+				)
+			);
+		},
+		v
+	));
+}
 
 map<Team,std::pair<Pr,std::optional<Pr>>> parse_page(std::filesystem::directory_entry const& path){
 	std::ifstream f(path.path());
@@ -196,6 +334,27 @@ map<Team,std::pair<Pr,std::optional<Pr>>> parse_page(std::filesystem::directory_
 	traverse(GUMBO_TAG_BODY);
 	traverse(GUMBO_TAG_TABLE);
 	traverse(GUMBO_TAG_TBODY);
+
+	{
+		auto &x=at->v.element.children;
+		if(x.length){
+			auto first=(GumboNode*)x.data[0];
+			if(first){
+				auto len=first->v.element.children.length;
+				if(len==2){
+					//traditional layout
+					//do nothing special
+				}else if(len==4){
+					//then we're in the 2026 layout
+					return parse2026(output);
+					//might need to do some extra cleanup here.
+				}else{
+					//unrecognized layout
+					assert(0);
+				}
+			}
+		}
+	}
 
 	auto parse_row=[&](GumboNode *a){
 		assert(a);
@@ -472,12 +631,16 @@ int main1(int argc,char **argv){
 
 	map<tba::District_key,vector<std::filesystem::directory_entry>> m;
 	for(auto subdir:
-		//sorted(to_vec(std::filesystem::directory_iterator("results/2022")))
 		sorted(filter(
 			[](auto x){
 				return x.is_directory() && numeric(std::filesystem::path(x).filename());
 			},
-			std::filesystem::directory_iterator("results/"+::as_string(year))
+			std::filesystem::directory_iterator([=]()->string{
+				if(year<tba::Year(2026)){
+					return "results/"+::as_string(year);
+				}
+				return "../standing_predictor_output";
+			}())
 		))
 	){
 		for(auto x:
