@@ -56,6 +56,7 @@ simple way:
 #include "vector_fixed.h"
 #include "output.h"
 #include "index.h"
+#include "history.h"
 
 //start program-specific stuff.
 
@@ -333,6 +334,7 @@ Args parse_args(int argc,char **argv){
 		r.quick
 	);
 	p.add("--index",{"UPDATE"},"Experimental",r.index);
+	p.add("--history_demo",{},"Experimental",r.history_demo);
 	p.parse(argc,argv);
 	return r;
 }
@@ -508,6 +510,10 @@ int main1(int argc,char **argv){
 
 	if(args.venue_demo){
 		return venue_demo(tba_fetcher);
+	}
+
+	if(args.history_demo){
+		return history_demo(tba_fetcher);
 	}
 
 	if(args.rank_limits_demo){

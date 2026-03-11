@@ -14,7 +14,12 @@ TBA_OBJS= \
 	../tba/data.o \
 	../tba/curl.o \
 	../tba/simdjson.o \
-	../tba/util.o
+	../tba/util.o\
+	../tba/event_key.o\
+	../tba/year.o\
+	../tba/district_key.o\
+	../tba/team_key.o\
+	../tba/match_key.o\
 
 FRC_API_OBJS= \
 	../frc_api/data.o \
@@ -24,6 +29,7 @@ FRC_API_OBJS= \
 	../frc_api/curl.o
 
 OUTLINE_OBJS= \
+	history.o \
 	index.o \
 	tournament_status.o\
 	event_categories.o\

@@ -48,9 +48,27 @@ std::string rand(std::string const*){
 	return "rand_string";
 }
 
+template<typename T>
+T rand(T const*);
+
+std::chrono::year rand(std::chrono::year const*){
+	return std::chrono::year(rand()%3000);
+}
+
+std::chrono::month rand(std::chrono::month const*){
+	return std::chrono::month(rand()%12);
+}
+
+std::chrono::day rand(std::chrono::day const*){
+	return std::chrono::day(rand()%29);
+}
+
 std::chrono::year_month_day rand(std::chrono::year_month_day const*){
-	std::chrono::year_month_day r{};
-	//obviously could make this more random.
+	std::chrono::year_month_day r{
+		rand((std::chrono::year*)0),
+		rand((std::chrono::month*)0),
+		rand((std::chrono::day*)0)
+	};
 	return r;
 }
 

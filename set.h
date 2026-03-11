@@ -56,6 +56,12 @@ std::set<T> operator|(std::set<T> a,std::set<T> const& b){
 }
 
 template<typename T>
+auto operator|(T a,std::set<T> b){
+	b|=a;
+	return b;
+}
+
+template<typename T>
 std::set<T> to_set(std::vector<T> const& a){
 	std::set<T> r;
 	for(auto x:a) r|=x;
