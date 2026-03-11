@@ -5,6 +5,7 @@
 #include<memory>
 #include "../tba/data.h"
 #include "../tba/db.h"
+#include "../tba/match.h"
 #include "probability.h"
 
 class Argument_parser;

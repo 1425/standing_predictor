@@ -20,6 +20,7 @@ TBA_OBJS= \
 	../tba/district_key.o\
 	../tba/team_key.o\
 	../tba/match_key.o\
+	../tba/match.o\
 
 FRC_API_OBJS= \
 	../frc_api/data.o \
