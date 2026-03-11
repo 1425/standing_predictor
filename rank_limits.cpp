@@ -1,6 +1,5 @@
 #include "rank_limits.h"
 #include "rand.h"
-#include "../tba/data.h"
 #include "set_fixed.h"
 #include "util.h"
 #include "pick_points.h"

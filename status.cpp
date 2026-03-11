@@ -158,7 +158,7 @@ The FIRST Impact Award, formerly the Chairman’s Award, is the most prestigious
  * Author's note: RIP 1311.
  * */
 
-std::set<tba::Team_key> chairmans(TBA_fetcher &tba_fetcher,tba::Event_key event_key){
+std::set<tba::Team_key> chairmans(TBA_fetcher &tba_fetcher,tba::Event_key const& event_key){
 	auto a=tba::event_awards(tba_fetcher,event_key);
 	auto f1=filter([](auto x){ return x.award_type==tba::Award_type::CHAIRMANS; },a);
 	if(f1.empty()){

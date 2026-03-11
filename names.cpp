@@ -3,7 +3,6 @@
 #include<iostream>
 #include<string>
 #include<cassert>
-#include "../tba/data.h"
 #include "../tba/tba.h"
 #include "io.h"
 #include "util.h"

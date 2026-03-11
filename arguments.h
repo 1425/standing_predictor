@@ -6,7 +6,8 @@
 #include<span>
 #include<memory>
 #include<functional>
-#include "../tba/data.h"
+#include "../tba/district_key.h"
+#include "../tba/year.h"
 
 std::string decode(std::span<char*>,std::string const*);
 tba::District_key decode(std::span<char*>,tba::District_key const*);

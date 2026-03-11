@@ -2,7 +2,6 @@
 #include<fstream>
 #include<set>
 #include "../tba/util.h"
-#include "../tba/data.h"
 #include "util.h"
 #include "zipcodes.h"
 #include "set.h"

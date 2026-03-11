@@ -3,7 +3,6 @@
 #include<set>
 #include<optional>
 #include<cassert>
-#include "../tba/data.h"
 #include "print_r.h"
 #include "tba.h"
 #include "../tba/tba.h"

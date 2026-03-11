@@ -1,7 +1,6 @@
 #include<fstream>
 #include<cmath>
 #include<boost/tokenizer.hpp>
-#include "../tba/data.h"
 #include "io.h"
 #include "vector.h"
 #include "vector_void.h"

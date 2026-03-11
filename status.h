@@ -2,12 +2,16 @@
 #define STATUS_H
 
 #include<set>
-#include "../tba/data.h"
+
+namespace tba{
+	class Team_key;
+	class Event_key;
+}
 
 class TBA_fetcher;
 
 int demo(TBA_fetcher&);
 
-std::set<tba::Team_key> chairmans(TBA_fetcher &tba_fetcher,tba::Event_key event_key);
+std::set<tba::Team_key> chairmans(TBA_fetcher&,tba::Event_key const&);
 
 #endif

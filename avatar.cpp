@@ -2,7 +2,7 @@
 #include<sstream>
 #include "util.h"
 #include "plot.h"
-#include "../tba/data.h"
+#include "../tba/team_key.h"
 #include "io.h"
 
 std::string avatar(tba::Team_key const& team){

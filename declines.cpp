@@ -3,7 +3,6 @@
 #include<numeric>
 #include<filesystem>
 #include "../tba/db.h"
-#include "../tba/data.h"
 #include "../tba/tba.h"
 #include "../frc_api/db.h"
 #include "../frc_api/query.h"

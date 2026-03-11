@@ -3,7 +3,6 @@
 
 #include<map>
 #include "io.h"
-#include "../tba/data.h"
 
 class TBA_fetcher;
 

@@ -1,7 +1,6 @@
 #include "history.h"
 #include<vector>
 #include<boost/tokenizer.hpp>
-#include "../tba/data.h"
 #include "tba.h"
 #include "skill.h"
 #include "event_partial.h"

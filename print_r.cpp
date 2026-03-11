@@ -2,7 +2,6 @@
 #include<sys/ioctl.h>
 #include<unistd.h>
 #include "../frc_api/data.h"
-#include "../tba/data.h"
 #include "../tba/match.h"
 
 using namespace std;

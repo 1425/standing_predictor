@@ -2,7 +2,6 @@
 #define PLAYOFF_LIMITS_H
 
 #include "rank_limits.h" //for Point_range
-#include "../tba/data.h"
 
 namespace tba{
 	class Team_key;

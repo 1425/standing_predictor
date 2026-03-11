@@ -27,7 +27,6 @@ simple way:
 */
 
 #include<filesystem>
-#include "../tba/data.h"
 #include "../tba/tba.h"
 #include "arguments.h"
 #include "slots.h"
