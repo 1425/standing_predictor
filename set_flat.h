@@ -301,7 +301,9 @@ auto group(Func f,set_flat<T> const& a){
 }
 
 template<typename T>
-T choose(set_flat<T>);
+T choose(set_flat<T> a){
+	return choose(a.get());
+}
 
 template<typename T>
 set_flat<T> choose(size_t,set_flat<T>);

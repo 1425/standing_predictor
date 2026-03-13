@@ -239,6 +239,20 @@ auto find_cutoff(std::array<T,N> const& a,std::vector<B> const& b){
 	);
 }
 
+template<typename T,size_t N,typename B,size_t M>
+auto find_cutoff(std::array<T,N> const& a,vector_fixed<B,M> const& b){
+	return mapf(
+		[&](auto i){
+			if(i<b.size()){
+				return find_cutoff(a[i],b[i]);
+			}else{
+				return find_cutoff(a[i],B{});
+			}
+		},
+		range_st<N>()
+	);
+}
+
 ELEMENTWISE_RAND(Run_result,RUN_RESULT_ITEMS)
 
 PRINT_STRUCT(Run_result,RUN_RESULT_ITEMS)

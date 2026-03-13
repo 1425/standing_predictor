@@ -261,19 +261,14 @@ auto count_if(Func f,vector_fixed<T,N> const& a){
 	return r;
 }
 
-template<size_t N,typename T>
+/*template<size_t N,typename T>
 auto take(std::vector<T> const& a){
 	vector_fixed<T,N> r;
 	for(size_t i=0;i<N && i<a.size();i++){
 		r|=a[i];
 	}
 	return r;
-}
-
-template<size_t N,typename K,typename V>
-auto take(std::map<K,V> const& a){
-	return ::take<N>(to_vec(a));
-}
+}*/
 
 template<size_t N,typename T,size_t M>
 auto take(vector_fixed<T,M> const& a){
@@ -297,6 +292,11 @@ auto take(T const& a){
 	return r;
 }
 
+template<size_t N,typename K,typename V>
+auto take(std::map<K,V> const& a){
+	return ::take<N>(to_vec(a));
+}
+
 template<typename T,size_t N>
 auto sum(vector_fixed<T,N> const& a){
 	return std::accumulate(a.begin(),a.end(),T());
@@ -308,6 +308,26 @@ auto enumerate_from(size_t n,vector_fixed<T,N> const& a){
 	vector_fixed<P,N> r;
 	for(auto const& x:a){
 		r|=P(n++,x);
+	}
+	return r;
+}
+
+template<typename T,size_t N>
+bool contains(vector_fixed<T,N> const& a,T const& b){
+	for(auto const& x:a){
+		if(x==b){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+template<typename Func,typename T,size_t N>
+auto mapf(Func f,vector_fixed<T,N> const& a){
+	using E=decltype(f(a[0]));
+	vector_fixed<E,N> r;
+	for(auto const& x:a){
+		r|=f(x);
 	}
 	return r;
 }

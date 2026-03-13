@@ -56,6 +56,7 @@ simple way:
 #include "output.h"
 #include "index.h"
 #include "history.h"
+#include "fly.h"
 
 //start program-specific stuff.
 
@@ -334,6 +335,7 @@ Args parse_args(int argc,char **argv){
 	);
 	p.add("--index",{"UPDATE"},"Experimental",r.index);
 	p.add("--history_demo",{},"Experimental",r.history_demo);
+	p.add("--fly",{},"Experimental",r.fly);
 	p.parse(argc,argv);
 	return r;
 }
@@ -559,6 +561,10 @@ int main1(int argc,char **argv){
 
 	if(args.index){
 		return index(tba_fetcher,*args.index);
+	}
+
+	if(args.fly){
+		return fly_demo(tba_fetcher);
 	}
 
 	run_outer(tba_fetcher,args);

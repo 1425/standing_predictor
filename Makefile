@@ -30,6 +30,7 @@ FRC_API_OBJS= \
 	../frc_api/curl.o
 
 OUTLINE_OBJS= \
+	fly.o \
 	history.o \
 	index.o \
 	tournament_status.o\

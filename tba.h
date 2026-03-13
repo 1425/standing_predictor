@@ -116,5 +116,10 @@ set_limited<T,N> to_set(tba::vector_fixed<T,N> const& a){
 }
 
 tba::Year current_season(TBA_fetcher&);
+std::optional<tba::District_key> district(TBA_fetcher&,tba::Team_key const&,tba::Year const&);
+tba::Date cmp_start(TBA_fetcher&,tba::Year);
+tba::Date dcmp_start(TBA_fetcher&,tba::District_key const&);
+std::optional<tba::Date> dcmp_start(TBA_fetcher&,std::optional<tba::District_key> const&);
+tba::Date dcmp_end(TBA_fetcher&,tba::District_key const&);
 
 #endif

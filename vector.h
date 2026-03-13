@@ -5,6 +5,7 @@
 #include<algorithm>
 #include<cassert>
 #include<execution>
+#include<cmath>
 #include "util.h" //for ELEM
 
 template<typename T,typename T2>
@@ -268,7 +269,7 @@ T max_else(std::vector<T> const& a,T b){
 }
 
 template<typename T>
-double mean(std::vector<T> const& v){
+auto mean(std::vector<T> const& v){
 	return sum(v)/v.size();
 }
 
@@ -542,6 +543,16 @@ auto mapf_par(Func f,std::vector<T> const& a){
 	std::vector<E> r(a.size());
 	std::transform(std::execution::par_unseq,a.begin(),a.end(),r.begin(),f);
 	return r;
+}
+
+template<typename T>
+bool none(std::vector<T> const& a){
+	for(auto const& x:a){
+		if(x){
+			return 0;
+		}
+	}
+	return 1;
 }
 
 #endif

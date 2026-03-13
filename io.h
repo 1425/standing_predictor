@@ -9,6 +9,7 @@
 #include<variant>
 #include<sstream>
 #include<chrono>
+#include "set.h"
 
 #define PRINT(X) { std::cout<<""#X<<":"<<(X)<<"\n"; }
 #define nyi { std::cout<<"nyi "<<__FILE__<<":"<<__LINE__<<"\n"; exit(44); }
@@ -33,6 +34,9 @@ std::ostream& operator<<(std::ostream&,std::variant<Ts...> const&);
 
 template<typename T>
 std::ostream& operator<<(std::ostream&,std::set<T> const&);
+
+template<typename T>
+std::ostream& operator<<(std::ostream&,std::multiset<T> const&);
 
 template<typename T>
 std::ostream& operator<<(std::ostream&,std::vector<T> const&);

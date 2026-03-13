@@ -556,3 +556,72 @@ tba::Event_type event_type(TBA_fetcher &f,tba::Event_points const& a){
 tba::Year current_season(TBA_fetcher& f){
 	return tba::status(f).current_season;
 }
+
+using Date=tba::Date;
+using Year=tba::Year;
+using Team_key=tba::Team_key;
+
+Date dcmp_end(TBA_fetcher &f,tba::District_key const& district){
+	auto found=filter(
+		[](auto x){ return x.event_type==tba::Event_type::DISTRICT_CMP; },
+		events(f,district)
+	);
+	auto m=mapf([](auto x){ assert(x.end_date); return *x.end_date; },found);
+	assert(!m.empty());
+	assert(all_equal(m));
+	return m[0];
+}
+
+Date dcmp_start(TBA_fetcher &f,tba::District_key const& district){
+	auto found=filter(
+		[](auto x){ return x.event_type==tba::Event_type::DISTRICT_CMP; },
+		events(f,district)
+	);
+	auto m=mapf([](auto x){ assert(x.start_date); return *x.start_date; },found);
+	assert(!m.empty());
+	assert(all_equal(m));
+	return m[0];
+}
+
+std::optional<Date> dcmp_start(TBA_fetcher& f,std::optional<tba::District_key> const& a){
+	if(!a){
+		return std::nullopt;
+	}
+	return dcmp_start(f,*a);
+}
+
+Date cmp_start(TBA_fetcher &f,tba::Year year){
+	auto found=filter(
+		[](auto x){ return x.event_type==tba::Event_type::CMP_DIVISION || x.event_type==tba::Event_type::CMP_FINALS; },
+		tba::events(f,year)
+	);
+	auto m=mapf([](auto x){ assert(x.start_date); return *x.start_date; },found);
+	assert(!m.empty());
+	//PRINT(count(m));
+	//assert(all_equal(m));
+	return min(m);
+}
+
+std::vector<tba::District_key> districts_keys(TBA_fetcher &f,Year year){
+	return mapf([](auto x){ return x.key; },tba::districts(f,year));
+}
+
+std::optional<tba::District_key> district(TBA_fetcher& f,Team_key const& a,Year const& year){
+	auto f1=filter(
+		[&](auto x){
+			return to_set(tba::district_teams_keys(f,x)).count(a);
+		},
+		districts_keys(f,year)
+	);
+	if(f1.empty()){
+		return std::nullopt;
+	}
+	if(f1.size()!=1){
+		PRINT(a);
+		PRINT(year);
+		print_r(f1);
+	}
+	assert(f1.size()==1);
+	return f1[0];
+}
+

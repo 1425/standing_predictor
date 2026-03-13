@@ -23,6 +23,7 @@ struct Args{
 	Skill_method skill_method=Skill_method::POINTS;
 	std::optional<bool> index;
 	bool history_demo=0;
+	bool fly=0;
 };
 
 void run_outer(TBA_fetcher&,Args);

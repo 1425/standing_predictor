@@ -67,4 +67,12 @@ std::optional<V> maybe_get(MAP<K,V> const& a,K2 const& k){
 std::optional<std::string> strip(std::optional<std::string> const&);
 bool prefix(std::optional<std::string> const& whole,std::string const& part);
 
+template<typename T>
+auto operator-(T a,std::optional<T> b)->std::optional<decltype(a-*b)>{
+	if(b){
+		return a-*b;
+	}
+	return std::nullopt;
+}
+
 #endif
