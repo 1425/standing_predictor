@@ -265,6 +265,27 @@ auto max_key(std::map<K,V> const& a){
 	return max(keys(a));
 }
 
+template<typename Func,typename T>
+auto argmin(Func f,std::vector<T> const& v){
+	auto m=min(mapf([&](auto x){ return make_pair(f(x),x); },v));
+	return m.second;
+}
+
+template<typename Func,typename T>
+auto argmin(Func f,set_flat<T> const& v){
+	auto m=min(mapf([&](auto x){ return make_pair(f(x),x); },v));
+	return m.second;
+}
+
+auto distance(int a,long b){
+	return abs(a-b);
+}
+
+template<typename A,typename B,typename C,typename D>
+auto distance(std::pair<A,B> a,std::pair<C,D> b){
+	return make_pair(distance(a.first,b.first),distance(a.second,b.second));
+}
+
 template<typename K,typename V,typename T>
 V find_close(std::map<K,V> const& a,T const& b){
 	auto f=a.find(b);
@@ -274,7 +295,9 @@ V find_close(std::map<K,V> const& a,T const& b){
 	if(b>max_key(a)){
 		return a.at(max_key(a));
 	}
-	nyi
+	//auto new_key=argmin([=](auto x){ return abs(x-b); },keys(a));
+	auto new_key=argmin([=](auto x){ return distance(x,b); },keys(a));
+	return a.at(new_key);
 }
 
 map<Team_season_status,Pr> step(Transition_table const& table,Team_season_status const& team_status){
@@ -310,7 +333,7 @@ map<Team_season_status,Pr> step(Transition_table const& table,Team_season_status
 
 	if(team_setup.dcmp==days){
 		//force the probability to either 0 or 100%.
-		PRINT(team_status);
+		//PRINT(team_status);
 
 		Team_season_status a{
 			team_status.setup,
@@ -393,16 +416,118 @@ bool operator!=(std::chrono::days a,int b){
 	return !(a==b);
 }
 
-void run_demo(Team_season_status team_status){
+using Value=double;
+using Result=std::pair<Days,Value>;
+using Cache=std::map<Team_season_status,Result>;
+
+double cost_function(int days_out){
+	if(days_out<=7){
+		return 1.59;
+	}
+	//at 21 days out start to spike
+	if(days_out<=21){
+		auto taper_width=21-7;
+		auto slope=-.59/taper_width;
+		//PRINT(slope);
+		return 1.59+slope*(days_out-7);
+	}
+	//1-3 months out 25% lower (for domestic
+	double months=days_out/30.0;
+	if(months>1 && months<3){
+		return .75;
+	}
+	return 1;
+}
+
+Value cost(std::chrono::days a){
+	//OBVIOUSLY WANT TO MAKE THIS DIFFERENT LATER
+	//return (a<std::chrono::days(20))?2:1;
+	return cost_function(a.count());
+}
+
+template<typename T>
+auto weighted_average(std::map<T,double> a){
+	T sum{};
+	double weight=0;
+	for(auto [k,v]:a){
+		sum+=(k*v);
+		weight+=v;
+	}
+	return sum/weight;
+}
+
+template<typename T>
+auto weighted_average(std::vector<std::pair<T,double>> a){
+	T sum{};
+	double weight=0;
+	for(auto [k,v]:a){
+		sum+=(k*v);
+		weight+=v;
+	}
+	return sum/weight;
+}
+
+Result run_cached(Cache &cache,Transition_table const& transition_table,Team_season_status const& here){
+	{
+		auto f=cache.find(here);
+		if(f!=cache.end()){
+			return f->second;
+		}
+	}
+
+	if(here.days>std::chrono::days(0)){
+		auto after=step(transition_table,here);
+		auto m=mapf(
+			[&](auto x){
+				auto [k,v]=x;
+				return make_pair(
+					run_cached(cache,transition_table,k),
+					v
+				);
+			},
+			after
+		);
+		auto m2=mapf([](auto x){ return make_pair(x.first.second,x.second); },m);
+		auto cost_if_wait=weighted_average(m2);
+		auto cost_if_now=cost(here.days);
+		if(cost_if_now<=cost_if_wait){
+			return Result{here.days,cost_if_now};
+		}
+		auto buy_times=mapf([](auto x){ return x.first.first; },m);
+		return Result{max(buy_times),cost_if_wait};
+	}
+
+	if(here.box==0){
+		return Result{0,0.0};
+	}
+	if(here.box==10){
+		return Result{0,cost(Days(0))};
+	}
+	PRINT(here);
+	nyi
+}
+
+using Team_key=tba::Team_key;
+
+void run_demo(TBA_fetcher &f,Year year,std::vector<std::pair<Team_key,Team_season_status>> team_status){
 	Transition_table transition_table=read_dist();
-	while(team_status.days!=0){
+	
+	Cache cache;
+	for(auto [team,info]:team_status){
+		auto x=run_cached(cache,transition_table,info);
+		auto date=cmp_start(f,year)-x.first;
+		cout<<team<<"\t"<<date<<"\t"<<x<<"\n";
+	}
+	return;
+
+	/*while(team_status.days!=0){
 		PRINT(team_status);
 		auto after=step(transition_table,team_status);
 		//PRINT(after);
 
 		team_status=choose(keys(after));
 	}
-	cout<<"End state:"<<team_status<<"\n";
+	cout<<"End state:"<<team_status<<"\n";*/
 }
 
 void run_demo(std::optional<Team_season_status> const& a){
@@ -410,11 +535,35 @@ void run_demo(std::optional<Team_season_status> const& a){
 	return run_demo(*a);
 }
 
+auto as_int(Team_key a){
+	return stoi(a.str().c_str()+3);
+}
+
 int fly_demo(TBA_fetcher &f){
 	auto x=read_dist();
 	Year year(2026);
 	auto h=read_history();
-	if(1){
+
+	cout<<"Reading team status\n";
+
+	auto e=nonempty(mapf(
+		[&](auto x)->optional<pair<Team_key,Team_season_status>>{
+			auto s=team_season_status(f,x,h);
+			if(s){
+				return make_pair(x.key,*s);
+			}else{
+				return std::nullopt;
+			}
+		},
+		//filter([](auto x){ return as_int(x.key)>5000; },teams(f))
+		teams(f)
+	));
+
+	cout<<"Pricing model\n";
+	run_demo(f,year,e);
+	cout<<"Done\n";
+
+	if(0){
 		for(auto team:teams(f)){
 			auto s=schedule(f,team,year);
 			auto s2=team_setup(f,team,year);

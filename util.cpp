@@ -59,6 +59,11 @@ std::chrono::days operator-(std::chrono::year_month_day a,std::chrono::year_mont
 	return std::chrono::sys_days(a)-std::chrono::sys_days(b);
 }
 
+std::chrono::year_month_day operator-(std::chrono::year_month_day a,std::chrono::days b){
+	auto x=std::chrono::sys_days(a)-b;
+	return x;
+}
+
 std::string demangle(const char *s){
 	assert(s);
 	#ifdef __unix__

@@ -76,6 +76,7 @@ std::chrono::year_month_day& operator++(std::chrono::year_month_day&);
 std::chrono::year_month_day operator+(std::chrono::year_month_day,std::chrono::days);
 
 std::chrono::days operator-(std::chrono::year_month_day,std::chrono::year_month_day);
+std::chrono::year_month_day operator-(std::chrono::year_month_day,std::chrono::days);
 
 //start tuple section
 
