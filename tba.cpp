@@ -561,7 +561,7 @@ using Date=tba::Date;
 using Year=tba::Year;
 using Team_key=tba::Team_key;
 
-Date dcmp_end(TBA_fetcher &f,tba::District_key const& district){
+Date dcmp_end_calc(TBA_fetcher &f,tba::District_key const& district){
 	auto found=filter(
 		[](auto x){ return x.event_type==tba::Event_type::DISTRICT_CMP; },
 		events(f,district)
@@ -570,6 +570,17 @@ Date dcmp_end(TBA_fetcher &f,tba::District_key const& district){
 	assert(!m.empty());
 	assert(all_equal(m));
 	return m[0];
+}
+
+Date dcmp_end(TBA_fetcher &f,tba::District_key const& district){
+	static std::map<tba::District_key,Date> cache;
+	{
+		auto f1=cache.find(district);
+		if(f1!=cache.end()){
+			return f1->second;
+		}
+	}
+	return cache[district]=dcmp_end_calc(f,district);
 }
 
 Date dcmp_start(TBA_fetcher &f,tba::District_key const& district){
@@ -590,7 +601,7 @@ std::optional<Date> dcmp_start(TBA_fetcher& f,std::optional<tba::District_key> c
 	return dcmp_start(f,*a);
 }
 
-Date cmp_start(TBA_fetcher &f,tba::Year year){
+Date cmp_start_inner(TBA_fetcher &f,tba::Year year){
 	auto found=filter(
 		[](auto x){ return x.event_type==tba::Event_type::CMP_DIVISION || x.event_type==tba::Event_type::CMP_FINALS; },
 		tba::events(f,year)
@@ -602,14 +613,38 @@ Date cmp_start(TBA_fetcher &f,tba::Year year){
 	return min(m);
 }
 
+Date cmp_start(TBA_fetcher &f,tba::Year year){
+	static std::map<Year,Date> cache;
+	auto found=cache.find(year);
+	if(found!=cache.end()){
+		return found->second;
+	}
+	return cache[year]=cmp_start_inner(f,year);
+}
+
 std::vector<tba::District_key> districts_keys(TBA_fetcher &f,Year year){
 	return mapf([](auto x){ return x.key; },tba::districts(f,year));
 }
 
-std::optional<tba::District_key> district(TBA_fetcher& f,Team_key const& a,Year const& year){
-	auto f1=filter(
+auto calc_districts(TBA_fetcher &f){
+	std::map<std::pair<Team_key,Year>,tba::District_key> r;
+
+	for(auto year:years()){
+		for(auto district:districts_keys(f,year)){
+			for(auto team:tba::district_teams_keys(f,district)){
+				r.insert(make_pair(make_pair(team,year),district));
+			}
+		}
+	}
+
+	return r;
+}
+
+std::optional<tba::District_key> district(TBA_fetcher& f,Team_key const& team,Year const& year){
+	/*auto f1=filter(
 		[&](auto x){
-			return to_set(tba::district_teams_keys(f,x)).count(a);
+			//return to_set(tba::district_teams_keys(f,x)).count(a);
+			return contains(tba::district_teams_keys(f,x),a);
 		},
 		districts_keys(f,year)
 	);
@@ -622,6 +657,15 @@ std::optional<tba::District_key> district(TBA_fetcher& f,Team_key const& a,Year 
 		print_r(f1);
 	}
 	assert(f1.size()==1);
-	return f1[0];
+	return f1[0];*/
+
+	static auto cache=calc_districts(f);
+
+	auto it=cache.find(make_pair(team,year));
+
+	if(it==cache.end()){
+		return std::nullopt;
+	}
+	return it->second;
 }
 

@@ -170,7 +170,7 @@ class vector_fixed{
 		return *this;
 	}
 
-	std::strong_ordering operator<=>(vector_fixed const& a)const{
+	constexpr std::strong_ordering operator<=>(vector_fixed const& a)const{
 		auto cmp=(size()<=>a.size());
 		if(cmp!=std::strong_ordering::equal){
 			return cmp;
@@ -182,6 +182,11 @@ class vector_fixed{
 			}
 		}
 		return std::strong_ordering::equal;
+	}
+
+	constexpr bool operator==(vector_fixed const& a)const{
+		auto x=(*this<=>a);
+		return x==std::strong_ordering::equal;
 	}
 
 	bool operator==(std::vector<T> const& a)const{
@@ -331,5 +336,16 @@ auto mapf(Func f,vector_fixed<T,N> const& a){
 	}
 	return r;
 }
+
+template<typename T,size_t N>
+struct std::hash<vector_fixed<T,N>>{
+	static auto operator()(vector_fixed<T,N> const& a){
+		size_t r=0;
+		for(auto const& x:a){
+			r=r*31+std::hash<T>{}(x);
+		}
+		return r;
+	}
+};
 
 #endif

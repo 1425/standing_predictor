@@ -40,6 +40,41 @@ https://github.com/1425/standing_predictor/
 To turn that into how team probabilities change over time, I ran that model on previous seasons and built a Markov model whose states for a team are (time left, upcoming scheduled events, quantized probability).  
 
  * */
+
+template<>
+struct std::hash<std::chrono::days>{
+	static size_t operator()(std::chrono::days a){
+		return a.count();
+	}
+};
+
+template<typename A,typename B>
+struct std::hash<std::chrono::duration<A,B>>{
+	static auto operator()(std::chrono::duration<A,B> a){
+		return a.count();
+	}
+};
+
+template<typename A,typename B>
+struct std::hash<std::pair<A,B>>{
+	static size_t operator()(std::pair<A,B> const& a){
+		size_t h1=std::hash<A>{}(a.first);
+		auto h2=std::hash<B>{}(a.second);
+		return h1*31+h2;
+	}
+};
+
+template<typename T>
+struct std::hash<std::vector<T>>{
+	static size_t operator()(std::vector<T> const& a){
+		size_t r=0;
+		for(auto const& x:a){
+			r=r*31+std::hash<T>{}(x);
+		}
+		return r;
+	}
+};
+
 using Week=int; //number of weeks before dcmp
 using Year=tba::Year;
 using Schedule=vector_fixed<Week,2>;
@@ -177,15 +212,30 @@ std::map<Team_status,Pr> step(Transition_table table,Team_state a){
 }
 #endif
 
-using Days=std::chrono::days;
+//using Days=std::chrono::days;
+using Days=std::chrono::duration<unsigned char,std::ratio<3600*24,1>>;
 using Event=std::pair<Days,bool>;//bool=team is playing
 
+//using Events=vector_fixed<Event,14>;
+using Events=vector<Event>;
+
 #define TEAM_SETUP(X)\
-	X(std::vector<Event>,pre_dcmp)\
+	X(Events,pre_dcmp)\
 	X(Days,dcmp)
 
 STRUCT_DECLARE(Team_setup,TEAM_SETUP)
 PRINT_STRUCT(Team_setup,TEAM_SETUP)
+
+template<>
+struct std::hash<Team_setup>{
+	static size_t operator()(Team_setup const& a){
+		size_t r=0;
+		#define X(A,B) r=r*31+std::hash<A>{}(a.B);
+		TEAM_SETUP(X)
+		#undef X
+		return r;
+	}
+};
 
 using Date=tba::Date;
 
@@ -231,7 +281,7 @@ std::optional<Team_setup> team_setup(TBA_fetcher &f,tba::Team_key team,Year year
 	return Team_setup{
 		mapf(
 			[=](auto x){
-				auto offset=c-x;
+				Days offset=c-x;
 				return make_pair(
 					offset,
 					to_set(s.local).count(offset)
@@ -256,6 +306,17 @@ auto team_setup(TBA_fetcher &f,tba::Team const& team,Year year){
 
 STRUCT_DECLARE(Team_season_status,TEAM_SEASON_STATUS)
 PRINT_STRUCT(Team_season_status,TEAM_SEASON_STATUS)
+
+template<>
+struct std::hash<Team_season_status>{
+	static auto operator()(Team_season_status const& a){
+		size_t r=0;
+		#define X(A,B) r=r*31+std::hash<A>{}(a.B);
+		TEAM_SEASON_STATUS(X)
+		#undef X
+		return r;
+	}
+};
 
 //template<typename K,typename V>
 //V find_close(std::map<K,V>,K);
@@ -418,7 +479,8 @@ bool operator!=(std::chrono::days a,int b){
 
 using Value=double;
 using Result=std::pair<Days,Value>;
-using Cache=std::map<Team_season_status,Result>;
+using Cache=std::unordered_map<Team_season_status,Result>;
+//using Cache=std::map<Team_season_status,Result>;
 
 double cost_function(int days_out){
 	if(days_out<=7){
@@ -494,14 +556,14 @@ Result run_cached(Cache &cache,Transition_table const& transition_table,Team_sea
 			return Result{here.days,cost_if_now};
 		}
 		auto buy_times=mapf([](auto x){ return x.first.first; },m);
-		return Result{max(buy_times),cost_if_wait};
+		return cache[here]=Result{max(buy_times),cost_if_wait};
 	}
 
 	if(here.box==0){
-		return Result{0,0.0};
+		return cache[here]=Result{0,0.0};
 	}
 	if(here.box==10){
-		return Result{0,cost(Days(0))};
+		return cache[here]=Result{0,cost(Days(0))};
 	}
 	PRINT(here);
 	nyi
@@ -544,11 +606,13 @@ int fly_demo(TBA_fetcher &f){
 	Year year(2026);
 	auto h=read_history();
 
+	auto g=group([](auto x){ return make_pair(x.team,x.year); },h);
+
 	cout<<"Reading team status\n";
 
 	auto e=nonempty(mapf(
 		[&](auto x)->optional<pair<Team_key,Team_season_status>>{
-			auto s=team_season_status(f,x,h);
+			auto s=team_season_status(f,x,g[make_pair(x.key,current_season(f))]);
 			if(s){
 				return make_pair(x.key,*s);
 			}else{
@@ -556,7 +620,7 @@ int fly_demo(TBA_fetcher &f){
 			}
 		},
 		//filter([](auto x){ return as_int(x.key)>5000; },teams(f))
-		teams(f)
+		take(400,teams(f))
 	));
 
 	cout<<"Pricing model\n";
