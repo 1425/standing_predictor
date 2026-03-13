@@ -69,6 +69,14 @@ auto square(auto x){
 }
 
 short coerce(int a,short const*);
+int coerce(int,int const*);
+double coerce(double,double const*);
+bool coerce(bool,bool const*);
+
+/*template<typename T>
+T coerce(const T a,T const*){
+	return a;
+}*/
 
 //start chrono section
 

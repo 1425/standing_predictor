@@ -216,6 +216,11 @@ class flat_map2{
 			return const_proxy<K,V>{*first,*second};
 		}
 
+		std::shared_ptr<std::pair<K const&,V const&>> operator->()const{
+			//this is obviously not a fast operation.
+			return make_shared<std::pair<K const&,V const&>>(*first,*second);
+		}
+
 		auto operator<=>(const_iterator const&)const=default;
 	};
 
@@ -225,6 +230,10 @@ class flat_map2{
 			return const_iterator{keys.end(),values.end()};
 		}
 		return const_iterator{f,values.begin()+(f-keys.begin())};
+	}
+
+	bool contains(K const& k)const{
+		return find(k)!=end();
 	}
 
 	iterator find(K const& k){
@@ -263,6 +272,16 @@ class flat_map2{
 			return *values.emplace(v_it,V{});
 		}
 		return *v_it;
+	}
+
+	V& at(K const& k){
+		return (*this)[k];
+	}
+
+	V const& at(K const& k)const{
+		auto f=find(k);
+		assert(f!=end());
+		return f->second;
 	}
 
 	iterator emplace_hint(iterator i,std::pair<K,V> p){

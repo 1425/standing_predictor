@@ -127,6 +127,18 @@ short coerce(int a,short const*){
 	return a;
 }
 
+int coerce(int a,int const*){
+	return a;
+}
+
+double coerce(double a,double const*){
+	return a;
+}
+
+bool coerce(bool a,bool const*){
+	return a;
+}
+
 int system(std::string const& s){
 	return system(s.c_str());
 }

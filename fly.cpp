@@ -161,9 +161,14 @@ STRUCT_DECLARE(Team_state,TEAM_STATE)
 	nyi
 }*/
 
-using Dist=std::map<int,Pr>;
+//using Dist=std::map<int,Pr>;
+//using Dist=flat_map<Int_limited<0,10>,Pr>;
+using Dist=map_fixed<Int_limited<0,10>,Pr>;
 
-using Transition_table=std::map<pair<int,bool>,std::map<int,Dist>>;
+using Day_count=Int_limited<0,75>;
+//using Transition_table=std::map<pair<int,bool>,std::map<Int_limited<0,10>,Dist>>;
+//using Transition_table=flat_map2<pair<int,bool>,map_fixed<Int_limited<0,10>,Dist>>;
+using Transition_table=flat_map2<pair<Day_count,bool>,map_fixed<Int_limited<0,10>,Dist>>;
 
 #if 0
 std::map<Team_status,Pr> step(Transition_table table,Team_state a){
@@ -321,8 +326,8 @@ struct std::hash<Team_season_status>{
 //template<typename K,typename V>
 //V find_close(std::map<K,V>,K);
 
-template<typename K,typename V>
-auto max_key(std::map<K,V> const& a){
+template<template<typename,typename>typename MAP,typename K,typename V>
+auto max_key(MAP<K,V> const& a){
 	return max(keys(a));
 }
 
@@ -338,6 +343,11 @@ auto argmin(Func f,set_flat<T> const& v){
 	return m.second;
 }
 
+template<typename Func,typename T>
+T argmin(Func f,std::set<T> const& a){
+	return argmin(f,to_vec(a));
+}
+
 auto distance(int a,long b){
 	return abs(a-b);
 }
@@ -347,8 +357,8 @@ auto distance(std::pair<A,B> a,std::pair<C,D> b){
 	return make_pair(distance(a.first,b.first),distance(a.second,b.second));
 }
 
-template<typename K,typename V,typename T>
-V find_close(std::map<K,V> const& a,T const& b){
+template<template<typename,typename>typename MAP,typename K,typename V,typename T>
+V const& find_close(MAP<K,V> const& a,T const& b){
 	auto f=a.find(b);
 	if(f!=a.end()){
 		return f->second;
@@ -361,7 +371,8 @@ V find_close(std::map<K,V> const& a,T const& b){
 	return a.at(new_key);
 }
 
-map<Team_season_status,Pr> step(Transition_table const& table,Team_season_status const& team_status){
+template<template<typename,typename>typename MAP=std::map>
+MAP<Team_season_status,Pr> step(Transition_table const& table,Team_season_status const& team_status){
 	//using Transition_table=std::map<pair<int,bool>,std::map<int,Dist>>;
 	auto [team_setup,days,box]=team_status;
 
@@ -377,13 +388,13 @@ map<Team_season_status,Pr> step(Transition_table const& table,Team_season_status
 				PRINT(keys(table));
 				nyi
 			}
-			auto found=find_close(table,k);
+			auto const& found=find_close(table,k);
 			/*auto found=table.at(k);
 			PRINT(found);
 			PRINT(box);*/
 			//auto dist=found.at(box);
-			auto dist=find_close(found,box);
-			map<Team_season_status,Pr> r;
+			auto const& dist=find_close(found,box);
+			MAP<Team_season_status,Pr> r;
 			for(auto [box2,p]:dist){
 				Team_season_status next{team_setup,days-std::chrono::days(1),box2};
 				r[next]=p;
@@ -405,7 +416,7 @@ map<Team_season_status,Pr> step(Transition_table const& table,Team_season_status
 		Team_season_status b=a;
 		b.box=0;
 
-		map<Team_season_status,Pr> r;
+		MAP<Team_season_status,Pr> r;
 		Pr p=double(box)/10;
 		r[a]=p;
 		r[b]=1-p;
@@ -420,7 +431,7 @@ map<Team_season_status,Pr> step(Transition_table const& table,Team_season_status
 		days-std::chrono::days(1),
 		box
 	};
-	map<Team_season_status,Pr> r;
+	MAP<Team_season_status,Pr> r;
 	r[next]=1;
 	return r;
 	/*
@@ -538,7 +549,7 @@ Result run_cached(Cache &cache,Transition_table const& transition_table,Team_sea
 	}
 
 	if(here.days>std::chrono::days(0)){
-		auto after=step(transition_table,here);
+		auto after=step<flat_map2>(transition_table,here);
 		auto m=mapf(
 			[&](auto x){
 				auto [k,v]=x;
@@ -571,8 +582,64 @@ Result run_cached(Cache &cache,Transition_table const& transition_table,Team_sea
 
 using Team_key=tba::Team_key;
 
+/*template<typename A,typename B>
+B coerce(A,B const*){
+	nyi
+}*/
+
+template<long long MIN,long long MAX>
+Int_limited<MIN,MAX> coerce(int a,Int_limited<MIN,MAX> const*){
+	return a;
+}
+
+template<typename K1,typename V1,typename K2,typename V2>
+auto coerce(std::map<K1,V1> a,map_fixed<K2,V2> const*){
+	map_fixed<K2,V2> r;
+	for(auto [k,v]:a){
+		r[coerce(k,(K2*)0)]=coerce(v,(V2*)0);
+	}
+	return r;
+}
+
+template<typename K1,typename V1,typename K2,typename V2>
+auto coerce(std::map<K1,V1> a,map_auto<K2,V2> const*){
+	map_auto<K2,V2> r;
+	for(auto [k,v]:a){
+		r[coerce(k,(K2*)0)]=coerce(v,(V2*)0);
+	}
+	return r;
+}
+
+template<typename K1,typename V1,typename K2,typename V2>
+auto coerce(std::map<K1,V1> a,flat_map<K2,V2> const*){
+	flat_map<K2,V2> r;
+	for(auto [k,v]:a){
+		r[coerce(k,(K2*)0)]=coerce(v,(V2*)0);
+	}
+	return r;
+}
+
+template<typename K1,typename V1,typename K2,typename V2>
+auto coerce(std::map<K1,V1> a,flat_map2<K2,V2> const*){
+	flat_map2<K2,V2> r;
+	for(auto [k,v]:a){
+		r[coerce(k,(K2*)0)]=coerce(v,(V2*)0);
+	}
+	return r;
+}
+
+template<typename K1,typename V1,typename K2,typename V2>
+auto coerce(std::map<K1,V1> a,std::map<K2,V2> const*){
+	std::map<K2,V2> r;
+	for(auto [k,v]:a){
+		r[coerce(k,(K2*)0)]=coerce(v,(V2*)0);
+	}
+	return r;
+}
+
 void run_demo(TBA_fetcher &f,Year year,std::vector<std::pair<Team_key,Team_season_status>> team_status){
-	Transition_table transition_table=read_dist();
+	//Transition_table transition_table=read_dist();
+	Transition_table transition_table=coerce(read_dist(),(Transition_table*)0);
 	
 	Cache cache;
 	for(auto [team,info]:team_status){
@@ -601,6 +668,16 @@ auto as_int(Team_key a){
 	return stoi(a.str().c_str()+3);
 }
 
+template<typename Func,typename T>
+auto group2(Func f,std::vector<T> const& a){
+	using K=decltype(f(a[0]));
+	std::unordered_map<K,std::vector<T>> r;
+	for(auto const& x:a){
+		r[f(x)]|=x;
+	}
+	return r;
+}
+
 int fly_demo(TBA_fetcher &f){
 	auto x=read_dist();
 	Year year(2026);
@@ -620,7 +697,7 @@ int fly_demo(TBA_fetcher &f){
 			}
 		},
 		//filter([](auto x){ return as_int(x.key)>5000; },teams(f))
-		take(400,teams(f))
+		teams(f)
 	));
 
 	cout<<"Pricing model\n";

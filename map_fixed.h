@@ -48,6 +48,10 @@ class map_fixed{
 			return std::make_pair(C::to(i),parent->data[i]);
 		}
 
+		std::shared_ptr<std::pair<K,V const&>> operator->()const{
+			return std::make_shared<std::pair<K,V const&>>(C::to(i),parent->data[i]);
+		}
+
 		auto operator<=>(const_iterator const&)const=default;
 	};
 
@@ -69,6 +73,14 @@ class map_fixed{
 		return const_iterator{this,N};
 	}
 
+	const_iterator find(K const& k)const{
+		auto i=C::from(k);
+		if(present[i]){
+			return const_iterator{this,i};
+		}
+		return end();
+	}
+
 	using iterator=const_iterator;
 
 	V& operator[](K const& k){
@@ -77,6 +89,12 @@ class map_fixed{
 			present[i]=1;
 			data[i]=V();
 		}
+		return data[i];
+	}
+
+	V const& at(K const& k)const{
+		auto i=C::from(k);
+		assert(present[i]);
 		return data[i];
 	}
 

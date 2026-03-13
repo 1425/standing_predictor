@@ -60,6 +60,11 @@ class flat_map{
 		return f;
 	}
 
+	bool contains(K const& k)const{
+		auto f=find(k);
+		return f!=end();
+	}
+
 	auto find(K const& k){
 		auto f=std::lower_bound(
 			data.begin(),
@@ -85,6 +90,14 @@ class flat_map{
 		);
 		if(f==data.end() || f->first!=k){
 			return data.emplace(f,std::make_pair(k,V{}))->second;
+		}
+		return f->second;
+	}
+
+	V const& at(K const& k)const{
+		auto f=find(k);
+		if(f==end()){
+			throw "not found";
 		}
 		return f->second;
 	}
