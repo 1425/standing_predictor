@@ -635,7 +635,8 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 		skill.pre_dcmp[team]=t.point_dist;
 		t.dcmp_home=*dcmp_home;
 
-		t.already_earned=min_key(t.point_dist);
+		//t.already_earned=min_key(t.point_dist);
+		t.already_earned=team_info.point_total;
 	}
 
 	auto dcmp_options=to_set(mapf([](auto x){ return x.dcmp_home; },values(r.by_team)));
