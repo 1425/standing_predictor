@@ -1,5 +1,6 @@
 #include "history.h"
 #include<vector>
+#include<filesystem>
 #include<boost/tokenizer.hpp>
 #include "tba.h"
 #include "skill.h"
@@ -127,6 +128,8 @@ void rw_demo(){
 	cout<<"RW works.\n";
 }
 
+static const std::string HISTORY_TMP_PATH="history.csv";
+
 void write_history(TBA_fetcher &f){
 	/*try{
 		rw_demo();
@@ -184,7 +187,7 @@ void write_history(TBA_fetcher &f){
 		}
 	}
 
-	write_file("history.csv",v);
+	write_file(HISTORY_TMP_PATH,v);
 
 	/*
 	 * some things to sanity check
@@ -465,6 +468,17 @@ map<pair<int,bool>,map<int,map<int,Pr>>> read_dist(){
 	return r;
 }
 
+static const std::string TRANSITION_TABLE_PATH="transition_p.csv";
+
+std::map<std::pair<int,bool>,std::map<int,std::map<int,Pr>>> transition_table(TBA_fetcher &f){
+	if(!std::filesystem::exists(TRANSITION_TABLE_PATH)){
+		auto data=read_history(f);
+		int r=normalize_data(f,data);
+		assert(r==0);
+	}
+	return read_dist();
+}
+
 int read_dist_demo(){
 	auto r=read_dist();
 	print_r(r);
@@ -472,8 +486,11 @@ int read_dist_demo(){
 }
 
 
-std::vector<History_item> read_history(){
-	return read_file("history.csv");
+std::vector<History_item> read_history(TBA_fetcher &f){
+	if(!std::filesystem::exists(HISTORY_TMP_PATH)){
+		write_history(f);
+	}
+	return read_file(HISTORY_TMP_PATH);
 }
 
 int history_demo(TBA_fetcher& f){
@@ -482,7 +499,7 @@ int history_demo(TBA_fetcher& f){
 	//write_history(f);
 	(void)f;
 
-	auto data=read_file("history.csv");
+	auto data=read_file(HISTORY_TMP_PATH);
 
 	return normalize_data(f,data);
 

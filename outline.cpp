@@ -251,6 +251,7 @@ map<tba::Team_key,std::pair<Pr,Pr>> run(
 		ghi.skill=skill;
 		ghi.worlds_slots=worlds_slots(district);
 		ghi.extra=extra;
+		ghi.flight=fly(f);
 		ofstream file(inputs.output_dir+"/"+district.get()+inputs.extra+".html");
 		gen_html(file,ghi,annotated);
 	}

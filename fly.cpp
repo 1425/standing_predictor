@@ -226,7 +226,8 @@ using Events=vector<Event>;
 
 #define TEAM_SETUP(X)\
 	X(Events,pre_dcmp)\
-	X(Days,dcmp)
+	X(Days,dcmp)\
+	X(bool,domestic)\
 
 STRUCT_DECLARE(Team_setup,TEAM_SETUP)
 PRINT_STRUCT(Team_setup,TEAM_SETUP)
@@ -268,6 +269,37 @@ auto district_throw(TBA_fetcher &f,tba::Team_key team,Year year){
 	return *r;
 }
 
+bool domestic(tba::District_key district){
+	auto a=district.location_part();
+	std::set<std::string> domestic{
+		"ca",
+		"fch",
+		"fim",
+		"fin",
+		"fit",
+		"fma",
+		"fnc",
+		"fsc",
+		"ne",
+		"pch",
+		"pnw",
+		"win"
+	};
+	std::set<std::string> intl{
+		"isr",
+		"ont",
+	};
+	if(domestic.count(a)){
+		return 1;
+	}
+	if(intl.count(a)){
+		return 0;
+	}
+	std::stringstream ss;
+	ss<<"Unknown location for district:"<<a;
+	throw ss.str();
+}
+
 std::optional<Team_setup> team_setup(TBA_fetcher &f,tba::Team_key team,Year year){
 	auto d=::district(f,team,year);
 	if(!d){
@@ -294,7 +326,8 @@ std::optional<Team_setup> team_setup(TBA_fetcher &f,tba::Team_key team,Year year
 			},
 			dates
 		),
-		c-dcmp_end(f,district)
+		c-dcmp_end(f,district),
+		domestic(*d)
 	};
 }
 
@@ -512,10 +545,34 @@ double cost_function(int days_out){
 	return 1;
 }
 
-Value cost(std::chrono::days a){
-	//OBVIOUSLY WANT TO MAKE THIS DIFFERENT LATER
-	//return (a<std::chrono::days(20))?2:1;
-	return cost_function(a.count());
+double cost_international(int days_out){
+	if(days_out<=7){
+		return 1.16;
+	}
+	if(days_out>179){
+		return 1;
+	}
+	if(days_out>=50 && days_out<=179){
+		return .75;
+	}
+	if(days_out>21){
+		return 1;
+	}
+	//if here, between 7 and 21 days
+	if(days_out>14){
+		return 1.05;
+	}
+	return 1.1;
+	//best time 50-179 days out
+	//jumps at 21, 14, 7 days
+	//14-21 days out=+50% to +60% from 3-6 months in advance
+}
+
+Value cost(std::chrono::days a,bool domestic){
+	if(domestic){
+		return cost_function(a.count());
+	}
+	return cost_international(a.count());
 }
 
 template<typename T>
@@ -562,7 +619,7 @@ Result run_cached(Cache &cache,Transition_table const& transition_table,Team_sea
 		);
 		auto m2=mapf([](auto x){ return make_pair(x.first.second,x.second); },m);
 		auto cost_if_wait=weighted_average(m2);
-		auto cost_if_now=cost(here.days);
+		auto cost_if_now=cost(here.days,here.setup.domestic);
 		if(cost_if_now<=cost_if_wait){
 			return Result{here.days,cost_if_now};
 		}
@@ -574,7 +631,7 @@ Result run_cached(Cache &cache,Transition_table const& transition_table,Team_sea
 		return cache[here]=Result{0,0.0};
 	}
 	if(here.box==10){
-		return cache[here]=Result{0,cost(Days(0))};
+		return cache[here]=Result{0,cost(Days(0),here.setup.domestic)};
 	}
 	PRINT(here);
 	nyi
@@ -639,11 +696,11 @@ auto coerce(std::map<K1,V1> a,std::map<K2,V2> const*){
 
 void run_demo(TBA_fetcher &f,Year year,std::vector<std::pair<Team_key,Team_season_status>> team_status){
 	//Transition_table transition_table=read_dist();
-	Transition_table transition_table=coerce(read_dist(),(Transition_table*)0);
+	Transition_table transition_table1=coerce(transition_table(f),(Transition_table*)0);
 	
 	Cache cache;
 	for(auto [team,info]:team_status){
-		auto x=run_cached(cache,transition_table,info);
+		auto x=run_cached(cache,transition_table1,info);
 		auto date=cmp_start(f,year)-x.first;
 		cout<<team<<"\t"<<date<<"\t"<<x<<"\n";
 	}
@@ -678,10 +735,37 @@ auto group2(Func f,std::vector<T> const& a){
 	return r;
 }
 
+std::map<Team_key,std::tuple<Date,Days,double>> fly(TBA_fetcher &f){
+	auto year=current_season(f);
+	auto h=read_history(f);
+	auto transition_table1=coerce(transition_table(f),(Transition_table*)0);
+	auto g=group([](auto x){ return make_pair(x.team,x.year); },h);
+	auto team_status=nonempty(mapf(
+		[&](auto x)->optional<pair<Team_key,Team_season_status>>{
+			auto s=team_season_status(f,x,g[make_pair(x.key,year)]);
+			if(s){
+				return make_pair(x.key,*s);
+			}else{
+				return std::nullopt;
+			}
+		},
+		//filter([](auto x){ return as_int(x.key)>5000; },teams(f))
+		teams(f)
+	));
+	Cache cache;
+	std::map<Team_key,std::tuple<Date,Days,double>> r;
+	for(auto [team,info]:team_status){
+		auto x=run_cached(cache,transition_table1,info);
+		auto date=cmp_start(f,year)-x.first;
+		r[team]=std::tuple(date,x.first,x.second);
+	}
+	return r;
+}
+
 int fly_demo(TBA_fetcher &f){
-	auto x=read_dist();
+	auto x=transition_table(f);
 	Year year(2026);
-	auto h=read_history();
+	auto h=read_history(f);
 
 	auto g=group([](auto x){ return make_pair(x.team,x.year); },h);
 

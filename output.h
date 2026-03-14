@@ -9,6 +9,7 @@
 #include "annotated_complex.h"
 #include "output_tuple.h"
 #include "skill.h"
+#include "fly.h"
 
 class TBA_fetcher;
 
@@ -39,7 +40,8 @@ STRUCT_DECLARE(Team_points_used,TEAM_POINTS_USED)
 	X(std::map<TBA_SINGLE_ARG(tba::Team_key,std::string)>,lock)\
 	X(Skill_estimates,skill)\
 	X(int,worlds_slots)\
-	X(std::map<TBA_SINGLE_ARG(tba::Team_key,std::string)>,extra)
+	X(std::map<TBA_SINGLE_ARG(tba::Team_key,std::string)>,extra)\
+	X(Flight_info,flight)\
 
 struct Gen_html_input{
 	GEN_HTML_INPUT(INST)

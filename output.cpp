@@ -693,6 +693,7 @@ void gen_html(
 
 		//ss<<"<p>"<<"Lock status:"<<in.lock.at(a.team)<<"\n";
 
+		ss<<h3("Schedule");
 		ss<<"<table border>";
 		ss<<tr(
 			th("Qualification")+
@@ -764,6 +765,35 @@ void gen_html(
 			show_event(colorize(a.cmp_make),cmp.finals,"");
 		}
 		ss<<"</table>";
+
+		const auto fly=[&]()->string{
+			auto f=in.flight.find(a.team);
+			if(f==in.flight.end()){
+				return "";
+			}
+			auto [date,days,cost]=f->second;
+			std::stringstream ss;
+			ss<<"<table border>";
+			ss<<tr(tag("th colspan=3","Championship plane tickets"));
+			ss<<tr(
+				th("Date")+
+				td([&](){
+					std::stringstream ss;
+					ss<<date<<" ("<<days<<" before start)";
+					return ss.str();
+				}())+
+				td("When is it expected to be most favorable for making a purchase decision.  Note that this date may move in either direction as more results are known.")
+			);
+			ss<<tr(
+				th("Expected cost")+
+				td(cost)+
+				td("Measured in multiple of standard flight cost.  A combination of how much tickets tend to be at that time ahead and the level of certainty in qualification")
+			);
+			ss<<tr(th("Warning")+tag("td colspan=2","As I control neither the Illuminati nor the Strait of Hormuz no guarantee of accuracy can be made."));
+			ss<<"</table>";
+			return ss.str();
+		}();
+		ss<<p(fly);
 
 		ss<<"<br>";
 		{

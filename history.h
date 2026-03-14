@@ -6,7 +6,7 @@
 
 class TBA_fetcher;
 
-std::map<std::pair<int,bool>,std::map<int,std::map<int,Pr>>> read_dist();
+std::map<std::pair<int,bool>,std::map<int,std::map<int,Pr>>> transition_table(TBA_fetcher&);
 
 #define HISTORY_ITEM(X)\
 	X(tba::Team_key,team)\
@@ -18,7 +18,7 @@ std::map<std::pair<int,bool>,std::map<int,std::map<int,Pr>>> read_dist();
 
 STRUCT_DECLARE(History_item,HISTORY_ITEM)
 
-std::vector<History_item> read_history();
+std::vector<History_item> read_history(TBA_fetcher&);
 
 int history_demo(TBA_fetcher&);
 
