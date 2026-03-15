@@ -190,8 +190,10 @@ std::vector<T> range(Interval<T> const& a){
 }
 
 template<typename T>
-Interval<T> limits(std::vector<T> const& a){
-	assert(!a.empty());
+std::optional<Interval<T>> limits(std::vector<T> const& a){
+	if(a.empty()){
+		return std::nullopt;
+	}
 	return Interval<T>{min(a),max(a)};
 }
 

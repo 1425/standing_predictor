@@ -16,8 +16,8 @@ struct Line{
 	tba::Team_key team;
 	tba::Event_key event;
 	std::string event_name;
-	double pr;
-	//interestingly, does not include cmp probability
+	double p_dcmp;
+	std::optional<double> p_cmp;
 };
 
 std::optional<Line> parse_line(std::string const& a){
@@ -33,7 +33,14 @@ std::optional<Line> parse_line(std::string const& a){
 		tba::Team_key(stoi(sp[0])),
 		tba::Event_key(string_view(sp[1])),
 		sp[2],
-		stof(last(sp))
+		stof(sp[3]),
+		[=]()->std::optional<double>{
+			if(sp.size()>4 && sp[4].size()){
+				PRINT(sp[4]);
+				return stof(sp[4]);
+			}
+			return std::nullopt;
+		}()
 	};
 }
 
@@ -49,17 +56,23 @@ std::vector<Line> parse_file(std::string path){
 	while(f.good()){
 		std::string s;
 		getline(f,s);
-		auto p=parse_line(s);
-		if(p){
-			r|=p;
-		}
+		try{
+			auto p=parse_line(s);
+			if(p){
+				r|=p;
+			}
+		}catch(...){}
 	}
 	return r;
 }
 
 void histogram(std::vector<double> a){
 	static const int BOXES=100;
-	auto lim=limits(a);
+	auto lim1=limits(a);
+	if(!lim1){
+		return;
+	}
+	auto lim=*lim1;
 	auto box=[&](auto x){
 		auto v=(x-lim.min)/lim.width();
 		return int(v*BOXES);
@@ -93,7 +106,7 @@ void examine_file(){
 	//would be interesting to know what the distribution of probabilities looks like
 	//and how much they change each week
 	//are the set of teams seen different? (and how?)
-	auto prs=mapf([](auto x){ return x.pr; },file);
+	auto prs=mapf([](auto x){ return x.p_dcmp; },file);
 	PRINT(sum(prs));
 	PRINT(limits(prs));
 	PRINT(quartiles(prs));
@@ -102,7 +115,7 @@ void examine_file(){
 }
 
 auto as_map(std::string path){
-	return dict(mapf([](auto x){ return make_pair(x.team,x.pr); },parse_file(path)));
+	return dict(mapf([](auto x){ return make_pair(x.team,x.p_dcmp); },parse_file(path)));
 }
 
 #define LINE2(X)\
@@ -144,10 +157,11 @@ auto parse_line2(std::string const& path){
 	return r;
 }
 
-int main1(){
-	auto f1="../standing_predictor_output/0/results.csv";
+int main1(std::string f1,std::string f2){
+	//auto f1="../standing_predictor_output/0/results.csv";
 	auto x1=as_map(f1);
-	auto x2=as_map("../standing_predictor_output/4/results.csv");
+	//auto x2=as_map("../standing_predictor_output/4/results.csv");
+	auto x2=as_map(f2);
 	
 	auto k1=keys(x1);
 	auto k2=keys(x2);
@@ -181,8 +195,18 @@ int main1(){
 	return 0;
 }
 
-int main(){
+int main(int argc,char **argv){
+	if(argc==3){
+		std::string f1=argv[1];
+		std::string f2=argv[2];
+		return main1(f1,f2);
+	}else{
+		return main1(
+			"../standing_predictor_output/0/results.csv",
+			"../standing_predictor_output/4/results.csv"
+		);
+	}
 	/*auto p=parse_line2("results.csv");
 	print_lines(p);*/
-	return main1();
+	//return main1();
 }

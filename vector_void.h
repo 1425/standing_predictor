@@ -12,6 +12,8 @@ class vector_void{
 	vector_void();
 	explicit vector_void(size_t);
 
+	static void operator[](size_t);
+
 	size_t size()const;
 	bool empty()const;
 };
