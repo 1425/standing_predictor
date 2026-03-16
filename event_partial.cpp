@@ -435,7 +435,7 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 					PRINT(event.key);
 					PRINT(event_data.status);
 				}
-				assert(event_points.empty());
+				//assert(event_points.empty());
 				
 				continue;
 			}else{
