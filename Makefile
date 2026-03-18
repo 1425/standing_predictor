@@ -1,5 +1,6 @@
-#CXXFLAGS=-std=c++23 -Wall -Wextra -Ofast -fdiagnostics-color=always -flto=auto
+#CXXFLAGS=-std=c++23 -Wall -Wextra -Ofast -fdiagnostics-color=always -flto=auto -mtune=native -march=native
 #CXXFLAGS=-std=c++23 -Wall -Wextra -pedantic -Og -g -fdiagnostics-color=always -fsanitize=undefined,address -fno-omit-frame-pointer
+#CXXFLAGS=-std=c++26 -Wall -Wextra -pedantic -Og -g -fdiagnostics-color=always -freflection
 CXXFLAGS=-std=c++23 -Wall -Wextra -pedantic -Og -g -fdiagnostics-color=always
 #CXXFLAGS=-std=c++23 -Os
 LIBS=-lsqlite3 -lcurl -lsimdjson -ltbb

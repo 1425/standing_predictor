@@ -115,7 +115,9 @@ std::vector<History_item> read_file(std::string const& path){
 }
 
 void rw_demo(){
-	for(auto _:range(100)){
+	for(auto _:range_st<100>()){
+		(void)_;
+
 		auto path="tmp.csv";
 		auto x=rand((std::vector<History_item>*)0);
 		print_lines(x);
@@ -643,7 +645,7 @@ int history_demo(TBA_fetcher& f){
 			cout<<v2<<",";
 		}
 		cout<<"\n";*/
-		for(auto i:range(11)){
+		for(auto i:range_st<11>()){
 			cout<<v[i]<<",";
 		}
 		cout<<"\n";

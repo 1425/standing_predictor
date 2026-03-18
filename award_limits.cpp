@@ -190,7 +190,8 @@ Point max_award_points(int event_size){
 	vector<int> v;
 	v|=15;
 	v|=8;
-	for(auto _:range(13)){
+	for(auto _:range_st<13>()){
+		(void)_;
 		v|=5;
 	}
 	auto subset=take(event_size,v);
@@ -257,7 +258,7 @@ Rank_status<Event_status,flat_map> award_limits(
 			return Event_status::COMPLETE;
 		}
 		auto awarded_so_far=sum(MAP(min,values(r.by_team)));
-		if(any(awarded_so_far)){
+		if(::any(awarded_so_far)){
 			return Event_status::IN_PROGRESS;
 		}
 		return Event_status::FUTURE;

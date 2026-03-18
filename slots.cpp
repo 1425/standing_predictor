@@ -181,8 +181,12 @@ std::vector<int> dcmp_slots(tba::District_key const& district){
 		return std::vector<int>{{60,60}};
 	}
 
-	cerr<<"Unknown event size for "<<district<<"\n";
-	exit(1);
+	cerr<<"Unknown event size for "<<district<<".  Assuming 0.\n";
+
+	std::vector<int> r;
+	r|=0;
+	return r;
+	//exit(1);
 }
 		
 

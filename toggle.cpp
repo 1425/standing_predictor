@@ -358,7 +358,7 @@ int toggle_demo(){
 		f<<h1(title_str)<<"\n";
 		as_html(v,"foo");
 		f<<"\n\n";
-		auto x=range(20);
+		auto x=range_st<20>();
 		as_html(v,x);
 
 		auto x2=rand((Run_result*)0);

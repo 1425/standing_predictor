@@ -44,13 +44,13 @@ Skill_estimates skill_null(TBA_fetcher &f,District_key const& district){
 
 	r.at_dcmp=[&](){
 		std::map<Point,Team_dist> r;
-		for(auto i:range(500)){
+		for(auto i:range_st<500>()){
 			r[i]=Team_dist(dcmp_distribution(f));
 		}
 		return r;
 	}();
 
-	for(auto x:range(300)){
+	for(auto x:range_st<300>()){
 		r.second_event[x]=pr;
 	}
 

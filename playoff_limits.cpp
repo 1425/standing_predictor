@@ -208,7 +208,8 @@ Playoff_limits playoff_limits(
 	},a));
 	std::vector<int> finish_points;
 	for(auto x:{30,20,10,10}){
-		for(auto _:range(3)){
+		for(auto _:range_st<3>()){
+			(void)_;
 			finish_points|=x;
 		}
 	}

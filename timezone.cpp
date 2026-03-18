@@ -42,7 +42,7 @@ bool has_times(tba::Match const& a){
 
 bool has_matches_with_times(TBA_fetcher &f,tba::Event const& e){
 	auto m=tba::event_matches(f,e.key);
-	return any(MAP(has_times,m));
+	return ::any(MAP(has_times,m));
 }
 
 std::optional<std::chrono::hours> offset(std::chrono::time_zone const* a){

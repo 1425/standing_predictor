@@ -44,7 +44,7 @@ class chdir_tmp{
 static const std::string OUTPUT_BASE="../standing_predictor_output/";
 
 std::pair<std::filesystem::path,std::string> next_dir(){
-	for(auto i:range(1,1000)){
+	for(auto i:range_st<1,1000>()){
 		std::string part=as_string(i);
 		std::filesystem::path path=OUTPUT_BASE+part+"/";
 		if(!std::filesystem::exists(path)){

@@ -2,6 +2,7 @@
 #include<fstream>
 #include<queue>
 #include<future>
+#include<any>
 #include "../tba/tba.h"
 #include "set.h"
 #include "util.h"
@@ -11,6 +12,8 @@
 #include "dates.h"
 #include "cat.h"
 #include "declines.h"
+#include "rand.h"
+#include "history.h"
 
 using namespace std;
 
@@ -81,10 +84,12 @@ map<Point,Pr> dcmp_distribution(TBA_fetcher &f){
 	return r;
 }
 
-multiset<Point> point_results(TBA_fetcher& fetcher,tba::District_key dk){
+std::optional<multiset<Point>> point_results(TBA_fetcher& fetcher,tba::District_key dk){
 	//district-level point totals from events.
 	auto d=district_rankings(fetcher,dk);
-	assert(d);
+	if(!d){
+		return std::nullopt;
+	}
 	multiset<Point> r;
 	for(auto team_result:*d){
 		for(auto event: ::take<2>(team_result.event_points)){
@@ -107,7 +112,10 @@ map<Point,Pr> historical_event_pts(TBA_fetcher &f){
 
 	multiset<Point> old_results;
 	for(auto key:old_keys){
-		old_results|=point_results(f,key);
+		auto p=point_results(f,key);
+		if(p){
+			old_results|=*p;
+		}
 	}
 	map<Point,unsigned> occurrances;
 	for(auto value:old_results){
@@ -182,6 +190,7 @@ void TBA_fetcher_config::add(Argument_parser &f){
 		"Attempt to fetch pages that are expected to change, even if they are cached.",
 		refresh
 	);
+	f.add("--tba_fuzz",{},"Feed random data",fuzz);
 }
 
 bool contains(string s,char c){
@@ -301,7 +310,435 @@ struct TBA_fetcher_refresh{
 	}
 };
 
+/*class Fetcher_dummy{
+	std::optional<tba::URL> url_found;
+
+	std::pair<tba::HTTP_Date,tba::Data> fetcher(URL url)const{
+		assert(!url_found);
+		url_found=url;
+		throw "Dummy";
+	}
+};*/
+
+/*template<typename R,typename A,typename B>
+struct Pattern2{
+	std::string name;
+	R *return_type;
+	string url1;
+	A arg1;
+	string url2;
+	B arg2;
+	string url3;
+
+	static std::optional<Pattern2> parse(URL const& a){
+		auto sp=split(a,'/');
+		PRINT(sp);
+		arg1=decode(sp[1],(A*)0);
+		arg2=decode(sp[2],(B*)0);
+		nyi
+	}
+
+	std::string url()const;
+};*/
+
+static const std::string base="https://www.thebluealliance.com/api/v3/";
+
+unsigned decode(std::string s,unsigned const*){
+	return stoi(s);
+}
+
+auto decode(std::string s,std::string const*){
+	return s;
+}
+
+template<typename T>
+bool parse(std::string url1,T const* t,std::string url2,URL url){
+	/*cout<<"\n\n";
+	PRINT(url1);
+	PRINT(type_string(t));
+	PRINT(url2);*/
+
+	assert(prefix(url,base));
+	auto s=url.substr(base.size(),url.size());
+	//PRINT(s);
+
+	if(!prefix(s,url1)){
+		return 0;
+	}
+	s=s.substr(url1.size(),s.size());
+
+	/*PRINT(s);
+	PRINT(url1);
+	PRINT(type_string(t));
+	PRINT(url2);
+	cout<<"url2: \""<<url2<<"\"\n";*/
+
+	if(!suffix(s,url2)){
+		return 0;
+	}
+	s=s.substr(0,s.size()-url2.size());
+	cout<<"left:"<<s<<"\n";
+	(void)t;
+	try{
+		auto d=decode(s,t);
+		(void)d;
+	}catch(...){
+		return 0;
+	}
+	return 1;
+}
+
+template<typename A,typename B>
+bool parse(std::string url1,A const* a,std::string url2,B const* b,std::string url3,std::string url){
+	PRINT(url);
+	PRINT(url1);
+	PRINT(type_string(a));
+	PRINT(url2);
+	PRINT(type_string(b));
+	PRINT(url3);
+
+	assert(prefix(url,base));
+	auto s=url.substr(base.size(),url.size());
+
+	PRINT(s);
+
+	if(!prefix(s,url1)){
+		return 0;
+	}
+	s=s.substr(url1.size(),s.size());
+
+	if(!suffix(s,url3)){
+		return 0;
+	}
+	s=s.substr(0,s.size()-url3.size());
+
+	auto sp=split(s,'/');
+	if(sp.size()!=3){
+		return 0;
+	}
+
+	PRINT(sp);
+
+	decode(sp[0],a);
+
+	auto mid="/"+sp[1]+"/";
+	if(mid!=url2){
+		return 0;
+	}
+
+	decode(sp[2],b);
+
+	return 1;
+}
+
+template<typename T>
+auto postprocess(std::any a){
+	nyi//return a;
+}
+
+struct Foo{};
+
+template<typename T>
+T postprocess(Foo);
+
+namespace tba{
+	template<typename T>
+	T postprocess(Foo);
+}
+
+/*namespace bar{
+	struct Bar{};
+
+	int postprocess(Bar);
+
+	template<typename T>
+	int postprocess(Bar);
+}*/
+
+/*template<typename T>
+std::string to_json(T const& t){
+	PRINT(type_string(t));
+	nyi
+}*/
+
+template<typename T>
+void serialize(simdjson::builder::string_builder&,T const& t){
+	PRINT(type_string(t));
+	nyi
+}
+
+using SB=simdjson::builder::string_builder;
+
+template<typename T>
+void serialize(SB&,std::vector<T> const&);
+
+template<typename T,size_t N>
+void serialize(SB&,tba::vector_fixed<T,N> const&);
+
+template<typename T>
+void serialize(SB &sb,std::optional<T> const& a);
+
+void serialize(SB& sb,int a){
+	sb.append(a);
+}
+
+void serialize(SB& sb,std::string const& a){
+	sb.escape_and_append_with_quotes(a);
+}
+
+void serialize(SB& sb,bool a){
+	sb.append(a);
+}
+
+void serialize(SB& sb,double a){
+	sb.append(a);
+}
+
+void serialize(simdjson::builder::string_builder& sb,tba::Year const& a){
+	sb.append(a.get());
+}
+
+void serialize(SB& sb,tba::District_key const& a){
+	sb.append(a.get());
+}
+
+void serialize(SB& sb,tba::Team_key const& a){
+	sb.append(a.str());
+}
+
+void serialize(SB& sb,tba::Event_key const& a){
+	sb.append(a.get());
+}
+
+void serialize(SB& sb,tba::Event_type const& a){
+	#define X(A,B) if(a==tba::Event_type::A){ sb.append(B); return; }
+	TBA_EVENT_TYPES(X)
+	#undef X
+	assert(0);
+}
+
+void serialize(SB& sb,tba::Webcast_type const& a){
+	#define X(A) if(a==tba::Webcast_type::A){ sb.append(""#A); return; }
+	TBA_WEBCAST_TYPES(X)
+	#undef X
+	assert(0);
+}
+
+void serialize(SB& sb,tba::Playoff_type a){
+	#define X(A,B,C) if(a==tba::Playoff_type::B){ sb.append(A); return; }
+	TBA_PLAYOFF_TYPES(X)
+	#undef X
+	assert(0);
+}
+
+void serialize(SB& sb,tba::Award_type a){
+	#define X(A,B) if(a==tba::Award_type::A){ sb.append(B); return; }
+	TBA_AWARD_TYPES(X)
+	#undef X
+	assert(0);
+}
+
+void serialize(SB& sb,std::chrono::year_month_day const& a){
+	std::stringstream ss;
+	ss<<a;
+	sb.append(ss.str());
+}
+
+#define STRUCT_TO_JSON_INNER(A,B) {\
+	if(first){\
+		first=0;\
+	}else{\
+		sb.append_comma();\
+	}\
+	sb.append(""#B);\
+	sb.append_colon();\
+	serialize(sb,a.B);\
+}\
+
+#define STRUCT_TO_JSON(NAME,ITEMS)\
+	void serialize(SB& sb,NAME const& a){\
+		sb.start_object();\
+		bool first=1;\
+		ITEMS(STRUCT_TO_JSON_INNER)\
+		sb.end_object();\
+	}\
+
+STRUCT_TO_JSON(tba::API_Status_App_Version,TBA_API_STATUS_APP_VERSION)
+STRUCT_TO_JSON(tba::Year_info,TBA_YEAR_INFO)
+STRUCT_TO_JSON(tba::District_Ranking,TBA_DISTRICT_RANKING)
+STRUCT_TO_JSON(tba::Event_points,TBA_EVENT_POINTS)
+STRUCT_TO_JSON(tba::Event,TBA_EVENT)
+STRUCT_TO_JSON(tba::District_List,TBA_DISTRICT_LIST)
+STRUCT_TO_JSON(tba::Webcast,TBA_WEBCAST)
+STRUCT_TO_JSON(tba::Team,TBA_TEAM)
+STRUCT_TO_JSON(tba::Award,TBA_AWARD)
+STRUCT_TO_JSON(tba::Award_Recipient,TBA_RECIPIENT)
+STRUCT_TO_JSON(tba::Dcmp_history,TBA_DCMP_HISTORY)
+
+/*void serialize(SB& sb,tba::API_Status_App_Version const& a){
+	sb.start_object();
+	#define X(A,B) sb.append(""#B); sb.append_colon(); serialize(sb,a.B); sb.append_comma();
+	TBA_API_STATUS_APP_VERSION(X)
+	#undef X
+	sb.end_object();
+}*/
+
+template<typename T>
+void serialize(SB& sb,std::vector<T> const& a){
+	sb.start_array();
+	bool first=1;
+	for(auto const& x:a){
+		if(first){
+			first=0;
+		}else{
+			sb.append_comma();
+		}
+		serialize(sb,x);
+	}
+	sb.end_array();
+}
+
+template<typename T,size_t N>
+void serialize(SB& sb,tba::vector_fixed<T,N> const& a){
+	sb.start_array();
+	bool first=1;
+	for(auto const& x:a){
+		if(first){
+			first=0;
+		}else{
+			sb.append_comma();
+		}
+		serialize(sb,x);
+	}
+	sb.end_array();
+}
+
+template<typename T>
+void serialize(SB &sb,std::optional<T> const& a){
+	if(a){
+		serialize(sb,*a);
+	}else{
+		sb.append_null();
+	}
+}
+
+void serialize(simdjson::builder::string_builder& sb,tba::API_Status const& a){
+	sb.start_object();
+	//#define X(A,B) sb.append_key_value(""#B,a.B); sb.append_comma();
+	bool first=1;
+	#define X(A,B){\
+		if(first){\
+			first=0;\
+		}else{\
+			sb.append_comma();\
+		}\
+		sb.append(""#B); \
+		sb.append_colon(); \
+		serialize(sb,a.B); \
+	}
+	TBA_API_STATUS(X)
+	#undef X
+	sb.end_object();
+}
+
+/*std::string to_json(tba::API_Status const& a){
+	simdjson::builder::string_builder sb;
+	serialize(sb,a);
+	return sb;
+}*/
+
+template<typename T>
+std::string to_json(T const& a){
+	simdjson::builder::string_builder sb;
+	print_r(a);
+	serialize(sb,a);
+	return sb;
+}
+
+template<typename ...Ts>
+std::variant<Ts...> rand(std::variant<Ts...> const*)nyi
+
+template<typename T>
+T rand2(T const* x){
+	if constexpr(std::is_same<T,std::string>()){
+		nyi
+	/*}else if constexpr(std::is_same<T,tba::API_Status>()){
+		auto r=rand(x);
+		PRINT(r);
+		return r;*/
+	}else{
+		PRINT(type_string(x));
+		auto r=rand(x);
+		PRINT(r);
+		return r;
+	}
+}
+
+template<typename T>
+std::optional<T> rand2(std::optional<T> const* x){
+	//return ::rand(x);
+	(void)x;
+	return rand((T*)0);
+}
+
+//class TBA_fetcher_fuzz:public TBA_fetcher_impl<TBA_fetcher_fuzz>{
+class TBA_fetcher_fuzz{
+	public:
+
+	TBA_fetcher_fuzz(){
+		srand(1001);
+	}
+
+	TBA_fetcher_fuzz(TBA_fetcher_fuzz const&)=delete;
+	TBA_fetcher_fuzz& operator=(TBA_fetcher_fuzz const&)=delete;
+
+	pair<tba::HTTP_Date,tba::Data> fetch(tba::URL const& url)const{
+	//bar::Bar fetch(tba::URL const& url)const{
+		PRINT(url);
+
+		/*Fetcher_dummy dummy;
+		status(dummy);
+		if(dummy.url_found){
+			nyi
+		}*/
+
+		//using Item=std::variant<std::string,
+		//using Pattern=std::vector<Item> patterns;
+		#define X0(NAME,RETURN_VALUE,URL) {\
+			auto sp=split(url,'/');\
+			assert(!sp.empty());\
+			auto name=last(sp);\
+			if(""#NAME==name){\
+				auto s=to_json(rand2((tba::RETURN_VALUE*)0));\
+				PRINT(s);\
+				return make_pair(rand((tba::HTTP_Date*)0),s);\
+			}\
+		}
+		#define X1(NAME,RETURN_VALUE,URL1,TYPE1,URL2) \
+			if(parse(URL1,(tba::TYPE1*)0,URL2,url)){\
+				using namespace tba;\
+				auto s=to_json(rand2((RETURN_VALUE*)0));\
+				PRINT(s);\
+				return make_pair(rand((tba::HTTP_Date*)0),s);\
+			}
+		#define X2(NAME,RETURN_VALUE,URL1,TYPE1,URL2,TYPE2,URL3)\
+			if(parse(URL1,(tba::TYPE1*)0,URL2,(tba::TYPE2*)0,URL3,url)){\
+				using namespace tba;\
+				auto s=to_json(rand2((RETURN_VALUE*)0));\
+				PRINT(s);\
+				return make_pair(rand((tba::HTTP_Date*)0),s);\
+			}
+
+		TBA_QUERIES(X0,X1,X2)
+
+		nyi
+	}
+};
+
 TBA_fetcher TBA_fetcher_config::get()const{
+	if(fuzz){
+		return new TBA_fetcher_fuzz();
+	}
 
 	TBA_fetcher r=[&]()->TBA_fetcher{
 		if(local_only){
@@ -347,7 +784,7 @@ tba::Team_key rand(tba::Team_key const*){
 tba::Event_key rand(tba::Event_key const*){
 	std::stringstream ss;
 	ss<<"2026";
-	for(auto _:range(5)){
+	for(auto _:range_st<5>()){
 		(void)_;
 		ss<<char('a'+rand()%26);
 	}

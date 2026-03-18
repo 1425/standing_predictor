@@ -68,8 +68,8 @@ std::set<T> to_set(std::vector<T> const& a){
 	return r;
 }
 
-template<typename T>
-std::set<T> operator-(std::set<T> a,T t){
+template<typename T,typename T2>
+std::set<T> operator-(std::set<T> a,T2 t){
 	a.erase(t);
 	return a;
 }

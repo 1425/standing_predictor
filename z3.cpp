@@ -3,6 +3,8 @@
 #include<algorithm>
 #include "z3++.h"
 #include "util.h"
+#include "vector_void.h"
+#include "io.h"
 
 using namespace std;
 using namespace z3;

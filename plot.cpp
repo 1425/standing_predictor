@@ -100,7 +100,7 @@ std::vector<std::string> plot(std::vector<Plot_setup> const& a){
 
 int main1(){
 	std::vector<std::pair<int,double>> data;
-	for(auto i:range(1000)){
+	for(auto i:range_st<1000>()){
 		auto n=i-500;
 		data|=make_pair(i,n*n);
 	}
@@ -119,7 +119,7 @@ int main1(){
 /*void plot_demo(){
 	cout<<"Plot demo\n";
 	vector<Plot_setup> v;
-	for(auto _:range(50)){
+	for(auto _:range_st<50>()){
 		v|=rand((Plot_setup*)0);
 	}
 

@@ -172,7 +172,7 @@ auto get_closest(map_auto<K,V> const& a,K k){
 		return a[k2];
 	}
 
-	for(auto i:range(300)){
+	for(auto i:range_st<300>()){
 		auto m=maybe_get(a,k+i);
 		if(m) return *m;
 
@@ -611,7 +611,7 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 			d.dists=skill.at_dcmp;
 		}else{
 			//whatever number of points you have expect to get 0 more.
-			for(auto i:range(500)){
+			for(auto i:range_st<500>()){
 				Team_dist n;
 				n[0]=1;
 				d.dists[i]=n;
@@ -660,7 +660,8 @@ int event_partial_demo(TBA_fetcher &f){
 		#undef X
 	}
 
-	for(auto _:range(1000)){
+	for(auto _:range_st<1000>()){
+		(void)_;
 		e[rand((Team_event_status*)0)];
 	}
 	return 0;

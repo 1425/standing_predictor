@@ -98,6 +98,9 @@ std::tuple<Run_result,Points_used,By_team,Skill_estimates,Annotated,std::map<tba
 
 	auto d1=[&](){
 		auto d=district_rankings(f,district);
+		if(!d){
+			throw "Error: Could not determine district rankings for "+::as_string(district);
+		}
 		assert(d);
 		return *d;
 	}();

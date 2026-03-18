@@ -1,8 +1,18 @@
 #ifndef TBA_H
 #define TBA_H
 
+#include<string>
+
+namespace bar{
+	struct Bar{};
+
+	template<typename T>
+	int postprocess(Bar,std::string);
+};
+
 #include<set>
 #include<memory>
+#include<any>
 #include "../tba/data.h"
 #include "../tba/db.h"
 #include "../tba/match.h"
@@ -50,6 +60,7 @@ class TBA_fetcher{
 struct TBA_fetcher_config{
 	std::string auth_key_path,cache_path;
 	bool local_only,log,refresh=0;
+	bool fuzz=0;
 
 	TBA_fetcher_config();
 
@@ -67,8 +78,8 @@ tba::Year year(tba::District_key const&);
 tba::Year year(tba::Event_key const&);
 tba::Year year(tba::Event const&);
 
-tba::Team_key rand(tba::Team_key const*);
-tba::Event_key rand(tba::Event_key const*);
+//tba::Team_key rand(tba::Team_key const*);
+//tba::Event_key rand(tba::Event_key const*);
 
 bool chairmans_expected(tba::Event_type);
 bool chairmans_expected(TBA_fetcher&,tba::Event_key const&);

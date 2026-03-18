@@ -10,9 +10,9 @@ namespace tba{
 	enum class Award_type:char;
 };
 
-tba::Team_key rand(tba::Team_key const*);
+/*tba::Team_key rand(tba::Team_key const*);
 tba::Event_key rand(tba::Event_key const*);
-tba::Award_type rand(tba::Award_type const*);
+tba::Award_type rand(tba::Award_type const*);*/
 
 bool rand(bool const*);
 short rand(short const*);

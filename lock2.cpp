@@ -276,15 +276,15 @@ Interval<T> interval(std::vector<T> a){
 vector<int> thresholds(int);
 
 template<typename A,typename B,typename C>
-vector<int> thresholds(std::tuple<A,B,C>){
-	return range(300);
+auto thresholds(std::tuple<A,B,C>){
+	return range_st<300>();
 }
 
 template<typename Status>
 auto thresholds(Rank_status<Status>){
 	vector<Rank_value> r;
-	for(auto awards:range(20)){
-		for(auto pts:range(300)){
+	for(auto awards:range_st<20>()){
+		for(auto pts:range_st<300>()){
 			r|=Rank_value(awards,pts);
 		}
 	}

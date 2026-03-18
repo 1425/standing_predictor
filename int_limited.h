@@ -237,4 +237,14 @@ Int_limited<MIN2,MAX2> coerce(Int_limited<MIN1,MAX1> a,Int_limited<MIN2,MAX2> co
 	return a.get();
 }
 
+/*template<long long MIN1,long long MAX1,long long MIN2,long long MAX2>
+auto range_lim(Int_limited<MIN1,MAX1> a,Int_limited<MIN2,MAX2> b){
+	using E=Int_limited<MIN1,MAX2>;
+	std::vector<E> r;
+	for(long long i=a;i<b;++i){
+		r|=i;
+	}
+	return r;
+}*/
+
 #endif

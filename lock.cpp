@@ -647,10 +647,10 @@ int lock_demo(TBA_fetcher& f){
 
 	(void)f;
 	auto data=rand((Lock_data*)0);
-	for(auto _:range(530)){
+	for(auto _:range_st<530>()){
 		data.by_team[rand((Team*)0)]=rand((Team_info*)0);
 	}
-	for(auto _:range(25*2)){
+	for(auto _:range_st<25*2>()){
 		//data.by_event[rand((Event_key*)0)]=rand((Event_info*)0);
 		data.by_event.insert(make_pair(rand((Event_key*)0),rand((Event_info*)0)));
 	}
