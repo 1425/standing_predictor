@@ -2,6 +2,7 @@
 #include "ca.h"
 #include "../tba/tba.h"
 #include "tba.h"
+#include "query.h"
 
 using namespace std;
 

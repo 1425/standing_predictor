@@ -6,6 +6,7 @@
 #include "event_status.h"
 #include "print_r.h"
 #include "set_limited.h"
+#include "query.h"
 
 using namespace std;
 using Team=tba::Team_key;

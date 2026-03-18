@@ -8,6 +8,7 @@
 #include "pick_points.h"
 #include "winners.h"
 #include "annotated_complex.h"
+#include "query.h"
 
 using namespace std;
 

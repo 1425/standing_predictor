@@ -9,6 +9,7 @@
 #include "tba.h"
 #include "int_limited.h"
 #include "map_auto.h"
+#include "query.h"
 
 using namespace std;
 using Year=tba::Year;

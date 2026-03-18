@@ -10,6 +10,7 @@
 #include "optional.h"
 #include "../tba/tba.h"
 #include "set_limited.h"
+#include "query.h"
 
 using namespace std;
 

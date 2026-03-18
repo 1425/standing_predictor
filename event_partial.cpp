@@ -12,6 +12,7 @@
 #include "output.h"
 #include "multiset_flat.h"
 #include "annotated_complex.h"
+#include "query.h"
 
 using namespace std;
 

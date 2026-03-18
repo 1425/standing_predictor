@@ -15,6 +15,7 @@
 #include "vector_void.h"
 #include "array.h"
 #include "optional.h"
+#include "query.h"
 
 using namespace std;
 

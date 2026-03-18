@@ -4,6 +4,7 @@
 #include "tba.h"
 #include "vector_void.h"
 #include "optional.h"
+#include "query.h"
 
 using Year=tba::Year;
 using District_abbreviation=tba::District_abbreviation;

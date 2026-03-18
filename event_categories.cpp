@@ -3,6 +3,7 @@
 #include "tba.h"
 #include "../tba/tba.h"
 #include "print_r.h"
+#include "query.h"
 
 PRINT_STRUCT(District_cmp_complex,DISTRICT_CMP_COMPLEX)
 

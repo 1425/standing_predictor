@@ -9,6 +9,7 @@
 #include "declines.h"
 #include "skill_opr.h"
 #include "../tba/tba.h"
+#include "query.h"
 
 using namespace std;
 

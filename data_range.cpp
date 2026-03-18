@@ -4,6 +4,7 @@
 #include "tba.h"
 #include "../tba/tba.h"
 #include "vector_void.h"
+#include "query.h"
 
 using namespace std;
 

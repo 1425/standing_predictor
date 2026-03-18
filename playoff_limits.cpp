@@ -7,6 +7,7 @@
 #include "pick_points.h"
 #include "declines.h"
 #include "set_flat.h"
+#include "query.h"
 
 template<typename T>
 bool disjoint(std::vector<std::set<T>> const& a){

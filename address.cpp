@@ -6,6 +6,7 @@
 #include "vector_void.h"
 #include "tba.h"
 #include "set_fixed.h"
+#include "query.h"
 
 using namespace std;
 

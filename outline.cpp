@@ -57,6 +57,7 @@ simple way:
 #include "index.h"
 #include "history.h"
 #include "fly.h"
+#include "query.h"
 
 //start program-specific stuff.
 

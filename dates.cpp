@@ -13,7 +13,7 @@
 #include "timezone.h"
 #include "names.h"
 #include "interval.h"
-
+#include "query.h"
 
 std::optional<std::chrono::days> operator-(std::chrono::year_month_day a,std::optional<std::chrono::year_month_day> const& b){
 	if(!b){

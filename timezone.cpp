@@ -9,6 +9,7 @@
 #include "optional.h"
 #include "vector_void.h"
 #include "address.h"
+#include "query.h"
 
 using namespace std;
 

@@ -4,6 +4,7 @@
 #include "tba.h"
 #include "print_r.h"
 #include "dates.h"
+#include "query.h"
 
 using namespace std;
 

@@ -5,6 +5,7 @@
 #include "print_r.h"
 #include "tba.h"
 #include "set.h"
+#include "query.h"
 
 using namespace std;
 

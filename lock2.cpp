@@ -4,6 +4,7 @@
 #include "multiset_compare.h"
 #include "tba.h"
 #include "district_championship_assignment.h"
+#include "query.h"
 
 using namespace std;
 using Team=tba::Team_key;

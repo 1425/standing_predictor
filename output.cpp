@@ -16,6 +16,7 @@
 #include "ca.h"
 #include "set_flat.h"
 #include "avatar.h"
+#include "query.h"
 
 using namespace std;
 using Team_key=tba::Team_key;

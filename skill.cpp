@@ -8,6 +8,7 @@
 #include "skill_opr.h"
 #include "vector_void.h"
 #include "print_r.h"
+#include "query.h"
 
 template<typename T>
 auto median(std::multiset<T> const& a){

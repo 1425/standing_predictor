@@ -31,6 +31,7 @@ FRC_API_OBJS= \
 	../frc_api/curl.o
 
 OUTLINE_OBJS= \
+	query.o \
 	fly.o \
 	history.o \
 	index.o \
@@ -111,6 +112,31 @@ META_OBJS= \
 	event_status.o \
 	status.o \
 	cmp_reason.o \
+	query.o \
+	rand.o \
+	history.o \
+	run.o \
+	event_partial.o \
+	skill_opr.o \
+	skill.o \
+	tournament_status.o\
+	rank_limits.o\
+	rp.o\
+	rank_pts.o\
+	event_categories.o\
+	ranking_match_status.o\
+	pick_points.o\
+	output.o\
+	plot.o\
+	ca.o\
+	subprocess.o\
+	avatar.o\
+	event_limits.o\
+	award_limits.o\
+	playoff_limits.o\
+	lock2.o\
+	district_championship_assignment.o\
+	annotated_complex.o\
 
 meta: $(META_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -lgumbo -o $@
@@ -135,6 +161,36 @@ DECLINE_OBJS= \
 	print_r.o\
 	interval.o\
 	vector.o\
+	query.o\
+	rand.o\
+	history.o \
+	run.o \
+	event_partial.o \
+	skill_opr.o \
+	skill.o \
+	tournament_status.o\
+	rank_limits.o\
+	rp.o\
+	rank_pts.o\
+	event_categories.o\
+	ranking_match_status.o\
+	pick_points.o\
+	output.o\
+	plot.o\
+	ca.o\
+	subprocess.o\
+	avatar.o\
+	event_limits.o\
+	award_limits.o\
+	playoff_limits.o\
+	lock2.o\
+	district_championship_assignment.o\
+	annotated_complex.o\
+	probability.o\
+	cmp_reason.o\
+	zipcodes.o\
+	status.o\
+	event_status.o\
 
 declines: $(DECLINE_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@

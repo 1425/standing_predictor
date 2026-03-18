@@ -20,6 +20,7 @@
 #include "rp.h"
 #include "rank_pts.h"
 #include "ranking_match_status.h"
+#include "query.h"
 
 using namespace std;
 

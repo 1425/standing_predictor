@@ -6,6 +6,7 @@
 #include "io.h"
 #include "map.h"
 #include "tba.h"
+#include "query.h"
 
 using namespace std;
 

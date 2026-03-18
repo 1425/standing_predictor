@@ -8,6 +8,7 @@
 #include "../tba/tba.h"
 #include "pick_points.h"
 #include "print_r.h"
+#include "query.h"
 
 template<size_t N>
 set_limited<tba::Team_key,N> teams(set_limited<tba::Team_key,N> const& a){

@@ -5,6 +5,7 @@
 #include "dates.h"
 #include "tba.h"
 #include "cmp_reason.h"
+#include "query.h"
 
 template<typename A,typename B,typename C,typename D>
 auto min(std::pair<A,B> a,std::pair<C,D> b){

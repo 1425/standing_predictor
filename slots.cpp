@@ -2,6 +2,7 @@
 #include<iostream>
 #include "vector.h"
 #include "tba.h"
+#include "query.h"
 
 using namespace std;
 
