@@ -324,4 +324,13 @@ std::multiset<T>& operator|=(std::multiset<T>& a,multiset_flat<T> const& b){
 	return a;
 }
 
+template<typename T>
+auto or_all(std::vector<multiset_flat<T>> const& a){
+	multiset_flat<T> r;
+	for(auto const& x:a){
+		r|=x;
+	}
+	return r;
+}
+
 #endif

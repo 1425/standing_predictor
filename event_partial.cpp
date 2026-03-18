@@ -261,6 +261,9 @@ Event_partial event_partial(TBA_fetcher &f){
 	auto make_dists=[](auto x){
 		auto g=GROUP(first,x);
 		static constexpr auto MIN_SAMPLE_SIZE=100;
+		if(x.size()<MIN_SAMPLE_SIZE){
+			throw "Error: Small sample too small size for dists.\n";
+		}
 		assert(x.size()>MIN_SAMPLE_SIZE);
 		auto v=MAP_VALUES(seconds,g);
 

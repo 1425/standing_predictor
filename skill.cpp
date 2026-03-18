@@ -120,11 +120,13 @@ std::vector<int> team_points(TBA_fetcher& f,Team_key team,Year year){
 				case tba::Event_type::CMP_FINALS:
 				case tba::Event_type::DISTRICT_CMP:
 				case tba::Event_type::DISTRICT_CMP_DIVISION:
+				case tba::Event_type::REMOTE:
 					return 0;
 				case tba::Event_type::REGIONAL:
 				case tba::Event_type::DISTRICT:
 					return 1;
 				default:
+					std::cout<<"\n\n";
 					PRINT(x);
 					assert(0);
 			}
@@ -207,6 +209,12 @@ Team_dist rookie_pre_dcmp(TBA_fetcher& f){
 			continue;
 		}
 		found|=f->second;
+	}
+	if(found.empty()){
+		cerr<<"Warning: No rookie data found.\n";
+		Team_dist r;
+		r[0]=1;
+		return r;
 	}
 	return to_dist(found);
 }
@@ -296,6 +304,9 @@ Skill_by_pts calc_skill_inner(TBA_fetcher& f){
 	map<Point,multiset_flat<Point>> adjacent,adjacent2,at_dcmp;
 	for(auto [k,v]:pts){
 		auto [year,team]=k;
+		if(year>=Year::MAX){
+			continue;
+		}
 		auto k2=make_pair(year+1,team);
 		auto f=pts.find(k2);
 		if(f==pts.end()){
@@ -330,10 +341,41 @@ Skill_by_pts calc_skill_inner(TBA_fetcher& f){
 		map<Point,multiset_flat<Point>> smoothed;
 
 		auto k=keys(in);
+		if(k.empty()){
+			return smoothed;
+		}
 		int min1=min(k);
 		int max1=max(k)+10;
 		for(auto k:range(min1,max1)){
 			auto get_samples=[&](){
+				size_t n=0;
+				auto b=in.begin();
+				auto e=in.end();
+				auto at_0=in.lower_bound(k);//going to head towards begin
+				auto at_1=in.upper_bound(k);//going to head towards end
+
+				multiset_flat<Point> found;
+				while(n<100){
+					size_t found_here=0;
+					if(at_0!=b && at_0!=e){
+						auto &here=at_0->second;
+						found|=here;
+						found_here+=sum(here);
+						--at_0;
+					}
+					if(at_1!=e){
+						auto &here=at_1->second;
+						found|=here;
+						found_here+=sum(here);
+						++at_1;
+					}
+					n+=found_here;
+					if(!found_here){
+						break;
+					}
+				}
+				return found;
+				#if 0
 				for(int width=0;width<200;width++){
 					auto to_use=range(k-width,k+width+1);
 					multiset_flat<Point> found;
@@ -345,8 +387,15 @@ Skill_by_pts calc_skill_inner(TBA_fetcher& f){
 					}
 				}
 				//not enough data; should not be reachable.
-				PRINT(k);
-				assert(0);
+				/*PRINT(k);
+				assert(0);*/
+				static bool warned=0;
+				if(!warned){
+					cerr<<"Warning: Data excessively sparse.\n";
+					warned=1;
+				}
+				return or_all(values(in));
+				#endif
 			}();
 
 			smoothed[k]=get_samples;
@@ -385,6 +434,9 @@ Skill_by_pts calc_skill_inner(TBA_fetcher& f){
 	auto at_dcmp_out=[=](){
 		//For the values lower than the worst that has been seen, make them equal to that.
 		auto x=to_pr(s3);
+		if(x.empty()){
+			return x;
+		}
 		auto min_seen=min(keys(x));
 		for(auto i:range(min_seen)){
 			auto found=x[min_seen];

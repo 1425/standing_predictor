@@ -11,7 +11,7 @@ class flat_map{
 	Data data;
 
 	public:
-	flat_map(){}
+	flat_map()=default;
 
 	explicit flat_map(std::initializer_list<std::pair<K,V>> a):data(a){
 		sort(data.begin(),data.end());

@@ -377,7 +377,7 @@ bool parse(std::string url1,T const* t,std::string url2,URL url){
 		return 0;
 	}
 	s=s.substr(0,s.size()-url2.size());
-	cout<<"left:"<<s<<"\n";
+	//cout<<"left:"<<s<<"\n";
 	(void)t;
 	try{
 		auto d=decode(s,t);
@@ -390,17 +390,8 @@ bool parse(std::string url1,T const* t,std::string url2,URL url){
 
 template<typename A,typename B>
 bool parse(std::string url1,A const* a,std::string url2,B const* b,std::string url3,std::string url){
-	PRINT(url);
-	PRINT(url1);
-	PRINT(type_string(a));
-	PRINT(url2);
-	PRINT(type_string(b));
-	PRINT(url3);
-
 	assert(prefix(url,base));
 	auto s=url.substr(base.size(),url.size());
-
-	PRINT(s);
 
 	if(!prefix(s,url1)){
 		return 0;
@@ -417,7 +408,7 @@ bool parse(std::string url1,A const* a,std::string url2,B const* b,std::string u
 		return 0;
 	}
 
-	PRINT(sp);
+	//PRINT(sp);
 
 	decode(sp[0],a);
 
@@ -469,6 +460,9 @@ void serialize(simdjson::builder::string_builder&,T const& t){
 
 using SB=simdjson::builder::string_builder;
 
+template<typename K,typename V>
+void serialize(SB&,std::map<K,V> const&);
+
 template<typename T>
 void serialize(SB&,std::vector<T> const&);
 
@@ -499,6 +493,10 @@ void serialize(simdjson::builder::string_builder& sb,tba::Year const& a){
 }
 
 void serialize(SB& sb,tba::District_key const& a){
+	sb.append(a.get());
+}
+
+void serialize(SB& sb,tba::District_abbreviation const& a){
 	sb.append(a.get());
 }
 
@@ -574,6 +572,9 @@ STRUCT_TO_JSON(tba::Team,TBA_TEAM)
 STRUCT_TO_JSON(tba::Award,TBA_AWARD)
 STRUCT_TO_JSON(tba::Award_Recipient,TBA_RECIPIENT)
 STRUCT_TO_JSON(tba::Dcmp_history,TBA_DCMP_HISTORY)
+STRUCT_TO_JSON(tba::Event_District_Points,TBA_EVENT_DISTRICT_POINTS)
+STRUCT_TO_JSON(tba::Points,TBA_POINTS)
+STRUCT_TO_JSON(tba::Tiebreaker,TBA_TIEBREAKER)
 
 /*void serialize(SB& sb,tba::API_Status_App_Version const& a){
 	sb.start_object();
@@ -641,6 +642,23 @@ void serialize(simdjson::builder::string_builder& sb,tba::API_Status const& a){
 	sb.end_object();
 }
 
+template<typename K,typename V>
+void serialize(SB &sb,std::map<K,V> const& a){
+	sb.start_object();
+	bool first=1;
+	for(auto [k,v]:a){
+		if(first){
+			first=0;
+		}else{
+			sb.append_comma();
+		}
+		serialize(sb,k);
+		sb.append_colon();
+		serialize(sb,v);
+	}
+	sb.end_object();
+}
+
 /*std::string to_json(tba::API_Status const& a){
 	simdjson::builder::string_builder sb;
 	serialize(sb,a);
@@ -650,7 +668,7 @@ void serialize(simdjson::builder::string_builder& sb,tba::API_Status const& a){
 template<typename T>
 std::string to_json(T const& a){
 	simdjson::builder::string_builder sb;
-	print_r(a);
+	//print_r(a);
 	serialize(sb,a);
 	return sb;
 }
@@ -667,9 +685,9 @@ T rand2(T const* x){
 		PRINT(r);
 		return r;*/
 	}else{
-		PRINT(type_string(x));
+		//PRINT(type_string(x));
 		auto r=rand(x);
-		PRINT(r);
+		//PRINT(r);
 		return r;
 	}
 }
@@ -710,7 +728,6 @@ class TBA_fetcher_fuzz{
 			auto name=last(sp);\
 			if(""#NAME==name){\
 				auto s=to_json(rand2((tba::RETURN_VALUE*)0));\
-				PRINT(s);\
 				return make_pair(rand((tba::HTTP_Date*)0),s);\
 			}\
 		}
@@ -718,14 +735,12 @@ class TBA_fetcher_fuzz{
 			if(parse(URL1,(tba::TYPE1*)0,URL2,url)){\
 				using namespace tba;\
 				auto s=to_json(rand2((RETURN_VALUE*)0));\
-				PRINT(s);\
 				return make_pair(rand((tba::HTTP_Date*)0),s);\
 			}
 		#define X2(NAME,RETURN_VALUE,URL1,TYPE1,URL2,TYPE2,URL3)\
 			if(parse(URL1,(tba::TYPE1*)0,URL2,(tba::TYPE2*)0,URL3,url)){\
 				using namespace tba;\
 				auto s=to_json(rand2((RETURN_VALUE*)0));\
-				PRINT(s);\
 				return make_pair(rand((tba::HTTP_Date*)0),s);\
 			}
 

@@ -13,7 +13,9 @@ void check_dist(Team_dist const&);
 
 template<typename T>
 auto to_dist(std::multiset<T> const& a){
-	assert(!a.empty());
+	if(a.empty()){
+		throw std::invalid_argument("No data for distribution");
+	}
 	flat_map2<T,Pr> r;
 	for(auto k:to_set(a)){
 		r[k]=(0.0+a.count(k))/a.size();
