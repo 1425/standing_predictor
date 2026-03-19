@@ -351,6 +351,7 @@ Skill_by_pts calc_skill_inner(TBA_fetcher& f){
 		int max1=max(k)+10;
 		for(auto k:range(min1,max1)){
 			auto get_samples=[&](){
+				#if 0
 				size_t n=0;
 				auto b=in.begin();
 				auto e=in.end();
@@ -378,7 +379,7 @@ Skill_by_pts calc_skill_inner(TBA_fetcher& f){
 					}
 				}
 				return found;
-				#if 0
+				#else
 				for(int width=0;width<200;width++){
 					auto to_use=range(k-width,k+width+1);
 					multiset_flat<Point> found;

@@ -28,10 +28,6 @@ std::vector<pair<tba::Event_key,std::string>> championship_event(auto &f,tba::Di
 	);
 }
 
-int team_number(tba::Team_key const& a){
-	return atoi(a.str().c_str()+3);
-}
-
 int make_spreadsheet(
 	TBA_fetcher &f,
 	map<tba::District_key,map<tba::Team_key,std::pair<Pr,Pr>>> const& m,
@@ -55,7 +51,7 @@ int make_spreadsheet(
 						assert(*x<e.size());
 						return e[*x];
 					}();
-					o<<team_number(team)<<","<<event_key<<",\""<<event_name<<"\",";
+					o<<team.raw()<<","<<event_key<<",\""<<event_name<<"\",";
 					o<<p.first<<","<<p.second<<"\n";
 				}
 			}

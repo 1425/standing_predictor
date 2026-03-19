@@ -4,6 +4,22 @@
 #include "avatar.h"
 #include "query.h"
 
+auto td_top(auto a){
+	return tag("td valign=top",a);
+}
+
+template<typename T>
+auto td_right(T const& t){
+	return tag("td align=right",t);
+}
+
+std::string round3(double d){
+	std::stringstream ss;
+	ss<<std::setprecision(3)<<std::fixed;
+	ss<<d;
+	return ss.str();
+}
+
 using namespace std;
 using Team_key=tba::Team_key;
 
@@ -17,10 +33,6 @@ struct Script_namer{
 		return ss.str();
 	}
 };
-
-auto td_top(auto a){
-	return tag("td valign=top",a);
-}
 
 std::string as_table(tba::Event const&);
 
@@ -224,21 +236,10 @@ string color(double d){
 	return rgb(a,1,a);
 }
 
-std::string round3(double d){
-	std::stringstream ss;
-	ss<<setprecision(3)<<fixed;
-	ss<<d;
-	return ss.str();
-}
-
 auto colorize(double d){
 	return tag("td align=center bgcolor=\""+color(d)+"\"",
 		tag("font color=black",round3(d))
 	);
-}
-
-int as_num(tba::Team_key const& a){
-	return atoi(a.str().c_str()+3);
 }
 
 template<typename T>
@@ -280,11 +281,6 @@ std::map<tba::Team_key,std::string> find_charts(std::map<Team_key,Team_points_us
 		},
 		zip(a,plots)
 	));
-}
-
-template<typename T>
-auto td_right(T const& t){
-	return tag("td align=right",t);
 }
 
 std::string show_skill(Skill_estimates const& in){
@@ -468,9 +464,9 @@ void gen_html(
 				+join(::mapf(
 					[](auto x){
 						auto [team,data]=x;
-						return tr(td(as_num(team))+td(data.rookie_bonus)+td(data.event_points_earned)+td(data.events_left));
+						return tr(td(team.raw())+td(data.rookie_bonus)+td(data.event_points_earned)+td(data.events_left));
 					},
-					sorted(to_vec(in.points_used),[](auto x){ return as_num(x.first); })
+					sorted(to_vec(in.points_used),[](auto x){ return x.first.raw(); })
 				))
 			);
 	}();
