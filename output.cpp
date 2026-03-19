@@ -4,6 +4,20 @@
 #include "avatar.h"
 #include "query.h"
 
+std::string toupper(std::string s){
+	std::stringstream ss;
+	for(auto c:s){
+		ss<<char(toupper(c));
+	}
+	return ss.str();
+}
+
+std::string operator+(std::string a,std::string_view b){
+	std::stringstream ss;
+	ss<<a<<b;
+	return ss.str();
+}
+
 auto td_top(auto a){
 	return tag("td valign=top",a);
 }
@@ -22,6 +36,28 @@ std::string round3(double d){
 
 using namespace std;
 using Team_key=tba::Team_key;
+
+std::string splat(std::string district,tba::Team_key team){
+	std::stringstream ss;
+	ss<<"https://splatfrc.com/team.html?district="<<district<<"&team="<<team.raw();
+	return link(ss.str(),"FRC Splat");
+}
+
+std::string splat_district(std::string district){
+	std::stringstream ss;
+	ss<<"https://splatfrc.com/districts.html?district="<<district;
+	return link(ss.str(),"FRC Splat");
+}
+
+std::string splat(tba::Event_key event){
+	std::stringstream ss;
+	ss<<"https://splatfrc.com/events.html?event="<<event;
+	return link(ss.str(),"FRC Splat");
+}
+
+std::string splat(tba::Event const& event){
+	return splat(event.key);
+}
 
 struct Script_namer{
 	size_t i=0;
@@ -331,11 +367,31 @@ std::string colorize(Tournament_status const& a){
 	);
 }
 
+std::string statbotics(tba::Event const& e){
+	return link(
+		string("https://www.statbotics.io/event/"+::as_string(e.key))+"#figures",
+		"Statbotics"
+	);
+}
+
+std::string frc_events(tba::Event const& e){
+	(void)e;
+	std::stringstream ss;
+	ss<<"https://frc-events.firstinspires.org/"<<year(e)<<"/"<<e.key.code();
+	return link(ss.str(),"FRC events");
+}
+
+std::string frc_locks(tba::Team_key const& e){
+	std::stringstream ss;
+	ss<<"https://frclocks.com/teams/"<<e<<".html";
+	return link(ss.str(),"FRC Locks");
+}
+
 std::string event_status(Annotated const& a){
 	std::stringstream o;
 	o<<h2("Events");
 	o<<"<table border>";
-	o<<tr(th("Type")+th("Name")+th("Date")+th("Status"));
+	o<<tr(th("Type")+th("Name")+th("Date")+th("Status")+th("Extra"));
 	auto show_event=[&](auto const& x){
 		auto [event,extra]=x;
 		const auto name=[&]()->string{
@@ -353,7 +409,12 @@ std::string event_status(Annotated const& a){
 				assert(event.end_date);
 				return as_string(Interval<tba::Date>{*event.start_date,*event.end_date});
 			}())+
-			colorize(extra.status)
+			colorize(extra.status)+
+			td(
+				frc_events(event)+" "+
+				statbotics(event)+" "+
+				splat(event)
+			)
 		);
 	};
 
@@ -667,7 +728,7 @@ void gen_html(
 		ss<<"</tr>";
 		ss<<"</table>";
 		
-		const auto team_num=a.team.str().substr(3,20);
+		const auto team_num=a.team.raw();
 
 		/*ss<<h3("Points used");
 		ss<<as_table(x);*/
@@ -778,21 +839,22 @@ void gen_html(
 		}();
 		ss<<p(fly);
 
-		ss<<"<br>";
+		ss<<"<br>"<<"More on this team:";
 		{
 			std::stringstream u;
 			u<<"https://frc-events.firstinspires.org/"<<in.year<<"/team/"<<team_num;
 			ss<<link(u.str(),"FRC Events");
 		}
-		ss<<"<br>";
+		ss<<" ";
 		ss<<link("https://thebluealliance.com/team/"+team_num+"/"+::as_string(in.year),"The Blue Alliance");
-		ss<<"<br>";
+		ss<<" ";
 		{
 			std::stringstream u;
 			u<<"https://www.statbotics.io/team/"<<team_num<<"/"<<in.year;
 			ss<<link(u.str(),"Statbotics");
 		}
-
+		ss<<" "<<frc_locks(a.team);
+		ss<<" "<<splat(in.district_short,a.team);
 		/*try{
 			ss<<p(in.extra.at(a.team));
 		}catch(...){
@@ -851,10 +913,10 @@ void gen_html(
 		)+
 		tag("body",
 			tag("h1",in.title)+
-			link("https://frc-events.firstinspires.org/"+::as_string(in.year)+"/district/"+in.district_short,"FRC Events")+"<br>"+
+			link("https://frc-events.firstinspires.org/"+::as_string(in.year)+"/district/"+toupper(in.district_short),"FRC Events")+"<br>"+
 			link("https://www.thebluealliance.com/events/"+in.district_short+"/"+::as_string(in.year)+"#rankings","The Blue Alliance")+"<br>"+
-			//link("http://frclocks.com/index.php?d="+district_short,"FRC Locks")+"(slow)<br>"+
 			link("http://frclocks.com/districts/"+in.district_short+".html","FRC Locks")+"<br>"+
+			splat_district(in.district_short)+"<br>"+
 			event_status(limits)+
 			cutoff_table1+
 			cutoff_table_cmp+
