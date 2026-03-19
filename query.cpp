@@ -27,7 +27,9 @@ set<tba::Team_key> chairmans_winners(TBA_fetcher& f,tba::District_key const& dis
 		//There is more than one recipient at the dcmp events.
 		for(auto x:f1[0].recipient_list){
 			auto team=x.team_key;
-			assert(team);
+			if(!team){
+				throw "Error: Chairmans award given with no team as a recipient.";
+			}
 			r|=*team;
 		}
 	}

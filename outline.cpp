@@ -165,7 +165,7 @@ std::tuple<Run_result,Points_used,By_team,Skill_estimates,Annotated,std::map<tba
 				));
 			}
 			if(events_left==2){
-				return get_key(skills.pre_dcmp,team.team_key);
+				return skills.pre_dcmp.at(team.team_key);
 			}
 			PRINT(team);
 			PRINT(events_left);
@@ -582,9 +582,9 @@ int main(int argc,char **argv){
 	}catch(std::string const& s){
 		cerr<<"Caught:"<<s<<"\n";
 		return 1;
-	/*}catch(std::invalid_argument const& e){
+	}catch(std::invalid_argument const& e){
 		cerr<<"Caught:"<<e<<"\n";
-		return 1;*/
+		return 1;
 	}catch(std::vector<std::string> const& v){
 		cerr<<"Caught:"<<v<<"\n";
 		return 1;
@@ -593,6 +593,9 @@ int main(int argc,char **argv){
 		return 1;
 	}catch(tba::Decode_error const& a){
 		cerr<<"Caught:"<<a<<"\n";
+		return 1;
+	}catch(std::out_of_range const& a){
+		cerr<<"Caught:"<<a.what()<<"\n";
 		return 1;
 	}
 }

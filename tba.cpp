@@ -3,6 +3,7 @@
 #include<queue>
 #include<future>
 #include<any>
+#include<random>
 #include "../tba/tba.h"
 #include "set.h"
 #include "util.h"
@@ -86,7 +87,7 @@ void TBA_fetcher_config::add(Argument_parser &f){
 		"Attempt to fetch pages that are expected to change, even if they are cached.",
 		refresh
 	);
-	f.add("--tba_fuzz",{},"Feed random data",fuzz);
+	f.add("--tba_fuzz",{"PATH"},"Feed random data",fuzz);
 }
 
 bool contains(string s,char c){
@@ -595,18 +596,162 @@ std::optional<T> rand2(std::optional<T> const* x){
 	return rand((T*)0);
 }
 
+template<typename Rand>
+std::string rand(Rand&,std::string const*);
+
+template<typename Rand>
+int rand(Rand& rng,int const*){
+	return rng();
+}
+
+namespace tba{
+template<typename Rand>
+tba::API_Status_App_Version rand(Rand &rng,tba::API_Status_App_Version const*);
+
+template<typename Rand>
+tba::Team_key rand(Rand&,Team_key const*){
+	nyi
+}
+}
+
+template<typename Rand,typename T>
+T rand(Rand &rand,T const* x){
+	(void)rand;
+	PRINT(type_string(x));
+	nyi
+}
+
+template<typename Rand,typename T>
+std::optional<T> rand(Rand& rng,std::optional<T> const*){
+	if(rng()%2){
+		return rand(rng,(T*)0);
+	}
+	return std::nullopt;
+}
+
+template<typename Rand>
+bool rand(Rand &rng,bool const*){
+	return rng()%2;
+}
+
+template<typename Rand>
+tba::District_abbreviation rand(Rand &rng,tba::District_abbreviation const*){
+	std::stringstream ss;
+	for(auto _:range(2+rng()%2)){
+		ss<<char('a'+rng()%26);
+	}
+	return ss.str();
+}
+
+template<typename Rand>
+tba::District_key rand(Rand &rng,tba::District_key const*){
+	std::stringstream ss;
+	ss<<rand(rng,(tba::Year*)0);
+	ss<<rand(rng,(tba::District_abbreviation*)0);
+	return tba::District_key(ss.str());
+}
+
+template<typename Rand,typename T>
+auto rand(Rand &rng,std::vector<T> const*){
+	std::vector<T> r;
+	for(auto const& _:range(rng()%10)){
+		(void)_;
+		r|=rand(rng,(T*)0);
+	}
+	return r;
+}
+
+template<typename Rand>
+std::string rand(Rand &rng,std::string const*){
+	std::stringstream ss;
+	for(auto _:range(rng()%10)){
+		(void)_;
+		ss<<char('a'+rng()%26);
+	}
+	return ss.str();
+}
+
+template<typename Rand>
+tba::Year rand(Rand& rng,tba::Year const*){
+	return tba::Year(1992+rng()%100);
+}
+
+template<typename Rand>
+tba::API_Status rand(Rand &rng,tba::API_Status const*){
+	using namespace tba;
+	return tba::API_Status{
+		#define X(A,B) rand(rng,(A*)0),
+		TBA_API_STATUS(X)
+		#undef X
+	};
+}
+
+template<typename Rand,typename T,size_t N>
+tba::vector_fixed<T,N> rand(Rand &rng,tba::vector_fixed<T,N> const&);
+
+#define STRUCT_TO_RAND_INNER(A,B) rand(rng,(A*)0),
+
+#define STRUCT_TO_RAND(NAME,ITEMS)\
+	namespace tba{\
+	template<typename Rand>\
+	NAME rand(Rand &rng,NAME const*){\
+		return NAME{ITEMS(STRUCT_TO_RAND_INNER)};\
+	}\
+	}
+
+STRUCT_TO_RAND(tba::API_Status_App_Version,TBA_API_STATUS_APP_VERSION)
+STRUCT_TO_RAND(tba::Year_info,TBA_YEAR_INFO)
+STRUCT_TO_RAND(tba::District_Ranking,TBA_DISTRICT_RANKING)
+STRUCT_TO_RAND(tba::Event_points,TBA_EVENT_POINTS)
+STRUCT_TO_RAND(tba::Event,TBA_EVENT)
+STRUCT_TO_RAND(tba::District_List,TBA_DISTRICT_LIST)
+STRUCT_TO_RAND(tba::Webcast,TBA_WEBCAST)
+STRUCT_TO_RAND(tba::Team,TBA_TEAM)
+STRUCT_TO_RAND(tba::Award,TBA_AWARD)
+STRUCT_TO_RAND(tba::Award_Recipient,TBA_RECIPIENT)
+STRUCT_TO_RAND(tba::Dcmp_history,TBA_DCMP_HISTORY)
+STRUCT_TO_RAND(tba::Event_District_Points,TBA_EVENT_DISTRICT_POINTS)
+STRUCT_TO_RAND(tba::Points,TBA_POINTS)
+STRUCT_TO_RAND(tba::Tiebreaker,TBA_TIEBREAKER)
+
+struct Rng{
+	ifstream f;
+
+	explicit Rng(std::string path):
+		f(path)
+	{}
+
+	unsigned operator()(){
+		if(!f.good()){
+			return 0;
+		}
+		unsigned r=0;
+		f.get((char*)&r,sizeof(r));
+		return r;
+	}
+};
+
 //class TBA_fetcher_fuzz:public TBA_fetcher_impl<TBA_fetcher_fuzz>{
 class TBA_fetcher_fuzz{
+	//mutable ifstream f;
+	//mutable std::mt19937_64 rng;
+	mutable Rng rng;
+
 	public:
 
-	TBA_fetcher_fuzz(){
-		srand(1001);
+	explicit TBA_fetcher_fuzz(std::string path):rng(path){
+		//srand(1001);
 	}
 
 	TBA_fetcher_fuzz(TBA_fetcher_fuzz const&)=delete;
 	TBA_fetcher_fuzz& operator=(TBA_fetcher_fuzz const&)=delete;
 
 	pair<tba::HTTP_Date,tba::Data> fetch(tba::URL const& url)const{
+		/*if(f.good()){
+			char c=0;
+			f.get(c);
+			srand(c);
+		}*/
 	//bar::Bar fetch(tba::URL const& url)const{
 		PRINT(url);
 
@@ -623,20 +768,20 @@ class TBA_fetcher_fuzz{
 			assert(!sp.empty());\
 			auto name=last(sp);\
 			if(""#NAME==name){\
-				auto s=to_json(rand2((tba::RETURN_VALUE*)0));\
+				auto s=to_json(rand(rng,(tba::RETURN_VALUE*)0));\
 				return make_pair(rand((tba::HTTP_Date*)0),s);\
 			}\
 		}
 		#define X1(NAME,RETURN_VALUE,URL1,TYPE1,URL2) \
 			if(parse(URL1,(tba::TYPE1*)0,URL2,url)){\
 				using namespace tba;\
-				auto s=to_json(rand2((RETURN_VALUE*)0));\
+				auto s=to_json(rand(rng,(RETURN_VALUE*)0));\
 				return make_pair(rand((tba::HTTP_Date*)0),s);\
 			}
 		#define X2(NAME,RETURN_VALUE,URL1,TYPE1,URL2,TYPE2,URL3)\
 			if(parse(URL1,(tba::TYPE1*)0,URL2,(tba::TYPE2*)0,URL3,url)){\
 				using namespace tba;\
-				auto s=to_json(rand2((RETURN_VALUE*)0));\
+				auto s=to_json(rand(rng,(RETURN_VALUE*)0));\
 				return make_pair(rand((tba::HTTP_Date*)0),s);\
 			}
 
@@ -648,7 +793,7 @@ class TBA_fetcher_fuzz{
 
 TBA_fetcher TBA_fetcher_config::get()const{
 	if(fuzz){
-		return new TBA_fetcher_fuzz();
+		return new TBA_fetcher_fuzz(*fuzz);
 	}
 
 	TBA_fetcher r=[&]()->TBA_fetcher{
