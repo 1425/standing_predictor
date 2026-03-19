@@ -11,8 +11,6 @@
 #include "skill.h"
 #include "fly.h"
 
-class TBA_fetcher;
-
 using Extended_cutoff=std::pair<Point,Pr>;
 
 using Cutoff=std::map<Extended_cutoff,Pr>;
@@ -61,12 +59,6 @@ void gen_html(
 	        Tournament_status,
 	        Rank_status<District_status>
 	> const&
-);
-
-int make_spreadsheet(
-	TBA_fetcher &f,
-	std::map<tba::District_key,std::map<tba::Team_key,std::pair<Pr,Pr>>> const&,
-	std::string const& output_dir
 );
 
 #endif

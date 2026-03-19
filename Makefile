@@ -31,6 +31,7 @@ FRC_API_OBJS= \
 	../frc_api/curl.o
 
 OUTLINE_OBJS= \
+	spreadsheet.o \
 	decode.o \
 	query.o \
 	fly.o \

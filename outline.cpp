@@ -58,6 +58,7 @@ simple way:
 #include "history.h"
 #include "fly.h"
 #include "query.h"
+#include "spreadsheet.h"
 
 //start program-specific stuff.
 
