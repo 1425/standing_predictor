@@ -14,7 +14,7 @@
 #include "cat.h"
 #include "declines.h"
 #include "rand.h"
-#include "history.h"
+#include "decode.h"
 
 using namespace std;
 
