@@ -503,7 +503,11 @@ std::optional<Team_season_status> team_season_status(TBA_fetcher& f,tba::Team_ke
 	//should probably check that days >=0
 
 	auto f1=filter([&](auto x){ return x.team==team && x.year==year; },history);
-	assert(!f1.empty());
+	if(f1.empty()){
+		//This occurs when there is a team that is listed as existing for a season
+		//but it doesn't have any events.
+		return std::nullopt;
+	}
 	auto m=max_by([](auto x){ return x.date; },f1);
 	auto p=m.cmp_pr;
 	auto box=int(p*10);

@@ -31,6 +31,7 @@ FRC_API_OBJS= \
 	../frc_api/curl.o
 
 OUTLINE_OBJS= \
+	json.o \
 	spreadsheet.o \
 	decode.o \
 	query.o \
@@ -117,6 +118,7 @@ META_OBJS= \
 	query.o \
 	rand.o \
 	decode.o \
+	json.o
 
 meta: $(META_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -lgumbo -o $@
@@ -144,6 +146,7 @@ DECLINE_OBJS= \
 	query.o\
 	rand.o\
 	decode.o\
+	json.o\
 
 declines: $(DECLINE_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@

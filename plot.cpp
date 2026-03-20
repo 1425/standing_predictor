@@ -1,10 +1,12 @@
 #include "plot.h"
 #include<fstream>
 #include<boost/beast/core/detail/base64.ipp>
+#include<simdjson.h>
 #include "rand.h"
 #include "subprocess.h"
 #include "vector_void.h"
 #include "io.h"
+#include "json.h"
 
 using namespace std;
 
@@ -127,3 +129,16 @@ int main1(){
 	exit(0);
 }*/
 
+using SB=simdjson::builder::string_builder;
+
+template<typename T>
+std::string serialize(SB&,T const&){
+	nyi
+}
+
+void plot(Plot_lines const& a){
+	(void)a;
+	nyi
+	//auto s=simdjson::to_json(a);
+	//PRINT(s);
+}
