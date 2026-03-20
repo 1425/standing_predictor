@@ -25,6 +25,7 @@ struct Args{
 	bool history_demo=0;
 	bool fly=0;
 	bool plot_demo=0;
+	bool team_history_demo=0;
 };
 
 void run_outer(TBA_fetcher&,Args);

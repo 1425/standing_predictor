@@ -6,6 +6,7 @@
 #include<cassert>
 #include<execution>
 #include<cmath>
+#include<ranges>
 #include "util.h" //for ELEM
 
 template<typename T,typename T2>
@@ -21,12 +22,14 @@ auto operator|(std::vector<T> a,T b){
 }
 
 template<typename T,template<typename...> typename COLLECTION,typename ...EXTRA>
+requires requires(COLLECTION<T,EXTRA...> a){ a.begin(); }
 std::vector<T>& operator|=(std::vector<T> &a,COLLECTION<T,EXTRA...> const& b){
 	a.insert(a.end(),b.begin(),b.end());
 	return a;
 }
 
 template<typename T,template<typename...> typename COLLECTION,typename ...EXTRA>
+requires requires(COLLECTION<T,EXTRA...> a){ a.begin(); }
 std::vector<T>& operator|=(std::vector<T> &a,COLLECTION<T,EXTRA...> && b){
 	a.insert(
 		a.end(),

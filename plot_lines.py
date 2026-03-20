@@ -84,10 +84,16 @@ def plot2(data):
         fill=[[i[2] for i in line]]
         #initiallly, going to ignore the fill and plot them all solid
         ax.plot(x,y,marker='o')
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%d %b %Y'))
+    #ax.xaxis.set_major_formatter(mdates.DateFormatter('%d %b %Y'))
+    fig.autofmt_xdate()
     plt.title(data['title'])
     ax.set_xlabel(data['x_label'])
     ax.set_ylabel(data['y_label'])
+    #plt.ylim(bottom=0,top=1)
+
+    for line in data['vertical_lines']:
+        ax.axvline(datetime.datetime.strptime(line,'%Y-%m-%d'),color='red')
+
     plt.tight_layout()
     #plt.show()
     plt.savefig(stdout,format='png')

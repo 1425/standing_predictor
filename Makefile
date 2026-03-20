@@ -31,6 +31,7 @@ FRC_API_OBJS= \
 	../frc_api/curl.o
 
 OUTLINE_OBJS= \
+	team_history.o \
 	json.o \
 	spreadsheet.o \
 	decode.o \

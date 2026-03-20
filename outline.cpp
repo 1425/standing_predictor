@@ -59,6 +59,7 @@ simple way:
 #include "fly.h"
 #include "query.h"
 #include "spreadsheet.h"
+#include "team_history.h"
 
 //start program-specific stuff.
 
@@ -343,6 +344,7 @@ Args parse_args(int argc,char **argv){
 	p.add("--index",{"UPDATE"},"Experimental",r.index);
 	p.add("--history_demo",{},"Experimental",r.history_demo);
 	p.add("--fly",{},"Experimental",r.fly);
+	p.add("--team_history_demo",{},"Experimental",r.team_history_demo);
 	p.parse(argc,argv);
 	return r;
 }
@@ -576,6 +578,9 @@ int main1(int argc,char **argv){
 
 	if(args.plot_demo){
 		return plot_demo();
+	}
+	if(args.team_history_demo){
+		return team_history_demo(tba_fetcher);
 	}
 
 	run_outer(tba_fetcher,args);
