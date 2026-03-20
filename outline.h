@@ -24,6 +24,7 @@ struct Args{
 	std::optional<bool> index;
 	bool history_demo=0;
 	bool fly=0;
+	bool plot_demo=0;
 };
 
 void run_outer(TBA_fetcher&,Args);

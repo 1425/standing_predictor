@@ -56,11 +56,11 @@ std::chrono::year rand(std::chrono::year const*){
 }
 
 std::chrono::month rand(std::chrono::month const*){
-	return std::chrono::month(rand()%12);
+	return std::chrono::month(1+rand()%12);
 }
 
 std::chrono::day rand(std::chrono::day const*){
-	return std::chrono::day(rand()%29);
+	return std::chrono::day(1+rand()%28);
 }
 
 std::chrono::year_month_day rand(std::chrono::year_month_day const*){
@@ -71,45 +71,3 @@ std::chrono::year_month_day rand(std::chrono::year_month_day const*){
 	};
 	return r;
 }
-
-/*template<typename A,typename B>
-auto rand(std::pair<A,B> const*){
-	return std::make_pair(rand((A*)0),rand((B*)0));
-}
-
-template<typename T>
-std::vector<T> rand(std::vector<T> const*){
-	return mapf(
-		[](auto x){
-			(void)x;
-			return rand((T*)0);
-		},
-		range(rand()%5)
-	);
-}
-
-template<typename T>
-std::optional<T> rand(std::optional<T> const*){
-	if(rand()%2){
-		return rand((T*)0);
-	}
-	return std::nullopt;
-}
-
-template<typename K,typename V>
-std::map<K,V> rand(std::map<K,V> const*){
-	std::map<K,V> r;
-	for(auto k:rand((std::vector<K>*)0)){
-		r[k]=rand((V*)0);
-	}
-	return r;
-}
-
-template<typename A,typename B>
-std::variant<A,B> rand(std::variant<A,B> const*){
-	if(rand()%2){
-		return rand((A*)0);
-	}
-	return rand((B*)0);
-}
-*/

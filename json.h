@@ -14,6 +14,9 @@ void serialize(simdjson::builder::string_builder&,T const& t){
 
 using SB=simdjson::builder::string_builder;
 
+template<typename A,typename B,typename C>
+void serialize(SB&,std::tuple<A,B,C> const&);
+
 template<typename K,typename V>
 void serialize(SB&,std::map<K,V> const&);
 
@@ -51,6 +54,14 @@ void serialize(SB&,std::chrono::year_month_day const&);
 	sb.append_colon();\
 	serialize(sb,a.B);\
 }\
+
+#define STRUCT_TO_JSON1(NAME,ITEMS)\
+	void serialize(SB& sb,NAME const& a){\
+		sb.start_object();\
+		bool first=1;\
+		ITEMS(STRUCT_TO_JSON_INNER)\
+		sb.end_object();\
+	}\
 
 #define STRUCT_TO_JSON(NAME,ITEMS)\
 	void serialize(SB&,NAME const&);
@@ -133,6 +144,17 @@ void serialize(SB &sb,std::map<K,V> const& a){
 	serialize(sb,a);
 	return sb;
 }*/
+
+template<typename A,typename B,typename C>
+void serialize(SB &sb,std::tuple<A,B,C> const& a){
+	sb.start_array();
+	serialize(sb,get<0>(a));
+	sb.append_comma();
+	serialize(sb,get<1>(a));
+	sb.append_comma();
+	serialize(sb,get<2>(a));
+	sb.end_array();
+}
 
 template<typename T>
 std::string to_json(T const& a){

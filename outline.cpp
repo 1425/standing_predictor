@@ -334,6 +334,7 @@ Args parse_args(int argc,char **argv){
 		"Include plots of point distributions in output.  Defauls to true.",
 		r.plot
 	);
+	p.add("--plot_demo",{},"Experimental",r.plot_demo);
 	p.add(
 		"--quick",{"ENABLE"},
 		"Do smaller number of iterations",
@@ -571,6 +572,10 @@ int main1(int argc,char **argv){
 
 	if(args.fly){
 		return fly_demo(tba_fetcher);
+	}
+
+	if(args.plot_demo){
+		return plot_demo();
 	}
 
 	run_outer(tba_fetcher,args);

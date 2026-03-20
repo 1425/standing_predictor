@@ -14,9 +14,30 @@ std::string plot(std::vector<std::pair<int,double>> const&,std::optional<std::st
 using Plot_point2=std::pair<int,double>;
 using Plot_point3=std::tuple<int,int,double>;
 
+using Plot_X=std::chrono::year_month_day;
+using Plot_Y=double;
+using Plot_point=std::tuple<Plot_X,Plot_Y,bool>;//bool=line should be dotted rather than solid
+using Plot_line=std::vector<Plot_point>;
+
+#define PLOT_LINES(X)\
+	X(std::string,title)\
+	X(std::string,x_label)\
+	X(std::string,y_label)\
+	X(std::vector<Plot_line>,lines)\
+	X(std::vector<Plot_X>,vertical_lines)\
+
+struct Plot_lines{
+	PLOT_LINES(INST)
+
+	auto operator<=>(Plot_lines const&)const=default;
+};
+
+std::ostream& operator<<(std::ostream&,Plot_lines const&);
+
 using Plot_data=std::variant<
 	std::vector<Plot_point2>,
-	std::vector<Plot_point3>
+	std::vector<Plot_point3>,
+	Plot_lines
 >;
 
 #define PLOT_SETUP(X)\
@@ -29,31 +50,6 @@ STRUCT_DECLARE(Plot_setup,PLOT_SETUP)
 //Gives like a 10x speedup.
 std::vector<std::string> plot(std::vector<Plot_setup> const&);
 
-#define PLOT_LINES(X)\
-	X(std::string,title)\
-	X(std::string,x_label)\
-	X(std::string,y_label)\
-	X(std::vector<Line>,lines)\
-	X(std::vector<X_>,vertical_lines)\
-
-struct Plot_lines{
-	//std::string title,x_label,y_label;
-
-	using X=std::chrono::year_month_day;
-	using X_=X;
-
-	using Y=double;
-	using Point=std::tuple<X,Y,bool>;//bool=line should be dotted rather than solid
-	using Line=std::vector<Point>;
-	//std::vector<Line> lines;
-
-	//std::vector<X> vertical_lines;
-	
-	PLOT_LINES(INST)
-
-	auto operator<=>(Plot_lines const&)const=default;
-};
-
-void plot(Plot_lines const&);
+int plot_demo();
 
 #endif

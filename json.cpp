@@ -95,14 +95,6 @@ void serialize(SB& sb,std::chrono::year_month_day const& a){
 	serialize(sb,a.B);\
 }\
 
-#define STRUCT_TO_JSON1(NAME,ITEMS)\
-	void serialize(SB& sb,NAME const& a){\
-		sb.start_object();\
-		bool first=1;\
-		ITEMS(STRUCT_TO_JSON_INNER)\
-		sb.end_object();\
-	}\
-
 STRUCT_TO_JSON1(tba::API_Status_App_Version,TBA_API_STATUS_APP_VERSION)
 STRUCT_TO_JSON1(tba::Year_info,TBA_YEAR_INFO)
 STRUCT_TO_JSON1(tba::District_Ranking,TBA_DISTRICT_RANKING)

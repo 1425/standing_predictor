@@ -10,9 +10,15 @@
 
 using namespace std;
 
+PRINT_STRUCT(Plot_lines,PLOT_LINES)
+
 PRINT_STRUCT(Plot_setup,PLOT_SETUP)
 
 ELEMENTWISE_RAND(Plot_setup,PLOT_SETUP)
+
+Job job(Plot_lines const& a){
+	return Job("./plot_lines.py",{},to_json(a));
+}
 
 Job job(Plot_setup const& a){
 	if(std::holds_alternative<std::vector<Plot_point2>>(a.data)){
@@ -30,6 +36,9 @@ Job job(Plot_setup const& a){
 			ss<<x<<","<<y<<","<<z<<"\n";
 		}
 		return Job("./plot3.py",{"--x","Input (Points)","--y","Output (Points)","--z","Probability"},ss.str());
+	}
+	if(std::holds_alternative<Plot_lines>(a.data)){
+		return job(std::get<Plot_lines>(a.data));
 	}
 	assert(0);
 }
@@ -53,7 +62,6 @@ std::string png_tag(std::string const& png_data,std::optional<std::string> const
 
 std::string plot(std::vector<std::pair<int,double>> const& data,std::optional<std::string> title){
 	//returns an HTML tag that will show the scatter plot.
-	(void)title;
 
 	auto r=run(
 		"./plot.py",
@@ -75,7 +83,7 @@ std::string plot(std::vector<std::pair<int,double>> const& data,std::optional<st
 }
 
 std::vector<std::string> plot(std::vector<Plot_setup> const& a){
-	auto jobs=mapf(job,a);
+	auto jobs=MAP(job,a);
 	auto result=run_jobs(jobs);
 	//status,out,error
 	auto error=mapf([](auto x){ return x.status!=0; },result);
@@ -83,6 +91,7 @@ std::vector<std::string> plot(std::vector<Plot_setup> const& a){
 		[](auto pair)->string{
 			auto [in,x]=pair;
 			if(x.status){
+				//cerr<<"Warning: Plot failed: "<<pair<<"\n";
 				//plotting failed.  Just return an empty string.
 				return "";
 			}
@@ -131,14 +140,30 @@ int main1(){
 
 using SB=simdjson::builder::string_builder;
 
-template<typename T>
+/*template<typename T>
 std::string serialize(SB&,T const&){
 	nyi
-}
+}*/
 
-void plot(Plot_lines const& a){
-	(void)a;
-	nyi
-	//auto s=simdjson::to_json(a);
-	//PRINT(s);
+ELEMENTWISE_RAND(Plot_lines,PLOT_LINES)
+
+/*void serialize(SB& sb,Plot_lines const& a){
+	
+}*/
+
+STRUCT_TO_JSON1(Plot_lines,PLOT_LINES)
+
+int plot_demo(){
+	auto data=rand((Plot_lines*)0);
+	Plot_setup ps{data,"example title"};
+	auto p=plot({ps});
+	assert(p.size()==1);
+	auto h=p[0];
+	static const std::string PATH="out.html";
+	{
+		ofstream f(PATH);
+		f<<h;
+	}
+	system("firefox "+PATH);
+	return 0;
 }
