@@ -459,6 +459,32 @@ std::optional<tba::Year> year(std::optional<tba::District_key> const& a){
 	return year(*a);
 }
 
+/*template<typename Func>
+auto mapf_fork(Func f,std::vector<T> const& a){
+	//using Data=std::pair<pid_t,int,
+	struct Data{
+		pid_t pid;
+		int pipe_fd;
+	};
+	std::vector<Data> children;
+	for(auto x:a){
+		
+		pid_t f=fork();
+		if(f==-1){
+			cerr<<"Fork failed\n";
+			assert(0);
+		}else if(f==0){
+			//child process
+			nyi
+		}else{
+			//parent process
+			children|=f;
+		}
+	}
+
+	nyi
+}*/
+
 void run_outer(TBA_fetcher& tba_fetcher,Args args){
 	if(!args.year){
 		if(args.district){
@@ -474,10 +500,18 @@ void run_outer(TBA_fetcher& tba_fetcher,Args args){
 
 	map<tba::District_key,map<tba::Team_key,std::pair<Pr,Pr>>> district_team_p;
 
-	for(auto year_info:d){
+	//for(auto year_info:d){
+	auto x=mapf([&](auto year_info)->
+		std::optional<
+			std::pair<
+				tba::District_key,
+				std::map<tba::Team_key,std::pair<double,double>>
+			>
+		>
+	{
 		auto district=year_info.key;
 		if(args.district && district!=args.district){
-			continue;
+			return std::nullopt;
 		}
 		//PRINT(district);
 		auto title=year_info.display_name+" District Championship Predictions "+::as_string(args.year);
@@ -491,7 +525,6 @@ void run_outer(TBA_fetcher& tba_fetcher,Args args){
 		run_inputs.skill_method=args.skill_method;
 		run_inputs.plot=args.plot;
 		run_inputs.quick=args.quick;
-		district_team_p[district]=run(tba_fetcher,run_inputs);
 
 		if(district=="2022ne"){
 			run_inputs.dcmp_slots=[](){
@@ -503,6 +536,12 @@ void run_outer(TBA_fetcher& tba_fetcher,Args args){
 			run_inputs.extra="_cmp";
 			run_inputs.ignore_chairmans=1;
 			run(tba_fetcher,run_inputs);
+		}
+		return make_pair(district,run(tba_fetcher,run_inputs));
+	},d);
+	for(auto const& elem:x){
+		if(elem){
+			district_team_p.insert(*elem);
 		}
 	}
 

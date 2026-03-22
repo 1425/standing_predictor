@@ -242,13 +242,14 @@ std::vector<tba::Team_key> teams_keys(TBA_fetcher& f,tba::Event const& a){
 	return teams_keys(f,a.key);
 }
 
-std::vector<tba::District_key> districts(TBA_fetcher &f){
-	static std::vector<tba::District_key> cache;
-	if(!cache.empty()){
-		return cache;
-	}
+static std::vector<tba::District_key> districts_inner(TBA_fetcher &f){
 	auto found=flatten(mapf([&](auto year){ return tba::districts(f,year); },years()));
-	return cache=mapf([](auto x){ return x.key; },found);
+	return mapf([](auto x){ return x.key; },found);
+}
+
+std::vector<tba::District_key> const& districts(TBA_fetcher &f){
+	static std::vector<tba::District_key> cache=districts_inner(f);
+	return cache;
 }
 
 std::vector<tba::Event> events(TBA_fetcher &f,tba::District_key const& district){
@@ -257,6 +258,8 @@ std::vector<tba::Event> events(TBA_fetcher &f,tba::District_key const& district)
 
 std::vector<tba::Event_key> events_keys(TBA_fetcher &f,tba::District_key const& district){
 	static map<tba::District_key,std::vector<tba::Event_key>> cache;
+	static std::mutex lock;
+	std::lock_guard<std::mutex> locked(lock);
 	auto it=cache.find(district);
 	if(it!=cache.end()){
 		return it->second;
@@ -362,6 +365,8 @@ Date dcmp_end_calc(TBA_fetcher &f,tba::District_key const& district){
 
 Date dcmp_end(TBA_fetcher &f,tba::District_key const& district){
 	static std::map<tba::District_key,Date> cache;
+	static std::mutex lock;
+	std::lock_guard<std::mutex> locked(lock);
 	{
 		auto f1=cache.find(district);
 		if(f1!=cache.end()){
@@ -403,6 +408,8 @@ Date cmp_start_inner(TBA_fetcher &f,tba::Year year){
 
 Date cmp_start(TBA_fetcher &f,tba::Year year){
 	static std::map<Year,Date> cache;
+	static std::mutex lock;
+	std::lock_guard<std::mutex> locked(lock);
 	auto found=cache.find(year);
 	if(found!=cache.end()){
 		return found->second;

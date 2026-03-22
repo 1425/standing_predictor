@@ -42,7 +42,7 @@ std::vector<tba::Team> teams(TBA_fetcher&);
 std::vector<tba::Team> teams(TBA_fetcher&,tba::Year);
 std::vector<tba::Team_key> teams_keys(TBA_fetcher&,tba::Event_key const&);
 std::vector<tba::Team_key> teams_keys(TBA_fetcher&,tba::Event const&);
-std::vector<tba::District_key> districts(TBA_fetcher&);
+std::vector<tba::District_key> const& districts(TBA_fetcher&);
 
 std::vector<tba::Match> playoff_matches(TBA_fetcher&,tba::Event_key const&);
 std::vector<tba::Match_Simple> playoff_matches_simple(TBA_fetcher&,tba::Event_key const&);

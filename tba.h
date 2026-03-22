@@ -1,15 +1,6 @@
 #ifndef TBA_H
 #define TBA_H
 
-#include<string>
-
-namespace bar{
-	struct Bar{};
-
-	template<typename T>
-	int postprocess(Bar,std::string);
-};
-
 #include<set>
 #include<memory>
 #include<any>

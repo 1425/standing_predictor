@@ -506,6 +506,9 @@ std::vector<Subprocess_result> run_jobs(std::vector<Job> const& jobs){
 	 * map<int,pair<int(index into jobs),which part?>>
 	*/
 
+	std::lock_guard<std::mutex> lock(signalfd_lock);
+	cout<<std::this_thread::get_id()<<": Got lock\n";
+
 	//set up all the pipes, etc.
 	{
 		auto r=signal(SIGPIPE,SIG_IGN);
@@ -526,8 +529,6 @@ std::vector<Subprocess_result> run_jobs(std::vector<Job> const& jobs){
 			exit(1);
 		}
 	}
-
-	std::lock_guard<std::mutex> lock(signalfd_lock);
 
 	//the close on exec is important to prevent the signals from being sent to child processes
 	//and effectively lost.
