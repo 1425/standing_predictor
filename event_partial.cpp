@@ -449,9 +449,7 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 						found|=Future();
 					}else if(event_data.status==Tournament_status_complete()){
 						//assume that since it's not recorded, you're getting 0 points
-						Team_dist r;
-						r[0]=1;
-						return r;
+						found|=std::nullopt;//this is a 3rd play+
 					}else{
 						if(
 							std::holds_alternative<Qual_status_in_progress>(event_data.status)

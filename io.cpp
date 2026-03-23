@@ -43,6 +43,10 @@ std::string link(std::string const& url,std::string const& body){
 	return tag("a href=\""+url+"\"",body);
 }
 
+std::string html_link(const char *a,const char *b){
+	return link(std::string(a),std::string(b));
+}
+
 std::string td1(std::string const& s){ return td(s); }
 std::string th1(std::string const& s){ return th(s); }
 
@@ -89,3 +93,6 @@ std::ostream& operator<<(std::ostream& o,std::stringstream const& ss){
 	return o<<ss.str();
 }
 
+std::ostream& operator<<(std::ostream& o,std::nullopt_t){
+	return o<<"nullopt";
+}

@@ -507,7 +507,7 @@ std::vector<Subprocess_result> run_jobs(std::vector<Job> const& jobs){
 	*/
 
 	std::lock_guard<std::mutex> lock(signalfd_lock);
-	cout<<std::this_thread::get_id()<<": Got lock\n";
+	//cout<<std::this_thread::get_id()<<": Got lock\n";
 
 	//set up all the pipes, etc.
 	{

@@ -47,7 +47,7 @@ std::ostream& operator<<(std::ostream&,std::array<T,N> const&);
 using Time_ns=std::chrono::duration<long int,std::ratio<1,1000*1000*1000>>;
 
 std::ostream& operator<<(std::ostream&,Time_ns const&);
-
+std::ostream& operator<<(std::ostream&,std::nullopt_t);
 std::chrono::hours offset(std::chrono::time_zone const&);
 std::ostream& operator<<(std::ostream&,std::chrono::time_zone const&);
 std::ostream& operator<<(std::ostream&,std::chrono::time_zone const * const);
@@ -306,6 +306,7 @@ auto p(T const& t){ return tag("p",t); }
 std::string th1(std::string const&);
 
 std::string link(std::string const& url,std::string const& body);
+std::string html_link(const char*,const char*);
 
 template<typename A,typename B,typename C,typename D,typename E,typename F>
 std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C,D,E,F> const& a){

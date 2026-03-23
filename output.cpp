@@ -3,6 +3,7 @@
 #include "ca.h"
 #include "avatar.h"
 #include "query.h"
+#include "io.h"
 
 std::string toupper(std::string s){
 	std::stringstream ss;
@@ -385,6 +386,26 @@ std::string frc_locks(tba::Team_key const& e){
 	std::stringstream ss;
 	ss<<"https://frclocks.com/teams/"<<e<<".html";
 	return link(ss.str(),"FRC Locks");
+}
+
+std::string frc_locks(std::string const& a){
+	auto main=[=](){
+		std::stringstream ss;
+		ss<<"https://frclocks.com/districts/"<<a<<".html";
+		return link(ss.str(),"FRC Locks");
+	}();
+
+	if(a=="ca"){
+		std::stringstream ss;
+		ss<<main<<"(";
+		ss<<html_link("https://frclocks.com/districts/ca_north.html","North");
+		ss<<" ";
+		ss<<html_link("https://frclocks.com/districts/ca_south.html","Sorth");
+		ss<<")";
+		return ss.str();
+	}else{
+		return main;
+	}
 }
 
 std::string event_status(Annotated const& a){
@@ -915,7 +936,7 @@ void gen_html(
 			tag("h1",in.title)+
 			link("https://frc-events.firstinspires.org/"+::as_string(in.year)+"/district/"+toupper(in.district_short),"FRC Events")+"<br>"+
 			link("https://www.thebluealliance.com/events/"+in.district_short+"/"+::as_string(in.year)+"#rankings","The Blue Alliance")+"<br>"+
-			link("http://frclocks.com/districts/"+in.district_short+".html","FRC Locks")+"<br>"+
+			frc_locks(in.district_short)+"<br>"+
 			splat_district(in.district_short)+"<br>"+
 			event_status(limits)+
 			cutoff_table1+

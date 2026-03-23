@@ -75,4 +75,12 @@ auto operator-(T a,std::optional<T> b)->std::optional<decltype(a-*b)>{
 	return std::nullopt;
 }
 
+template<typename T>
+auto operator-(std::optional<T> a,std::optional<T> b)->std::optional<decltype(*a-*b)>{
+	if(a && b){
+		return *a-*b;
+	}
+	return std::nullopt;
+}
+
 #endif

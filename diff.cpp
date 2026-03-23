@@ -86,6 +86,8 @@ void histogram(std::vector<double> a){
 	}
 }
 
+void histogram(std::vector<std::optional<double>>){}
+
 using Team=tba::Team_key;
 
 void result_table(std::vector<std::pair<Team,double>> v){
@@ -99,6 +101,9 @@ void result_table(std::vector<std::pair<Team,double>> v){
 
 		cout<<limits(seconds(here))<<"\t"<<here.size()<<"\t"<<take(5,firsts(here))<<"\n";
 	}
+}
+
+void result_table(std::vector<std::pair<Team,std::optional<double>>>){
 }
 
 void examine_file(){
@@ -116,6 +121,7 @@ void examine_file(){
 
 auto as_map(std::string path){
 	return dict(mapf([](auto x){ return make_pair(x.team,x.p_dcmp); },parse_file(path)));
+	//return dict(mapf([](auto x){ return make_pair(x.team,x.p_cmp); },parse_file(path)));
 }
 
 #define LINE2(X)\
@@ -155,6 +161,13 @@ auto parse_line2(std::string const& path){
 		};
 	}
 	return r;
+}
+
+double fabs(std::optional<double> a){
+	if(a){
+		return fabs(*a);
+	}
+	return 0;
 }
 
 int main1(std::string f1,std::string f2){

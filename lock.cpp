@@ -427,7 +427,8 @@ Lock_result run(Lock_data const& data){
 				switch(reason){
 					case NONE:
 						if(found){
-							nyi
+							//this can actually happen, no teams were able to pass
+							return Status_in{};
 						}else{
 							//ran out of teams to pass
 							return Status_in{};

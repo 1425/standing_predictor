@@ -513,7 +513,7 @@ void run_outer(TBA_fetcher& tba_fetcher,Args args){
 		if(args.district && district!=args.district){
 			return std::nullopt;
 		}
-		//PRINT(district);
+		PRINT(district);
 		auto title=year_info.display_name+" District Championship Predictions "+::as_string(args.year);
 		Run_inputs run_inputs;
 		run_inputs.output_dir=args.output_dir;

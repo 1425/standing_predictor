@@ -3,6 +3,7 @@
 
 #include<set>
 #include "map.h"
+#include "../tba/vector_fixed.h"
 
 namespace frc_api{
 	struct Match;
@@ -16,6 +17,8 @@ namespace tba{
 	struct Match_Score_Breakdown_2024_Alliance;
 	struct Event;
 	struct Elimination_Alliance;
+	struct District_Ranking;
+	struct Event_points;
 };
 
 void print_r(int,frc_api::Match const&);
@@ -26,6 +29,8 @@ void print_r(int,tba::Team const&);
 void print_r(int,tba::Event const&);
 void print_r(int,tba::Match_Score_Breakdown_2024_Alliance const&);
 void print_r(int,tba::Elimination_Alliance const&);
+void print_r(int,tba::District_Ranking const&);
+void print_r(int,tba::Event_points const&);
 
 #define BREAKDOWN(YEAR)\
 	namespace tba{ struct Match_Score_Breakdown_##YEAR##_Alliance; }\
@@ -91,11 +96,19 @@ void print_r(int n,std::set<T> const& a){
 	}
 }
 
+template<typename T,size_t N>
+void print_r(int n,tba::vector_fixed<T,N> const& a){
+	indent(n);
+	std::cout<<"tba::vector_fixed\n";
+	for(auto const& x:a){
+		print_r(n+1,x);
+	}
+}
+
 template<typename T>
 void print_r(T const& t){
 	return print_r(0,t);
 }
-
 
 #define PRINT_R_INNER(A,B) indent(n); std::cout<<""#B<<"\n"; print_r(n+1,a.B);
 
