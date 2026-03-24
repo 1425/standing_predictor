@@ -39,4 +39,7 @@ flat_map<Point,Pr> convolve(std::map<Point,Pr> const&,std::map<Point,Pr> const&)
 
 map_fixed<Int_limited<0,600>,Pr> convolve(flat_map2<Point,Pr> const&,std::map<Point,flat_map2<Point,double>> const&);
 
+std::map<Point,Pr> simplify(std::map<std::pair<Point,Pr>,Pr> const&);
+std::map<Point,Pr> simplify(flat_map2<std::pair<Point,Pr>,Pr> const&);
+
 #endif

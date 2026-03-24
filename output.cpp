@@ -15,30 +15,16 @@ PRINT_STRUCT(Output_tuple,OUTPUT_TUPLE)
 
 ELEMENTWISE_RAND(Output_tuple,OUTPUT_TUPLE)
 
-map<Point,Pr> simplify(map<pair<Point,Pr>,Pr> const& m){
-	map<Point,Pr> r;
-	for(auto [k,v]:m){
-		r[k.first]+=v;
-	}
-	return r;
-}
+struct Script_namer{
+	size_t i=0;
 
-map<Point,Pr> simplify(flat_map2<pair<Point,Pr>,Pr> const& m){
-	map<Point,Pr> r;
-	for(auto [k,v]:m){
-		r[k.first]+=v;
+	string operator()(){
+		std::stringstream ss;
+		ss<<"n"<<i;
+		i++;
+		return ss.str();
 	}
-	return r;
-}
-
-double entropy(Pr p){
-	//units are bits.
-	if(p<0) p=0;
-	if(p>1) p=1;
-	if(p==0 || p==1) return 0;
-	assert(p>0 && p<1);
-	return -(log2(p)*p+log2(1-p)*(1-p))/log2(2);
-}
+};
 
 char digit(auto i){
 	if(i<10) return '0'+i;
@@ -94,7 +80,7 @@ tuple<T,T,T> summary(map<T,Pr> const& a){
 	);
 }
 
-std::map<tba::Team_key,std::string> find_charts(std::map<Team_key,Team_points_used> const& a){
+static std::map<tba::Team_key,std::string> find_charts(std::map<Team_key,Team_points_used> const& a){
 	std::vector<Plot_setup> setups;
 	for(auto [k,v]:a){
 		Plot_setup p;
@@ -112,7 +98,7 @@ std::map<tba::Team_key,std::string> find_charts(std::map<Team_key,Team_points_us
 	));
 }
 
-std::string show_skill(Skill_estimates const& in){
+static std::string show_skill(Skill_estimates const& in){
 	std::stringstream ss;
 	ss<<h2("Skill estimates");
 	ss<<as_table(in);
@@ -143,7 +129,7 @@ std::string show_skill(Skill_estimates const& in){
 	return ss.str();
 }
 
-std::string color(Tournament_status const& a){
+static std::string color(Tournament_status const& a){
 	if(a==Qual_status_future()){
 		return "#ccccff";
 	}
@@ -153,14 +139,14 @@ std::string color(Tournament_status const& a){
 	return "#ffffcc";
 }
 
-std::string colorize(Tournament_status const& a){
+static std::string colorize(Tournament_status const& a){
 	return tag(
 		"td bgcolor=\""+color(a)+"\"",
 		tag("font color=black",show(a))
 	);
 }
 
-std::string event_status(Annotated const& a){
+static std::string event_status(Annotated const& a){
 	std::stringstream o;
 	o<<h2("Events");
 	o<<"<table border>";
@@ -204,123 +190,8 @@ std::string event_status(Annotated const& a){
 	return o.str();
 }
 
-void gen_html(
-	std::ostream& o,
-	Gen_html_input const& in,
-	Event_categories_annotated<
-		Rank_status<Tournament_status>,
-		Tournament_status,
-		Rank_status<District_status>
-	> const& limits
-){
-	const auto by_team=[&](){
-		std::map<tba::Team_key,tba::Team> r;
-		for(auto x:in.team_info){
-			r.insert(make_pair(x.key,x));
-		}
-		return r;
-	}();
-
-	int script_names_used=0;
-	auto get_script_name=[&](){
-		std::stringstream ss;
-		ss<<"u"<<script_names_used;
-		script_names_used++;
-		return ss.str();
-	};
-
-	auto dcmp_string=[&](tba::Team_key t)->string{
-		auto f=by_team.find(t);
-		if(f==by_team.end()){
-			PRINT(in.district_short)
-			PRINT(in.year)
-			PRINT(t)
-		}
-		if(f==by_team.end()){
-			cout<<"Warning: Could not find home event for "<<t<<"\n";
-			return "";
-		}
-		assert(f!=by_team.end());
-		auto f1=f->second;
-		if(f1.state_prov!="California"){
-			return string();
-		}
-		return as_string(california_region(f1));
-	};
-	auto by_dcmp=group([&](auto const& x){ return dcmp_string(x.team); },in.result);
-	//PRINT(by_dcmp);
-	map<tba::Team_key,std::string> team_str;
-	for(auto &p:by_dcmp){
-		auto &l=p.second;
-		std::sort(
-			l.begin(),
-			l.end(),
-			[](auto a,auto b){
-				auto t=[](auto x){ return make_tuple(round3(x.dcmp_make),round3(x.cmp_make),x); };
-				return t(a)<t(b);
-			}
-		);
-
-		std::reverse(l.begin(),l.end());
-		auto m=mapf([](auto x){ return x.team; },l);
-		for(auto [i,team]:enumerate_from(1,m)){
-			std::stringstream ss;
-			auto d=dcmp_string(team);
-			ss<<d;
-			if(!d.empty()){
-				ss<<"("<<i<<" of "<<m.size()<<")";
-			}
-			team_str.insert(make_pair(team,ss.str()));
-		}
-	}
-
-	auto get_team_str=[=](tba::Team_key t){
-		auto f=team_str.find(t);
-		assert(f!=team_str.end());
-		return f->second;
-	};
-
-	auto nickname=[&](auto k){
-		auto f=by_team.find(k);
-		if(f==by_team.end()){
-			cout<<"Warning: Unexpected team: "<<k<<"\n";
-			return ::as_string(k);
-		}
-		auto v=f->second.nickname;
-		assert(v);
-		return *v;
-	};
-
-	auto data_used_table=[&](){
-		return h2("Team data used")+
-			tag("table border",
-				tr(th("Team")+th("Rookie Points")+th("Played")+th("Remaining events"))
-				+join(::mapf(
-					[](auto x){
-						auto [team,data]=x;
-						return tr(td(team.raw())+td(data.rookie_bonus)+td(data.event_points_earned)+td(data.events_left));
-					},
-					sorted(to_vec(in.points_used),[](auto x){ return x.first.raw(); })
-				))
-			);
-	}();
-
-	auto dcmp_name=[=](int i)->string{
-		if(in.district_short=="ca"){
-			switch(i){
-				case 0:
-					return "NORTH";
-				case 1:
-					return "SOUTH";
-				default:
-					assert(0);
-			}
-		}
-		return "";
-	};
-
-	auto cutoff_table_long1=[=](auto data){
-		return "The cutoff values, along with how likely a team at that value is to miss advancing.  For example: a line that said (50,.25) would correspond to the probability that team above 50 get in, teams below 50 do not, and 75% of teams ending up with exactly 50 would qualify for the district championship."+
+static std::string cutoff_table_long(auto data){
+	return "The cutoff values, along with how likely a team at that value is to miss advancing.  For example: a line that said (50,.25) would correspond to the probability that team above 50 get in, teams below 50 do not, and 75% of teams ending up with exactly 50 would qualify for the district championship."+
 		tag("table border",
 			tr(th("Points")+th("Probability"))+
 			join(mapf(
@@ -330,21 +201,21 @@ void gen_html(
 				data
 			))
 		);
-	};
+}
 
-	auto cutoff_table=[=](string s,auto cutoff_pr,int slots,std::optional<std::string> note=""){
-		auto simple=simplify(cutoff_pr);
-		auto chart=plot([&](){
-			std::vector<std::pair<int,double>> r;
-			auto ks=keys(simple);
-			for(auto k:range_inclusive(min(ks),max(ks))){
-				r|=make_pair(k,simple[k]);
-			}
-			return r;
-		}());
-		auto name=get_script_name();
-		auto name2=get_script_name();
-		return h2(s+" cutoff value")+
+static std::string cutoff_table(Script_namer& get_script_name,string s,auto cutoff_pr,int slots,std::optional<std::string> note=""){
+	auto simple=simplify(cutoff_pr);
+	auto chart=plot([&](){
+		std::vector<std::pair<int,double>> r;
+		auto ks=keys(simple);
+		for(auto k:range_inclusive(min(ks),max(ks))){
+			r|=make_pair(k,simple[k]);
+		}
+		return r;
+	}());
+	auto name=get_script_name();
+	auto name2=get_script_name();
+	return h2(s+" cutoff value")+
 		table(tr(
 			td(
 				[=](){
@@ -384,247 +255,45 @@ void gen_html(
 					)+
 					tag("a href='' onclick=\"toggle_viz('"+name2+"');event.preventDefault();\"","More details")+
 					tag("table class=hidden id=\""+name2+"\"",
-						tr(td(cutoff_table_long1(cutoff_pr)))
+						tr(td(cutoff_table_long(cutoff_pr)))
 					)
 				))
 			);
-	};
+}
 
-	//auto dcmp_names=(in.district_short=="ca")?2:1;
+static const std::vector<std::pair<std::string,std::string>> COLUMNS{
+	{"Rank","Ranking of probability of advancement"},
+	{"P<sub>DCMP</sub>","Probability of making district championship"},
+	{"Team","Team number"},
+	{"Nickname","Team nickname"},
+	{"DCMP 5% pts","Extra points needed to have 5% chance of making district championship"},
+	{"DCMP 50% pts","Extra points needed to have 50% chance of making district championship"},
+	{"DCMP 95% pts","Extra points needed to have 95% chance of making district championship"},
+	{"P<sub>CMP</sub>","Probability of making championship"},
+	{"CMP 5% pts","Extra points needed to have a 5% chance of making championship"},
+	{"CMP 50% pts","Extra points needed to have a 50% chance of making championship"},
+	{"CMP 95% pts","Extra points needed to have a 95% chance of making championship"},
+	{"Rookie Points","Rookie bonus points awarded"},
+	{"Played","Results from events played so far"},
+	{"Remaining events","Number of counting events for which the team is scheduled"}
+};
 
-	//auto cutoff_table1=cutoff_table("District Championship",dcmp_cutoff_pr);
-	auto cutoff_table1=join(mapf(
-		[=](auto i){
-			return cutoff_table(
-				"District Championship "+dcmp_name(i),
-				in.dcmp_cutoff_pr[i],
-				in.dcmp_slots[i]
-			);
-		},
-		range(in.dcmp_slots.size())
-	));
-	auto cutoff_table_cmp=cutoff_table(
-		"FRC Championship",
-		in.cmp_cutoff_pr,
-		in.worlds_slots,
-		"(Excluding by award)"
-	);
-
-	//double total_entropy=sum(::mapf(entropy,seconds(result)));
-	if(0){
-		double total_entropy=sum(::mapf([](auto x){ return entropy(x); },mapf([](auto x){ return x.dcmp_make; },in.result)));
-		PRINT(total_entropy);
-	}
-
-	static const std::vector<std::pair<std::string,std::string>> columns{
-		{"Rank","Ranking of probability of advancement"},
-		{"P<sub>DCMP</sub>","Probability of making district championship"},
-		{"Team","Team number"},
-		{"Nickname","Team nickname"},
-		{"DCMP 5% pts","Extra points needed to have 5% chance of making district championship"},
-		{"DCMP 50% pts","Extra points needed to have 50% chance of making district championship"},
-		{"DCMP 95% pts","Extra points needed to have 95% chance of making district championship"},
-		{"P<sub>CMP</sub>","Probability of making championship"},
-		{"CMP 5% pts","Extra points needed to have a 5% chance of making championship"},
-		{"CMP 50% pts","Extra points needed to have a 50% chance of making championship"},
-		{"CMP 95% pts","Extra points needed to have a 95% chance of making championship"},
-		{"Rookie Points","Rookie bonus points awarded"},
-		{"Played","Results from events played so far"},
-		{"Remaining events","Number of counting events for which the team is scheduled"}
-	};
-
-	auto explain=[&](){
-		auto name=get_script_name();
-		//		p(tag("a href='' onclick=\"toggle_viz('"+name+"');event.preventDefault();\"","Details"))
-		return tag("a href=\"#\" onclick=\"toggle_viz('"+name+"');event.preventDefault();\"","Column descriptions")+
+static std::string explain(Script_namer &get_script_name){
+	auto name=get_script_name();
+	//		p(tag("a href='' onclick=\"toggle_viz('"+name+"');event.preventDefault();\"","Details"))
+	return tag("a href=\"#\" onclick=\"toggle_viz('"+name+"');event.preventDefault();\"","Column descriptions")+
 		tag("table border class=\"hidden\" id=\""+name+"\"",
 			tr(th("Column")+th("Description"))+
 			join(mapf(
 				[](auto a){
 					return tr(td(a.first)+td(a.second));
 				},
-				columns
+				COLUMNS
 			))
 		);
-	}();
+}
 
-	auto charts=[&]()->std::map<Team_key,std::string>{
-		if(in.plot){
-			return find_charts(in.points_used);
-		}
-		return {};
-	}();
-
-	auto fancy=[&](auto a){
-		//nickname(a.team),
-		//auto x=points_used[a.team];
-		//print_r(x);
-		stringstream ss;
-		//ss<<"<div class=\"tooltip\">";
-
-		ss<<table(tr(td(avatar(a.team))+td(nickname(a.team))))<<"\n";
-
-		//ss<<"<span class=\"tooltiptext\">"<<h3("Expected "+::as_string(a.team)+ " pre-dcmp points")+charts[a.team]<<"</span>";
-		//ss<<"</div>\n";
-		return ss.str();
-		//return nickname(a.team)+as_string(quartiles(x.pre_dcmp_dist))+charts[a.team];
-	};
-
-	auto team_details=[&](auto a)->std::string{
-		//auto x=in.points_used.at(a.team);
-		std::stringstream ss;
-		ss<<h3("Expected pre-dcmp points");
-		ss<<"<table>";
-		ss<<"<tr>";
-		ss<<"<td>";
-		//ss<<"Dist quartiles: "<<quartiles(in.points_used.at(a.team).pre_dcmp_dist);
-		
-		auto c=[=](double target){
-			double total=0;
-			for(auto [k,v]:in.points_used.at(a.team).pre_dcmp_dist){
-				total+=v;
-				if(total>=target){
-					return td(k);
-				}
-			}
-			assert(0);
-		};
-		ss<<h3("Summary");
-		ss<<tag("table border",
-			tr(th("Probability")+th("Point total"))+
-			tr(th("5%")+c(.05))+
-			tr(th("Median")+c(.5))+
-			tr(th("95%")+c(.95))
-		);
-		ss<<"</td>";
-		ss<<td(charts[a.team]);
-		ss<<"</tr>";
-		ss<<"</table>";
-		
-		/*ss<<h3("Points used");
-		ss<<as_table(x);*/
-
-		//ss<<as_table(a);
-
-		//ss<<"<p>"<<"Lock status:"<<in.lock.at(a.team)<<"\n";
-
-		ss<<h3("Schedule");
-		ss<<"<table border>";
-		ss<<tr(
-			th("Qualification")+
-			th("Event type")+
-			th("Event name")+
-			th("Date")+
-			th("Event Status")+
-			th("Unclaimed points")+
-			th("Team point range")+
-			th("Notes")
-		);
-
-		auto show_event=[&](string qual,auto p,auto y,std::optional<std::string> note=std::nullopt){
-			auto [event,event_data]=p;
-			const auto date=[=](){
-				assert(event.start_date);
-				assert(event.end_date);
-				return Interval<tba::Date>{*event.start_date,*event.end_date};
-			}();
-			ss<<"<tr>";
-			ss<<qual;
-			ss<<td(event.event_type);
-			const auto event_name=[=]()->string{
-				if(event.short_name && event.short_name!="{}"){
-					return *event.short_name;
-				}
-				return ::as_string(event.key);
-			}();
-			ss<<td(link(event.key,event_name));
-			ss<<td(date);
-			ss<<colorize(event_data.status);
-			//ss<<td(event);
-			//ss<<td(event_data);
-			ss<<td(event_data.unclaimed);
-			ss<<td(y);
-			if(note){
-				ss<<td(*note);
-			}
-			ss<<"</tr>";
-		};
-
-		for(auto p:limits.local){
-			auto [event,event_data]=p;
-			auto y=maybe_get(event_data.by_team,a.team);
-			if(!y) continue;
-			show_event(colorize(1),p,y);
-		}
-		auto dcmp=limits.dcmp.at(a.dcmp_home);
-
-		for(auto division:dcmp.divisions){
-			auto m=maybe_get(division.extra.by_team,a.team);
-			if(!m) continue;
-			//only show division when this team is in it
-			show_event(colorize(1),division,m);
-		}
-		show_event(
-			colorize(a.dcmp_make),
-			dcmp.finals,
-			maybe_get(dcmp.finals.extra.by_team,a.team),
-			"Lock status: "+in.lock.at(a.team)
-		);
-
-		for(auto cmp:limits.cmp){
-			for(auto division:cmp.divisions){
-				auto m=maybe_get(division.extra.by_team,a.team);
-				if(!m) continue;
-				show_event(colorize(1),division,m);
-			}
-			show_event(colorize(a.cmp_make),cmp.finals,"");
-		}
-		ss<<"</table>";
-
-		const auto fly=[&]()->string{
-			auto f=in.flight.find(a.team);
-			if(f==in.flight.end()){
-				return "";
-			}
-			auto [date,days,cost]=f->second;
-			std::stringstream ss;
-			ss<<"<table border>";
-			ss<<tr(tag("th colspan=3","Championship plane tickets"));
-			ss<<tr(
-				th("Date")+
-				td([&](){
-					std::stringstream ss;
-					ss<<date<<" ("<<days<<" before start)";
-					return ss.str();
-				}())+
-				td("When is it expected to be most favorable for making a purchase decision.  Note that this date may move in either direction as more results are known.")
-			);
-			ss<<tr(
-				th("Expected cost")+
-				td(cost)+
-				td("Measured in multiple of standard flight cost.  A combination of how much tickets tend to be at that time ahead and the level of certainty in qualification")
-			);
-			ss<<tr(th("Warning")+tag("td colspan=2","As I control neither the Illuminati nor the Strait of Hormuz no guarantee of accuracy can be made."));
-			ss<<"</table>";
-			return ss.str();
-		}();
-		ss<<p(fly);
-
-		ss<<"<br>"<<"More on this team:";
-		ss<<frc_events(in.year,a.team);
-		ss<<" "<<the_blue_alliance(a.team,in.year);
-		ss<<" "<<statbotics(a.team,in.year);
-		ss<<" "<<frc_locks(a.team);
-		ss<<" "<<splat(in.district_short,a.team);
-		/*try{
-			ss<<p(in.extra.at(a.team));
-		}catch(...){
-			ss<<"Failed to read extra data for "<<a.team<<"\n";
-		}*/
-		return ss.str();
-	};
-
-	string style="\n\
+static const string STYLE="\n\
 		:root{\n\
 			color-scheme: light dark;\n\
 		}\n\
@@ -660,17 +329,321 @@ void gen_html(
 		        visibility: visible;\n\
 		}\n";
 
-	auto script="\n\
+static const auto SCRIPT="\n\
 		function toggle_viz(name){\n\
 			var content=document.getElementById(name);\n\
 			content.classList.toggle(\"hidden\");\n\
 		}\n";
 
+
+std::string team_details(
+	Gen_html_input const& in,
+	Event_categories_annotated<
+		Rank_status<Tournament_status>,
+		Tournament_status,
+		Rank_status<District_status>
+	> const& limits,
+	std::map<tba::Team_key,std::string> &charts,
+	auto a
+){
+	//auto x=in.points_used.at(a.team);
+	std::stringstream ss;
+	ss<<h3("Expected pre-dcmp points");
+	ss<<"<table>";
+	ss<<"<tr>";
+	ss<<"<td>";
+	//ss<<"Dist quartiles: "<<quartiles(in.points_used.at(a.team).pre_dcmp_dist);
+		
+	auto c=[=](double target){
+		double total=0;
+		for(auto [k,v]:in.points_used.at(a.team).pre_dcmp_dist){
+			total+=v;
+			if(total>=target){
+				return td(k);
+			}
+		}
+		assert(0);
+	};
+	ss<<h3("Summary");
+	ss<<tag("table border",
+		tr(th("Probability")+th("Point total"))+
+		tr(th("5%")+c(.05))+
+		tr(th("Median")+c(.5))+
+		tr(th("95%")+c(.95))
+	);
+	ss<<"</td>";
+	ss<<td(charts[a.team]);
+	ss<<"</tr>";
+	ss<<"</table>";
+		
+	/*ss<<h3("Points used");
+	ss<<as_table(x);*/
+
+	//ss<<as_table(a);
+
+	//ss<<"<p>"<<"Lock status:"<<in.lock.at(a.team)<<"\n";
+
+	ss<<h3("Schedule");
+	ss<<"<table border>";
+	ss<<tr(
+		th("Qualification")+
+		th("Event type")+
+		th("Event name")+
+		th("Date")+
+		th("Event Status")+
+		th("Unclaimed points")+
+		th("Team point range")+
+		th("Notes")
+	);
+
+	auto show_event=[&](string qual,auto p,auto y,std::optional<std::string> note=std::nullopt){
+		auto [event,event_data]=p;
+		const auto date=[=](){
+			assert(event.start_date);
+			assert(event.end_date);
+			return Interval<tba::Date>{*event.start_date,*event.end_date};
+		}();
+		ss<<"<tr>";
+		ss<<qual;
+		ss<<td(event.event_type);
+		const auto event_name=[=]()->string{
+			if(event.short_name && event.short_name!="{}"){
+				return *event.short_name;
+			}
+			return ::as_string(event.key);
+		}();
+		ss<<td(link(event.key,event_name));
+		ss<<td(date);
+		ss<<colorize(event_data.status);
+		//ss<<td(event);
+		//ss<<td(event_data);
+		ss<<td(event_data.unclaimed);
+		ss<<td(y);
+		if(note){
+			ss<<td(*note);
+		}
+		ss<<"</tr>";
+	};
+
+	for(auto p:limits.local){
+		auto [event,event_data]=p;
+		auto y=maybe_get(event_data.by_team,a.team);
+		if(!y) continue;
+		show_event(colorize(1),p,y);
+	}
+	auto dcmp=limits.dcmp.at(a.dcmp_home);
+
+	for(auto division:dcmp.divisions){
+		auto m=maybe_get(division.extra.by_team,a.team);
+		if(!m) continue;
+		//only show division when this team is in it
+		show_event(colorize(1),division,m);
+	}
+	show_event(
+		colorize(a.dcmp_make),
+		dcmp.finals,
+		maybe_get(dcmp.finals.extra.by_team,a.team),
+		"Lock status: "+in.lock.at(a.team)
+	);
+
+	for(auto cmp:limits.cmp){
+		for(auto division:cmp.divisions){
+			auto m=maybe_get(division.extra.by_team,a.team);
+			if(!m) continue;
+			show_event(colorize(1),division,m);
+		}
+		show_event(colorize(a.cmp_make),cmp.finals,"");
+	}
+	ss<<"</table>";
+
+	const auto fly=[&]()->string{
+		auto f=in.flight.find(a.team);
+		if(f==in.flight.end()){
+			return "";
+		}
+		auto [date,days,cost]=f->second;
+		std::stringstream ss;
+		ss<<"<table border>";
+		ss<<tr(tag("th colspan=3","Championship plane tickets"));
+		ss<<tr(
+			th("Date")+
+			td([&](){
+				std::stringstream ss;
+				ss<<date<<" ("<<days<<" before start)";
+				return ss.str();
+			}())+
+			td("When is it expected to be most favorable for making a purchase decision.  Note that this date may move in either direction as more results are known.")
+		);
+		ss<<tr(
+			th("Expected cost")+
+			td(cost)+
+			td("Measured in multiple of standard flight cost.  A combination of how much tickets tend to be at that time ahead and the level of certainty in qualification")
+		);
+		ss<<tr(th("Warning")+tag("td colspan=2","As I control neither the Illuminati nor the Strait of Hormuz no guarantee of accuracy can be made."));
+		ss<<"</table>";
+		return ss.str();
+	}();
+	ss<<p(fly);
+
+	ss<<"<br>"<<"More on this team:";
+	ss<<frc_events(in.year,a.team);
+	ss<<" "<<the_blue_alliance(a.team,in.year);
+	ss<<" "<<statbotics(a.team,in.year);
+	ss<<" "<<frc_locks(a.team);
+	ss<<" "<<splat(in.district_short,a.team);
+	/*try{
+		ss<<p(in.extra.at(a.team));
+	}catch(...){
+		ss<<"Failed to read extra data for "<<a.team<<"\n";
+	}*/
+	return ss.str();
+}
+
+void gen_html(
+	std::ostream& o,
+	Gen_html_input const& in,
+	Event_categories_annotated<
+		Rank_status<Tournament_status>,
+		Tournament_status,
+		Rank_status<District_status>
+	> const& limits
+){
+	const auto by_team=[&](){
+		std::map<tba::Team_key,tba::Team> r;
+		for(auto x:in.team_info){
+			r.insert(make_pair(x.key,x));
+		}
+		return r;
+	}();
+
+	Script_namer get_script_name;
+
+	auto dcmp_string=[&](tba::Team_key t)->string{
+		auto f=by_team.find(t);
+		if(f==by_team.end()){
+			PRINT(in.district_short)
+			PRINT(in.year)
+			PRINT(t)
+		}
+		if(f==by_team.end()){
+			cout<<"Warning: Could not find home event for "<<t<<"\n";
+			return "";
+		}
+		assert(f!=by_team.end());
+		auto f1=f->second;
+		if(f1.state_prov!="California"){
+			return string();
+		}
+		return as_string(california_region(f1));
+	};
+	auto by_dcmp=group([&](auto const& x){ return dcmp_string(x.team); },in.result);
+	//PRINT(by_dcmp);
+
+	const map<tba::Team_key,std::string> team_str=[&](){
+		map<tba::Team_key,std::string> r;
+		for(auto &p:by_dcmp){
+			auto &l=p.second;
+			std::sort(
+				l.begin(),
+				l.end(),
+				[](auto a,auto b){
+					auto t=[](auto x){ return make_tuple(round3(x.dcmp_make),round3(x.cmp_make),x); };
+					return t(a)<t(b);
+				}
+			);
+
+			std::reverse(l.begin(),l.end());
+			auto m=mapf([](auto x){ return x.team; },l);
+			for(auto [i,team]:enumerate_from(1,m)){
+				std::stringstream ss;
+				auto d=dcmp_string(team);
+				ss<<d;
+				if(!d.empty()){
+					ss<<"("<<i<<" of "<<m.size()<<")";
+				}
+				r.insert(make_pair(team,ss.str()));
+			}
+		}
+		return r;
+	}();
+
+	auto get_team_str=[=](tba::Team_key t){
+		auto f=team_str.find(t);
+		assert(f!=team_str.end());
+		return f->second;
+	};
+
+	auto nickname=[&](auto k){
+		auto f=by_team.find(k);
+		if(f==by_team.end()){
+			cout<<"Warning: Unexpected team: "<<k<<"\n";
+			return ::as_string(k);
+		}
+		auto v=f->second.nickname;
+		assert(v);
+		return *v;
+	};
+
+	auto dcmp_name=[=](int i)->string{
+		if(in.district_short=="ca"){
+			switch(i){
+				case 0:
+					return "NORTH";
+				case 1:
+					return "SOUTH";
+				default:
+					assert(0);
+			}
+		}
+		return "";
+	};
+
+	//auto dcmp_names=(in.district_short=="ca")?2:1;
+
+	//auto cutoff_table1=cutoff_table("District Championship",dcmp_cutoff_pr);
+	const auto cutoff_table1=join(mapf(
+		[&](auto i){
+			return cutoff_table(
+				get_script_name,
+				"District Championship "+dcmp_name(i),
+				in.dcmp_cutoff_pr[i],
+				in.dcmp_slots[i]
+			);
+		},
+		range(in.dcmp_slots.size())
+	));
+	const auto cutoff_table_cmp=cutoff_table(
+		get_script_name,
+		"FRC Championship",
+		in.cmp_cutoff_pr,
+		in.worlds_slots,
+		"(Excluding by award)"
+	);
+
+	//double total_entropy=sum(::mapf(entropy,seconds(result)));
+	if(0){
+		double total_entropy=sum(::mapf([](auto x){ return entropy(x); },mapf([](auto x){ return x.dcmp_make; },in.result)));
+		PRINT(total_entropy);
+	}
+
+	auto charts=[&]()->std::map<Team_key,std::string>{
+		if(in.plot){
+			return find_charts(in.points_used);
+		}
+		return {};
+	}();
+
+	auto fancy=[&](auto a){
+		stringstream ss;
+		ss<<table(tr(td(avatar(a.team))+td(nickname(a.team))))<<"\n";
+		return ss.str();
+	};
+
 	o<<tag("html",
 		tag("head",
 			tag("title",in.title)+
-			tag("style",style)+
-			tag("script",script)
+			tag("style",STYLE)+
+			tag("script",SCRIPT)
 		)+
 		tag("body",
 			tag("h1",in.title)+
@@ -682,15 +655,15 @@ void gen_html(
 			cutoff_table1+
 			cutoff_table_cmp+
 			h2("Team Probabilities")+
-			p(explain)+
+			p(explain(get_script_name))+
 			tag("table border",
 				tr(join(::mapf(
 					[](auto x){ return th1(x.first); },
-					columns
+					COLUMNS
 				)))+
 				join(
 					::mapf(
-						[=](auto p){
+						[&](auto p){
 							auto [i,a]=p;
 							auto name=get_script_name();
 							const auto used=[=]()->Team_points_used{
@@ -717,7 +690,7 @@ void gen_html(
 								td(join("&nbsp;",used.event_points_earned))+
 								td_right(used.events_left)
 							)+tag("tr class=\"hidden\" id=\""+name+"\"",
-								tag("td colspan=\"100%\"",team_details(a))
+								tag("td colspan=\"100%\"",team_details(in,limits,charts,a))
 							);
 						},
 						enumerate_from(1,reversed(sorted(
@@ -729,7 +702,6 @@ void gen_html(
 			)+
 			h2("Extra data")+as_table(limits)+
 			show_skill(in.skill)
-			/*+data_used_table*/
 		)
 	);
 }

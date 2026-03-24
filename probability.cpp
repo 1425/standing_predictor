@@ -26,11 +26,36 @@ flat_map2<Point,Pr> operator+(flat_map2<Point,Pr> const& a,int i){
 	return r;
 }
 
+double entropy(Pr p){
+	//units are bits.
+	if(p<0) p=0;
+	if(p>1) p=1;
+	if(p==0 || p==1) return 0;
+	assert(p>0 && p<1);
+	return -(log2(p)*p+log2(1-p)*(1-p))/log2(2);
+}
+
 double entropy(Team_dist const& a){
 	return sum(mapf(
 		[](auto x){ return -log2(x); },
 		values(a)
 	));
+}
+
+std::map<Point,Pr> simplify(std::map<std::pair<Point,Pr>,Pr> const& m){
+	std::map<Point,Pr> r;
+	for(auto [k,v]:m){
+		r[k.first]+=v;
+	}
+	return r;
+}
+
+std::map<Point,Pr> simplify(flat_map2<std::pair<Point,Pr>,Pr> const& m){
+	std::map<Point,Pr> r;
+	for(auto [k,v]:m){
+		r[k.first]+=v;
+	}
+	return r;
 }
 
 flat_map<Point,Pr> convolve(std::map<Point,Pr> const& a,std::map<Point,Pr> const& b){

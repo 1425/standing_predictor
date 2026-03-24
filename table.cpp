@@ -3,17 +3,6 @@
 
 using namespace std;
 
-struct Script_namer{
-	size_t i=0;
-
-	string operator()(){
-		std::stringstream ss;
-		ss<<"n"<<i;
-		i++;
-		return ss.str();
-	}
-};
-
 std::string as_table(tba::Event const&);
 
 template<typename K,typename V>
