@@ -40,6 +40,8 @@ STRUCT_SINGLE(File_not_found,std::string,path)
 
 std::string slurp(std::string const& filename);
 
+std::string operator+(std::string const&,std::string_view);
+std::string toupper(std::string const&);
 std::string tolower(std::string const&);
 bool prefix(std::string const& whole,std::string const& p);
 bool suffix(std::string const& whole,std::string const&);

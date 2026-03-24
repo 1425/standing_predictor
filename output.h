@@ -26,12 +26,12 @@ STRUCT_DECLARE(Team_points_used,TEAM_POINTS_USED)
 
 #define GEN_HTML_INPUT(X)\
 	X(tba::Year,year)\
+	X(tba::District_abbreviation,district_short)\
 	X(std::vector<Output_tuple>,result)\
 	X(std::vector<tba::Team>,team_info)\
 	X(std::array<TBA_SINGLE_ARG(Cutoff2,MAX_DCMPS)>,dcmp_cutoff_pr)\
 	X(Cutoff,cmp_cutoff_pr)\
 	X(std::string,title)\
-	X(std::string,district_short)\
 	X(std::vector<int>,dcmp_slots)\
 	X(std::map<TBA_SINGLE_ARG(tba::Team_key,Team_points_used)>,points_used)\
 	X(bool,plot)\
@@ -44,8 +44,12 @@ STRUCT_DECLARE(Team_points_used,TEAM_POINTS_USED)
 struct Gen_html_input{
 	GEN_HTML_INPUT(INST)
 
-	Gen_html_input(tba::Year year1):
-		year(year1)
+	Gen_html_input(
+		tba::Year year1,
+		tba::District_abbreviation b
+	):
+		year(year1),
+		district_short(b)
 	{}
 
 	auto operator<=>(Gen_html_input const&)const=default;

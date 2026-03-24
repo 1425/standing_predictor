@@ -243,13 +243,15 @@ map<tba::Team_key,std::pair<Pr,Pr>> run(
 
 	auto team_info=district_teams(f,district);
 	{
-		Gen_html_input ghi(year);
+		Gen_html_input ghi(
+			year,
+			inputs.district_short
+		);
 		ghi.result=results.result;
 		ghi.team_info=team_info;
 		ghi.dcmp_cutoff_pr=results.cutoff_pr;
 		ghi.cmp_cutoff_pr=to_map(results.cmp_cutoff_pr);
 		ghi.title=inputs.title;
-		ghi.district_short=inputs.district_short;
 		ghi.dcmp_slots=inputs.dcmp_slots;
 		ghi.points_used=points_used;
 		ghi.plot=inputs.plot;

@@ -158,6 +158,22 @@ DIFF_OBJS=\
 	diff.o\
 	vector.o\
 	util.o\
+	query.o\
+	$(TBA_OBJS)\
+	dates.o\
+	names.o\
+	tba.o\
+	cat.o\
+	rand.o\
+	timezone.o\
+	address.o\
+	slots.o\
+	print_r.o\
+	interval.o\
+	json.o\
+	arguments.o\
+	$(FRC_API_OBJS)\
+	decode.o\
 
 diff: $(DIFF_OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LIBS) -o $@

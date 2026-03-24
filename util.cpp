@@ -32,6 +32,14 @@ std::string tolower(std::string const& s){
 	return ss.str();
 }
 
+std::string toupper(std::string const& s){
+	std::stringstream ss;
+	for(auto c:s){
+		ss<<char(toupper(c));
+	}
+	return ss.str();
+}
+
 bool prefix(std::string const& whole,std::string const& p){
 	return whole.substr(0,p.size())==p;
 }
@@ -141,4 +149,10 @@ bool coerce(bool a,bool const*){
 
 int system(std::string const& s){
 	return system(s.c_str());
+}
+
+std::string operator+(std::string const& a,std::string_view b){
+	std::stringstream ss;
+	ss<<a<<b;
+	return ss.str();
 }

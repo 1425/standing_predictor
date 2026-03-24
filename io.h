@@ -18,6 +18,7 @@ void indent(int levels);
 
 std::vector<std::string> split(std::string const&);
 std::vector<std::string> split(std::string const&,char);
+std::string round3(double);
 
 //definition in map.h.
 template<typename K,typename V>
@@ -303,6 +304,15 @@ auto title(T const& t){ return tag("title",t); }
 template<typename T>
 auto p(T const& t){ return tag("p",t); }
 
+auto td_top(auto a){
+	return tag("td valign=top",a);
+}
+
+template<typename T>
+auto td_right(T const& t){
+	return tag("td align=right",t);
+}
+
 std::string th1(std::string const&);
 
 std::string link(std::string const& url,std::string const& body);
@@ -346,5 +356,29 @@ std::ostream& operator<<(std::ostream& o,std::tuple<A,B,C,D,E,F> const& a){
 		ITEMS(ENUM_CLASS_PRINT_INNER)\
 		assert(0);\
 	}
+
+namespace tba{
+	class District_abbreviation;
+	class Team_key;
+	class Event_key;
+	struct Event;
+	class Year;
+};
+
+std::string splat(tba::District_abbreviation const&,tba::Team_key const&);
+std::string splat(tba::District_abbreviation const&);
+std::string splat(tba::Event_key const&);
+std::string splat(tba::Event const&);
+std::string statbotics(tba::Event const&);
+std::string statbotics(tba::Team_key const&,tba::Year const&);
+std::string frc_events(tba::Event const&);
+std::string frc_events(tba::Year const&,tba::Team_key const&);
+std::string frc_events(tba::Year const&,tba::District_abbreviation const&);
+std::string frc_locks(tba::Team_key const&);
+std::string frc_locks(tba::District_abbreviation const&);
+std::string make_link(tba::Team_key const&);
+std::string make_link(tba::Team_key const&,tba::Year const&);
+std::string the_blue_alliance(tba::Team_key const&,tba::Year const&);
+std::string the_blue_alliance(tba::Year const&,tba::District_abbreviation const&);
 
 #endif
