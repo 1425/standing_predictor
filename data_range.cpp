@@ -61,8 +61,80 @@ auto group(vector<std::variant<A,B,C,D,E,F,G,H,I,J,K>> const& a){
 	return r;
 }
 
+template<
+	typename A,typename B,typename C,typename D,
+	typename E,typename F,typename G,typename H,
+	typename I,typename J,typename K,typename L
+>
+auto group(vector<std::variant<A,B,C,D,E,F,G,H,I,J,K,L>> const& a){
+	std::tuple<
+		vector<A>,vector<B>,vector<C>,vector<D>,
+		vector<E>,vector<F>,vector<G>,vector<H>,
+		vector<I>,vector<J>,vector<K>,vector<L>
+	> r;
+	for(auto const& x:a){
+		#define X(INDEX,NAME) \
+			if(std::holds_alternative<NAME>(x)){\
+				std::get<INDEX>(r)|=std::get<INDEX>(x);\
+				continue;\
+			}
+		X(0,A)
+		X(1,B)
+		X(2,C)
+		X(3,D)
+		X(4,E)
+		X(5,F)
+		X(6,G)
+		X(7,H)
+		X(8,I)
+		X(9,J)
+		X(10,K)
+		#undef X
+		assert(0);
+	}
+	return r;
+}
+
+template<
+	typename A,typename B,typename C,typename D,
+	typename E,typename F,typename G,typename H,
+	typename I,typename J,typename K,typename L,
+	typename M
+>
+auto group(vector<std::variant<A,B,C,D,E,F,G,H,I,J,K,L,M>> const& a){
+	std::tuple<
+		vector<A>,vector<B>,vector<C>,vector<D>,
+		vector<E>,vector<F>,vector<G>,vector<H>,
+		vector<I>,vector<J>,vector<K>,vector<L>,
+		vector<M>
+	> r;
+	for(auto const& x:a){
+		#define X(INDEX,NAME) \
+			if(std::holds_alternative<NAME>(x)){\
+				std::get<INDEX>(r)|=std::get<INDEX>(x);\
+				continue;\
+			}
+		X(0,A)
+		X(1,B)
+		X(2,C)
+		X(3,D)
+		X(4,E)
+		X(5,F)
+		X(6,G)
+		X(7,H)
+		X(8,I)
+		X(9,J)
+		X(10,K)
+		X(11,L)
+		X(12,M)
+		#undef X
+		assert(0);
+	}
+	return r;
+}
+
 template<typename...Ts>
-tuple<Ts...> group(std::vector<std::variant<Ts...>>){
+tuple<vector<Ts...>> group(std::vector<std::variant<Ts...>>){
 	nyi
 }
 
@@ -103,8 +175,40 @@ auto mapv(Func f,std::tuple<A,B,C,D,E,F,G,H,I,J,K> const& a){
 	#undef X
 }
 
+template<
+	typename Func,
+	typename A,typename B,typename C,typename D,
+	typename E,typename F,typename G,typename H,
+	typename I,typename J,typename K,typename L
+>
+auto mapv(Func f,std::tuple<A,B,C,D,E,F,G,H,I,J,K,L> const& a){
+	#define X(N) f(std::get<N>(a));
+	X(0) X(1) X(2) X(3)
+	X(4) X(5) X(6) X(7)
+	X(8) X(9) X(10)
+	#undef X
+}
+
+template<
+	typename Func,
+	typename A,typename B,typename C,typename D,
+	typename E,typename F,typename G,typename H,
+	typename I,typename J,typename K,typename L,
+	typename M
+>
+auto mapv(Func f,std::tuple<A,B,C,D,E,F,G,H,I,J,K,L,M> const& a){
+	#define X(N) f(std::get<N>(a));
+	X(0) X(1) X(2) X(3)
+	X(4) X(5) X(6) X(7)
+	X(8) X(9) X(10) X(11)
+	X(12)
+	#undef X
+}
+
 template<typename...Ts>
 void examine(std::vector<std::string> path,std::vector<std::variant<Ts...>> const&);
+
+void examine(std::vector<string> path,vector_void);
 
 template<typename T>
 void examine(std::vector<string> path,std::vector<optional<T>> const&);
@@ -125,6 +229,8 @@ void examine(std::vector<std::string> path,vector<tba::vector_fixed<T,N>> const&
 	X(tba::Match_Score_Breakdown_2022_Alliance,TBA_MATCH_SCORE_BREAKDOWN_2022_ALLIANCE)\
 	X(tba::Match_Score_Breakdown_2020,TBA_MATCH_SCORE_BREAKDOWN_2020)\
 	X(tba::Match_Score_Breakdown_2020_Alliance,TBA_MATCH_SCORE_BREAKDOWN_2020_ALLIANCE)\
+	X(tba::Match_Score_Breakdown_2018,TBA_MATCH_SCORE_BREAKDOWN_2018)\
+	X(tba::Match_Score_Breakdown_2018_Alliance,TBA_MATCH_SCORE_BREAKDOWN_2018_ALLIANCE)\
 	X(tba::Match_Score_Breakdown_2017,TBA_MATCH_SCORE_BREAKDOWN_2017)\
 	X(tba::Match_Score_Breakdown_2017_Alliance,TBA_MATCH_SCORE_BREAKDOWN_2017_ALLIANCE)\
 	X(tba::Match_Score_Breakdown_2016,TBA_MATCH_SCORE_BREAKDOWN_2016)\
@@ -264,10 +370,11 @@ void examine(vector<string> path,vector<short> const& a){
 	static const auto SIGNIFICANCE=6;
 	auto outlier_low=min(min(a),u-SIGNIFICANCE*sigma);
 	auto outlier_high=max(max(a),u+SIGNIFICANCE*sigma);
+	auto options=to_set(a).size();
 
 	if(min(a)>=0 && outlier_high<255){
 		cout<<path<<" could be u8\n";
-		cout<<"\tseen: ("<<min(a)<<"-"<<max(a)<<")\n";
+		cout<<"\tseen: ("<<min(a)<<"-"<<max(a)<<")"<<"opt:"<<options<<"\n";
 		cout<<"\tu:"<<u<<" sigma:"<<sigma<<"\n";
 		cout<<"\toutliers:"<<outlier_low<<" "<<outlier_high<<"\n";
 	}

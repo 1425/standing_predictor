@@ -25,6 +25,14 @@ RP rp(tba::Match_Score_Breakdown_2024_Alliance const& a){
 	return a.rp;
 }
 
+RP rp(tba::Match_Score_Breakdown_2019_Alliance const& a){
+	return a.rp;
+}
+
+RP rp(tba::Match_Score_Breakdown_2018_Alliance const& a){
+	return a.rp.get();
+}
+
 RP rp(tba::Match_Score_Breakdown_2023_Alliance const& a){
 	return a.rp.get();
 }
@@ -38,7 +46,8 @@ RP rp(tba::Match_Score_Breakdown_2022_Alliance const& a){
 }
 
 RP rp(tba::Match_Score_Breakdown_2020_Alliance const& a){
-	return a.rp.get();
+	assert(a.rp);
+	return a.rp->get();
 }
 
 auto rp(tba::Match_Score_Breakdown_2017_Alliance const& a){
@@ -75,7 +84,7 @@ RP rp(tba::Match_Score_Breakdown_2015_Alliance const&){
 }
 
 RP rp(tba::Match_Score_Breakdown_2026_Alliance const& a){
-	return a.rp;
+	return a.rp.get();
 }
 
 std::array<RP,2> rp(tba::Ignore const&){
@@ -92,6 +101,8 @@ X(2024)
 X(2023)
 X(2022)
 X(2020)
+X(2019)
+X(2018)
 X(2017)
 X(2016)
 X(2015)

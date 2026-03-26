@@ -165,10 +165,10 @@ struct TBA_fetcher_refresh{
 
 		for(auto [url,old_data]:to_refresh){
 			//PRINT(url);
-			auto f2=inner.fetcher.fetch(url);
+			auto f2=inner.fetcher.fetch(url,std::nullopt);
 
 			//diff(f2,old_data);
-			cout<<url<<" "<<(f2.second==old_data.second)<<"\n";
+			cout<<url<<" "<<(f2.data==old_data.second)<<"\n";
 
 			try{
 				inner.cache.update(url,f2);
