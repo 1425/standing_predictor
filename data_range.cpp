@@ -89,6 +89,7 @@ auto group(vector<std::variant<A,B,C,D,E,F,G,H,I,J,K,L>> const& a){
 		X(8,I)
 		X(9,J)
 		X(10,K)
+		X(11,L)
 		#undef X
 		assert(0);
 	}
