@@ -460,27 +460,27 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 							//Team_event_status_rank t(g.ranks.at(team_info.team_key));
 							auto x=f->second;
 							Interval in{x.min.second,x.max.second};
-							return event_partial1[Team_event_status_rank(in)];
-						}
-						if(
+							found|=event_partial1[Team_event_status_rank(in)];
+						}else if(
 							std::holds_alternative<Tournament_status_picking_complete>(event_data.status)
 							|| std::holds_alternative<Tournament_status_eliminations_in_progress>(event_data.status)
 						){
 							auto x=f->second.min.second;
 							//this is not exactly right because might include  some points
 							//earned during playoffs.
-							return event_partial1[Team_event_status_post_pick(x)];
+							found|=event_partial1[Team_event_status_post_pick(x)];
+						}else{
+							//TODO: Figure out how to get here.
+							//because it seems like can occur during an event.
+							PRINT(team_info.team_key);
+							PRINT(event.key);
+							PRINT(event_data.status);
+							PRINT(f->second);
+							print_r(event_data);
+							assert(0);
+							//for part way through an event
+							//found|=event_partial[team_event_status(team_info.team_key,event_points[0]);
 						}
-						//TODO: Figure out how to get here.
-						//because it seems like can occur during an event.
-						PRINT(team_info.team_key);
-						PRINT(event.key);
-						PRINT(event_data.status);
-						PRINT(f->second);
-						print_r(event_data);
-						assert(0);
-						//for part way through an event
-						//found|=event_partial[team_event_status(team_info.team_key,event_points[0]);
 					}
 				}else{
 					found|=team_event_status(team_info.team_key,event_points[0]);
