@@ -469,6 +469,14 @@ std::tuple<Run_input,Skill_estimates,Annotated,std::map<tba::Team_key,std::strin
 							//this is not exactly right because might include  some points
 							//earned during playoffs.
 							found|=event_partial1[Team_event_status_post_pick(x)];
+						}else if(
+							std::holds_alternative<Tournament_status_eliminations_complete>(event_data.status)
+							|| std::holds_alternative<Tournament_status_awards_in_progress>(event_data.status)
+						){
+							//not exactly right because might include some awards already
+							auto x=f->second.min.second;
+
+							found|=event_partial1[Team_event_status_post_elims(x)];
 						}else{
 							//TODO: Figure out how to get here.
 							//because it seems like can occur during an event.
