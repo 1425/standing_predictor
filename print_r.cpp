@@ -9,7 +9,13 @@ using namespace std;
 int terminal_width(){
 	#ifdef __unix__
 	struct winsize w;
-	ioctl(STDIN_FILENO,TIOCGWINSZ,&w);
+	{
+		int r=ioctl(STDIN_FILENO,TIOCGWINSZ,&w);
+		if(r==-1){
+			perror("Could not determine terminal width");
+			exit(1);
+		}
+	}
 	auto found=w.ws_col;
 	//PRINT(found);
 	if(!(found>0 && found<1000)){
